@@ -244,6 +244,7 @@
 #@2025_05_07 lib v4.64 Add SADM_QUIET (Y/N) variable to control the output of error message.
 #@2025_05_19 lib v4.65 Add function 'sadm_nfs_mount' & 'sadm_nfs_unmount', solve PID_TIMEOUT problem.
 #@2025_05_26 lib v4.66 Portability minor code change to 'sadm_get_epoch_time()'.
+#@2025_05_31 lib v4.67 When a lock is created for sa system, an info line is shown on monitor web page.
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -254,7 +255,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.66"                                              # This Library Version
+export SADM_LIB_VER="4.67"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -349,7 +350,7 @@ export SADM_VMHOSTS="$SADM_WWW_DAT_DIR/vm_hosts.txt"                    # List a
 export SADM_LOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SADM_INST}.log"     # Script Output LOG
 export SADM_ELOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SADM_INST}_e.log"  # Script Error LOG
 export SADM_RCH_FILE="${SADM_RCH_DIR}/${SADM_HOSTNAME}_${SADM_INST}.rch"  # Result Code History File
-export SADM_RPT_FILE="${SADM_RPT_DIR}/${SADM_HOSTNAME}.rpt"             # Monitor Report file (rpt)
+export SADM_RPT_FILE="${SADM_RPT_DIR}/${SADM_HOSTNAME}_${SADM_INST}.rpt"  # Monitor Report file (rpt)
 
 # COMMAND PATH REQUIRE THAT SADMIN USE
 export SADM_DMIDECODE=""                                    # Command dmidecode Path
@@ -2854,52 +2855,44 @@ sadm_lock_system()
              return 1                                                   # Return Error to caller
     fi
 
-    # Save parameters received.
-    RC=0                                                                # Default Return Code
+    # Manage parmeter(s) received.
     SNAME="$1"                                                          # Name of system to lock
     if [ $# -eq 2 ]                                                     # Second parameter specified
         then SCRIPT_NAME="$2"                                           # Desc. or Remote ScriptName
+             LOCK_MESS="System '$SNAME' lock: '"${SCRIPT_NAME/$SADMIN\/bin\//}"'" 
         else SCRPIT_NAME="$SADM_INST"                                   # Use current script name
+             LOCK_MESS="Lock system '${SNAME}' while '$SADM_INST' is running"
     fi 
-    
-    # Write reason why we lock this system into the lock file..
     LOCK_FILE="${SADM_BASE_DIR}/${SNAME}.lock"                          # System Lock file name
+    RC=0                                                                # Default Return Code
 
-    # Refuse to lock if already lock.
+
+    # Refuse to lock if already lock or create the system lock file
     if [ -f "$LOCK_FILE" ]
         then sadm_write_log "[ ERROR ] System '$SNAME' is already lock by another script."
-             sadm_write_log "Lock file already exist '$LOCK_FILE'."
-             sadm_write_log "Lock file content : $(sadm_show_lock "$SNAME")."
+             sadm_write_log "  - Lock file already exist '$LOCK_FILE'."
+             sadm_write_log "  - Lock file content : $(sadm_show_lock "$SNAME")."
              return 1
-    fi
-     
-    if [ $# -eq 2 ]                                                     # User passs
-        then LOCK_MESS="System '$SNAME' lock: '"${SCRIPT_NAME/$SADMIN\/bin\//}"'" 
-        else LOCK_MESS="Lock system '${SNAME}' while '$SADM_INST' is running"
+        else echo "$LOCK_MESS" > "$LOCK_FILE"                           # Write reason why to lock  
+             if [ $? -ne 0 ]                                            # Error while writing to file
+                then sadm_write_err "[ ERROR ] Can't write to lock file '$LOCK_FILE'."
+                     return 1                                           # Return Error to caller
+             fi
+             sadm_write_log "[ OK ] System '$SNAME' is now lock."  
     fi 
+    if [ $(id -u) -eq 0 ] ;then chown ${SADM_USER}:${SADM_GROUP} ${LOCK_FILE} ;chmod 0664 "$LOCK_FILE" ;fi
 
-    # Create lock file and check for error.
-    echo "$LOCK_MESS" > "$LOCK_FILE"
-    if [ $? -eq 0 ]                                                     # Lock file created [ OK ]
-       then sadm_write_log "[ OK ] System '$SNAME' is now lock."  
-            if [ $(id -u) -eq 0 ] 
-                then chown ${SADM_USER}:${SADM_GROUP} ${LOCK_FILE}          
-                     chmod 0664 "$LOCK_FILE" 
-            fi                 
-       else sadm_write_err "[ ERROR ] Creating the lock file '$LOCK_FILE'."
-            return 1
-    fi 
 
-    # Create RPT file to inform user that the system is lock
-    RPT_MSG="$LOCK_MESS"                                                # Lock file content  
+
+    # Create RPT line to inform user that the system is lock
     RPT_OS="$(sadm_get_ostype)"                                         # Get the O/S type of remote
     RPT_DATE=$(date "+%Y.%m.%d")                                        # Report Date in YYYY.MM.DD                              
-    RPT_TIME=$(date "+%H:%M")                                           # Report Time in HH:MM
-    RPTLINE="I;${SNAME};${RPT_DATE};${RPT_TIME};${RPT_OSNAME}"          # Part 1 Build Report Line
-    RPTLINE="${RPTLINE};"SCRIPT";${RPT_MSG};${RPT_WGRP};${RPT_EGRP};"   # Part 2 Build Line    
+    RPT_TIME=$(date "+%H:%M:%S")                                        # Report Time in HH:MM
+    RPTLINE="Info;${SNAME};${RPT_DATE};${RPT_TIME};${RPT_OSNAME}"       # Build Report Line
+    RPTLINE="${RPTLINE};"SCRIPT";${LOCK_MESS};${SADM_WARNING_GROUP};${SADM_INFO_GROUP};"  
 
     # Update the Local & Global (www) RPT files.
-    RPT_LOCAL="${SADM_RPT_DIR}/${SNAME}_${SADM_INST}.rpt"            # SADMIN Server Local RPT
+    RPT_LOCAL="${SADM_RPT_DIR}/${SNAME}_${SADM_INST}.rpt"               # SADMIN Server Local RPT
     echo "$RPTLINE" >> "$RPT_LOCAL"                                     # Local $SADMIN/dat/rpt rpt
     RPT_GLOBAL="${SADM_WWW_DAT_DIR}/${SNAME}/rpt/${SNAME}_${SADM_INST}.rpt" 
     echo "$RPTLINE" >> "$RPT_GLOBAL"                                    # $SADMIN/www/dat/hostname/rpt
@@ -2991,7 +2984,7 @@ sadm_unlock_system() {
 
 
     # We can need to remove the (.rpt) files that will remove lock mnessage in web monitor page.
-    RPT_LOCAL="${SADM_RPT_DIR}/${SNAME}_${SADM_INST}.rpt"            # SADMIN Server Local RPT
+    RPT_LOCAL="${SADM_RPT_DIR}/${SNAME}_${SADM_INST}.rpt"               # SADMIN Server Local RPT
     if [ -f "$RPT_LOCAL" ] ;then rm -f "$RPT_LOCAL" >/dev/null 2>&1 ;fi # Remove Local RPT file
 
     RPT_GLOBAL="${SADM_WWW_DAT_DIR}/${SNAME}/rpt/${SNAME}_${SADM_INST}.rpt" 
