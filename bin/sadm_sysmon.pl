@@ -52,6 +52,7 @@
 # 2022_09_24 mon v2.48 On MacOS review 'check_cpu_usage', 'check_load average' & filesystem check
 # 2022_10_11 mon v2.49 Sysmon don't check capacity exceeded for '/snap/*' '/media/*' filesystem
 # 2023_05_06 mon v2.50 Reduce ping wait time to speed up processing.
+#@2025_05_31 mon v2.51 Delay start (ramdom number from 1 to 20 seconds), so all not run at same time.
 #===================================================================================================
 #
 use English;
@@ -66,7 +67,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.50";                                       # Version Number
+my $VERSION_NUMBER      = "2.51";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -1795,12 +1796,12 @@ sub init_process {
     }else{
         print "\nCreating lock file $SYSMON_LOCK_FILE\n";               # Show user want we do
         @args = ("$CMD_TOUCH", "$SYSMON_LOCK_FILE");                    # Cmd to Create Lock File
-#        system(@args) == 0   or die "system @args failed: $?";          # Execute the Touch Command
+#        system(@args) == 0   or die "system @args failed: $?";         # Execute the Touch Command
         system(@args) == 0   ;                                          # Execute the Touch Command
     }
 
     # Execute the 'ps' command twice and save result to files
-    @args = ("export COLUMNS=4096 ; ps -efwww  > $PSFILE1 ; export COLUMNS=80");
+    @args = ("export COLUMNS=4096 ; ps -efwww > $PSFILE1 ; export COLUMNS=80");
     system(@args) == 0   or print "ps 1 command Failed ! : $?";         # Execute 'ps' Command No.1
     sleep(1);                                                           # One Second between Exec.
     @args = ("export COLUMNS=4096 ; ps -efwww > $PSFILE2 ; export COLUMNS=80");
@@ -1962,9 +1963,9 @@ sub end_of_sysmon {
         exit 1 ;                                    # Exit with Error
     }    
     #
-    #my $random_number = rand(120);                  # Get a random number between 0 and 120
-    #print "Execution will start in $random_number seconds.\n";
-    #sleep($random_number);
+    my $random_number = int(rand(20));             # Get a random number between 0 and 30
+    print "Execution will start in $random_number seconds.\n";
+    sleep($random_number);
 
     $start_time = time;                             # Store Starting time - To calculate elapse time
     init_process;                                   # Create lock file & do 'ps' commands > to files
