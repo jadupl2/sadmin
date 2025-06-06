@@ -775,7 +775,7 @@ sub check_for_error {
    if ($MODULE eq "NETWORK")   {
       if ($SUBMODULE eq "PING")   {
          if ($SYSMON_DEBUG >= 5) { print "\nPing to server $WID failed"; }
-         $ERR_MESS = "$HOSTNAME can't ping server $WID" ;
+         $ERR_MESS = "$HOSTNAME Can't ping server '$WID'" ;
          write_rpt_file($alert_type,"NETWORK","PING",$ERR_MESS );
       }
    }
@@ -1281,9 +1281,9 @@ sub check_filesystems_usage  {
 sub ping_ip  {
     @dummy = split /_/, $SADM_RECORD->{SADM_ID} ;                       # Extract Name or IP from ID
     $ipname = $dummy[1];                                                # Extract Name/IP to ping
-    print "\n\nTest ping to $ipname ... ";                              # Show to User Name/IP
+    print "Test ping to $ipname ... ";                                  # Show to User Name/IP
 
-    $PCMD = "ping -c2 -W2 $ipname >/dev/null 2>&1" ;                        # Build ping command
+    $PCMD = "ping -c2 -W2 $ipname >/dev/null 2>&1" ;                    # Build ping command
     @args = ("$PCMD"); system(@args) ;                                  # Perform the ping operation
     $src = $? >> 8;                                                     # Get Ping Result
     $SADM_RECORD->{SADM_CURVAL}=$src;                                   # Save Result Code to CurVal
