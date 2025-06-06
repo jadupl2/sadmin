@@ -42,7 +42,8 @@
 # 2022_08_17 backup v2.4 Updated with SADMIN section 1.52
 #@2024_04_17 backup v2.5 Replace 'sadm_write' with 'sadm_write_log' and 'sadm_write_err'.
 #@2024_12_17 backup v2.6 Updated with SADMIN section 1.56
-# --------------------------------------------------------------------------------------------------
+#@2025_-6_06 backup v2.7 Show a tree view of Database Backup directory.
+
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
 
@@ -70,7 +71,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.6'                                      # Script version number
+export SADM_VER='2.7'                                      # Script version number
 export SADM_PDESC="Take a backup of all (Default) or selected (sadmin) database."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -290,11 +291,11 @@ backup_cleanup()
     fi
     
     # Process all Databases Directories Found
-    pwd_save=`pwd`                                                      # Save Current Directory
+    pwd_save=$(pwd)                                                     # Save Current Directory
     while read dbdir                                                    # Read All DB Dir to process
     do
         sadm_write_log "    - Pruning $dbdir Database Backup."          # Show User Database pruning
-        cd $dbdir                                                       # cd to Database Backup Dir.
+        cd "$dbdir"                                                     # cd to Database Backup Dir.
         if [ $SADM_DEBUG -gt 0 ] ; then ls -l ; fi                      # In Debug List Backup files
         NB_BACKUP=$(ls -1 | wc -l | tr -d ' ')                          # Count Nb. Backup in Dir.
         NB_DELETE=$(echo "$NB_BACKUP - $NB_KEEP" | $SADM_BC)            # Nb. Backup to Delete
@@ -423,6 +424,10 @@ main_process()
     if [ $? -ne 0 ] ; then return 1 ; fi                                # If Error Return to Caller
     backup_cleanup "$YEARLY_DIR"  "$YEARLY_BACKUP_TO_KEEP"              # Purge unwanted Backup file
     if [ $? -ne 0 ] ; then return 1 ; fi                                # If Error Return to Caller
+
+    cd $SADM_DBB_DIR
+    tree | tee -a $SADM_LOG                                             # Show Dir. Tree of Backup
+    
     return 0                                                            # Return to Caller
 }
 
