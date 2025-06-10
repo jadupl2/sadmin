@@ -63,6 +63,7 @@
 # 2023_10_17 web v2.37 System monitor page - Minor adjustments.
 #@2025_01_24 web v2.38 Will now show when a system is lock.
 #@2025_03_27 web v2.39 Enhance the appearance of the page.
+#@2025_06_10 web v2.40 If an invalid status code is encountered, it will be displayed as Unknown.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -129,7 +130,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #---------------------------------------------------------------------------------------------------
 #
 $DEBUG         = False ;                                                # Debug Activated True/False
-$SVER          = "2.39" ;                                               # Current version number
+$SVER          = "2.40" ;                                               # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE    = '/crud/srv/sadm_server_create.php';                    # Create Page URL
 $URL_UPDATE    = '/crud/srv/sadm_server_update.php';                    # Update Page URL
@@ -405,9 +406,9 @@ function display_line($line,$con)
             break;
         default:
             echo "\n<td align='left'>"; 
-            echo "<span data-toggle='tooltip' title='Unknown Status'>";
+            echo "<span data-toggle='tooltip' title='Unknown $wstatus'>";
             echo "<img src='/images/question_mark.jpg' ";               # Show Question Mark
-            echo "style='width:96px;height:40px;'></span>Unknown</td>";
+            echo "style='width:96px;height:40px;'></span>$wstatus</td>";
             $alert_group="default";                                     # Set Event Alert Group
             break;
     }
