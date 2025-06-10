@@ -54,6 +54,7 @@
 #@2025_01_09 cmdline v2.3 Execute a script on remote system, while creating a specified lock file.
 #@2025_01_24 cmdline v2.4 Bug fixes concerning lock & remote execution while updating logs
 #@2025_05_19 cmdline v2.5 Correct rpt file problem.
+#@2025_06_10 nolog   v2.6 Minor change - no log
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -105,7 +106,7 @@ export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader 
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
 export SADM_MULTIPLE_EXEC="Y"                              # Run Simultaneous copy of script
 export SADM_USE_RCH="N"                                    # Update RCH History File (Y/N)
-export SADM_DEBUG=5                                        # Debug Level(0-9) 0=NoDebug
+export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
 export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
 export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") 
 export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX") 
@@ -246,8 +247,8 @@ update_rpt_file()
     fi
 
     # Update the Local & Global RTP files.
-    RPT_LOCAL="${SADM_RPT_DIR}/${RPT_HOST}_rmcmd_lock.rpt"              # SADMIN Server Local RPT
-    RPT_GLOBAL="${SADM_WWW_DAT_DIR}/${RPT_HOST}/rpt/${RPT_HOST}_rmcmd_lock.rpt" 
+    RPT_LOCAL="${SADM_RPT_DIR}/${RPT_HOST}_${SADM_INST}.rpt"              # SADMIN Server Local RPT
+    RPT_GLOBAL="${SADM_WWW_RPT_DIR}/${RPT_HOST}_${SADM_INST}.rpt" 
     echo "$RPTLINE" >> "$RPT_LOCAL"                                     # $SADMIN/dat/rpt rpt
     echo "$RPTLINE" >> "$RPT_GLOBAL"                                    # $SADMIN/www/dat/hostname/rpt
 
@@ -357,8 +358,6 @@ rmcmd_start()
 
         # Remove the system lock file
         sadm_unlock_system "$LOCK_FILENAME"                          # Remove the lock file
-        RPT_LOCAL="${SADM_RPT_DIR}/${RPT_HOST}_rmcmd_lock.rpt"     # SADMIN Server Local RPT
-        RPT_GLOBAL="${SADM_WWW_DAT_DIR}/${RPT_HOST}/rpt/${RPT_HOST}_rmcmd_lock.rpt" 
         done < $SADM_TMP_FILE1
 
     return 0
