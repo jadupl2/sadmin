@@ -67,6 +67,7 @@
 #@2024_09_12 osupdate v5.6 Adjustments & modifications done to log.
 #@2024_11_25 osupdate v5.7 Fix minor problem with system lock.
 #@2025_04_22 osupdate v5.8 Reduce sleep time from 8 minutes to 4 to restart system app.
+#@2025_06_10 nolog    v5.9 Minor changes - No Log
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -98,7 +99,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 
-# ----------
+# --------------------------------------------------------------------------------------------------
 # SPECIAL DEROGATION TO INSERT THE NAME OF THE SYSTEM TO UPDATE IN THE FILENAME OF LOG AND RCH FILE.
 
 # Making sure at least one parameter is received (Should be the system name to update"
@@ -111,11 +112,11 @@ export SADM_EXT=$(echo "$SADM_PN" | cut -d'.' -f2)         # Save Script extensi
 export SADM_INST="${SADM_INST}_${SYSTEM_NAME}"             # Insert VMName to export in rch & log
 export SADM_HOSTNAME="$SYSTEM_NAME"                        # SystemName that we are going to update
 export SADM_PN="${SADM_INST}.${SADM_EXT}"                  # Script name(with extension)
-# ----------
+# --------------------------------------------------------------------------------------------------
 
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='5.8'                                      # Script version number
+export SADM_VER='5.9'                                      # Script version number
 export SADM_PDESC="Run the O/S update script on the selected remote system."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -157,7 +158,7 @@ export SADM_MAX_RCLINE=60                                  # Nb Lines to trim(0=
 # --------------------------------------------------------------------------------------------------
 #                               This Script environment variables
 # --------------------------------------------------------------------------------------------------
-export USCRIPT="sadm_osupdate.sh"                                       # Script to execute on nodes
+export USCRIPT="sadm_osupdate.sh"                                       # Script to execute remotely
 
 # Seconds given for system reboot and to start applications.
 export REBOOT_TIME=240                                                  # 240 seconds is 4 minutes
@@ -228,7 +229,7 @@ update_server_db()
 rcmd_osupdate()
 {
 
-    # Build necessary SQL command to retrieve information about the system to update.
+    # Build necessary SQL command to retrieve information about the system to be updated.
     SQL1="SELECT srv_name, srv_ostype, srv_domain, srv_update_auto, "
     SQL2="srv_update_reboot, srv_sporadic, srv_active, srv_sadmin_dir, srv_ssh_port from server "
     SQL3="where srv_ostype = 'linux' and srv_active = True "            # Got to Be a Linux & Active
@@ -249,14 +250,14 @@ rcmd_osupdate()
     fi 
     
     wline=$(head -1 $SADM_TMP_FILE1)                                    # Read Server Info Line 
-    server_name=`               echo $wline|awk -F\; '{ print $1 }'`    # Get Server Name
-    server_os=`                 echo $wline|awk -F\; '{ print $2 }'`    # Server O/S
-    server_domain=`             echo $wline|awk -F\; '{ print $3 }'`    # Server Domain
-    server_update_auto=`        echo $wline|awk -F\; '{ print $4 }'`    # Update Auto 1=Yes 0=No
-    server_update_reboot=`      echo $wline|awk -F\; '{ print $5 }'`    # RebootAfter Upd 1=Yes 0=No
-    server_sporadic=`           echo $wline|awk -F\; '{ print $6 }'`    # SporadicServer 1=Yes 0=No
-    server_sadmin_dir=`         echo $wline|awk -F\; '{ print $8 }'`    # $SADMIN on remote Server
-    server_ssh_port=`           echo $wline|awk -F\; '{ print $9 }'`    # SSH port to system
+    server_name=$(              echo $wline|awk -F\; '{ print $1 }')    # Get Server Name
+    server_os=$(                echo $wline|awk -F\; '{ print $2 }')    # Server O/S
+    server_domain=$(            echo $wline|awk -F\; '{ print $3 }')    # Server Domain
+    server_update_auto=$(       echo $wline|awk -F\; '{ print $4 }')    # Update Auto 1=Yes 0=No
+    server_update_reboot=$(     echo $wline|awk -F\; '{ print $5 }')    # RebootAfter Upd 1=Yes 0=No
+    server_sporadic=$(          echo $wline|awk -F\; '{ print $6 }')    # SporadicServer 1=Yes 0=No
+    server_sadmin_dir=$(        echo $wline|awk -F\; '{ print $8 }')    # $SADMIN on remote Server
+    server_ssh_port=$(          echo $wline|awk -F\; '{ print $9 }')    # SSH port to system
     fqdn_server=$(echo ${server_name}.${server_domain})                 # Create FQN Server Name
         
     # Ping to server (-c2 send two packets, -W2 Timeout waiting for response)
@@ -274,9 +275,9 @@ rcmd_osupdate()
 
     # If 'srv_update_auto' = 0 for that system in Database, it means no update allowed for system
     if [ "$server_update_auto" = "0" ]
-        then sadm_write_err "[ WARNING ]O/S Update for '${fqdn_server}' isn't activated.".
+        then sadm_write_err "[ WARNING ] O/S Update for '${fqdn_server}' isn't activated.".
              sadm_write_err "No O/S Update will be performed."
-             sadm_write_err "Unless you check field 'Activate O/S Update Schedule' in the schedule."
+             sadm_write_err "Unless you check field 'Activate O/S Update Schedule' on web interface."
              return 1
     fi 
 
@@ -292,23 +293,25 @@ rcmd_osupdate()
 
     # Activate or not the reboot at the end of the O/S Update.
     WREBOOT=""                                                      # Def. Action = NO reboot
-    if [ "$server_update_reboot" = "1" ]                            # If Requested in Database
-        then WREBOOT="-r"                                           # Add -r option to reboot  
+    if [ "$server_update_reboot" = "1" ]                            # If reboot Requested in Database
+        then WREBOOT=" -r "                                         # Add -r option to reboot  
     fi                                                              # This reboot after Update
     
     # Check if System is Locked.
     sadm_lock_status "$server_name"                                 # Check lock file status
     if [ $? -ne 0 ]                                                 # If System is lock
        then sadm_write_err "[ ERROR ] System '$server_name' is lock, cannot proceed at this time."
+            sadm_write_err "No O/S Update will be perform."
             return 1 
     fi
 
     # Create lock file while O/S Update is running 
-    # This prevent the SADMIN server from starting a script on the remote system.
+    # This prevent the SADMIN server from starting any other scripts on the remote system.
     # A system Lock also turn off monitoring of remote system.
     sadm_lock_system "$server_name"                                 # Lock system while update o/s
     if [ $? -ne 0 ]                                                 # If lock system failed
-       then sadm_write_err "[ ERROR ] Couldn't create the lock file for '$server_name'."
+       then sadm_write_err "[ ERROR ] Couldn't lock the server '$server_name'."
+            sadm_write_err "No O/S Update will be perform."
             return 1 
     fi
     
@@ -318,7 +321,8 @@ rcmd_osupdate()
 
     # Check if on a valid SADMIN server, if so use 'ssh' else run locally.
     if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If not on SADMIN Server                                          # SADMIN Server? 0=No 1=Yes
-        then sadm_write_log "$SADM_SSH -qnp $server_ssh_port $fqdn_server '${server_sadmin_dir}/bin/$USCRIPT ${WREBOOT}'"
+        then sadm_write_log "Starting the O/S update on '$fqdn_server'"
+             sadm_write_log "$SADM_SSH -qnp $server_ssh_port $fqdn_server '${server_sadmin_dir}/bin/$USCRIPT ${WREBOOT}'"
              sadm_write_log " "
              sadm_write_log " "
              $SADM_SSH -qnp $server_ssh_port $fqdn_server ${server_sadmin_dir}/bin/$USCRIPT $WREBOOT
@@ -332,7 +336,7 @@ rcmd_osupdate()
     sadm_write_log " "
     sadm_write_log "Back on $SADM_HOSTNAME after doing the O/S update on '$server_name'."
     if [ $RC -eq 0 ]
-        then sadm_write_log "[ OK ] O/S update was a success on $fqdn_server"
+        then sadm_write_log "[ SUCCESS ] O/S update was sucessfull on $fqdn_server"
              update_server_db "${server_name}" "S"                      # Update O/S Status in DB 
         else sadm_write_log "[ ERROR ] O/S update terminated with error on $fqdn_server"
              update_server_db "${server_name}" "F"                      # Update O/S Status in DB
@@ -347,6 +351,8 @@ rcmd_osupdate()
              sadm_write_log "Give time for '$server_name' to be available, we will wait $REBOOT_TIME sec."
              sadm_sleep $REBOOT_TIME 20 
     fi 
+
+    
     sadm_unlock_system "$server_name"                                   # Go remove the lock file
     return 0
 }
@@ -397,7 +403,6 @@ function cmd_options()
 #
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Create Dir.,PID,log,rch
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
     rcmd_osupdate                                                       # Go Update Server
     SADM_EXIT_CODE=$?                                                   # Save Exit Code
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
