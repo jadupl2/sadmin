@@ -64,8 +64,6 @@ export SADM_LOG_TYPE="B"                                   # Write log to [S]cre
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoLogHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeLogFooter N=NoLogFooter
-#export SADM_LOG_DATE="Y"                              # Y=Include date in log,  N=No date in log
-#export SADM_LOG_TIME="Y"                              # Y=Include time in log,  N=No time in log
 export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
 export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
@@ -84,7 +82,7 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 # VARIABLES DEFINE BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
 # BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).export SADM_WARNING_GRP="default"
 #export SADM_ALERT_GROUP="default"                          # Error Group Define in alert_group.cfg
-#export SADM_WARNING_GROUP="default"                        # Warning alert Group (alert_group.cfg)                           # Warning alert Group (alert_group.cfg)
+#export SADM_WARNING_GROUP="default"                        # Warning alert Group (alert_group.cfg)   
 #export SADM_INFO_GROUP="default"                           # Info alert Group (in alert_group.cfg)
 #export SADM_QUIET="N"                                      # N=Show Err.Msg Y=ReturnCodeOnly No Msg
 #export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
