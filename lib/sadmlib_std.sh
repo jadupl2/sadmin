@@ -245,6 +245,7 @@
 #@2025_05_19 lib v4.65 Add function 'sadm_nfs_mount' & 'sadm_nfs_unmount', solve PID_TIMEOUT problem.
 #@2025_05_26 lib v4.66 Portability minor code change to 'sadm_get_epoch_time()'.
 #@2025_05_31 lib v4.67 When a lock is created for sa system, an info line is shown on monitor web page.
+#@2025_06_10 lib v4.68 Show the process preventing to run a second copy of a script.
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -255,7 +256,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.67"                                              # This Library Version
+export SADM_LIB_VER="4.68"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -305,6 +306,7 @@ export SADM_WWW_CRUD_DIR="$SADM_WWW_DIR/crud"                           # www CR
 export SADM_WWW_LIB_DIR="$SADM_WWW_DIR/lib"                             # www Lib Dir
 export SADM_WWW_IMG_DIR="$SADM_WWW_DIR/images"                          # www Img Dir
 export SADM_WWW_NET_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/net"        # web net dir
+export SADM_WWW_RPT_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/rpt"        # web rpt dir
 export SADM_WWW_TMP_DIR="$SADM_WWW_DIR/tmp"                             # web tmp dir
 export SADM_WWW_PERF_DIR="$SADM_WWW_TMP_DIR/perf"                       # web perf dir
 
@@ -637,9 +639,22 @@ sadm_writelog() {
 }
 
 
-# New write_log
-# Example: sadm_write_log "Starting Main Process ... " "NOLF"  
-#===================================================================================================
+#---------------------------------------------------------------------------------------------------
+# sadm_write_log()
+#
+# Desc: Write a message to the log file ($SADM_LOG) and/or to the screen.
+#
+#
+# Arguments: 
+#   $1  = Message to write to log.
+#   $2  = Optional, control line feed befora and after recording the 'message'.
+#
+# Example of optional second parameter will work in a short futur : 
+#   - ""       LineFeed issue at the end of the line.   
+#   - "NOLF"   Issue no line feed at the end of the line.
+#   - "LFBL"   Issue LineFeed Before the Line. 
+#   - "LFBA"   Issue LineFeed Before and After the Line.
+#
 sadm_write_log()
 {
     init_msg="$1"                                                       # Initial msg received
@@ -708,13 +723,17 @@ sadm_write_err() {
 }
 
 
-# Write String received to script log ($SADM_LOG) & script error log ($SADM_ELOG)
+# --------------------------------------------------------------------------------------------------
+# Write Debug information in the script log ($SADM_LOG) file (Use it in test mode)
+# 
 sadm_write_dbg() {
-    sadm_write_log "----- Debug Level: $SADM_DEBUG - $(date "+%C%y.%m.%d %H:%M:%S")"
-    DBG_SMSG="$1"                                                       # Screen Mess no Date/Time
-    sadm_write_log "$DBG_SMSG"                                          # Go write in normal Scr/log
-    #
+    if [ "$SADM_DEBUG" = "0" ] ; then return 0 ; fi                     # If Debug not activated, exit
+    message="$1"                                                        # Screen Mess 
+    date_msg="$(date "+%C%y.%m.%d %H:%M:%S")"
+    sadm_write_err "$date_msg DL:$SADM_DEBUG FN: ${FUNCNAME[0]} LN:${LINENO} $message"
 }
+
+
 
 
 
@@ -2364,8 +2383,11 @@ sadm_start() {
     [ ! -f "$SADM_ELOG" ]     && touch $SADM_ELOG                       # Create ELOG If not exist
 
     # Will work when running with root, don't give error if we are not 'root'.
-    chmod 664 "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 # Change Perm.only with root
-    chgrp "${SADM_GROUP}" "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 # Good with root
+    chmod 666 "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 # Change Perm.only with root
+    if [ $(id -u) -eq 0 ] 
+        then chgrp "${SADM_GROUP}" "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 
+             chown "${SADM_USER}"  "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 
+    fi 
 
     # Check if log and error log are writable.
     if [ ! -w "$SADM_LOG" ] || [ ! -w "$SADM_ELOG" ]                    # If can't write to log/elog
@@ -2446,7 +2468,7 @@ sadm_start() {
     fi 
 
     # If PID File exist and user want to run only 1 instance of the script - Abort Script
-    if [ -e "${SADM_PID_FILE}" ] && [ "$SADM_MULTIPLE_EXEC" = "N" ]     # PIP Exist - Run One Copy
+    if [ -e "${SADM_PID_FILE}" ] && [ "$SADM_MULTIPLE_EXEC" = "N" ]     # PID file exist & Only 1 
        then pepoch=$(stat --format="%Y" $SADM_PID_FILE)                 # Epoch time of PID File
             cepoch=$(sadm_get_epoch_time)                               # Current Epoch Time
             pelapse=$(( $cepoch - $pepoch ))                            # Nb Sec PID File was create
@@ -2461,6 +2483,7 @@ sadm_start() {
             #sadm_write_err " "
             if [ -z "$SADM_PID_TIMEOUT" ]                               # SADM_PID_TIMEOUT defined ?
                 then sadm_write_err "Script can't run unless one of the following action is done :"
+                     ps -ef |grep "$SADM_PN" |grep -v grep |nl |tee -a $SADM_ELOG 2>&1
                      sadm_write_err "  - Remove the PID File '\${SADMIN}/tmp/${SADM_INST}.pid'."
                      sadm_write_err "  - Set 'SADM_MULTIPLE_EXEC' variable to 'Y' in your script."
                      sadm_write_err "  - Wait till PID timeout '\$SADM_PID_TIMEOUT' is reach."
@@ -2470,10 +2493,11 @@ sadm_start() {
                 else if [ $pelapse -ge $SADM_PID_TIMEOUT ]              # PID Timeout reached
                         then sadm_write_log "The PID file is now expired."
                              sadm_write_log "Let's see if '$SADM_PN' is currently running."
-                             ps -ef | grep "$SADM_PN" | grep -v grep | nl >> $SADM_LOG 2>&1
+                             ps -ef | grep "$SADM_PN" | grep -v grep | nl >> $SADM_ELOG 2>&1
                              proc_count=$(ps -ef | grep "$SADM_PN"| grep -v grep | wc -l)
                              if [ $proc_count -gt 1 ] 
                                 then sadm_write_err "More than 1 process are running with the name '$SADM_PN'."
+                                     ps -ef |grep "$SADM_PN" |grep -v grep |nl |tee -a $SADM_LOG 2>&1
                                      sadm_write_err "Refusing to run another copy of this script."
                                      DELETE_PID="N"                     # No Del PID Since running
                                      sadm_stop 1                        # Close,Clean up before exit
@@ -2482,7 +2506,7 @@ sadm_start() {
                                      sadm_write_log "Assuming that the script was aborted abnormally."
                                      sadm_write_log "Script execution will now start and the PID file recreated."
                                      sadm_write_log " "
-                                     touch ${SADM_PID_FILE} >/dev/null 2>&1     # Update Modify date of PID
+                                     echo "SADM_TPID" > ${SADM_PID_FILE} >/dev/null 2>&1  
                                      DELETE_PID="Y"                     # Del PID Since running
                              fi
                         else DELETE_PID="N"                             # No Del PID Since running
@@ -2490,20 +2514,22 @@ sadm_start() {
                              exit 1                                     # Exit with Error
                      fi
             fi                                                          # Close and Trim Log
-       else echo "$TPID" > $SADM_PID_FILE                               # Create the PID File
+       else echo "$SADM_TPID" > $SADM_PID_FILE                          # Create the PID File
             DELETE_PID="Y"                                              # Del PID Since running
     fi
 
     # If System Startup Script does not exist - Create one from the startup template script
     [ ! -r "$SADM_SYS_STARTUP" ] && cp $SADM_SYS_START $SADM_SYS_STARTUP
     if [ $(id -u) -eq 0 ]
-        then chmod 0774 $SADM_SYS_STARTUP ; chown ${SADM_USER}:${SADM_GROUP} $SADM_SYS_STARTUP
+        then chmod 0774 $SADM_SYS_STARTUP 
+             chown ${SADM_USER}:${SADM_GROUP} $SADM_SYS_STARTUP
     fi
 
     # If System Shutdown Script does not exist - Create it from the shutdown template script
     [ ! -r "$SADM_SYS_SHUTDOWN" ] && cp $SADM_SYS_SHUT $SADM_SYS_SHUTDOWN
     if [ $(id -u) -eq 0 ]
-        then chmod 0774 $SADM_SYS_SHUTDOWN ; chown ${SADM_USER}:${SADM_GROUP} $SADM_SYS_SHUTDOWN
+        then chmod 0774 $SADM_SYS_SHUTDOWN 
+             chown ${SADM_USER}:${SADM_GROUP} $SADM_SYS_SHUTDOWN
     fi
 
     # Alert Group File ($SADMIN/cfg/alert_group.cfg) MUST be present.
@@ -2849,6 +2875,7 @@ sadm_sendmail() {
 # --------------------------------------------------------------------------------------------------
 sadm_lock_system()
 {    
+    ERROR_COUNT=0                                                   # Default Error Count
     if [ $# -lt 1 ] || [ $# -gt 2 ] 
         then sadm_write_err "[ ERROR ] Function '$FUNCNAME' invalid number of argument."
              sadm_write_err "Should be 1 or 2 but we received $# : $* " # Show what received
@@ -2865,7 +2892,7 @@ sadm_lock_system()
     fi 
     LOCK_FILE="${SADM_BASE_DIR}/${SNAME}.lock"                          # System Lock file name
     RC=0                                                                # Default Return Code
-
+    ERROR_COUNT=0                                                       # Default Error Count
 
     # Refuse to lock if already lock or create the system lock file
     if [ -f "$LOCK_FILE" ]
@@ -2893,11 +2920,20 @@ sadm_lock_system()
 
     # Update the Local & Global (www) RPT files.
     RPT_LOCAL="${SADM_RPT_DIR}/${SNAME}_${SADM_INST}.rpt"               # SADMIN Server Local RPT
-    echo "$RPTLINE" >> "$RPT_LOCAL"                                     # Local $SADMIN/dat/rpt rpt
-    RPT_GLOBAL="${SADM_WWW_DAT_DIR}/${SNAME}/rpt/${SNAME}_${SADM_INST}.rpt" 
-    echo "$RPTLINE" >> "$RPT_GLOBAL"                                    # $SADMIN/www/dat/hostname/rpt
+    echo "$RPTLINE" > "$RPT_LOCAL"                                      # Local $SADMIN/dat/rpt rpt
+    if [ $? -ne 0 ]                                            # Error while writing to file
+       then sadm_write_err "[ ERROR ] Couldn't write description to '$RPT_LOCAL'."
+            SADM_EXIT_CODE=1                                        # Return Error to caller
+    fi
 
-    return 0     
+    RPT_GLOBAL="${SADM_WWW_RPT_DIR}/${SNAME}_${SADM_INST}.rpt" 
+    echo "$RPTLINE" > "$RPT_GLOBAL"                                    # $SADMIN/www/dat/hostname/rpt
+    if [ $? -ne 0 ]                                            # Error while writing to file
+       then sadm_write_err "[ ERROR ] Couldn't write description to '$RPT_GLOBAL'."
+            SADM_EXIT_CODE=1                                        # Return Error to caller
+    fi
+
+    return $SADM_EXIT_CODE
 } 
 
 
@@ -2969,15 +3005,15 @@ sadm_unlock_system() {
              return 1                                                   # Return Error to caller
     fi
 
-    SNAME=$1                                                            # Save System Name to verify
+    SNAME=$1                                                            # Save System Name to unlock
     LOCK_FILE="${SADM_BASE_DIR}/${SNAME}.lock"                          # System Lock file name
 
     if [ -f "$LOCK_FILE" ]                                              # Lock file exist ?
         then rm -f ${LOCK_FILE} >/dev/null 2>&1                         # Delete Lock file 
              if [ $? -eq 0 ]                                            # no error while updating
-               then sadm_write_log "[ OK ] System '$SNAME' is now unlock."
-               else sadm_write_err "[ ERROR ] Unlocking '${SNAME}' - Can't remove '${LOCK_FILE}'" 
-                    return 1                                            # Set Return Value (Error)
+                then sadm_write_log "[ OK ] System '$SNAME' is now unlock."
+                else sadm_write_err "[ ERROR ] Unlocking '${SNAME}' - Can't remove '${LOCK_FILE}'" 
+                     return 1                                            # Set Return Value (Error)
              fi
         else sadm_write_log "[ OK ] System '$SNAME' unlock (wasn't lock)."
     fi 
@@ -2987,7 +3023,7 @@ sadm_unlock_system() {
     RPT_LOCAL="${SADM_RPT_DIR}/${SNAME}_${SADM_INST}.rpt"               # SADMIN Server Local RPT
     if [ -f "$RPT_LOCAL" ] ;then rm -f "$RPT_LOCAL" >/dev/null 2>&1 ;fi # Remove Local RPT file
 
-    RPT_GLOBAL="${SADM_WWW_DAT_DIR}/${SNAME}/rpt/${SNAME}_${SADM_INST}.rpt" 
+    RPT_GLOBAL="${SADM_WWW_RPT_DIR}/${SNAME}_${SADM_INST}.rpt" 
     if [ -f "$RPT_GLOBAL" ] ;then rm -f "$RPT_GLOBAL" >/dev/null 2>&1 ;fi # Remove Global RPT file
 
     return 0                                                            # Return to caller 
