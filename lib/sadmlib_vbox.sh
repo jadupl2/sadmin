@@ -68,7 +68,7 @@ export VBOXMANAGE=""                                                    # /usr/b
 export START_EXCLUDE_FILE="$SADM_CFG_DIR/sadm_vm_exclude_start_${SADM_HOSTNAME}.txt" # VM Start Excl
 export START_EXCLUDE_INIT="$SADM_CFG_DIR/.sadm_vm_exclude_start.txt"    # VM Start Exclude Template
 
-# Variables already loaded by sadmlib_std.sh - You change them in $SADMIN/cfg/sadmin.cfg).
+# These variables are loaded by sadmlib_std.sh - You change them in $SADMIN/cfg/sadmin.cfg).
 # SADM_VM_EXPORT_NFS_SERVER    = batnas.maison.ca
 # SADM_VM_EXPORT_MOUNT_POINT   = /volume1/backup_vm/virtualbox_exports
 # SADM_VM_EXPORT_TO_KEEP       = 2
@@ -215,6 +215,7 @@ sadm_vm_stop()
     sadm_write_log "Stopping virtual machine '$VM'."
     sadm_write_log "$VBOXMANAGE controlvm '$VM' acpipowerbutton"
     sadm_write_log "We give $SADM_VM_STOP_TIMEOUT seconds to bring down the virtual machine."
+    sadm_write_log "This value is taken from SADMIN configuration file 'sadmin.cfg' as 'SADM_VM_STOP_TIMEOUT'."
     $VBOXMANAGE controlvm "$VM" acpipowerbutton >> $SADM_LOG 2>&1
 
     # Wait for the shutdown to complete, wait for "$SADM_VM_STOP_TIMEOUT" sec, then power off.
