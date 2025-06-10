@@ -428,7 +428,7 @@ rear_preparation()
 
     # Show the content of /etc/rear/site.conf before starting the ReaR backup
     sadm_write_log " "
-    sadm_write_log "Content of 'ReaR' site configuration file ${REAR_CFGFILE} before backup:"
+    sadm_write_log "Content of 'ReaR' site configuration file ${REAR_CFGFILE} before beginning backup:"
     grep -Ev "^$|^#" $REAR_CFGFILE | while read wline ; do sadm_write_log "${wline}"; done
     sadm_write_log " "
     sadm_write_log "[ SUCCESS ] 'ReaR' backup preparation succeeded."
@@ -560,7 +560,7 @@ rear_housekeeping()
     sadm_write_log "gzip -t '$REAR_CUR_TGZ'"
     gzip -t "$REAR_CUR_TGZ" >>$SADM_LOG 2>&1 
     if [ $? -ne 0 ] 
-        then sadm_write_err "[ ERROR ] The compressed failed the integrity check."
+        then sadm_write_err "[ ERROR ] The ReaR backup file failed the integrity check."
              sadm_write_err "The ReaR backup may not be restorable, you may want to run it again."
              sadm_write_err ""
              ((FNC_ERROR++))                                            # Incr. Error counter
@@ -604,7 +604,7 @@ rear_housekeeping()
     fi
 
 
-    # List 20 biggest files include in the tgz file
+    # List 15 biggest files include in the tgz file
     if [ "$FNC_ERROR" = 0 ] 
         then sadm_write_log " "
              sadm_write_log "Building a list of the 15 biggest files included in your ReaR backup file."
