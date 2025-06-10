@@ -26,8 +26,9 @@
 # 2021_07_21 client: v3.8 Fix problem with cfg2html on Fedora 34.
 # 2022_05_05 client: v3.9 Update code for RHEL, CentOS, AlmaLinux & Rocky Linux v9.
 # 2022_07_28 client: v3.10 Updated to use new SADMIN section 1.51
-# 2024_01_02 client: v3.12 Code review to run cfg2html v7 & update SADMIN section to v1.56
-# 2025_03_25 client: v3.13 Review code - 'which' command is depreciated.
+#@2024_01_02 client: v3.12 Code review to run cfg2html v7 & update SADMIN section to v1.56
+#@2025_03_25 client: v3.13 Review code - 'which' command is depreciated.
+#@2025_06_10 client: v3.14 Code review to work on more platform.
 #===================================================================================================
 #
 # --------------------------------------------------------------------------------------------------
@@ -60,7 +61,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.13'                                      # Script version number
+export SADM_VER='3.14'                                      # Script version number
 export SADM_PDESC="Run 'cfg2html' tool & produce system information files."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -110,76 +111,6 @@ show_usage()
     printf "\n\n" 
 }
 
-# --------------------------------------------------------------------------------------------------
-# Check if we need to update from version to 7 of cfg2html
-# --------------------------------------------------------------------------------------------------
-function update_cfg2html()
-{
-    if [ "$CFG2HTML" = "" ] ; then return 0 ; fi                        # If not install, no update
-
-    #wversion=$($CFG2HTML -v | tail -1 | awk  '{ print $3 }')            # Get version third field
-    #cur_version=$(echo $wversion | awk -F\. '{ print $1 }')             # Get 1st digit of version #
-    #if [ "$cur_version" = "7" ] ; then return 0 ; fi                    # Current version is OK
-    #sadm_write_log "Going to update 'cfg2html' from version $cur_version to version 7." 
-
-    # Uninstall current version & install latest version.
-    case "$(sadm_get_packagetype)" in
-        "rpm")  package_name="cfg2html-linux"                           # rpm cfg2html package name
-                sadm_write_log "Verifying if '$package_name' package is installed."
-                rpm -qi $package_name >/dev/null 2>&1                   # Is the package installed ?
-                if [ $? -eq 0 ]                                         # If cfg2html installed 
-                    then sadm_write_log "Removing old version 2 of '$package_name'." 
-                         sadm_write_log "dnf remove -y $package_name"
-                         dnf remove -y "$package_name" >>$SADM_LOG 2>&1 # Remove installed package
-                         if [ $? -ne 0 ]                                # If error removing package
-                            then sadm_write_err "Error removing '$package_name' package."
-                                 return 1                               # Return Error to caller
-                         fi 
-                fi 
-                #sadm_write_log " "
-                sadm_write_log "Installing ${package_name} v7."
-                sadm_write_log "dnf -y --nogpgcheck install ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm"
-                dnf -y --nogpgcheck install ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm >>$SADM_LOG 2>&1
-                if [ $? -ne 0 ]                                         # if error installing latest
-                   then sadm_write_err "Error installing '$package_name' package."
-                        return 1                                        # Return Error to caller
-                fi 
-                sadm_write_log "Latest version on '$package_name' in now installed."
-                ;;  
-
-        "deb")  package_name="cfg2html-linux"                           # deb cfg2html package name
-                sadm_write_log "Verifying if '$package_name' package is installed."
-                dpkg -s "$package_name" >/dev/null 2>&1                 # Is the package installed ?
-                if [ $? -eq 0 ]                                         # If cfg2html installed 
-                    then sadm_write_log "Removing old version 2 of $package_name." 
-                         sadm_write_log "apt remove -y $package_name"
-                         apt remove -y "$package_name" >>$SADM_LOG 2>&1 # Remove installed package
-                         if [ $? -ne 0 ]                                # If error removing package
-                            then sadm_write_err "Error removing '$package_name' package."
-                                 return 1                               # Return Error to caller
-                         fi 
-                fi 
-                #sadm_write_log " "
-                sadm_write_log "Installing '$package_name' v7 package."
-                sadm_write_log "apt -y install ${SADM_PKG_DIR}/cfg2html/cfg2html.deb"
-                apt -y install ${SADM_PKG_DIR}/cfg2html/cfg2html.deb >>$SADM_LOG 2>&1
-                if [ $? -ne 0 ]                                         # if error installing latest
-                   then sadm_write_err "Error installing '$package_name' package."
-                        return 1                                        # Return Error to caller
-                fi 
-                sadm_write_log "Latest version on '$package_name' in now installed."
-                ;;  
-
-        *)      sadm_write_err "Invalid package type $(sadm_get_packagetype)."
-                return 1                                                # Return Error to caller
-                ;;  
-    esac
-}
-
-
-
-
-
 
 
 # --------------------------------------------------------------------------------------------------
@@ -188,21 +119,14 @@ function update_cfg2html()
 # --------------------------------------------------------------------------------------------------
 function main_process()
 {
-    if command -v cfg2html >/dev/null 2>&1
-        then CFG2HTML=$(command -v cfg2html)                            # Get full path of cfg2html
-             wversion=$($CFG2HTML -v | tail -1 | awk  '{ print $3 }')   # Get version third field
-        else sadm_write_err "The command 'cfg2html' is not installed, please install it." 
-             return 1
-    fi
 
-
-    CFG2HTML=$(command -v cfg2html)                                     # May have change if updated
+    CFG2HTML=$(command -v cfg2html)                                     # Go we have cfg2html 
     if [ $? -ne 0 ]                                                     # if not found
        then sadm_write_log "Command 'cfg2html' is not installed."       # Not Found inform user
             sadm_write_log "Installing 'cfg2html' ..."                  # Not Found inform user
             packname="cfg2html"
 
-            if [ "$(sadm_get_packagetype)" = "rpm" ] 
+            if [ "$(sadm_get_packagetype)" = "rpm" ]                    #
                 then sadm_write_log "dnf -y --nogpgcheck install ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm"
                      dnf -y --nogpgcheck install ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm >>$SADM_LOG 2>&1
                      if [ $? -ne 0 ]                                    # if error installing latest
@@ -221,10 +145,10 @@ function main_process()
             fi
 
             # Now that it is supposed to be installed, check if available now.
-            ws=$(command -v cfg2html >/dev/null 2>&1)                   # Try Again to Locate cfg2html
+            command -v cfg2html >/dev/null 2>&1                         # Try Again to Locate pgm
             if [ $? -ne 0 ]                                             # if Still not found
-                then sadm_write_err "Still the command 'cfg2html' can't be found."
-                     sadm_write_err "Install it & re-run this script."  # Not Found inform user
+                then sadm_write_err "Still 'cfg2html' can't be found."
+                     sadm_write_err "Install it & re-run this script."  # Not Found inform user 
                      sadm_write_err "For Ubuntu/Debian/Mint,Raspbian : "
                      sadm_write_err " - sudo apt -y install ${SADM_PKG_DIR}/cfg2html/cfg2html.deb"
                      sadm_write_err "For Rocky,Alma,RedHat,CentOS,Fedora   : "
@@ -236,13 +160,22 @@ function main_process()
              
     fi
 
-    # Run CFG2HTML
-    export CFG2HTML=$(command -v cfg2html)                                   # Get cfg2html Path
+    # Here we know that cfg2html is on the system.
+    if command -v cfg2html >/dev/null 2>&1
+        then export CFG2HTML=$(command -v cfg2html)                     # Get full path of cfg2html
+             wversion=$($CFG2HTML -v | tail -1 | awk  '{ print $3 }')   # Get version third field
+             sadm_write_log "Current version of cfg2html is $wversion." # Show current version
+        else sadm_write_err "The command 'cfg2html' is not installed, please install it." 
+             return 1
+    fi
+
+
+    # Let's run CFG2HTML
     sadm_write_log " "
-    sadm_write_log "Running : $CFG2HTML -o ${SADM_DR_DIR}"
-    $CFG2HTML -o $SADM_DR_DIR | tee -a $SADM_LOG 2>&1
-    SADM_EXIT_CODE=$?
-    sadm_write_log "Return code of the command is ${SADM_EXIT_CODE}."
+    sadm_write_log "Running : $CFG2HTML -o $SADM_DR_DIR"
+    f=$(mktemp) ; { $CFG2HTML -o $SADM_DR_DIR ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 
+    SADM_EXIT_CODE=$(cat $f) 
+    sadm_write_log "Return code of command is ${SADM_EXIT_CODE}."
 
     # Uniformize name of cfg2html output files so that the domain name is not include in the name.
     if [ "$(hostname)" != "$(hostname -s)" ]
@@ -262,7 +195,10 @@ function main_process()
              chmod 664 ${SADM_DR_DIR}/cfg2html_$(hostname -s).*
 
     fi
+
+    return $SADM_EXIT_CODE
 }
+
 
 
 
@@ -276,13 +212,13 @@ function cmd_options()
     while getopts "d:hv" opt ; do                                       # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
-               num=$(echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$) # Valid is Level is Numeric
+               num=$(echo "$SADM_DEBUG" |grep -E "^\-?[0-9]?\.?[0-9]+$") # Valid if Level is Numeric
                if [ "$num" = "" ]                            
-                  then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
+                  then printf "\nInvalid debug level.\n"                # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
                        exit 1                                           # Exit Script with Error
                fi
-               printf "Debug Level set to ${SADM_DEBUG}.\n"             # Display Debug Level
+               printf "Debug level set to ${SADM_DEBUG}.\n"             # Display Debug Level
                ;;                                                       
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
@@ -301,13 +237,13 @@ function cmd_options()
 
 
 
+
 #===================================================================================================
 #                                       Script Start HERE
 #===================================================================================================
 
     cmd_options "$@"                                                    # Check command-line Options    
     sadm_start                                                          # Create Dir.,PID,log,rch
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
     main_process
     SADM_EXIT_CODE=$?
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
