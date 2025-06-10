@@ -730,8 +730,9 @@ mount_nfs()
 umount_nfs()
 {
     sadm_write_log " "
+    cd /tmp                                                             # Go to /tmp to unmount   
     sadm_write_log "Unmounting NFS mount directory ${LOCAL_MOUNT}"
-    umount $LOCAL_MOUNT >> $SADM_LOG 2>&1                               # Umount Just to make sure
+    umount $LOCAL_MOUNT                                                 # Umount Just to make sure
     if [ $? -ne 0 ]                                                     # If Error trying to mount
         then sadm_write_err "[ ERROR ] Unmounting NFS Directory $LOCAL_MOUNT"   
              return 1                                                   # End Function with error
