@@ -90,6 +90,7 @@
 #@2025_03_25 backup v2.43 Minor change & now show 20 biggest files taken in backup.
 #@2025_03_26 backup v2.44 Refine validation of ReaR backup file (.tgz).
 #@2025_05_19 backup v2.45 Added more messages when backup verification failed & added NFS unmount.
+#@2025_06_16 nolog  v2.45 Minor change to script log.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -538,7 +539,8 @@ rear_housekeeping()
              if [ $SADM_DEBUG -gt 0 ] 
                 then sadm_write_log "Number of backup directory to delete: $nb_to_delete"
              fi 
-             sadm_write_log "Following directories that will be removed : "
+             sadm_write_log ""
+             sadm_write_log "Following directories will be removed : "
              /bin/ls -1td ${REAR_DIR}/20* | sort -r | sed 1,${nb_dir_to_keep}d | while read wline ; do sadm_write_log "${wline}"; done
              /bin/ls -1td ${REAR_DIR}/20* | sort -r | sed 1,${nb_dir_to_keep}d | xargs rm -fr >> $SADM_LOG 2>&1
              if [ $? -ne 0 ]
@@ -588,7 +590,7 @@ rear_housekeeping()
     # Create a table of content of tgz backup file just produced to a log file.
     sadm_write_log " " 
     sadm_write_log "Creating a list of the ReaR backup content in '$REAR_CUR_LST'".
-    sadm_write_log "tar -tvzf '$REAR_CUR_TGZ'"
+    sadm_write_log "tar -tvzf '$REAR_CUR_TGZ' 1>$REAR_CUR_LST 2>$REAR_CUR_ERR"
     tar -tvzf "$REAR_CUR_TGZ" 1>"$REAR_CUR_LST" 2>"$REAR_CUR_ERR"
     if [ $? -ne 0 ]
         then sadm_write_err "[ ERROR ] Failed to produce a list of files on the backup."
@@ -606,7 +608,7 @@ rear_housekeeping()
 
     # List 15 biggest files include in the tgz file
     if [ "$FNC_ERROR" = 0 ] 
-        then sadm_write_log " "
+        then sadm_write_log " "; sadm_write_log " "; sadm_write_log " "
              sadm_write_log "Building a list of the 15 biggest files included in your ReaR backup file."
              tar -tzvf $REAR_CUR_TGZ | sort -k3 -rn | nl | head -n 15 | tee -a $SADM_LOG 2>&1
              sadm_write_log " "
