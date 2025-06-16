@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------------------------
-# SADMIN SYStem MONitor configuration file (3.1)
+# SADMIN SYStem MONitor configuration file (3.2)
 #  - This file MUST reside in ${SADMIN}/cfg (filename = $(hostname -s).smon).
 #  - It is loaded in memory when the SADMIN System Monitor start (sadm_sysmon.pl).
 #  - Before exiting SysMon write the updated version of this file.
@@ -16,7 +16,7 @@
 #                       These are the one presently supported :
 #
 #       'script:yourscript.sh'  
-#               If you wish to run a custom script to you wrote, this is the one. 
+#               If you wish to run a custom script that you wrote, this is the one. 
 #               Place the word 'script:' in column 1, followed by the name of your script. 
 #               Be sure that your script exit with a return code of 0 or 1, so you can test it. 
 #               Script execution time must be as short as possible, cause it will run each time 
@@ -111,9 +111,9 @@
 #                       When you leave this value at 0, then the Error threshold is not evaluated.
 #---------------------------------------------------------------------------------------------------
 #  6    Duration Min/   This field have a double usage :
-#       RunCounter          - For load_average, cpu_level and swap_space it's the number of minutes
-#                             that the value returned must exceed the Warning or Error before a 
-#                             Warning or an Error is raised.
+#       RunCounter          - For 'load_average', 'cpu_level, 'swap_space' and 'ping_' it's the 
+#                             number of minutes that the value returned must exceed the Warning or 
+#                             Error before a Warning or an Error is raised.
 #                             Example : You set the warning threshold of the 'cpu_level' line at 80%
 #                                       but you don't want to trigger an error if the CPU Level 
 #                                       exceed 80% for only 2 minutes. So you may want to set this
@@ -122,7 +122,7 @@
 #                                       leave it 0, is sysmon is run at the cpu_level exceed 80% an
 #                                       error will be trigger immediately.
 #                           - For Service (service_) and Filesystem (FS) lines it represented the
-#                             number of time the service was restarted or the filesystem was
+#                             number of time (counter) the service was restarted or the filesystem 
 #                             increased in the last 24 Hours. You don't need to change this field,
 #                             it's taken care of automatically (Unless you want to reset it to 0 and
 #                             provoke a service restart or a filesystem increase within the 24 hrs).
@@ -131,13 +131,13 @@
 #       Start Time      Let's say you only want to evaluate a line between 7am and 9pm, you would
 #                       put 0700 in this column and 2100 in column 8 (Monitor End Time)..
 #                       If you leave this column at 0000 the line is evaluated 24 hours a day, 
-#                       unless specify otherwise in column 9 to G.
+#                       unless specify otherwise in column 9 to F.
 #---------------------------------------------------------------------------------------------------
 #  8    Monitor         Hour of the day you want to disable evaluation of the line (In 24:00 format)
 #       End Time        Let's say you only want to evaluate a line between 7am and 9pm, you would
 #                       put 0700 in column 7 and 2100 in this column (Monitor End Time)..
 #                       If you leave this column at 0000 the line is evaluated 24 hours a day, 
-#                       unless specify otherwise in column 9 to G.
+#                       unless specify otherwise in column 9 to F.
 #---------------------------------------------------------------------------------------------------
 #  9    Enable Sunday   If this value is set to 'Y', the line will be evaluated on Sunday (Default).
 #                       If this column is set to 'N', the line will not be evaluated on Sunday.
@@ -202,10 +202,8 @@
 #---------------------------------------------------------------------------------------------------
 #
 # Run specific custom script, check return code and issue a warning or error based on threshold
-# Example 
 #script:stemplate.sh       1  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180911 1520 default default -
-#
-#
+
 # System Load Average (use uptime)
 load_average                     0  >  20  35 120 0700 2100 Y Y Y Y Y Y Y Y 00000000 0000 default default -
 
@@ -255,9 +253,19 @@ check_multipath                  1 !=  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 0000
 # Except on Sunday the ping does not report error between 22:00 and 23:15.
 #   - Because system is down, performing an export of the SADMIN server.
 #
-#ping_sadmin                      0  =  00  01 000 0000 0000 N Y Y Y Y Y Y Y 00000000 0000 default default -
-#ping_sadmin                      1 !=  00  01 000 2200 2315 Y N N N N N N Y 00000000 0000 default default -
+
+# Ping every time the SADMIN monitor is run, except the Sunday ('N' in column #9, Sunday).
+#   - Ping server - Second column return '0' if it worked and ´1' if it failed.
+# Column #1 (Identifier)         2  3  4   5   6   7    8   9 A B C D E F G     H     I      J       K    L
+ping_sadmin                      0  =  00  01 000 0000 0000 N Y Y Y Y Y Y Y 00000000 0000 default default -
+
+# Ping only on Sunday ('Y' in column 9 and 'N' in column 10 to F).
+# Column #1 (Identifier)         2  3  4   5   6   7    8   9 A B C D E F G     H     I      J       K    L
+ping_sadmin                      0 !=  00  01 000 0001 2200 Y N N N N N N Y 00000000 0000 default default -
+ping_sadmin                      1  =  01  00 000 2201 2315 Y N N N N N N Y 00000000 0000 default default -
 #
+
+
 #
 Test web site responsiveness (0=Up 1=NoResponse)
 #http_linux.com                   0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
