@@ -218,6 +218,7 @@ main_process()
                                         else scount=$(expr $scount + 1) # VM started VM Count
                                      fi 
                                      sadm_write_log "You asked for an interval of $SADM_VM_START_INTERVAL seconds between VM start." 
+                                     sadm_write_log "  - SADM_VM_START_INTERVAL in SADMIN configuration file."
                                      sadm_sleep $SADM_VM_START_INTERVAL 15 # Sleep between Start
                             fi
                        else sadm_write_log "[ INFO ] Skipping '$vm' because it's in the exclude list." 
