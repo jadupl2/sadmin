@@ -38,6 +38,7 @@
 #@2025_04_22 web v2.5 Backup status page - Alert are now shown in a tinted background for emphasis.
 #@2025_04_28 web v2.6 Backup status page - Refresh disposition.
 #@2025_05_29 web v2.7 Backup start up time corrected, was the time of previous to the last backup.
+#@2025_06_20 web v2.8 Modify output when no backup was available.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -111,7 +112,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/lib/sadmPageWrapper.php');    # Headi
 # Local Variables
 #===================================================================================================
 $DEBUG              = False;                                           # Debug Activated True/False
-$WVER               = "2.7";                                           # Current version number
+$WVER               = "2.8";                                           # Current version number
 $URL_CREATE         = '/crud/srv/sadm_server_create.php';               # Create Page URL
 $URL_UPDATE         = '/crud/srv/sadm_server_update.php';               # Update Page URL
 $URL_DELETE         = '/crud/srv/sadm_server_delete.php';               # Delete Page URL
@@ -244,28 +245,20 @@ function display_data($count, $row)
                 echo "\n<td align='center'>" ;
             }
             echo "<span data-toggle='tooltip' title='" . $tooltip . "'>" .$rch_array[1]. "</span>";
-            #echo "<span data-toggle='tooltip' title='" . $tooltip . "'>" .$barray[1]. "</span>";
         }
-        #echo "</td>";
-    }
 
-    # Start Backup Time
-    echo "&nbsp;" ; 
-    if ($row['srv_backup'] == True) {                                   # If Backup Activated
-        #echo "\n<td align='center'>";
-        list($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT(
-            $row['srv_backup_dom'],
-            $row['srv_backup_month'],
-            $row['srv_backup_dow'],
-            $row['srv_backup_hour'],
-            $row['srv_backup_minute']
-        );
-        $backup_time =explode(":",$rch_array[2]);
-        echo sprintf("%02d", $backup_time[0]) .":". sprintf("%02d", $backup_time[1]);
-    }else{
-        if (!file_exists($rch_name)) {                                      # If RCH File doesn't exist
-#            echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>No data</b>";
-            echo " style='color:red' bgcolor='#DAF7A6'><b>No data</b>";
+        # Start Backup Time
+        echo "&nbsp;" ; 
+        if ($row['srv_backup'] == True) {                                   # If Backup Activated
+            list($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT(
+                $row['srv_backup_dom'],
+                $row['srv_backup_month'],
+                $row['srv_backup_dow'],
+                $row['srv_backup_hour'],
+                $row['srv_backup_minute']
+            );
+            $backup_time =explode(":",$rch_array[2]);
+            echo sprintf("%02d", $backup_time[0]) .":". sprintf("%02d", $backup_time[1]);
         }else{
             echo "<style='color:red' bgcolor='#DAF7A6'><b>Deactivated</b>";
         } 
@@ -285,6 +278,7 @@ function display_data($count, $row)
         echo "\n<td align='center'>" . $rch_array[3] . "&nbsp" . substr($rch_array[4],0,5)  ;  
     }
     echo "</td>";
+
 
     # Backup duration time
     if (!file_exists($rch_name)) {                                    # If RCH File Not Found
