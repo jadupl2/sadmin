@@ -65,6 +65,7 @@
 #@2024_04_02 server v2.46 Restructure rsync of $SADMIN/cfg and minor changes.
 #@2025_02_11 server v2.47 Minor changes to screen output & log.
 #@2025_03_25 server v2.48 Use rsync exclude file instead of specifying each files.
+#@2025_06_20 server v2.49 Added display of exclude list before doing a rsync.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -94,7 +95,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.48'                                     # Script Version
+export SADM_VER='2.49'                                     # Script Version
 export SADM_PDESC="Copy SADMIN version to all actives clients, without overwriting config files)."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -375,8 +376,13 @@ process_servers()
         echo "alert_archive.txt"    >> $CFG_EXCL
         echo "backup*.txt"          >> $CFG_EXCL
         echo "*.smon"               >> $CFG_EXCL
+        if [ $SADM_DEBUG -gt 0 ]  
+            then sadm_write_log "Content of $CFG_EXCL : "
+                 cat $CFG_EXCL | while read wline ; do sadm_write_log "$wline"; done
+        fi                                   
+
         CFG_CMD="rsync -ar -e 'ssh -p $server_ssh_port' --exclude-from $CFG_EXCL $CFG_SRC $CFG_DST"
-        rsync -ar -e "ssh -p $server_ssh_port" $CFG_EXCL $CFG_SRC $CFG_DST
+        rsync -ar -e "ssh -p $server_ssh_port" --exclude-from $CFG_EXCL $CFG_SRC $CFG_DST
         RC=$? 
         if [ $RC -ne 0 ]
             then if [ $RC -eq 23 ] 
