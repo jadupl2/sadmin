@@ -542,7 +542,7 @@ def load_config_file(cfg_file):
         Load Sadmin Configuration File (sadmin.cfg) in dictionary.
         
         Args:
-            cfg_file (str)  :   Full path of the configuration file.
+            cfg_file (str)  :   Is the full path of the configuration file.
 
         Returns:
             All Global variables are loader with the content of sadmin.cfg

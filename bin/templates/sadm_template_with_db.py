@@ -83,14 +83,14 @@ sa.log_append        = False      # Append Existing Log(True) or Create New One(
 sa.log_header        = True       # Show/Generate Header in script log (.log)
 sa.log_footer        = True       # Show/Generate Footer in script log (.log)
 sa.multiple_exec     = "Y"        # Allow running multiple copy at same time ?
-sa.proot_only        = False      # Pgm run by root only ?
+sa.proot_only        = False      # Script run by root only ?
 sa.psadm_server_only = True       # Run only on SADMIN server ?
 sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (sa.cmd_ssh,sa.sadm_ssh_port)
 
 
-# The values of fields below, are loaded from sadmin.cfg when you import the SADMIN library.
-# Change them to fit your need, they are use by start() & stop() functions of SADMIN Python Libr.
-#
+# The values of fields below, are loaded from sadmin.cfg by the 'sa.start()' function.
+# Change them to fit your need, they are use by various function of this library.
+# 
 #sa.sadm_alert_type  = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
 #sa.sadm_alert_group = "default"  # Valid Alert Group defined in $SADMIN/cfg/alert_group.cfg
 #sa.max_logline      = 500        # Max. lines to keep in log (0=No trim) after execution.

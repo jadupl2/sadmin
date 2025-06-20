@@ -162,7 +162,7 @@ function netinfo ($ip_address,$ip_nmask) {
 
 
 # ==================================================================================================
-# Function accept a valid alert group name (like default and defined in alert_group.fg file) 
+# Function accept a valid alert group name (like 'default' and defined in 'alert_group.cfg' file) 
 # Return :
 #   - The real group name (in case this function receive 'default' as the group name)
 #   - The group type (M=Mail, S=SLack, T=Texto, C=Cellular)
