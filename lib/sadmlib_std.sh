@@ -206,7 +206,6 @@
 # 2023_08_20 lib v4.27 Code optimization, LIBRARY LOAD A LOT FASTER (So scripts run faster).
 # 2023_09_22 lib v4.28 Change default values of SADM_*_KEEPDAYS.
 # 2023_09_26 lib v4.29 Code optimization : To function "sadm_get_command_path()".
-# 2023_12_14 lib v4.30 New function 'sadm_on_sadmin_server(), it return "Y" if on SADMIN server else "N".
 # 2023_12_21 lib v4.31 Fix problem when copying log and rch when initially created and user isn't root.
 # 2023_12_22 lib v4.32 Eliminate 'cp' error message in 'sadm_stop()'' function, when file is missing.
 # 2023_12_22 lib v4.33 Add user message when user is not part if the SADMIN group.
@@ -229,7 +228,6 @@
 #@2024_10_31 lib v4.50 Add new variable to sadmin.cfg for Virtual Box export new feature.
 #@2024_11_01 lib v4.51 sadm_get_osname() was not returning the right O/S under certain condition.
 #@2024_11_11 lib v4.52 Add two Global var. accessible to any script 'SADM_VMLIST' & 'SADM_VMHOSTS'.
-#@2024_11_24 lib v4.53 Fix minor bug in function sadm_on_sadmin_server()
 #@2024_12_16 lib v4.54 On Debian the 'sadm_get_osversion()' did not return the minor version number.
 #@2024_12_27 lib v4.55 Under certain condition, 'sadm_get_host_ip' wasn't returning proper IP.
 #@2025_01_07 lib v4.56 Fix for Debian the 'sadm_get_osversion()' did not return the minor version.
@@ -246,6 +244,7 @@
 #@2025_05_26 lib v4.66 Portability minor code change to 'sadm_get_epoch_time()'.
 #@2025_05_31 lib v4.67 When a lock is created for sa system, an info line is shown on monitor web page.
 #@2025_06_10 lib v4.68 Show the process preventing to run a second copy of a script.
+#@2025_06_20 lib v4.69 Change to work on MacOS : sadm_get_fqdn(), sadm_trim(), sadm_server_serial().
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -256,7 +255,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.68"                                              # This Library Version
+export SADM_LIB_VER="4.69"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -890,8 +889,8 @@ sadm_show_version()
 
 
 
-# Purpose : 
-#   Trim a file.
+# sadm_trimfile() 
+#   Trim a file 
 #
 # Parameter(s)  : 
 #   1) File name to trim.
@@ -925,7 +924,12 @@ sadm_trimfile() {
     nbline=$(wc -l $wfile | awk '{print $1}')                           # How many lines in the file
     if [ $nbline -le $maxline ] ; then return 0 ; fi                    # If no need to trim file
     nbdel=$(( $nbline - $maxline ))                                     # Number of lines to delete
-    $SADM_SED -i "1,${nbdel}d" $wfile                                   # Delete lines in the file
+
+    
+    if [ "$(sadm_get_ostype)" = "DARWIN" ]                              # If MacOS
+        then $SADM_SED -i '' "1,${nbdel}d" $wfile                       # Delete lines in the file
+        else $SADM_SED -i    "1,${nbdel}d" $wfile                       # Delete lines in the file
+    fi 
     if [ $? -ne 0 ] ; then wreturn_code=1 ; fi                          # Return Code report error
     return ${wreturn_code}                                              # Return to Caller
 }
@@ -1435,8 +1439,14 @@ sadm_get_domainname() {
 #                        RETURN THE FULLY QUALIFIED NAME OF THE SYSTEM
 # --------------------------------------------------------------------------------------------------
 sadm_get_fqdn() {
-    #echo "${SADM_HOSTNAME}.$(sadm_get_domainname)"
-    echo "$(hostname --fqdn)"
+    case "$(sadm_get_ostype)" in
+        "LINUX")    echo "$(hostname --fqdn)"
+                    ;;
+        "DARWIN")   Echo "${SADM_HOSTNAME}.$(sadm_get_domainname)"
+                    ;;
+        "AIX")      echo "${SADM_HOSTNAME}.$(sadm_get_domainname)"
+                    ;;
+    esac
 }
 
 
@@ -1684,8 +1694,7 @@ sadm_server_serial() {
                   ;;
         "AIX")    wserial=$(uname -u | awk -F, '{ print $2 }')
                   ;;
-        "DARWIN") syspro=$(system_profiler SPHardwareDataType)
-                  wserial=$($syspro |grep -i 'Serial' |awk -F: '{ print $2 }' |tr -d ' ')
+        "DARWIN") wserial=$(system_profiler SPHardwareDataType |grep -i 'Serial' |awk -F: '{ print $2 }' |tr -d ' ')
                   ;;
     esac
     echo "$wserial"
@@ -1720,9 +1729,9 @@ sadm_server_arch() {
     case "$(sadm_get_ostype)" in
         "LINUX")    warch=$(arch)
                     ;;
-        "AIX")      warch=`uname -p`  
+        "AIX")      warch=$(uname -p)
                     ;;
-        "DARWIN")   warch=`uname -m`
+        "DARWIN")   warch=$(uname -m)
                     ;;
     esac
     echo "$warch"
@@ -2341,19 +2350,19 @@ sadm_freshen_directories_structure() {
 
     # If on the SADMIN server
     if [ "$SADM_HOST_TYPE" = "S" ] &&  [ "$(id -u)" -eq 0 ]
-        then chmod 0775 $SADM_WWW_DIR       ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_DIR 
-             chmod 0775 $SADM_WWW_DAT_DIR   ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_DAT_DIR 
-             chmod 0775 $SADM_WWW_ARC_DIR   ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_ARC_DIR 
-             chmod 0775 $SADM_WWW_DOC_DIR   ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_DOC_DIR 
-             chmod 0775 $SADM_WWW_LIB_DIR   ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_LIB_DIR 
-             chmod 0775 $SADM_WWW_IMG_DIR   ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_IMG_DIR 
-             chmod 1777 $SADM_WWW_TMP_DIR   ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_TMP_DIR 
-             chmod 0775 $SADM_WWW_NET_DIR   ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_NET_DIR
-             chmod 1777 $SADM_WWW_PERF_DIR  ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_PERF_DIR
-             chmod 0775 $SADM_WWW_CRUD_DIR  ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_CRUD_DIR
-             chmod 0775 $SADM_WWW_CSS_DIR   ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_CSS_DIR
-             chmod 0775 $SADM_WWW_VIEW_DIR  ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_VIEW_DIR
-             chmod 0775 $SADM_WWW_RRD_DIR   ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_RRD_DIR
+        then chmod 0775 $SADM_WWW_DIR      ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_DIR 
+             chmod 0775 $SADM_WWW_DAT_DIR  ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_DAT_DIR 
+             chmod 0775 $SADM_WWW_ARC_DIR  ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_ARC_DIR 
+             chmod 0775 $SADM_WWW_DOC_DIR  ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_DOC_DIR 
+             chmod 0775 $SADM_WWW_LIB_DIR  ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_LIB_DIR 
+             chmod 0775 $SADM_WWW_IMG_DIR  ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_IMG_DIR 
+             chmod 1777 $SADM_WWW_TMP_DIR  ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_TMP_DIR 
+             chmod 0775 $SADM_WWW_NET_DIR  ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_NET_DIR
+             chmod 1777 $SADM_WWW_PERF_DIR ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_PERF_DIR
+             chmod 0775 $SADM_WWW_CRUD_DIR ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_CRUD_DIR
+             chmod 0775 $SADM_WWW_CSS_DIR  ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_CSS_DIR
+             chmod 0775 $SADM_WWW_VIEW_DIR ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_VIEW_DIR
+             chmod 0775 $SADM_WWW_RRD_DIR  ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_RRD_DIR
     fi
 }
 
@@ -2614,8 +2623,11 @@ sadm_stop() {
                      if [ "$XCODE" != "0" ] && [ "$XCODE" != "1" ] && [ "$XCODE" != "2" ]
                         then XCODE="0"                                  # If ResultCode Invalid = 0 
                      fi 
-                     if [ "$XCODE" == "2" ]                             # If last Line code is 2
-                        then sed -i '$d' "$SADM_RCH_FILE"               # Delete last line of rch
+                     if [ "$XCODE" == "2" ]                             # last Line code is 2
+                        then if [ "$(sadm_get_ostype)" = "DARWIN" ] 
+                                then sed -i '' -e '$ d'  "$SADM_RCH_FILE"
+                             fi 
+                        else sed -i '$d' "$SADM_RCH_FILE"               # Delete last line of rch
                      fi 
              fi 
              RCHLINE="${SADM_HOSTNAME} $SADM_STIME $sadm_end_time"      # Format Part1 of RCH File
@@ -3077,52 +3089,6 @@ sadm_lock_status() {
 
 
 
-# --------------------------------------------------------------------------------------------------
-# sadm_on_sadmin_server()
-#
-# Check if the IP assigned to 'SADMIN' env. variable is defined on the current system and check 
-# if the value of 'SADM_HOST_TYPE' is set to "S" in $SADMIN/cfg/sadmin.cfg. 
-# 
-# Input Parameters :
-#   None
-#
-# Return code : 
-#     "0"     : Mean that current host is not a SADMIN server 
-#                   - Set global variable 'SADM_ON_SADMIN_SERVER' is to "N".
-#               
-#     "1"     : Current system is a 'SADMIN' server.
-#                 - If system global variable "SADM_HOST_TYPE" equal "S" in $SADMIN/cfg/sadmin.cfg.
-#                 - If 'sadmin' host resolved to an IP present on the current system (IP alias).
-#                 - Set global variable 'SADM_ON_SADMIN_SERVER' is set to "Y".
-#               
-# Sample Code :
-#        if [ "$SADM_ON_SADMIN_SERVER" = "N" ] 
-#            then sadm_write_log "You are on a SADMIN client" 
-#            else sadm_write_log "You are on a SADMIN server" 
-#        fi
-#
-# --------------------------------------------------------------------------------------------------
-sadm_on_sadmin_server() {
-
-    wreturn=0                                                           # 0=yes, 1=No = Return
-    if [ "$SADM_HOST_TYPE" = "S" ]                                      # Check value in sadmin.cfg
-        then SADM_ON_SADMIN_SERVER="Y"                                  # Set Global Var to Y
-             return 1
-    fi
-    
-    # Check if SADM_SERVER IP is defined on this system and set SADM_ON_SADMIN_SERVER accordingly.
-    # Usefull when sadmin server in an IP alias.
-    server_ip=$(getent ahostsv4 $SADM_SERVER | tail -1 | awk  '{ print $1 }')  
-    ip a | grep -q $server_ip > /dev/null 2>&1                          # SADMIN server ip on system
-    if [ $? -eq 0 ]                                                     # If on a SADMIN Server
-        then wreturn=1                                                  # Return 1 to caller
-             SADM_ON_SADMIN_SERVER="Y"                                  # Set Global Var to Y
-        else wreturn=0                                                  # If not a SADMIN Server
-             SADM_ON_SADMIN_SERVER="N"                                  # Set Global to N
-    fi 
-    return $wreturn
-}
-
 
 
 # Check if new variables added with new version are in the sadmin.cfg file
@@ -3285,8 +3251,7 @@ EOF
     sadmin_cfg_update                                                   # New Stuff was added to cfg
 
     # Check if on a valid SADMIN server and set SADM_ON_SADMIN_SERVER to "Y" or "N" 
-    sadm_on_sadmin_server                                               # SADMIN Server? 0=No 1=Yes
-    if [ $? -eq 0 ] ; then SADM_ON_SADMIN_SERVER="N" ; else SADM_ON_SADMIN_SERVER="Y" ; fi 
+    if [ "$SADM_HOST_TYPE" = "S" ] ;then SADM_ON_SADMIN_SERVER="Y" ;else SADM_ON_SADMIN_SERVER="N" ;fi
 
     # Load the path of commands used in SADMIN
     if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
