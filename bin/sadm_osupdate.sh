@@ -61,6 +61,7 @@
 #@2025_02_22 osupdate v3.42 Remove the use of the 'tee' command that was affecting return code.
 #@2025_04_22 osupdate v3.43 The Log file was closed too early when a reboot was requested.
 #@2025_05_31 osupdate v3.44 Re-enable the output when applying the update.
+#@2025_06_20 osupdate v3.45 Modify test to allow reboot at the end of update, if requested.
 # --------------------------------------------------------------------------------------------------
 #set -x
 
@@ -89,7 +90,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.44'                                     # Your Current Script Version
+export SADM_VER='3.45'                                     # Your Current Script Version
 export SADM_PDESC="Script is used to perform an O/S update on the system"
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -399,7 +400,7 @@ perform_osupdate()
 {
 
     # Make sure no reboot on SADMIN server "WREBOOT="N".
-    if [ "$(sadm_on_sadmin_server)" = "Y" ] && [ "$WREBOOT" = "Y" ]     # No reboot of sadmin server
+    if [ "$SADM_HOST_TYPE" = "S" ]  && [ "$WREBOOT" = "Y" ]             # No reboot of sadmin server
        then WREBOOT="N"                                                 # No Auto Reboot on SADM Srv
             sadm_write_err "[ WARNING ] Refusing reboot after successful update on the SADMIN server" 
             sadm_write_err "[ WARNING ] You will need to reboot the system at your chosen time."
