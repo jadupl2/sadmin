@@ -52,7 +52,8 @@
 # 2022_09_24 mon v2.48 On MacOS review 'check_cpu_usage', 'check_load average' & filesystem check
 # 2022_10_11 mon v2.49 Sysmon don't check capacity exceeded for '/snap/*' '/media/*' filesystem
 # 2023_05_06 mon v2.50 Reduce ping wait time to speed up processing.
-#@2025_05_31 mon v2.51 Delay start (ramdom number from 1 to 20 seconds), so all not run at same time.
+#@2025_05_31 nolog v2.51 Delay start (ramdom number from 1 to 20 seconds), so all not run at same time.
+#@2025_06_20 mon v2.52 Ping test, added continious error minute count before triggering an error.
 #===================================================================================================
 #
 use English;
@@ -67,7 +68,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.51";                                       # Version Number
+my $VERSION_NUMBER      = "2.52";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -771,14 +772,57 @@ sub check_for_error {
     }
 
 
+
    ## Error detected for the Module name "NETWORK"
-   if ($MODULE eq "NETWORK")   {
-      if ($SUBMODULE eq "PING")   {
-         if ($SYSMON_DEBUG >= 5) { print "\nPing to server $WID failed"; }
-         $ERR_MESS = "$HOSTNAME Can't ping server '$WID'" ;
-         write_rpt_file($alert_type,"NETWORK","PING",$ERR_MESS );
-      }
-   }
+    if ($MODULE eq "NETWORK")   
+    {
+
+        if ($SUBMODULE eq "PING")   {
+            if ($SYSMON_DEBUG >= 5) { print "\nPing to server $WID failed"; }
+            ($year,$month,$day,$hour,$min,$sec,$epoch) = Today_and_Now(); # Get Date,Time,Epoch Time
+            if ($SYSMON_DEBUG >= 5) {                                     # If DEBUG Activated
+                print "\nActual Time: $year $month $day $hour $min $sec - $epoch"; # Actual Time & Epoch
+            }
+
+            # If it is the first occurence of the Error - Save Current Date and Time in RECORD
+            if ($SADM_RECORD->{SADM_DATE} == 0) {                       # No Prev.Date
+                $SADM_RECORD->{SADM_DATE}=sprintf ("%04d%02d%02d",$year,$month,$day); # Save Date
+                $SADM_RECORD->{SADM_TIME}=sprintf ("%02d%02d",$hour,$min,$sec);       # Save Time
+            }else{       
+                # Split Date and Time when the ping began to give error 
+                $wyear  =sprintf "%04d",substr($SADM_RECORD->{SADM_DATE},0,4); # Extract Year started
+                $wmonth =sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},4,2); # Extract Mth started
+                $wday   =sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},6,2); # Extract Day Started
+                $whrs   =sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},0,2); # Extract Hrs Started
+                $wmin   =sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},2,2); # Extract Min Started
+
+                # Get Epoch Time of the last time we had a ping error d
+                $last_epoch = get_epoch("$wyear", "$wmonth", "$wday", "$whrs", "$wmin", "0");
+                if ($SYSMON_DEBUG >= 5) {
+                    print "\nPing error started at $wyear $wmonth $wday $whrs $wmin 00 - $last_epoch";
+                }
+
+                # Calculate number of seconds before SADMIN report the error (Min * 60 sec)
+                $elapse_second = $epoch - $last_epoch;                  # Cur. Epoch - $last_epoch
+                $max_second = $SADM_RECORD->{SADM_MINUTES} * 60 ;       # Min. Before alert in Sec.
+                if ($SYSMON_DEBUG >= 5) {                               # Under Debug Mode
+                   print "\nSo $epoch - $last_epoch = $elapse_second seconds";  # Sec. Elapse Since 
+                   print "\nYou asked to wait $max_second seconds before issuing alert";
+                }
+
+                # If number of second since the last error is greater than wanted - Issue Alert
+                if ( $elapse_second >= $max_second ) {                  # Problem Exceed Sec. Wait
+                   $wmin = $SADM_RECORD->{SADM_MINUTES};                # min. before issuing alert
+                   $ERR_MESS = "Ping did not work for more than $wmin Min";
+                   write_rpt_file($alert_type,"NETWORK","PING",$ERR_MESS);    # Go Reporting Alert
+                   $SADM_RECORD->{SADM_DATE} = $SADM_RECORD->{SADM_TIME} = 0; # Reset Last Alert Date
+                }
+            $ERR_MESS = "$HOSTNAME Can't ping server '$WID'" ;
+            write_rpt_file($alert_type,"NETWORK","PING",$ERR_MESS );
+            } # End o
+        }
+    }
+
 
     ## Script execution Alert
     if ($MODULE eq "SCRIPT")   {                                        # If Script Execution Alert
@@ -1281,7 +1325,7 @@ sub check_filesystems_usage  {
 sub ping_ip  {
     @dummy = split /_/, $SADM_RECORD->{SADM_ID} ;                       # Extract Name or IP from ID
     $ipname = $dummy[1];                                                # Extract Name/IP to ping
-    print "Test ping to $ipname ... ";                                  # Show to User Name/IP
+    print "\nNetwork ping to $ipname ... ";                             # Show User Name/IP to ping
 
     $PCMD = "ping -c2 -W2 $ipname >/dev/null 2>&1" ;                    # Build ping command
     @args = ("$PCMD"); system(@args) ;                                  # Perform the ping operation
@@ -1296,7 +1340,27 @@ sub ping_ip  {
     $MOD  = "NETWORK"                   ;                               # Module Category
     $SMOD = "PING"                      ;                               # Sub-Module Category
     $STAT = $ipname                     ;                               # Current Value Returned
-    if ($CVAL == 0) {print " OK ($CVAL)\n" }else{ print " ERROR ($CVAL)\n"} # Print ping Result
+    if ($CVAL == 0) {
+        print " OK ($CVAL)\n" ;
+    }else{ 
+        print " ERROR ($CVAL)\n";
+        # If it is the first occurence of the Error - Save Current Date and Time in RECORD
+        if ( $SADM_RECORD->{SADM_DATE} == 0 ) {                         # No Prev.Date/Time
+            $SADM_RECORD->{SADM_DATE}=sprintf ("%04d%02d%02d",$year,$month,$day); # Save Excess Date
+            $SADM_RECORD->{SADM_TIME}=sprintf ("%02d%02d",$hour,$min,$sec); # Save Excess Time
+        }        
+    } 
+
+    # If Ping value is less than warning level then reset Date/Time of last exceeded value to 0
+    if ( $SADM_RECORD->{SADM_CURVAL} < $SADM_RECORD->{SADM_WARVAL} ) {  # Current Load < Warning Val
+         $SADM_RECORD->{SADM_DATE} = $SADM_RECORD->{SADM_TIME} = 0 ;    # Reset Date/Time Last War.
+    }
+
+    # If Ping value is less than error level then reset Date/Time of last exceeded value to 0
+    if ( $SADM_RECORD->{SADM_CURVAL} < $SADM_RECORD->{SADM_ERRVAL} ) {  # Current Load < Warning Err
+        $SADM_RECORD->{SADM_DATE} = $SADM_RECORD->{SADM_TIME} = 0 ;     # Reset Date/Time Last Err.
+    }
+
     check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);          # Go Evaluate Error/Alert
     return
 }
@@ -1963,9 +2027,9 @@ sub end_of_sysmon {
         exit 1 ;                                    # Exit with Error
     }    
     #
-    my $random_number = int(rand(20));             # Get a random number between 0 and 30
-    print "Execution will start in $random_number seconds.\n";
-    sleep($random_number);
+    #my $random_number = int(rand(20));             # Get a random number between 0 and 30
+    #print "Execution will start in $random_number seconds.\n";
+    #sleep($random_number);
 
     $start_time = time;                             # Store Starting time - To calculate elapse time
     init_process;                                   # Create lock file & do 'ps' commands > to files
