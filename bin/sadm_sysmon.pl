@@ -54,6 +54,7 @@
 # 2023_05_06 mon v2.50 Reduce ping wait time to speed up processing.
 #@2025_05_31 nolog v2.51 Delay start (ramdom number from 1 to 20 seconds), so all not run at same time.
 #@2025_06_20 mon v2.52 Ping test, added continious error minute count before triggering an error.
+#@2025_06_24 mon v2.53 Solve 'hotsname.smon' intermittently get re-created using '.template.smon'.
 #===================================================================================================
 #
 use English;
@@ -68,7 +69,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.52";                                       # Version Number
+my $VERSION_NUMBER      = "2.53";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -299,9 +300,10 @@ sub load_sadmin_cfg {
 # Load the content of ${SADMIN}/cfg/`HOSTNAME`.smon file into an array called @sysmon_array.
 #---------------------------------------------------------------------------------------------------
 sub load_smon_file {
+    print "\nLoading SysMon configuration file : ${SYSMON_CFG_FILE}\n";
 
     # For debug purpose - Display Important Data
-    if ($SYSMON_DEBUG >= 5) {
+    if ($SYSMON_DEBUG > 4) {
         print "------------------------------------------------------------------------------\n";
         print BOLD, BLUE, "SADMIN SYStem MONitor Tools - Version ", BOLD, RED, "${VERSION_NUMBER}\n", RESET;
         print "------------------------------------------------------------------------------\n";
@@ -314,37 +316,50 @@ sub load_smon_file {
         print "------------------------------------------------------------------------------\n";
     }
 
-    print "\nLoading SysMon configuration file : ${SYSMON_CFG_FILE}\n";
     # Check if `hostname`.smon already exist, if not copy .template.smon to `hostname`.smon
     if ( ! -e "$SYSMON_CFG_FILE"  ) {                                   # If hostname.smon not exist
+
+        # Advise the sysadmin, if the hostname.smon file has dissappeared in $SADMIN/cfg.
         ($myear,$mmonth,$mday,$mhour,$mmin,$msec,$mepoch) = Today_and_Now(); # Get Date,Time, Epoch
-        my $mail_mess0 = sprintf("This message was send by the SADMIN System Monitor.\n");
-        my $mail_mess1 = sprintf("Today %04d/%02d/%02d at %02d:%02d, ",$myear,$mmonth,$mday,$mhour,$mmin);
-        my $mail_mess2 = "SysMon configuration file $SYSMON_CFG_FILE for ${HOSTNAME} wasn't found.\n";
-        my $mail_mess3 = "A new one was created based on the template file ${SYSMON_STD_FILE}.\n";
-        my $mail_message = "${mail_mess0}${mail_mess1}${mail_mess2}${mail_mess3}";
+        my $msg0 = sprintf("This message was send by the SADMIN System Monitor.\n");
+        my $msg1 = sprintf("Today %04d/%02d/%02d at %02d:%02d, ",$myear,$mmonth,$mday,$mhour,$mmin);
+        my $msg2 = "SysMon configuration file $SYSMON_CFG_FILE for ${HOSTNAME} wasn't found.\n";
+        my $msg3 = "A new one was created based on the template file ${SYSMON_STD_FILE}.\n";
+        my $msg4 = "\nList of '.smon' file: \n"; 
+        my $msg5 = `ls -la $SADMIN/cfg | grep smon`; chomp $mail_mess4;  
+        my $msg6 = "\nps -aux | grep 'sadm' : \n"; 
+        my $msg7 = `ps -aux | grep sadm` ; chomp $mail_mess7;  
         my $mail_subject = "SADM INFO: $SYSMON_CFG_FILE not found on $HOSTNAME";
+        my $mail_message = "${msg0}${msg1}${msg2}${msg3}${msg4}${msg5}${msg6}${msg7}\n";
+
+        # Send the Email.
         @cmd = ("echo \"$mail_message\" | $CMD_MUTT -s \"$mail_subject\" $SADM_MAIL_ADDR");
         $return_code = 0xffff & system @cmd ;                           # Perform Mail Command
-#        @cmd = ("$CMD_CP $SYSMON_STD_FILE $SYSMON_CFG_FILE");           # cp template standard.smon
-#        $return_code = 0xffff & system @cmd ;                           # Perform Command cp
 
+        @cmd = ("$CMD_CP $SYSMON_STD_FILE $SYSMON_CFG_FILE");           # cp template standard.smon
+        $return_code = 0xffff & system @cmd ;                           # Perform Command cp
+#        @cmd = ("$CMD_CHMOD 664 $SYSMON_CFG_FILE");                     # Make hostname.smon 664
+#        $return_code = 0xffff & system @cmd ;                           # Perform Command chmod
+
+        # Since we will be starting with a new '.smon' configuration file, 
+        #   we need to customize it to our environment, 
+        # So we will replace the 'default' alert 'warning' and 'error' group by the one 
+        #   you have defined in $SADMIN/cfg/sadmin.cfg file.
         open (IN, $SYSMON_STD_FILE) || die "Cannot open file ".$SYSMON_STD_FILE." for read";
         @lines=<IN>;
         close IN;
+        
         open (OUT, ">", $SYSMON_CFG_FILE) || die "Cannot open file ".$SYSMON_CFG_FILE." for write";
         foreach $line (@lines)
             {
-            $line =~ s/default default/$SADM_ALERT_GROUP $SADM_ALERT_GROUP/ig;
+            $line =~ s/default default/$SADM_WARNING_GROUP $SADM_ALERT_GROUP/ig;
             print OUT $line;
             }
         close OUT;
 
-        @cmd = ("$CMD_CHMOD 664 $SYSMON_CFG_FILE");                     # Make hostname.smon 664
-        $return_code = 0xffff & system @cmd ;                           # Perform Command chmod
     }
 
-    # OPEN SYSMON HOST CONFIGURATION FILE AND LOAD IT IN AN ARRAY CALLED SYSMON_ARRAY
+    # Open Sysmon Host Configuration File (hostname.smon) and Load It In An Array ($sysmon_array).
     open (SMONFILE,"<$SYSMON_CFG_FILE") or die "Can't open $SYSMON_CFG_FILE: $!\n";
     $widx = 0;                                                          # Array Index
     while ($line = <SMONFILE>) {                                        # Read while end of file
@@ -371,7 +386,7 @@ sub load_smon_file {
 #---------------------------------------------------------------------------------------------------
 sub unload_smon_file {
     if ($SYSMON_DEBUG >= 5) {                                           # Debug Show what we do
-        print "\n\n-----\nUpdating SADM Sysmon configuration file ($SYSMON_CFG_FILE)";
+        print "\n\n-----\nUpdating System Monitor configuration file ($SYSMON_CFG_FILE)";
     }
 
     # OPEN (CREATE) AN EMPTY TEMPORARY FILE TO UNLOAD SYSMON CONFIG FILE
@@ -1814,26 +1829,24 @@ sub write_rpt_file {
 #---------------------------------------------------------------------------------------------------
 sub init_process {
 
-    # If you really want to prevent sysmon from running for a long period of time.
-    # Create this file /tmp/sadmlock.txt , BUT DON'T FORGET TO REMOVE IT, cause sysmon don't work.
+    # If you don't want to run the SYStem MONitor for a long period of time,
+    # example for system maintenance or application update, Then create this file /tmp/sadmlock.txt. 
+    # But don't forget to remove it after you maintenance is done, so monitoring restart.
     if ( -e "/tmp/sadmlock.txt") {                                      # If /tmp/sadmlock.txt exist
-        print "/tmp/sadmlock.txt exist - SYSMON not executed";          # Advise User - Show Message
+        print "System monitoring if 'OFF' - File '/tmp/sadmlock.txt' exist, delete it to start it.";
         exit 1;                                                         # Exit with Error
     }
 
-    # GET THE ALL THE VALUES FOR CURRENT TIME
+    # If normal lock file exist ($SYSMON_LOCK_FILE) GET THE ALL THE VALUES FOR CURRENT TIME
     #($SECOND, $MINUTE, $HOUR, $DAY, $MONTH, $YEAR, $WEEKDAY, $DAYOFYEAR, $ISDST) = LOCALTIME(TIME);
     # IF LOCK FILE EXIST, CHECK IF IT IS THERE FOR MORE THAN 15 MINUTES, IF SO DELETE IT
-    if ( -e "$SYSMON_LOCK_FILE"  ) {                                    # If sysmon.lock exist
+    if ( -e $SYSMON_LOCK_FILE ) {                                       # If sysmon.lock exist
 
         # Get sysmon.lock file information - Creation time of the lock file in epoch time
         ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,$blksize,$blocks) = stat ($SYSMON_LOCK_FILE);
-        if ($SYSMON_DEBUG >= 6) {                                       # If DEBUG Activated
-            print "\nLockfile creation time in epoch time is : $ctime"; # Show Creation Epoch time
-        }
+        if ($SYSMON_DEBUG >= 6) { print "\nLockfile creation time in epoch time is : $ctime"; } 
         $creation_date = localtime($ctime);                             # Convert Epoch to HumanDate
-        print "\nLockfile was created on $creation_date";               # Show Lock Creation Date
-
+        print "\nLockfile was created the $creation_date";              # Show Lock Creation Date
         my $actual_epoch_time = time();                                 # Get Current Epoch Time
         $actual_date = localtime($actual_epoch_time);                   # COnvert Epoch to HumanDate
         if ($SYSMON_DEBUG >= 6) {                                       # If DEBUG Activated
@@ -1850,7 +1863,7 @@ sub init_process {
             #unlink "$SYSMON_LOCK_FILE" ;
             #print "\nCreating lock file $SYSMON_LOCK_FILE\n";
             @args = ("$CMD_TOUCH", "$SYSMON_LOCK_FILE");                # Touch Lockfile Reset date
-            system(@args) == 0   or die "system @args failed: $?";      # Execute touch on lockfile
+            system(@args) == 0   or die "command @args failed: $?";     # Execute touch on lockfile
         }else{                                                          # Waiting LockFile to Expire
             my $wait_time = ($LOCKFILE_MAX_SEC - $elapse_time) ;        # Calc. Sec. Remaining
             printf("\nLock file TTL - %04d seconds.",$LOCKFILE_MAX_SEC);# Show Current Time to Live
@@ -1992,12 +2005,12 @@ sub loop_through_array {
 #---------------------------------------------------------------------------------------------------
 sub end_of_sysmon {
 
-    # Delete PSFILE (contain ps command results, creating at the beginning of script)
+    # Delete PSFILE (containing the 'ps' command output, created at the beginning of the script)
     unlink "$PSFILE1" or die "Cannnot delete $PSFILE1: $!\n" ;
     unlink "$PSFILE2" or die "Cannnot delete $PSFILE2: $!\n" ;
 
     # Remove sysmon.lock file
-    print "\nDeleting SYStem MONitor lock file $SYSMON_LOCK_FILE";
+    print "\nDeleting System Monitor lock file $SYSMON_LOCK_FILE";
     unlink "$SYSMON_LOCK_FILE" or die "Cannnot delete $SYSMON_LOCK_FILE: $!\n" ;
 
     # Print Execution time
@@ -2044,10 +2057,13 @@ sub end_of_sysmon {
 
     # Ending SysMon
     close SADMRPT;                                  # Close SysMon tmp report file
-    @cmd = ("$CMD_CP $SYSMON_RPT_FILE_TMP $SYSMON_RPT_FILE"); # Copy new rpt over old one
+    @cmd = ("$CMD_CP $SYSMON_RPT_FILE_TMP $SYSMON_RPT_FILE"); # Temp file become main smon file
     $return_code = 0xffff & system @cmd ;           # Perform Command cp
-    unlink $SYSMON_RPT_FILE_TMP ;                   # Delete Temporary file                
+    unlink $SYSMON_RPT_FILE_TMP ;                   # Remove Temp file                
     system ("chmod 664 $SYSMON_RPT_FILE");          # File readable by group
+
+    # Unload the updated SysMon Array to hostname.smon file
     unload_smon_file;                               # Unload Update Array to hostname.smon file
+
     end_of_sysmon;                                  # Delete lock file - Print Elapse time
 
