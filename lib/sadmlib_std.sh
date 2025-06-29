@@ -2899,7 +2899,7 @@ sadm_lock_system()
     if [ $# -eq 2 ]                                                     # Second parameter specified
         then SCRIPT_NAME="$2"                                           # Desc. or Remote ScriptName
              LOCK_MESS="System '$SNAME' lock: '"${SCRIPT_NAME/$SADMIN\/bin\//}"'" 
-        else SCRPIT_NAME="$SADM_INST"                                   # Use current script name
+        else SCRIPT_NAME="$SADM_INST"                                   # Use current script name
              LOCK_MESS="Lock system '${SNAME}' while '$SADM_INST' is running"
     fi 
     LOCK_FILE="${SADM_BASE_DIR}/${SNAME}.lock"                          # System Lock file name
