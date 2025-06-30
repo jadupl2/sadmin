@@ -562,7 +562,7 @@ rear_housekeeping()
     sadm_write_log "gzip -t '$REAR_CUR_TGZ'"
     gzip -t "$REAR_CUR_TGZ" >>$SADM_LOG 2>&1 
     if [ $? -ne 0 ] 
-        then sadm_write_err "[ ERROR ] The ReaR backup file failed the integrity check."
+        then sadm_write_err "[ ERROR ] The ReaR backup file '$REAR_CUR_TGZ' failed the integrity check."
              sadm_write_err "The ReaR backup may not be restorable, you may want to run it again."
              sadm_write_err ""
              ((FNC_ERROR++))                                            # Incr. Error counter
