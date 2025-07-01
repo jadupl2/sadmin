@@ -245,6 +245,7 @@
 #@2025_05_31 lib v4.67 When a lock is created for sa system, an info line is shown on monitor web page.
 #@2025_06_10 lib v4.68 Show the process preventing to run a second copy of a script.
 #@2025_06_20 lib v4.69 Change to work on MacOS : sadm_get_fqdn(), sadm_trim(), sadm_server_serial().
+#@2025_07_01 lib v4.70 sadm_stop(), line with result code 2 were not deleted in the .rch file.
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -255,7 +256,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.69"                                              # This Library Version
+export SADM_LIB_VER="4.70"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -2596,17 +2597,17 @@ sadm_stop() {
     if [ $# -eq 0 ]                                                     # If No status Code Received
         then SADM_EXIT_CODE=1                                           # Assume Error if none given
              sadm_write_log "Function '${FUNCNAME[0]}' expect one parameter."
-             sadm_write_log "${SADM_ERROR} Received None."              # Advise User
+             sadm_write_log "[ ERROR ] No result code received."        # Advise User
         else SADM_EXIT_CODE=$1                                          # Save Exit Code Received
     fi
     if [ "$SADM_EXIT_CODE" -ne 0 ] ; then SADM_EXIT_CODE=1 ; fi         # Result Code must be 0 or 1
 
     # Get End time and Calculate Elapse Time
-    export sadm_end_time=`date "+%C%y.%m.%d %H:%M:%S"`                  # Get & Format End Time
+    export sadm_end_time=$(date "+%C%y.%m.%d %H:%M:%S")                 # Get & Format End Time
     sadm_elapse=$(sadm_elapse "$sadm_end_time" "$SADM_STIME")           # Go Calculate Elapse Time
 
     # Write script exit code and execution time to log (If user ask for a log footer) 
-    if [ ! -z "$SADM_LOG_FOOTER" ] && [ "$SADM_LOG_FOOTER" = "Y" ]      # Want to Produce Log Footer
+    if [ -n "$SADM_LOG_FOOTER" ] && [ "$SADM_LOG_FOOTER" = "Y" ]        # Want to Produce Log Footer
         then sadm_write_log " "                                         # Blank Line
              sadm_write_log "${SADM_FIFTY_DASH}"                        # Dash Line
              if [ $SADM_EXIT_CODE -eq 0 ]                               # If script succeeded
@@ -2617,17 +2618,17 @@ sadm_stop() {
     fi
 
     # Update RCH File and Trim It to $SADM_MAX_RCLINE lines define in sadmin.cfg
-    if [ "$SADM_USE_RCH" = "Y" ]                                        # User Want update RCH File?
-        then if [ -s "$SADM_RCH_FILE" ]                                 # If RCH file exist
-                then XCODE=`tail -1 "$SADM_RCH_FILE" |awk '{ print $NF }'` # RCH Code on last line
+    if [ "$SADM_USE_RCH" = "Y" ]                                        # User Want to use RCH File
+        then if [ -s "$SADM_RCH_FILE" ]                                 # RCH file exist & size > 0
+                then XCODE=`tail -1 "$SADM_RCH_FILE" |awk '{ print $NF }'` # Last Field of last line
                      if [ "$XCODE" != "0" ] && [ "$XCODE" != "1" ] && [ "$XCODE" != "2" ]
                         then XCODE="0"                                  # If ResultCode Invalid = 0 
                      fi 
                      if [ "$XCODE" == "2" ]                             # last Line code is 2
                         then if [ "$(sadm_get_ostype)" = "DARWIN" ] 
                                 then sed -i '' -e '$ d'  "$SADM_RCH_FILE"
+                                else sed -i '$d' "$SADM_RCH_FILE"               # Delete last line of rch
                              fi 
-                        else sed -i '$d' "$SADM_RCH_FILE"               # Delete last line of rch
                      fi 
              fi 
              RCHLINE="${SADM_HOSTNAME} $SADM_STIME $sadm_end_time"      # Format Part1 of RCH File
