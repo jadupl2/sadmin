@@ -55,6 +55,7 @@
 #@2025_05_31 nolog v2.51 Delay start (ramdom number from 1 to 20 seconds), so all not run at same time.
 #@2025_06_20 mon v2.52 Ping test, added continious error minute count before triggering an error.
 #@2025_06_24 mon v2.53 Solve 'hotsname.smon' intermittently get re-created using '.template.smon'.
+#@2025_07_09 mon v2.54 Add more info in email sent when the hostname.smon file is gone & replace.
 #===================================================================================================
 #
 use English;
@@ -69,7 +70,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.53";                                       # Version Number
+my $VERSION_NUMBER      = "2.54";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -325,10 +326,11 @@ sub load_smon_file {
         my $msg1 = sprintf("Today %04d/%02d/%02d at %02d:%02d, ",$myear,$mmonth,$mday,$mhour,$mmin);
         my $msg2 = "SysMon configuration file $SYSMON_CFG_FILE for ${HOSTNAME} wasn't found.\n";
         my $msg3 = "A new one was created based on the template file ${SYSMON_STD_FILE}.\n";
-        my $msg4 = "\nList of '.smon' file: \n"; 
+        my $msg4 = "\n\nList of '.smon' file: \n"; 
         my $msg5 = `ls -la $SADMIN/cfg | grep smon`; chomp $mail_mess4;  
-        my $msg6 = "\nps -aux | grep 'sadm' : \n"; 
-        my $msg7 = `ps -aux | grep sadm` ; chomp $mail_mess7;  
+        my $msg4 = "\n\nSADMIN process running : \n"; 
+        my $msg6 = "\nps -aux | grep 'sadm_' : \n"; 
+        my $msg7 = `ps -aux | grep '_sadm'`  ; chomp $mail_mess7;  
         my $mail_subject = "SADM INFO: $SYSMON_CFG_FILE not found on $HOSTNAME";
         my $mail_message = "${msg0}${msg1}${msg2}${msg3}${msg4}${msg5}${msg6}${msg7}\n";
 
