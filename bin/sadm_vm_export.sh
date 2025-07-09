@@ -67,8 +67,7 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 # Script accept only one parameter, it's the name of the VM you want to export.
 if [ $# -eq 1 ]                                            # Only Parameter is VMName
     then export VMNAME="$1"                                # Save VM Name to export
-    else show_usage
-         printf "${SADM_ERROR} You must specify the name of the VM to export.\n\n"
+    else printf "[ ERROR ] You need to specify the name of the VM to export.\n\n"
          exit 1                                            # Exit with an error 1
 fi
 export SADM_INST="${SADM_INST}_${VMNAME}"                  # Insert VMName to export in rch & log
