@@ -90,8 +90,9 @@
 # 2023_09_13 backup v3.46 Record backup size, more info in log & apply cleaning to all backup type.
 # 2024_01_02 backup v3.47 Fix initial backup directory setup.
 #@2024_04_02 backup v3.48 Small enhancements
-#@2020_02_01 backup v3.49 Fix 'mount.nfs: Cannot allocate memory' on Raspi O/S
-#@2020_02_22 backup v3.50 Fix problem with 'mount.nfs: Cannot allocate memory' on Raspbian.
+#@2025_02_01 backup v3.49 Fix 'mount.nfs: Cannot allocate memory' on Raspi O/S
+#@2025_02_22 backup v3.50 Fix problem with 'mount.nfs: Cannot allocate memory' on Raspbian.
+#@2025_07_09 backup v3.51 Correct typo error, when unmount NFS drive.
 #===================================================================================================
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -120,7 +121,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.50'                                     # Script version number
+export SADM_VER='3.51'                                     # Script version number
 export SADM_PDESC="Backup files and directories specified in the backup list file."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -330,13 +331,13 @@ backup_setup()
     # Show Backup Preferences
     sadm_write_log " "
     case $BACKUP_TYPE in
-        D) sadm_write_log "Today `date` we are starting a [Daily] backup ..." 
+        D) sadm_write_log "Today $(date) we are starting a [Daily] backup ..." 
            ;;
-        W) sadm_write_log "Today `date` we are starting a [Weekly] backup ..."
+        W) sadm_write_log "Today $(date) we are starting a [Weekly] backup ..."
            ;;
-        M) sadm_write_log "Today `date` we are starting a [Monthly] backup ..."
+        M) sadm_write_log "Today $(date) we are starting a [Monthly] backup ..."
            ;;
-        Y) sadm_write_log "Today `date` we are starting a [Yearly] backup ..."
+        Y) sadm_write_log "Today $(date) we are starting a [Yearly] backup ..."
            ;;
     esac 
     sadm_write_log " " 
@@ -605,7 +606,7 @@ clean_backup_dir()
     sadm_write_log "Total backup size = $total_size"
 
     cd "$CUR_PWD"
-    umount_nfs                                                          # Unmount NFS Drive
+    umount_nfs "$LOCAL_MOUNT"                                           # Unmount NFS Drive
     return 0
 } 
 
@@ -730,11 +731,14 @@ mount_nfs()
 umount_nfs()
 {
     sadm_write_log " "
+    LOCAL_MOUNT="$1" 
+
     cd /tmp                                                             # Go to /tmp to unmount   
-    sadm_write_log "Unmounting NFS mount directory ${LOCAL_MOUNT}"
-    umount $LOCAL_MOUNT                                                 # Umount Just to make sure
+    sadm_write_log "Unmounting NFS mount directory '$LOCAL_MOUNT'"
+    umount "$LOCAL_MOUNT" >>$SADM_LOG 2>&1                              # Umount Just to make sure
     if [ $? -ne 0 ]                                                     # If Error trying to mount
-        then sadm_write_err "[ ERROR ] Unmounting NFS Directory $LOCAL_MOUNT"   
+        then sadm_write_err "[ ERROR ] Unmounting NFS Directory $LOCAL_MOUNT" 
+             sadm_write_err "Please check if the NFS server is still available."
              return 1                                                   # End Function with error
         else sadm_write_log "[ SUCCESS ] Unmounting NFS Directory $LOCAL_MOUNT" 
     fi
@@ -792,9 +796,9 @@ function cmd_options()
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
     mount_nfs                                                           # Mount NFS Dir.
-    if [ $? -ne 0 ] ; then umount_nfs ; sadm_stop 1 ; exit 1 ; fi       # If Error While Mount NFS
+    if [ $? -ne 0 ] ; then umount_nfs "$LOCAL_MOUNT" ; sadm_stop 1 ; exit 1 ; fi  
     backup_setup                                                        # Create Necessary Dir.
-    if [ $? -ne 0 ] ; then umount_nfs ; sadm_stop 1 ; exit 1 ; fi       # If Error While Mount NFS
+    if [ $? -ne 0 ] ; then umount_nfs "$LOCAL_MOUNT" ; sadm_stop 1 ; exit 1 ; fi  
     create_backup                                                       # Create TGZ of Selected Dir
     SADM_EXIT_CODE=$?                                                   # Save Backup Result Code
     clean_backup_dir                                                    # Delete Old Backup
