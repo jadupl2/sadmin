@@ -64,8 +64,7 @@
 #@2025_06_20 osupdate v3.45 Modify test to allow reboot at the end of update, if requested.
 # --------------------------------------------------------------------------------------------------
 #set -x
-
-
+# dnf clean expire-cache && dnf makecache # Refresh cache in dnf5
 
 
 # ------------------- S T A R T  O F   S A D M I N   C O D E    S E C T I O N  ---------------------
