@@ -48,6 +48,7 @@
 #@2024_11_17 virtualbox v2.8 Minor changes
 #@2025_03_25 virtualbox v2.9 Was not showing the current VirtualBox Guest addition version.
 #@2025_04_09 virtualbox v3.0 Minor changes.
+#@2025_07_09 virtualbox v3.1 Minor adjustment in heading & Change total calculation
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -58,7 +59,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 
 # Global Variables
 # --------------------------------------------------------------------------------------------------
-export VMLIBVER="3.0"                                                   # This Library version
+export VMLIBVER="3.1"                                                   # This Library version
 export VMLIB_DEBUG="N"                                                  # Activate Debug output Y/N
 export VMLIST="$(mktemp "$SADMIN/tmp/${SADM_INST}vm_list1_XXX")"        # List of all VM in VBox
 export VMRUNLIST="$(mktemp "$SADMIN/tmp/${SADM_INST}vm_runlist_XXX")"   # Tmp File to list RunningVM 
@@ -490,7 +491,7 @@ sadm_list_vm_status()
 
     # Virtual Box machine list header
     printf "${SADM_80_DASH}\n" | tee -a $SADM_LOG
-    printf "%-3s%-17s%-8s%-14s%-8s%-6s%-16s%-s\n" "No" "Name" "State" "Additions" "Memory" "CPU" "VM IP" "VRDE Port" | tee -a $SADM_LOG
+    printf "%-3s%-17s%-8s%-14s%-8s%-6s%-15s%-s\n" "No" "Name" "State" "Additions" "Memory" "CPU" "VM IP" "VRDE Port" | tee -a $SADM_LOG
     printf "${SADM_80_DASH}\n" | tee -a $SADM_LOG
 
     # Initialize Total Variables.
@@ -549,7 +550,7 @@ sadm_list_vm_status()
     part1=$(printf "Running VM allocated memory : ${tmemory} MB")
     freemem=$(free -m  | grep 'Mem:' | awk '{ print $4 }')
     availmem=$(free -m | grep 'Mem:' | awk '{ print $7 }') 
-    part2=$(printf "Memory available for VM  : $(( availmem + freemem )) MB")
+    part2=$(printf "Memory available for VM  : $(free -hl | awk '/Mem:/ {print $NF}')")
     printf "%-40s%40s\n" "$part1" "$part2" | tee -a $SADM_LOG
     #
     printf "%-40s%40s\n" "Total PowerON VM : ${tpoweron}" "Total PowerOFF VM : ${tpoweroff}" | tee -a $SADM_LOG
@@ -558,7 +559,7 @@ sadm_list_vm_status()
     #echo "Swap Used: $swap_used - Swap Size: $swap_size "
     swap_pct=$( echo "$swap_used / $swap_size * 100" | bc -l)
     swap_pct=$(printf "%3.1f" "$swap_pct")
-    printf "Using %s MB (%s%%) of the %s MB allocated for swap space.\n" "$swap_used" "$swap_pct" "$swap_size" | tee -a $SADM_LOG
+    printf "Using %s (%s%%) of the %s allocated for swap space.\n" "$(free -hl | awk '/Swap:/ {print $3}')" "$swap_pct" "$(free -hl | awk '/Swap:/ {print $2}')" | tee -a $SADM_LOG
     printf "${SADM_80_DASH}\n" | tee -a $SADM_LOG
     return 0
 }
