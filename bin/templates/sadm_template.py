@@ -27,18 +27,19 @@
 # ------------------
 # 2024_01_21 lib v1.56 Python standard template, can be use to create your next scripts.
 #                      Need to access SADMIN database ? : Use 'sadm_template_with_db.py' instead.
+#@2025_07_09 lib v1.56 Added import of module pwd.
 # --------------------------------------------------------------------------------------------------
 #
 
 # Modules needed by this script SADMIN Tools and they all come with Standard Python 3.
 try:
-    import os, sys, argparse, time, datetime, socket, platform, re  # Import Std Python3 Modules
-    import pymysql                                                  # Use for MySQL DB
-#   import pdb                                                      # Python Debugger (If needed)
-except ImportError as e:                                            # Trap Import Error
-    print("Import Error : %s " % e)                                 # Print Import Error Message
-    sys.exit(1)                                                     # Back to O/S With Error Code 1
-#pdb.set_trace()                                                    # Activate Python Debugging
+    import os,sys,pwd,argparse,time,datetime,socket,platform,re         # Import Std Python3 Modules
+    import pymysql                                                      # Use for MySQL DB
+#   import pdb                                                          # Python Debugger(If needed)
+except ImportError as e:                                                # Trap Import Error
+    print("Import Error : %s " % e)                                     # Print Import Error Message
+    sys.exit(1)                                                         # Back to O/S With Error1
+#pdb.set_trace()                                                        # Activate Python Debugging
 
  
 
