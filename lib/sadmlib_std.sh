@@ -246,6 +246,7 @@
 #@2025_06_10 lib v4.68 Show the process preventing to run a second copy of a script.
 #@2025_06_20 lib v4.69 Change to work on MacOS : sadm_get_fqdn(), sadm_trim(), sadm_server_serial().
 #@2025_07_01 lib v4.70 sadm_stop(), line with result code 2 were not deleted in the .rch file.
+#@2025_07_09 lib v4.71 Remove the update of rpt file when locking a system (already done).
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -256,7 +257,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.70"                                              # This Library Version
+export SADM_LIB_VER="4.71"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -2394,7 +2395,7 @@ sadm_start() {
 
     # Will work when running with root, don't give error if we are not 'root'.
     chmod 666 "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 # Change Perm.only with root
-    if [ $(id -u) -eq 0 ] 
+    if [ "$(id -u)" -eq 0 ] 
         then chgrp "${SADM_GROUP}" "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 
              chown "${SADM_USER}"  "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 
     fi 
@@ -2920,32 +2921,35 @@ sadm_lock_system()
              fi
              sadm_write_log "[ OK ] System '$SNAME' is now lock."  
     fi 
-    if [ $(id -u) -eq 0 ] ;then chown ${SADM_USER}:${SADM_GROUP} ${LOCK_FILE} ;chmod 0664 "$LOCK_FILE" ;fi
-
-
-
-    # Create RPT line to inform user that the system is lock
-    RPT_OS="$(sadm_get_ostype)"                                         # Get the O/S type of remote
-    RPT_DATE=$(date "+%Y.%m.%d")                                        # Report Date in YYYY.MM.DD                              
-    RPT_TIME=$(date "+%H:%M:%S")                                        # Report Time in HH:MM
-    RPTLINE="Info;${SNAME};${RPT_DATE};${RPT_TIME};${RPT_OSNAME}"       # Build Report Line
-    RPTLINE="${RPTLINE};"SCRIPT";${LOCK_MESS};${SADM_WARNING_GROUP};${SADM_INFO_GROUP};"  
-
-    # Update the Local & Global (www) RPT files.
-    RPT_LOCAL="${SADM_RPT_DIR}/${SNAME}_${SADM_INST}.rpt"               # SADMIN Server Local RPT
-    echo "$RPTLINE" > "$RPT_LOCAL"                                      # Local $SADMIN/dat/rpt rpt
-    if [ $? -ne 0 ]                                            # Error while writing to file
-       then sadm_write_err "[ ERROR ] Couldn't write description to '$RPT_LOCAL'."
-            SADM_EXIT_CODE=1                                        # Return Error to caller
+    if [ $(id -u) -eq 0 ] 
+        then chown ${SADM_USER}:${SADM_GROUP} ${LOCK_FILE} 
+             chmod 0664 "$LOCK_FILE" 
     fi
 
-    RPT_GLOBAL="${SADM_WWW_RPT_DIR}/${SNAME}_${SADM_INST}.rpt" 
-    echo "$RPTLINE" > "$RPT_GLOBAL"                                    # $SADMIN/www/dat/hostname/rpt
-    if [ $? -ne 0 ]                                            # Error while writing to file
-       then sadm_write_err "[ ERROR ] Couldn't write description to '$RPT_GLOBAL'."
-            SADM_EXIT_CODE=1                                        # Return Error to caller
-    fi
 
+
+#    # Create RPT line to inform user that the system is lock
+#    RPT_OS="$(sadm_get_ostype)"                                         # Get the O/S type of remote
+#    RPT_DATE=$(date "+%Y.%m.%d")                                        # Report Date in YYYY.MM.DD                              
+#    RPT_TIME=$(date "+%H:%M:%S")                                        # Report Time in HH:MM
+#    RPTLINE="Info;${SNAME};${RPT_DATE};${RPT_TIME};${RPT_OSNAME}"       # Build Report Line
+#    RPTLINE="${RPTLINE};"SCRIPT";${LOCK_MESS};${SADM_WARNING_GROUP};${SADM_INFO_GROUP};"  
+#
+#    # Update the Local & Global (www) RPT files.
+#    RPT_LOCAL="${SADM_RPT_DIR}/${SNAME}_${SADM_INST}.rpt"               # SADMIN Server Local RPT
+#    echo "$RPTLINE" > "$RPT_LOCAL"                                      # Local $SADMIN/dat/rpt rpt
+#    if [ $? -ne 0 ]                                                     # Error writing to file
+#       then sadm_write_err "[ ERROR ] Couldn't write description to '$RPT_LOCAL'."
+#            SADM_EXIT_CODE=1                                        # Return Error to caller
+#    fi
+#
+#    RPT_GLOBAL="${SADM_WWW_RPT_DIR}/${SNAME}_${SADM_INST}.rpt" 
+#    echo "$RPTLINE" > "$RPT_GLOBAL"                                    # $SADMIN/www/dat/hostname/rpt
+#    if [ $? -ne 0 ]                                            # Error while writing to file
+#       then sadm_write_err "[ ERROR ] Couldn't write description to '$RPT_GLOBAL'."
+#            SADM_EXIT_CODE=1                                        # Return Error to caller
+#    fi
+#
     return $SADM_EXIT_CODE
 } 
 
