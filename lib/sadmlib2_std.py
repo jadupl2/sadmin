@@ -71,6 +71,7 @@
 #@2025_01_30 lib v4.57 3 New global var. for NFS mount in sadmin.cfg, initialize when loading library
 #@2025_01_30 lib v4.57 sadm_vm_export_nfs_server_ver,sadm_backup_nfs_server_ver,sadm_rear_nfs_server_ver
 #@2025_02_21 lib v4.58 Fix some seldom error with these 2 functions 'get_host_ip'& 'get_domainname'.
+#@2025_07_09 lib v4.59 Adjust content of variable 'dir_www_arc'.
 # 
 # --------------------------------------------------------------------------------------------------
 
@@ -105,7 +106,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.58"                                # This Library Version
+lib_ver             = "4.59"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -295,7 +296,7 @@ dir_usr_mon        = os.path.join(dir_usr,'mon')            # SADM Usr SysMon Sc
 
 # SADM Web Site Directories Structure
 dir_www_dat        = os.path.join(dir_www,'dat')            # SADM Web Site Data Dir
-dir_www_arc        = os.path.join(dir_www,'archive')        # SADM WebSite ArchiveDir
+dir_www_arc        = os.path.join(dir_www_dat,'archive')    # SADM WebSite ArchiveDir
 dir_www_doc        = os.path.join(dir_www,'doc')            # SADM Web Site Doc Dir
 dir_www_lib        = os.path.join(dir_www,'lib')            # SADM dbpass_file
 dir_www_tmp        = os.path.join(dir_www,'tmp')            # SADM Web Site Tmp Dir
