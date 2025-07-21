@@ -56,7 +56,8 @@
 #@2024_12_28 lib v2.25 Fix problem date of next schedule at end of year in 'SCHEDULE_TO_TEXT()'.
 #@2025_03_05 lib v2.26 Update O/S Logo and documentation URL.
 #@2025_05_07 lib v2.27 Update O/S Logo and documentation URL.
-
+#@2025_07_20 lib v2.28 Add pencil image in standar5d page heading.
+display_lib_heading
 #===================================================================================================
 
 
@@ -66,7 +67,7 @@
 #===================================================================================================
 #
 $DEBUG  = False ;                                                        # Debug Activated True/False
-$LIBVER = "2.27" ;   
+$LIBVER = "2.28" ;   
     
 
 #===================================================================================================
@@ -106,7 +107,9 @@ function display_lib_heading($BACK_URL,$TITLE1,$TITLE2,$WVER) {
     }        
 
     # Space line for separation purpose
-    echo "<hr/>\n\n";                                                     # Print Horizontal Line
+    echo  "\n\n<br><center><img src='/images/pencil2.gif'></center>\n\n"; 
+
+    #echo "<hr/>\n\n";                                                     # Print Horizontal Line
 #    echo "\n\n";                                                     # Print Horizontal Line
 }
 
@@ -116,11 +119,14 @@ function display_lib_heading($BACK_URL,$TITLE1,$TITLE2,$WVER) {
 # ==================================================================================================
 function std_page_footer($wcon="") {
 
-    if ($wcon != "") { mysqli_close($wcon); }                    # Close Database Connection
+    if ($wcon != "") { mysqli_close($wcon); }                           # Close Database Connection
     echo "\n</div> <!-- End of sadmRightColumn   -->" ;                 # End of Left Content Page
     echo "\n</div> <!-- End of sadmPageContents  -->" ;                 # End of Content Page
    #echo "\n</div> <!-- End of ... -->" ;                               # End of Content Page
     
+    #echo  "\n\n<center><img src='/images/pencil2.gif'></center>\n"; 
+
+
     echo "\n\n<div id='sadmFooter'>";
     echo "\nCopyright &copy; 2015-2025 - sadmin.ca - Suggestions, Questions or Report a problem at ";
     echo '<a href="mailto:sadmlinux@gmail.com">sadmlinux@gmail.com</a></small>';
