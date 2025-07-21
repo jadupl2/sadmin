@@ -247,6 +247,7 @@
 #@2025_06_20 lib v4.69 Change to work on MacOS : sadm_get_fqdn(), sadm_trim(), sadm_server_serial().
 #@2025_07_01 lib v4.70 sadm_stop(), line with result code 2 were not deleted in the .rch file.
 #@2025_07_09 lib v4.71 Remove the update of rpt file when locking a system (already done).
+#@2025_07_20 lib v4.72 Change log directory permission 775 instead of 755
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -257,7 +258,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.71"                                              # This Library Version
+export SADM_LIB_VER="4.72"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -2748,11 +2749,11 @@ sadm_stop() {
     if [ "$SADM_HOST_TYPE" = "S" ]                                      # Only run on SADMIN server
        then 
             WLOGDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/log"          # Host Main LOG Directory
-            if [ ! -d "${WLOGDIR}" ] ;then mkdir -p -m 755 $WLOGDIR ;fi # Host Log dir. not exist
+            if [ ! -d "${WLOGDIR}" ] ;then mkdir -p -m 775 $WLOGDIR ;fi # Host Log dir. not exist
             WLOG="${WLOGDIR}/${SADM_HOSTNAME}_${SADM_INST}.log"         # LOG File Name in Main Dir
 
             WRCHDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"          # Host Main RCH Directory
-            if [ ! -d "${WRCHDIR}" ] ; then mkdir -p -m 755 $WRCHDIR ; fi      # Host Main Dir don't exist
+            if [ ! -d "${WRCHDIR}" ] ; then mkdir -p -m 775 $WRCHDIR ; fi      # Host Main Dir don't exist
             WRCH="${WRCHDIR}/${SADM_HOSTNAME}_${SADM_INST}.rch"         # RCH File Name in Main Dir
 
             # Rsync Local 'log' directory ($SADMIN/log) 
