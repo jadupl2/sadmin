@@ -274,7 +274,6 @@ function cmd_options()
 #===================================================================================================
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Won't come back if error
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong    
     process_servers                                                     # ssh to all actives clients
     SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
