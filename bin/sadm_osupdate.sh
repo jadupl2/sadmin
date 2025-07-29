@@ -62,6 +62,7 @@
 #@2025_04_22 osupdate v3.43 The Log file was closed too early when a reboot was requested.
 #@2025_05_31 osupdate v3.44 Re-enable the output when applying the update.
 #@2025_06_20 osupdate v3.45 Modify test to allow reboot at the end of update, if requested.
+#@2025_07_26 osupdate v3.46 Add 'dnf autoremove -y' at the end of a Redhat family system.
 # --------------------------------------------------------------------------------------------------
 #set -x
 # dnf clean expire-cache && dnf makecache # Refresh cache in dnf5
@@ -89,7 +90,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.45'                                     # Your Current Script Version
+export SADM_VER='3.46'                                     # Your Current Script Version
 export SADM_PDESC="Script is used to perform an O/S update on the system"
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -270,8 +271,13 @@ run_yum()
     sadm_write_log "Starting $SADM_OS_NAME update process ..."
     sadm_write_log "Running : yum -y update"
     f=$(mktemp) ; { yum -y update ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; rc=$(cat $f)
-    sadm_write_log "The exit code of the 'yum -y update' command is ${rc}."
-    sadm_write_log "${SADM_TEN_DASH}"
+    if [ "$rc" -ne 0 ] 
+       then sadm_write_err "The exit code of the 'yum -y update' command is ${rc}."
+       else sadm_write_log "[ OK ] The 'yum -y update' command ran with success."
+            sadm_write_log " "
+    fi 
+
+    sadm_write_log " "
     return $rc
 }
 
@@ -287,7 +293,19 @@ run_dnf()
 
     # Running the update command 
     f=$(mktemp) ; { dnf -y update ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; rc=$(cat $f)
-    sadm_write_log "The exit code of the 'dnf -y update' command is ${rc}."
+    if [ "$rc" -ne 0 ] 
+       then sadm_write_err "The exit code of the 'dnf -y update' command is ${rc}."
+       else sadm_write_log "[ OK ] The 'dnf -y update' command ran with success."
+            sadm_write_log " "
+            sadm_write_log "Remove orphaned packages, running 'dnf autoremove'."
+            dnf autoremove -y >>$SADM_LOG 2>&1
+            RC=$?
+            if [ "$RC" -ne 0 ]
+               then sadm_write_err "Return Code of 'dnf autoremove -y' is ${RC}"
+                    return $RC
+            fi
+    fi 
+    
     sadm_write_log " "
     return $rc
 }
@@ -414,7 +432,7 @@ perform_osupdate()
     case "$(sadm_get_osname)" in                                        # Test OS Name
         "REDHAT"|"CENTOS"|"ALMA"|"ROCKY"|"FEDORA")
             pkg_mgm="dnf"                                               # Default value
-            sadm_get_command_path "yum" >/dev/null                      # yum on system ? RHEL 7
+            sadm_get_command_path "dnf" >/dev/null                      # yum on system ? RHEL 7
             if [ $? -eq 0 ] && [ $SADM_OS_MAJORVER -lt 8 ]
                then run_yum                                             # For RHEL 7 and prior ver.
                     SADM_EXIT_CODE=$?                                   # Save Return Code
