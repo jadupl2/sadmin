@@ -28,6 +28,7 @@
 #@2025_03_25 web v1.5 Change more look of the page adding some more info
 #@2025_04_10 web v1.6 Modify disposition on web page.
 #@2025_05_07 web v1.7 Minor adjustments to web page layout.
+#@2025_07_27 web v1.8 Change Legend at the bottom of the page & enhance layout.
 # ==================================================================================================
 
 
@@ -99,7 +100,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 $DEBUG              = False ;                                           # Debug Activated True/False
-$WVER               = "1.7" ;                                           # Current version number
+$WVER               = "1.8" ;                                           # Current version number
 $URL_HOME           = '/index.php';                                     # Site Main Page
 
 # Server Static Data Maintenance
@@ -133,15 +134,9 @@ $EXPORT_SCRIPT      = "_sadm_vm_export_";
 #===================================================================================================
 function setup_table() {
 
-    #echo "<div id='SimpleTable'>\n"; 
     echo "<div id='MyTable'>\n"; 
     echo "<table class='content-table' border=1>\n" ; 
     
-    #    echo "<table bgcolor='black' width='1100' border=1>\n" ; 
-    #echo "<table id='sadmTable' row-border width='100%'>\n";   
-    #echo '<table id="sadmTable" class="display" row-border width="100%">';   
-    #echo "<table row-border width='100%'>\n";   
-
     echo "\n<thead>\n";
     echo "  <tr align=center bgcolor='grey'>\n";
     echo "      <th width=12>No</th>\n";
@@ -152,7 +147,7 @@ function setup_table() {
     echo "      <th align='center' width=60>Duration</th>\n";
     echo "      <th align='center' width=50>Status</th>\n";
     echo "      <th align='center' width=60>Log & Hist.</th>\n";
-    echo "      <th align='center' width=70>Update<br>Schedule</th>\n";
+    echo "      <th align='center' width=70>Schedule</th>\n";
     echo "      <th align='center' width=110>Next Export</th>\n";
     echo "      <th align='left'   width=230>Occurrence</th>\n";
     echo "      <th align='center' width=60>Export Size</th>\n";
@@ -170,7 +165,7 @@ function setup_table() {
     echo "      <th align='center' width=60>Duration</th>\n";
     echo "      <th align='center' width=50>Status</th>\n";
     echo "      <th align='center' width=60>Log & Hist.</th>\n";
-    echo "      <th align='center' width=70>Update<br>Schedule</th>\n";
+    echo "      <th align='center' width=70>Schedule</th>\n";
     echo "      <th align='center' width=110>Next Export</th>\n";
     echo "      <th align='left'   width=230>Occurrence</th>\n";
     echo "      <th align='center' width=60>Export Size</th>\n";
@@ -395,8 +390,9 @@ function display_data($count, $row) {
     #echo "num_previous size: " . $num_previous_size .  "\n"; 
 
     # Show current export size.
+    $BG='#DAF7A6';                                                      # Catch eye attention color
     if (($num_export_size == 0 || $num_previous_size == 0) && (SADM_VM_EXPORT_DIF != 0)) {
-        echo "<td align='center' style='color:red' bgcolor='#DAF7A6'>" .$export_size;
+        echo "<td align='center' style='color:red' bgcolor='" .$BG. "'>" .$export_size;
     }else{
         #echo "PCT = (($num_export_size - $num_previous_size) / $num_previous_size) * 100";
         $PCT = (($num_export_size - $num_previous_size) / $num_previous_size) * 100;
@@ -404,16 +400,12 @@ function display_data($count, $row) {
             echo "<td align='center'>" . $export_size ; 
         }else{
             if (number_format($PCT,0) > SADM_VM_EXPORT_DIF) {
-                echo "<td align='center' style='color:red' bgcolor='#DAF7A6'><b>" .$export_size. "&nbsp;(+" .number_format($PCT,1). "%)</b>"; 
+                echo "<td align='center' style='color:red' bgcolor='" .$BG. "'><b>"   .$export_size. "&nbsp;(+" .number_format($PCT,1). "%)</b>"; 
             }else{
                 if (number_format($PCT,0) < (SADM_VM_EXPORT_DIF * -1)) {
-                    echo "<td align='center' style='color:red' bgcolor='#DAF7A6'><b>" . $export_size . "&nbsp;("  .number_format($PCT,1). "%)</b>";
+                    echo "<td align='center' style='color:red'  bgcolor='" .$BG. "'>" .$export_size . "&nbsp;("  .number_format($PCT,1). "%)</b>";
                 }else{
-                    if ($PCT < 0) {
-                        echo "<td align='center'>" . $export_size . "&nbsp;("  .number_format($PCT,1). "%)"; 
-                    }else{ 
-                        echo "<td align='center'>" . $export_size . "&nbsp;(+" .number_format($PCT,1). "%)"; 
-                    }
+                    echo "<td align='center'>" . $export_size . "&nbsp;("  .number_format($PCT,1). "%)"; 
                 }
             }
         }
@@ -422,11 +414,30 @@ function display_data($count, $row) {
 
 # Show Previous Backup Size
     if (($num_export_size == 0 || $num_previous_size == 0) && (SADM_VM_EXPORT_DIF != 0)) {
-        echo "<td align='center' style='color:red' bgcolor='#DAF7A6'><b>" .$previous_size. "</b></td>\n";
+        echo "<td align='center' style='color:red' bgcolor='" .$BG. "'><b>" .$previous_size. "</b></td>\n";
     }else{
         echo "<td align='center'>" . $previous_size . "</td>\n";
     }
 
+}
+
+
+
+
+# Add legend at the bottom of the page
+#===================================================================================================
+function export_legend()
+{
+    #echo  "\n\n<center><img src='/images/pencil2.gif'></center>\n"; 
+    echo "<hr>\n<br>\n"; 
+    echo "<b>Will have row(s) with colored background when :  <br>\n"; 
+    echo "1- The export have failed.<br>\n";
+    echo "2- The latest & previous export size differ for more than " .SADM_VM_EXPORT_DIF. "%.<br>\n";
+    echo "&nbsp;&nbsp;&nbsp;&nbsp;This percentage is set in '\$SADMIN/cfg/sadmin.cfg' by the value of 'SADM_VM_EXPORT_DIF'.<br>\n";
+    echo "3- If the last export is older than " .SADM_VM_EXPORT_INTERVAL. " days.<br>\n";
+    echo "&nbsp;&nbsp;&nbsp;&nbsp;Set by the value of 'SADM_VM_EXPORT_INTERVAL' in '\$SADMIN/cfg/sadmin.cfg'.<br>\n";
+    echo "<br>\nExport are recorded on '" . SADM_VM_EXPORT_NFS_SERVER . "' in '" .SADM_VM_EXPORT_MOUNT_POINT. "' directory.";
+    echo  "</b><br>\n";
 }
 
 
@@ -446,23 +457,25 @@ function display_data($count, $row) {
         if ($DEBUG) {                                                   # In Debug Insert SQL in Msg
             $err_msg = $err_msg . "<br>\nMaybe a problem with SQL Command ?\n" . $query ;
         }
-        sadm_fatal_error($err_msg);                                # Display Error & Go Back
+        sadm_fatal_error($err_msg);                                     # Display Error & Go Back
         exit();  
     }
 
     # Show Virtual system schedule status page heading
-    display_lib_heading("NotHome","Virtual Box Export Status"," ",$WVER);
+
+    display_lib_heading("NotHome","Virtual Box Export Status","Only virtual systems are shown on this page",$WVER);
     setup_table();                                                      # Create HTML Table/Heading
     
     # Loop Through Retrieved Data and Display each Row
     $count=0;   
-    while ($row = mysqli_fetch_assoc($result)) {                # Gather Result from Query
+    while ($row = mysqli_fetch_assoc($result)) {                        # Gather Result from Query
         $count+=1;                                                      # Incr Line Counter
         display_data($count, $row);                                     # Display Next Server
     }
     echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
 
-    echo "<center>Only virtual systems are shown on this page.</center>";
+    #echo "<center>Only virtual systems are shown on this page.</center>";
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
-    std_page_footer($con)                                         # Close MySQL & HTML Footer
+    export_legend();                                                    # Display Legend               
+    std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>
