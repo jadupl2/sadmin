@@ -40,6 +40,7 @@
 # 2023_04_27 web v2.6 ReaR backup status page - Combine 'Last Backup Date' & 'Duration'.
 #@2025_04_10 web v2.7 Add a little more disposition on web page.
 #@2025_05_07 web v2.8 Change CSS of page to enhance and change appearance of the page.
+#@2025_07_27 web v2.9 Small enhancement on page layout.
 
 # ==================================================================================================
 #
@@ -112,7 +113,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 $DEBUG              = False ;                                           # Debug Activated True/False
-$WVER               = "2.8" ;                                           # Current version number
+$WVER               = "2.9" ;                                           # Current version number
 $URL_CREATE         = '/crud/srv/sadm_server_create.php';               # Create Page URL
 $URL_UPDATE         = '/crud/srv/sadm_server_update.php';               # Update Page URL
 $URL_DELETE         = '/crud/srv/sadm_server_delete.php';               # Delete Page URL
@@ -152,12 +153,13 @@ function setup_table() {
     echo "\n<thead>";
     echo "\n<tr>";
     echo "\n<th align='center' width=20>No</th>";
-    echo "\n<th align='left'>System</th>";
+    #echo "\n<th align='left'>System</th>";
+    echo "\n<th width=110 align=left>Name&nbsp;/&nbsp;Arch&nbsp;/&nbsp;Desc.</th>"; 
     echo "\n<th align='center'>Last Backup</th>";
     echo "\n<th align='center'>Duration</th>";
     echo "\n<th align='center'>Status</th>";
     echo "\n<th align='center'>Log & Hist.</th>";
-    echo "\n<th align='center'>Rear<br>Schedule</th>";
+    echo "\n<th align='center'>Schedule</th>";
     echo "\n<th align='center'>Sporadic</th>";
     echo "\n<th align='center'>ReaR</th>";
     echo "\n<th align='center'>Next Backup</th>";
@@ -170,12 +172,13 @@ function setup_table() {
     echo "\n<tfoot>";
     echo "\n<tr>";
     echo "\n<th align='center' width=20>No</th>";
-    echo "\n<th align='left'>System</th>";
+    #echo "\n<th align='left'>System</th>";
+    echo "\n<th width=110 align=left>Name&nbsp;/&nbsp;Arch&nbsp;/&nbsp;Desc.</th>"; 
     echo "\n<th align='center'>Last Backup</th>";
     echo "\n<th align='center'>Duration</th>";
     echo "\n<th align='center'>Status</th>";
     echo "\n<th align='center'>Log & Hist.</th>";
-    echo "\n<th align='center'>Rear<br>Schedule</th>";
+    echo "\n<th align='center'>Schedule</th>";
     echo "\n<th align='center'>Sporadic</th>";
     echo "\n<th align='center'>ReaR</th>";
     echo "\n<th align='center'>Next Backup</th>";
@@ -215,14 +218,23 @@ function display_data($count, $row) {
     # Line Counter
     echo "\n<td align='center'>" . $count . "</td>";  
 
-    # Show System name
-    echo "<td>";
-    echo "<a href='" . $URL_UPDATE . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP . "'";
-    echo " title='Click to view system info, $WOS $WVER system - " . $row['srv_note'] . "'>";
-    echo $row['srv_name']  . "</a>&nbsp;&nbsp;"; 
-    $WOS   = sadm_clean_data($row['srv_osname']);
-    echo "<br>" . $row['srv_desc'];
-    echo "</td>\n";
+    # System Name / Architecture / Description
+    echo "\n<td>" ;
+    echo "<a href='" .$URL_HOST_INFO. "?sel=" .$row['srv_name']. "' data-toggle='tooltip' title='";
+    echo "Note: " . $row['srv_note']. "\n" ; 
+    echo "Model: ". ucfirst(strtolower($row['srv_model'])) ."\nIP: ". $row['srv_ip'] . "'>\n" ;
+    echo $row['srv_name']. "</a>&nbsp;&nbsp;" .$row['srv_arch'] ;
+    echo "\n<br>" . $row['srv_desc'] ;
+    echo "\n</td>";   
+
+    ## Show System name
+    #echo "<td>";
+    #echo "<a href='" . $URL_UPDATE . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP . "'";
+    #echo " title='Click to view system info, $WOS $WVER system - " . $row['srv_note'] . "'>";
+    #echo $row['srv_name']  . "</a>&nbsp;&nbsp;"; 
+    #$WOS   = sadm_clean_data($row['srv_osname']);
+    #echo "<br>" . $row['srv_desc'];
+    #echo "</td>\n";
 
 
     # Last Rear Backup Date/Time & Check if overdue.
@@ -318,7 +330,7 @@ if ((file_exists($elog_name)) and (file_exists($elog_name)) and (filesize($elog_
 $rch_www_name  = $row['srv_name'] . "_$BACKUP_RCH";
 if (file_exists($rch_name)) {
     echo "<a href='" . $URL_VIEW_RCH . "?host=" . $row['srv_name'] . "&filename=" . $rch_www_name . "'" ;
-    echo " title='View Backup History (rch) file'>[rch]</a>";
+    echo " title='View Backup History (rch) file'>[hist]</a>";
 }else{
     echo "&nbsp;[NoRCH]";
 }
@@ -460,7 +472,8 @@ echo "</td>\n";
     #}     
     
     $title1="ReaR Backup Status";                                       # Page Title 1
-    $title2=" "; 
+    $title2="<a href='https://relax-and-recover.org'>ReaR</a> support Intel x86 "; 
+    $title2="$title2 (32-bit and 64-bit), AMD x86 (64-bit) and PPC64LE architectures"; 
     display_lib_heading("NotHome","$title1","$title2",$WVER);           # Display Heading
     
     # Loop Through Retrieved Data and Display each Row
@@ -472,10 +485,10 @@ echo "</td>\n";
     }
     echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
 
-    echo "<center>"; 
-    echo "MacOS & ARM systems aren't shown on this page because they aren't supported by "; 
-    echo "<a href='https://relax-and-recover.org'>ReaR.</a>"; 
-    echo "</center>";
+#    echo "<center>"; 
+#    echo "MacOS & ARM systems aren't shown on this page because they aren't supported by "; 
+#    echo "<a href='https://relax-and-recover.org'>ReaR.</a>"; 
+#    echo "</center>";
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
     std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>
