@@ -56,8 +56,7 @@
 #@2024_12_28 lib v2.25 Fix problem date of next schedule at end of year in 'SCHEDULE_TO_TEXT()'.
 #@2025_03_05 lib v2.26 Update O/S Logo and documentation URL.
 #@2025_05_07 lib v2.27 Update O/S Logo and documentation URL.
-#@2025_07_20 lib v2.28 Add pencil image in standar5d page heading.
-display_lib_heading
+#@2025_07_20 lib v2.28 Add pencil image in standard page heading.
 #===================================================================================================
 
 
