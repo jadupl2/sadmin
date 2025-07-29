@@ -2395,10 +2395,9 @@ sadm_start() {
     [ ! -f "$SADM_ELOG" ]     && touch $SADM_ELOG                       # Create ELOG If not exist
 
     # Will work when running with root, don't give error if we are not 'root'.
-    chmod 666 "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 # Change Perm.only with root
+    chmod 666 "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 # Log & RCH Change Permission 
     if [ "$(id -u)" -eq 0 ] 
-        then chgrp "${SADM_GROUP}" "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 
-             chown "${SADM_USER}"  "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 
+       then chown "${SADM_USER}:${SADM_GROUP}"  "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 
     fi 
 
     # Check if log and error log are writable.
