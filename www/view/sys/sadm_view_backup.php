@@ -39,6 +39,7 @@
 #@2025_04_28 web v2.6 Backup status page - Refresh disposition.
 #@2025_05_29 web v2.7 Backup start up time corrected, was the time of previous to the last backup.
 #@2025_06_20 web v2.8 Modify output when no backup was available.
+#@2025_07_28 web v2.9 Adjust the legend at the bottom of the page.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -112,7 +113,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/lib/sadmPageWrapper.php');    # Headi
 # Local Variables
 #===================================================================================================
 $DEBUG              = False;                                           # Debug Activated True/False
-$WVER               = "2.8";                                           # Current version number
+$WVER               = "2.9";                                           # Current version number
 $URL_CREATE         = '/crud/srv/sadm_server_create.php';               # Create Page URL
 $URL_UPDATE         = '/crud/srv/sadm_server_update.php';               # Update Page URL
 $URL_DELETE         = '/crud/srv/sadm_server_delete.php';               # Delete Page URL
@@ -496,13 +497,16 @@ function display_data($count, $row)
 #===================================================================================================
 function backup_legend()
 {
-    echo  "\n<hr>\n<center><b>\n";
-    echo "If backup status isn't a 'Success' it will have a different background color.<br>\n";
-    echo "If the current backup size is zero or " . SADM_BACKUP_DIF . "% bigger or smaller than the previous backup, it will be in red.<br>\n";
-    echo "If the previous backup size is zero or " . SADM_BACKUP_DIF . "% bigger or smaller than the current backup, it will be in red.<br>\n";
-    echo "You can change the " . SADM_BACKUP_DIF . "% by modifying the variable 'SADM_BACKUP_DIF' in \$SADMIN/cfg/sadmin.cfg.<br>\n";
-    echo "If the date of the last backup is not today, it will have the last backup date in red.<br>\n";
-    echo  "</center><br><br>\n";
+    echo  "\n<hr>\n<b>\n";
+    echo "Will have a colored background when :  <br>\n"; 
+    echo "1- The backup have failed.<br>\n";
+    echo "2- The latest & previous backup size differ for more than " .SADM_BACKUP_DIF. "%.<br>\n";
+    echo "&nbsp;&nbsp;&nbsp;&nbsp;This percentage is set in '\$SADMIN/cfg/sadmin.cfg' by the value of 'SADM_BACKUP_DIF'.<br>\n";
+    echo "3- If the last backup is older than " .SADM_BACKUP_INTERVAL. " days.<br>\n";
+    echo "&nbsp;&nbsp;&nbsp;&nbsp;Set by the value of 'SADM_BACKUP_INTERVAL' in '\$SADMIN/cfg/sadmin.cfg'.<br>\n";
+    echo  "<br>\n";
+    echo "Backup are recorded on '" . SADM_BACKUP_NFS_SERVER . "' in '" . SADM_BACKUP_NFS_MOUNT_POINT . "' directory.";
+    echo  "<br>\n";
 }
 
 
@@ -538,8 +542,7 @@ function backup_legend()
     if (file_exists(SADM_WWW_DIR . "/view/daily_backup_report.html")) {
         $title2 = "<a href='" . $URL_BACKUP_REPORT . "'>View the Backup Daily Report</a>";
     }
-    $title2 = "Backup are recorded on '" . SADM_BACKUP_NFS_SERVER . "' in '";
-    $title2 = "$title2" . SADM_BACKUP_NFS_MOUNT_POINT . "' directory.";
+
     display_lib_heading("NotHome", "$title1", "$title2", $WVER);        # Display Content Heading
 
     setup_table();                                                      # Create Table & Heading
@@ -553,6 +556,6 @@ function backup_legend()
     echo "\n</table>\n</tbody>";                                        # End of tbody,table
 
    #echo "</div> <!-- End of SimpleTable          -->";                 # End Of SimpleTable Div
-    backup_legend();
+    backup_legend();                                                    # Display Legend               
     std_page_footer($con);                                              # Close MySQL & HTML Footer
 ?>
