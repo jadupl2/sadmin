@@ -449,5 +449,5 @@ function display_data($count,$con,$row) {
     echo "\n</table>\n";                                                # End of tbody,table
     echo "\n</tbody>" ;
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
-    std_page_footer($con)                                         # Close MySQL & HTML Footer
+    std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>
