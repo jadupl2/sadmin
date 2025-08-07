@@ -72,6 +72,7 @@
 #@2025_01_30 lib v4.57 sadm_vm_export_nfs_server_ver,sadm_backup_nfs_server_ver,sadm_rear_nfs_server_ver
 #@2025_02_21 lib v4.58 Fix some seldom error with these 2 functions 'get_host_ip'& 'get_domainname'.
 #@2025_07_09 lib v4.59 Adjust content of variable 'dir_www_arc'.
+#@2025_08_07 lib v4.60 If don't use RCH, (sa.use_rch=False), won't delete (sa,rch_file) script 'rch'.
 # 
 # --------------------------------------------------------------------------------------------------
 
@@ -106,7 +107,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.59"                                # This Library Version
+lib_ver             = "4.60"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -2120,9 +2121,9 @@ def stop(pexit_code) :
                 shutil.copyfile(rch_file, woutput )                     # Copy Now rch to www
             except Exception as e:
                 print ("Couldn't copy %s to %s\n%s\n" % (rch_file,woutput,e)) # Advise user
-    else :
-        if not use_rch :                                                # If not using RCH File
-            silentremove(rch_file)                                      # Then Delete it 
+    #else :
+    #    if not use_rch :                                                # If not using RCH File
+    #        silentremove(rch_file)                                      # Then Delete it 
 
     # If on SADMIN Server, copy immediately rch, log and elog to server central directories.
     if (sadm_host_type == "S" and os.getuid() == 0 ) :              # If on SADMIN Server
@@ -2545,7 +2546,8 @@ def sendmail(mail_addr, mail_subject, mail_body, mail_attach="") :
     data['From '] = sadm_smtp_sender                                    # store sender email address  
     data['To '] = mail_addr                                             # store receiver email 
     data['Subject '] = mail_subject                                     # storing the subject 
-    data.attach(MIMEText(mail_body, 'plain'))                           # attach body with msg inst
+    data.attach(MIMEText(str(mail_body), 'plain'))                           # attach body with msg inst
+    #data.attach(MIMEText(encoded_elements, 'plain'))                     # attach body with msg inst
 
     if mail_attach != "" :
         filenames = mail_attach.split(',')
