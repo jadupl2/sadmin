@@ -248,6 +248,7 @@
 #@2025_07_01 lib v4.70 sadm_stop(), line with result code 2 were not deleted in the .rch file.
 #@2025_07_09 lib v4.71 Remove the update of rpt file when locking a system (already done).
 #@2025_07_20 lib v4.72 Change log directory permission 775 instead of 755
+#@2025_08_09 lib v4.73 When on sadmin server, update the way we update the global log/rch directory.
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -258,7 +259,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.72"                                              # This Library Version
+export SADM_LIB_VER="4.73"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -2745,18 +2746,14 @@ sadm_stop() {
 
 
     # If script is running on the SADMIN server, copy log and rch immediatly to web data dir.
-    if [ "$SADM_HOST_TYPE" = "S" ]                                      # Only run on SADMIN server
+    if [ "$SADM_HOST_TYPE" = "S" ] && [ $(id -u) -eq 0 ]                # Only run on SADMIN server
        then 
+
+            # Rsync Local 'log' directory ($SADMIN/log) 
+            # to Global log web dir. ($SADMIN/www/dat/$SADM_HOSTNAME/log)
             WLOGDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/log"          # Host Main LOG Directory
             if [ ! -d "${WLOGDIR}" ] ;then mkdir -p -m 775 $WLOGDIR ;fi # Host Log dir. not exist
             WLOG="${WLOGDIR}/${SADM_HOSTNAME}_${SADM_INST}.log"         # LOG File Name in Main Dir
-
-            WRCHDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"          # Host Main RCH Directory
-            if [ ! -d "${WRCHDIR}" ] ; then mkdir -p -m 775 $WRCHDIR ; fi      # Host Main Dir don't exist
-            WRCH="${WRCHDIR}/${SADM_HOSTNAME}_${SADM_INST}.rch"         # RCH File Name in Main Dir
-
-            # Rsync Local 'log' directory ($SADMIN/log) 
-            # to Global log web dir. ($SADMIN/www/dat/$SADM_HOSTNAME)
             rsync -ar --no-t --delete ${SADM_LOG_DIR}/ ${WLOGDIR}/ >/dev/null 2>&1 
             if [ $? -ne 0 ] 
                 then sadm_write_err "[ ERROR ] Doing rsync between $SADM_LOG_DIR to $WLOGDIR"
@@ -2766,6 +2763,9 @@ sadm_stop() {
 
             # Rsync Local 'rch' directory 
             # to Global rch web directory ($SADMIN/www/dat/$SADM_HOSTNAME)/rch)
+            WRCHDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"          # Host Main RCH Directory
+            if [ ! -d "${WRCHDIR}" ] ; then mkdir -p -m 775 $WRCHDIR ; fi      # Host Main Dir don't exist
+            WRCH="${WRCHDIR}/${SADM_HOSTNAME}_${SADM_INST}.rch"         # RCH File Name in Main Dir
             rsync -ar --no-t --delete ${SADM_RCH_DIR}/ ${WRCHDIR}/ >/dev/null 2>&1 
             if [ $? -ne 0 ] 
                 then sadm_write_err "[ ERROR ] Doing rsync between $SADM_RCH_DIR to $WRCHDIR" 
