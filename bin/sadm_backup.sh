@@ -760,7 +760,7 @@ function cmd_options()
     while getopts "d:hnvw" opt ; do                                     # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
-               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
+               num=$(echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$)  # Valid is Level is Numeric
                if [ "$num" = "" ]                                       # No it's not numeric 
                   then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
@@ -794,7 +794,6 @@ function cmd_options()
 
     cmd_options "$@"                                                    # Check command-line Options    
     sadm_start                                                          # Create Dir.,PID,log,rch
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
     mount_nfs                                                           # Mount NFS Dir.
     if [ $? -ne 0 ] ; then umount_nfs "$LOCAL_MOUNT" ; sadm_stop 1 ; exit 1 ; fi  
     backup_setup                                                        # Create Necessary Dir.
