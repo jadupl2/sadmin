@@ -49,12 +49,12 @@
 # 2023_07_26 server v3.20 Restrict execution on the SADMIN server only.
 # 2023_08_18 server v3.21 Update to SADMIN section v2.3 & update database I/O functions.
 # 2025_01_25 server v3.22 Update VM Guest version in Database for sysinfo.txt file.
-# 
+#@2025_08_15 server v3.23 Added restriction to run only on 'SADMIN' server.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
 try :
-    import os,time,sys,argparse,pdb,socket,datetime,glob,pymysql,fnmatch 
+    import os,time,sys,argparse,pdb,socket,datetime,glob,fnmatch 
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
@@ -76,7 +76,7 @@ except ImportError as e:                                                # If Err
     sys.exit(1)                                                         # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver        = "3.22"                                                    # Program version
+pver        = "3.23"                                                    # Program version
 pdesc       = "Update SADMIN database with information collected from each system."
 phostname   = sa.get_hostname()                                         # Get current `hostname -s`
 pdebug      = 0                                                         # Debug level from 0 to 9
@@ -98,7 +98,7 @@ sa.log_header        = True       # Show/Generate Header in script log (.log)
 sa.log_footer        = True       # Show/Generate Footer in script log (.log)
 sa.multiple_exec     = "Y"        # Allow running multiple copy at same time ?
 sa.proot_only        = False      # Pgm run by root only ?
-sa.psadm_server_only = False      # Run only on SADMIN server ?
+sa.psadm_server_only = True       # Run only on SADMIN server ?
 sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (sa.cmd_ssh,sa.sadm_ssh_port)
 
 # The values of fields below, are loaded from sadmin.cfg when you import the SADMIN library.
