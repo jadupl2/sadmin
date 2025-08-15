@@ -73,6 +73,7 @@
 #@2025_02_21 lib v4.58 Fix some seldom error with these 2 functions 'get_host_ip'& 'get_domainname'.
 #@2025_07_09 lib v4.59 Adjust content of variable 'dir_www_arc'.
 #@2025_08_07 lib v4.60 If don't use RCH, (sa.use_rch=False), won't delete (sa,rch_file) script 'rch'.
+#@2025_08_15 lib v4.61 MySQL & Python module 'pymysql' must be present, if db_used is set to true.
 # 
 # --------------------------------------------------------------------------------------------------
 
@@ -99,15 +100,25 @@ try :
     import subprocess                                       # Subprocess management
     import multiprocessing                                  # Process-based parallelism
 #   import pdb                                              # Python Debugger
-    import pymysql 
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
-#pdb.set_trace()                                            # Activate Python Debugging
+
+# Load MySQL module if it exist
+    try : 
+        import pymysql 
+    except ImportError as e:
+        if db_used :
+            print ("\nVar. 'db_used' set to True and module 'pymysql' isn't installed: \n%s\n " % e)
+            sys.exit(1)
+        else : 
+            print ("\nModule pymysql loaded.\n")
+        
+
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.60"                                # This Library Version
+lib_ver             = "4.61"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -126,6 +137,7 @@ pusername           = pwd.getpwuid(os.getuid())[0]          # Get Current User N
 #
 #
 # Fields used by sa.start(),sa.stop() & DB functions that influence execution of SADMIN library
+# Thse are default values, they can be changed by the script that use this library.
 db_used        = True           # Open/Use DB(True), No DB needed (False), sa.start() auto connect
 db_silent      = False          # When DB Error Return(Error), True = NoErrMsg, False = ShowErrMsg
 db_conn        = None           # Use this Database Connector when using DB,  set by sa.start()
@@ -2326,12 +2338,12 @@ def start(pver,pdesc) :
 
     # If this script can only be run on the SADMIN server
     if on_sadmin_server() == "N" and psadm_server_only : 
-        print("Script can only run on a SADMIN server.")
-        print("Must met these conditions :")
+        print("This script can only run on a 'SADMIN' server.\n")
+        print("These are the requirements to access the 'SADMIN' database : ")
         print(" - Variable 'SADM_HOST_TYPE' in $SADMIN/cfg/sadmin.cfg must be 'S'.")
         print(" - The IP of the host 'sadmin' must refer to an ip define on this host.")
-        print(" - The 'sadmin' MySQL database must be present on this host.") 
-        print("Process aborted.")                                       # Abort advise message
+        print(" - The 'SADMIN' MySQL database & Python module 'pymysql' must be present.") 
+        print("\nProcess aborted.")                                       # Abort advise message
         stop(1)                                                         # Close SADMIN 
         sys.exit(1)                                                     # Back to O/S 
     
@@ -2769,5 +2781,4 @@ if (os.getenv("SADMIN",default="X") == "X"):                            # SADMIN
 load_config_file(cfg_file)                                              # Load sadmin.cfg in Dict.
 load_cmd_path()                                                         # Load Cmd Path Variables
 dict_alert = load_alert_file()                                          # Load Alert group in dict
-if (lib_debug > 0) :                                                    # Under debugging
-    print_dict_alert()                                                  # Print Alert Group Dict
+if (lib_debug > 0) : print_dict_alert()                                 # Print Alert Group Dict
