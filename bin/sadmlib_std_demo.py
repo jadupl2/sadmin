@@ -61,11 +61,10 @@
 #==================================================================================================
 #
 try :
-    import os, time, sys, pdb, socket, datetime, glob, argparse, platform
+    import os, time, sys, pdb, socket, pdb, datetime, glob, argparse, pymysql, platform
 except ImportError as e:                                            
     print ("Import Error : %s " % e)
     sys.exit(1)
-
 
 #pdb.set_trace()                                                    # Activate Python Debugging
 
@@ -333,8 +332,10 @@ def print_functions():
 # Print SADMIN Function available to Users
 #===================================================================================================
 def print_python_function():
-    printheader ("FUNCTIONS AVAILABLE ONLY PYTHON","Description","  This System Result")
+#    pdb.set_trace()                                                    # Activate Python Debugging
 
+    (db_conn,db_cur,db_errno,db_errmsg) = sa.db_connect('sadmin')
+    print ("\ndb_conn=%d, db_cur=%d, db_errno=%d, db_errmsg%s\n") % (db_conn,db_cur,db_errno,db_errmsg)
     pexample="sa.db_connect('sadmin')"                                  
     pdesc="Open connection to database"                                 # Function Description
     presult="1=Success 1=Error"                                         # Return 3 Value(s)
