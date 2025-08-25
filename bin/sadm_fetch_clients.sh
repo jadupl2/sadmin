@@ -599,7 +599,9 @@ update_vmexport_crontab ()
 
     # To Display Parameters received - Used for Debugging Purpose ----------------------------------
     if [ $SADM_DEBUG -gt 4 ] 
-        then sadm_write_log "I'm in update_vmexport_crontab"
+        then sadm_write_log " " 
+             sadm_write_log "==========" 
+             sadm_write_log "I'm in upupdate_vmexport_crontab"
              sadm_write_log "cserver  = $cserver"                        # Server to export
              sadm_write_log "chost    = $host"                           # VirtualBox Hostname
              sadm_write_log "cscript  = $cscript"                        # Script to execute
@@ -687,7 +689,7 @@ update_vmexport_crontab ()
     fi
 
     cline="$cline $SADM_USER sudo \$RMCMD_LOCK -u ${SADM_VM_USER} -n $chost -l $cserver -s $cscript -a $cserver" 
-    if [ $SADM_DEBUG -gt 2 ] ; then sadm_write_log "[ DEBUG ] cline=.$cline." ;fi 
+    if [ $SADM_DEBUG -gt 2 ] ; then sadm_write_log "[ DEBUG ] cline='$cline'" ;fi 
     echo "$cline" >> $SADM_VMEXPORT_NEWCRON                             # Output Line to VM Crontab 
     return
 }
@@ -730,7 +732,7 @@ create_vm_list()
     fi 
 
     # CReate VM Hosts, if the list of vm is not empty, create the vm host file from it.
-    if [ -s "$SADM_VMLIST" ]                                                 
+    if [ -s "$SADM_VMLIST" ]                                            # Exist & contain data     
         then sadm_write_log " "                                         # Separation Blank Line
              sadm_write_log "Creating list of all VM Hosts '$SADM_VMHOSTS'."
              awk -F, '{print $1}' "$SADM_VMLIST" | sort | uniq > $SADM_VMHOSTS

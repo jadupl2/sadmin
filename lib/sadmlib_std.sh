@@ -249,7 +249,7 @@
 #@2025_07_09 lib v4.71 Remove the update of rpt file when locking a system (already done).
 #@2025_07_20 lib v4.72 Change log directory permission 775 instead of 755
 #@2025_08_09 lib v4.73 When on sadmin server, update the way we update the global log/rch directory.
-#@2025_08_25 lib v4.74 Change location of 'vm_list.txt' & 'vm_hosts.txt' to '$SADMIN/dat' directory. 
+#@2025_08_25 lib v4.74 Change location of 'vm_list.txt' & 'vm_hosts.txt' to '$SADMIN/dat/dr' dir. 
 #===================================================================================================
 
 trap 'exit 0' 2  
