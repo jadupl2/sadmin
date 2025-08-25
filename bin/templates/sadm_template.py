@@ -2,7 +2,7 @@
 # --------------------------------------------------------------------------------------------------
 #   Author      :   Your Name
 #   Script Name :   XXXXXXXX.py
-#   Date        :   2024/MM/DD
+#   Date        :   2025/MM/DD
 #   Requires    :   python3 and SADMIN Python Library
 #   Description :   Your description of what this script is doing.
 # ---------------------------------------------------------------------------------------------------
@@ -25,21 +25,19 @@
 #
 # VERSION CHANGE LOG
 # ------------------
-# 2024_01_21 lib v1.56 Python standard template, can be use to create your next scripts.
-#                      Need to access SADMIN database ? : Use 'sadm_template_with_db.py' instead.
-#@2025_07_09 lib v1.56 Added import of module pwd.
+# 2025_08_25 lib v1.00 Initial Version
 # --------------------------------------------------------------------------------------------------
 #
 
 # Modules needed by this script SADMIN Tools and they all come with Standard Python 3.
 try:
-    import os,sys,pwd,argparse,time,datetime,socket,platform,re         # Import Std Python3 Modules
-    import pymysql                                                      # Use for MySQL DB
-#   import pdb                                                          # Python Debugger(If needed)
-except ImportError as e:                                                # Trap Import Error
-    print("Import Error : %s " % e)                                     # Print Import Error Message
-    sys.exit(1)                                                         # Back to O/S With Error1
-#pdb.set_trace()                                                        # Activate Python Debugging
+    import os, sys, argparse, time, datetime, socket, platform, re  # Import Std Python3 Modules
+    import pymysql                                                  # Use for MySQL DB
+#   import pdb                                                      # Python Debugger (If needed)
+except ImportError as e:                                            # Trap Import Error
+    print("Import Error : %s " % e)                                 # Print Import Error Message
+    sys.exit(1)                                                     # Back to O/S With Error Code 1
+#pdb.set_trace()                                                    # Activate Python Debugging
 
  
 
@@ -64,18 +62,18 @@ except ImportError as e:                                             # If Error 
     sys.exit(1)                                                      # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver        = "1.3"                                                  # Program version no.
+pver        = "1.3"               # Program version no.
 pdesc       = "Put here a description of your script."
-phostname   = sa.get_hostname()                                      # Get current `hostname -s`
-pdebug      = 0                                                      # Debug level from 0 to 9
-pexit_code  = 0                                                      # Script default exit code
+phostname   = sa.get_hostname()   # Get current `hostname -s`
+pdebug      = 0                   # Debug level from 0 to 9
+pexit_code  = 0                   # Script default exit code
+db_conn     = None                # Database Connector (if used)
+db_cur      = None                # Database Cursor (if used)
 
 # Fields used by sa.start(),sa.stop() & DB functions that influence execution of SADMIN library
-sa.db_used           = False      # Open/Use DB(True), No DB needed (False), sa.start() auto connect
+sa.db_used           = True      # Open/Use DB(True), No DB needed (False), sa.start() auto connect
 sa.db_silent         = False      # True=ReturnErrorNo & No ErrMsg, False=ReturnErrorNo & ShowErrMsg
-sa.db_conn           = None       # Use this Database Connector when using DB,  set by sa.start()
-sa.db_cur            = None       # Use this Database cursor if you use the DB, set by sa.start()
-sa.db_name           = ""         # Database Name default to name define in $SADMIN/cfg/sadmin.cfg
+sa.db_name           = "sadmin"   # Database Name default to name define in $SADMIN/cfg/sadmin.cfg
 sa.db_errno          = 0          # Database Error Number
 sa.db_errmsg         = ""         # Database Error Message
 #
@@ -84,7 +82,7 @@ sa.log_type          = 'B'        # Output goes to [S]creen to [L]ogFile or [B]o
 sa.log_append        = False      # Append Existing Log(True) or Create New One(False)
 sa.log_header        = True       # Show/Generate Header in script log (.log)
 sa.log_footer        = True       # Show/Generate Footer in script log (.log)
-sa.multiple_exec     = "Y"        # Allow running multiple copy at same time ?
+sa.multiple_exec     = "N"        # Allow running multiple copy at same time ?
 sa.proot_only        = False      # Pgm run by root only ?
 sa.psadm_server_only = False      # Run only on SADMIN server ?
 sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (sa.cmd_ssh,sa.sadm_ssh_port)
@@ -111,17 +109,100 @@ sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (s
 
 
 
+# Process all your active(s) server(s) in the Database (Used if want to process selected servers)
+# Called when 'sa.db_used' is set to 'True'.
+# --------------------------------------------------------------------------------------------------
+def process_servers(fconn=db_conn,fcur=db_cur):
+
+    sa.write_log("Processing all actives server(s)")                    # Enter Servers Processing
+
+    if (sa.db_used == False) :                                          # Make sure db_used is True
+        sa.write_err ("Variable 'sa.db_used' must be set to 'True' to have access to the database.")
+        return(1)                                                       # Return error to caller
+    
+    # Construct SQL
+    # See columns available in 'table_structure_server.pdf' in $SADMIN/doc/pdf/database directory
+    sql = "SELECT * FROM server WHERE srv_active = %s order by srv_name;" % ('True')
+
+    try:
+        fcur.execute(sql)                                               # Execute SQL Statement
+        rows = fcur.fetchall()                                          # Retrieve All Rows
+    except(pymysql.err.InternalError, pymysql.err.IntegrityError, pymysql.err.DataError) as e:
+        enum, emsg = e.args                                             # Get Error No. & Mee
+        sa.write_err("Error: Retrieving all active systems rows.")      # User error message
+        sa.write_err("%s %s" % (enum, emsg))                            # Print Error No. & Message
+        return (1)                                                      # Return error to caller
+
+    # Process each Active Servers
+    lineno      = 1                                                     # System Count Start at 1
+    error_count = 0                                                     # Clear Error Counter
+    for row in rows:                                                    # Process each server row
+        wname       = row['srv_name']                                   # Extract Server Name
+        wdesc       = row['srv_desc']                                   # Extract Server Desc.
+        wdomain     = row['srv_domain']                                 # Extract Server Domain Name
+        wos         = row['srv_osname']                                 # Extract Server O/S Name
+        wsporadic   = row['srv_sporadic']                               # Extract Server Sporadic ?
+        wmonitor    = row['srv_monitor']                                # Extract Server Monitored ?
+        wosversion  = row['srv_osversion']                              # Extract Server O/S Version
+        wssh_port   = row['srv_ssh_port']                               # Extract Server SSH Port
+        wfqdn       = "%s.%s" % (wname, wdomain)                        # Construct FQDN
+        #sa.write_log("\n%s" % ('-' * 40))                               # Insert 40 Dashes Line
+        sa.write_log("  ")                                              # Blank Lime
+        sa.write_log("Processing (%d) %-15s - %s %s %s" % (lineno,wfqdn,wos,wosversion,wdesc))  
+
+        # Check if system name can be resolved,
+        try:
+            hostip = socket.gethostbyname(wfqdn)                        # Resolve Server Name ?
+        except socket.gaierror:                                         # Hostname can't be resolve
+            sa.write_err("[ ERROR ] Can't process %s, hostname can't be resolved" % (wfqdn))
+            error_count += 1                                            # Increase Error Counter
+            if (error_count != 0):                                      # If Error count not at zero
+                sa.write_log("Total error(s) : %s" % (error_count))     # Show Total Error Count
+            continue                                                    # Go read Next Server
+
+        # Check if System is Locked.
+        if sa.lock_status(wname) != 0:                                  # Is System Lock ?
+            sa.write_err("[ WARNING ] System '%s' is currently lock." % (wname))
+            sa.write_log("Continuing with next system")                 # Not Error if system lock
+            continue                                                    # Go read Next Server
+
+        # Perform a SSH to system currently processing
+        #cur_datetime = datetime.datetime.now()                          # Get current Date & Time
+        #ws_datetime  = cur_datetime.strftime("%Y/%m/%d %H:%M:%S")       # Format Date and Time
+        ssh_command  = "%s -qnp %s -o ConnectTimeout=3 " % (sa.cmd_ssh,wssh_port)
+        wcommand = "%s %s %s" % (ssh_command,wfqdn,"date")              # SSH Cmd to Server for date
+        if pdebug > 0 : sa.write_log("Command is %s" % (wcommand))      # Show SSH Command in debug
+
+        ccode,cstdout,cstderr = sa.oscommand("%s" % (wcommand))         # Get system date/time
+        if (ccode == 0):                                                # If ssh Worked
+            sa.write_log("[OK] SSH Succeeded %s" % (cstdout))           # OK + date/Time of system
+        else:                                                           # If ssh didn't work
+            if wsporadic:                                               # Is it a Sporadic Server
+                sa.write_err("[ WARNING ] Can't SSH to sporadic system %s" % (wfqdn))
+                sa.write_log("Continuing with next system")             # Not Error if Sporadic Srv.
+                continue                                                # Continue with next system
+            else:
+                error_count += 1                                        # Increase Error Counter
+                sa.write_err("[ ERROR ] SSH Error %d %s" % (ccode, cstderr))  
+        if (error_count != 0): sa.write_log("Total error(s) : %s" % (error_count)) 
+        lineno += 1                                                     # Increase Server Counter
+
+    return (error_count)                                                # Return Err.Count to caller
 
 
 
-# Main Process (Used to run script on current server)
+
+
+
+# Main Process (Insert here your main process (Called when 'sa.db_used' is set to 'False'.)
 # --------------------------------------------------------------------------------------------------
 def main_process():
 
-    # Insert your code HERE !
+    sa.write_log ("Insert your code here.")
     sa.sleep(8,2)
+    sa.write_log(" ")
 
-    # Return Err. Code To Caller
+    # Return Result code to caller
     return(pexit_code)
 
 
@@ -176,9 +257,15 @@ def cmd_options(argv):
 # --------------------------------------------------------------------------------------------------
 def main(argv):
     (pdebug) = cmd_options(argv)                                        # Analyze cmdline options
-    sa.start(pver, pdesc)                                               # Initialize SADMIN env.
-    pexit_code = main_process()                                         # Main Process without DB
-    sa.stop(pexit_code)                                                 # Gracefully exit SADMIN
+
+    if sa.db_used : 
+        (db_conn,db_cur) = sa.start(pver,pdesc)                         # Initialize SADMIN env.
+        pexit_code = process_servers(db_conn,db_cur)                    # Loop All Active systems
+        sa.stop(pexit_code,db_conn,db_cur)                              # Exit Gracefully & Close DB
+    else: 
+        sa.start(pver,pdesc)                                            # Initialize SADMIN env.
+        pexit_code = main_process()                                  # Loop All Active systems
+        sa.stop(pexit_code)                                             # Exit Gracefully SADMIN Lib
     sys.exit(pexit_code)                                                # Back to O/S with Exit Code
 
 # This idiom means the below code only runs when executed from command line
