@@ -249,6 +249,7 @@
 #@2025_07_09 lib v4.71 Remove the update of rpt file when locking a system (already done).
 #@2025_07_20 lib v4.72 Change log directory permission 775 instead of 755
 #@2025_08_09 lib v4.73 When on sadmin server, update the way we update the global log/rch directory.
+#@2025_08_25 lib v4.74 Change location of 'vm_list.txt' & 'vm_hosts.txt' to '$SADMIN/dat' directory. 
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -259,7 +260,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.73"                                              # This Library Version
+export SADM_LIB_VER="4.74"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -282,6 +283,8 @@ export SADM_PKG_DIR="$SADM_BASE_DIR/pkg"                                # Packag
 export SADM_SETUP_DIR="$SADM_BASE_DIR/setup"                            # Package rpm,deb  directory
 export SADM_NMON_DIR="$SADM_DAT_DIR/nmon"                               # Where nmon file reside
 export SADM_DR_DIR="$SADM_DAT_DIR/dr"                                   # Disaster Recovery  files
+export SADM_VMLIST="$SADM_DAT_DIR/vm_list.txt"                          # List all VMs & Hosts 
+export SADM_VMHOSTS="$SADM_DAT_DIR/vm_hosts.txt"                        # List all VirtualBox Hosts
 export SADM_RCH_DIR="$SADM_DAT_DIR/rch"                                 # Result Code History Dir
 export SADM_NET_DIR="$SADM_DAT_DIR/net"                                 # Network SubNet Info Dir
 export SADM_RPT_DIR="$SADM_DAT_DIR/rpt"                                 # SADM Sysmon Report Dir
@@ -344,11 +347,9 @@ export SADM_BACKUP_EXCLUDE="$SADM_CFG_DIR/backup_exclude.txt"           # files 
 export SADM_BACKUP_EXCLUDE_INIT="$SADM_CFG_DIR/.backup_exclude.txt"     # Default Files to Exclude
 export SADM_REAR_EXCLUDE_INIT="$SADM_CFG_DIR/.rear_exclude.txt"         # Default Rear Files Excl.
 export SADM_CFG_HIDDEN="$SADM_CFG_DIR/.sadmin.cfg"                      # Default SADMIN Cfg File
-export SADM_DOCLINK="$SADM_WWW_DOC_DIR/pgm2doc_link.cfg"                # Script to Doc Link File
+export SADM_DOCLINK="$SADM_WWW_DOC_DIR/sadm_commands/pgm2doc_link.cfg"  # Script to Doc Link File
 export SADM_WEBSITE="https://sadmin.ca"                                 # sadmin website URL
 export SADM_VM_EXCLUDE_TEMPLATE="$SADM_CFG_DIR/.sadm_vm_exclude_start.txt" # VM Start exclude file
-export SADM_VMLIST="$SADM_WWW_DAT_DIR/vm_list.txt"                      # List all VMs & Hosts 
-export SADM_VMHOSTS="$SADM_WWW_DAT_DIR/vm_hosts.txt"                    # List all VirtualBox Hosts
 
 
 # Definition of SADMIN log, error log, Result Code  History (.rch) and Monitor report file (*.rpt).
@@ -2491,7 +2492,7 @@ sadm_start() {
             sadm_write_err "  - Can't run simultaneous copy of this script (\$SADM_MULTIPLE_EXEC='N')." 
             sadm_write_err "  - PID file ('\${SADMIN}/tmp/${SADM_INST}.pid'), was created $f_elapse seconds ago."
             sadm_write_err "  - The PID timeout ('\$SADM_PID_TIMEOUT') is set to $f_timeout seconds."
-            sadm_write_err " "
+            #sadm_write_err " "
             #sadm_write_err " "
             if [ -z "$SADM_PID_TIMEOUT" ]                               # SADM_PID_TIMEOUT defined ?
                 then sadm_write_err "Script can't run unless one of the following action is done :"
@@ -2503,20 +2504,20 @@ sadm_start() {
                      sadm_stop 1                                        # Close,Clean up before exit
                      exit 1                                             # Exit To O/S with Error
                 else if [ $pelapse -ge $SADM_PID_TIMEOUT ]              # PID Timeout reached
-                        then sadm_write_log "The PID file is now expired."
-                             sadm_write_log "Let's see if '$SADM_PN' is currently running."
+                        then sadm_write_log "  - The PID file is now expired."
+                             sadm_write_log "  - Let's see if '$SADM_PN' is currently running."
                              ps -ef | grep "$SADM_PN" | grep -v grep | nl >> $SADM_ELOG 2>&1
                              proc_count=$(ps -ef | grep "$SADM_PN"| grep -v grep | wc -l)
                              if [ $proc_count -gt 1 ] 
-                                then sadm_write_err "More than 1 process are running with the name '$SADM_PN'."
+                                then sadm_write_err "  - More than 1 process are running with the name '$SADM_PN'."
                                      ps -ef |grep "$SADM_PN" |grep -v grep |nl |tee -a $SADM_LOG 2>&1
-                                     sadm_write_err "Refusing to run another copy of this script."
+                                     sadm_write_err "  - Refusing to run another copy of this script."
                                      DELETE_PID="N"                     # No Del PID Since running
                                      sadm_stop 1                        # Close,Clean up before exit
                                      exit 1                             # Exit To O/S with Error
-                                else sadm_write_log "No process with the name '$SADM_PN' is currently running." 
-                                     sadm_write_log "Assuming that the script was aborted abnormally."
-                                     sadm_write_log "Script execution will now start and the PID file recreated."
+                                else sadm_write_log "  - No process with the name '$SADM_PN' is currently running." 
+                                     sadm_write_log "  - Assuming that the script was aborted abnormally."
+                                     sadm_write_log "  - Script execution will now start and the PID file recreated."
                                      sadm_write_log " "
                                      echo "SADM_TPID" > ${SADM_PID_FILE} >/dev/null 2>&1  
                                      DELETE_PID="Y"                     # Del PID Since running
