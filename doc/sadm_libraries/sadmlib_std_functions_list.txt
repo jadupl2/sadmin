@@ -1,0 +1,62 @@
+Fri Aug 22 09:59:23 PM EDT 2025
+     1	sadm_abort()
+     2	sadm_ask() {
+     3	sadm_capitalize() {
+     4	sadm_date_to_epoch() {
+     5	sadm_elapse() {
+     6	sadm_epoch_to_date() {
+     7	sadm_freshen_directories_structure() {
+     8	sadm_get_command_path() {
+     9	sadm_get_domainname() {
+    10	sadm_get_epoch_time() {
+    11	sadm_get_fqdn() {
+    12	sadm_get_host_ip() {
+    13	sadm_get_hostname() {
+    14	sadm_get_kernel_bitmode() {
+    15	sadm_get_kernel_version() {
+    16	sadm_get_oscodename() {
+    17	sadm_get_osmajorversion() {
+    18	sadm_get_osminorversion() {
+    19	sadm_get_osname() {
+    20	sadm_get_ostype() {
+    21	sadm_get_osversion() {
+    22	sadm_get_packagetype() {
+    23	sadm_get_release() {
+    24	sadmin_cfg_update() {
+    25	sadm_isnumeric() {
+    26	sadm_load_cmd_path() {
+    27	sadm_load_config_file() {
+    28	sadm_lock_status() {
+    29	sadm_lock_system()
+    30	sadm_nfs_mount()
+    31	sadm_nfs_unmount()
+    32	sadm_sendmail() {
+    33	sadm_server_arch() {
+    34	sadm_server_core_per_socket() {
+    35	sadm_server_cpu_speed() {
+    36	sadm_server_disks() {
+    37	sadm_server_hardware_bitmode() {
+    38	sadm_server_ips() {
+    39	sadm_server_memory() {
+    40	sadm_server_model() {
+    41	sadm_server_nb_cpu() {
+    42	sadm_server_nb_logical_cpu() {
+    43	sadm_server_nb_socket() {
+    44	sadm_server_serial() {
+    45	sadm_server_thread_per_core() {
+    46	sadm_server_type() {
+    47	sadm_server_vg() {
+    48	sadm_show_lock()
+    49	sadm_show_version()
+    50	sadm_sleep() {
+    51	sadm_start() {
+    52	sadm_stop() {
+    53	sadm_tolower() {
+    54	sadm_toupper() {
+    55	sadm_trimfile() {
+    56	sadm_unlock_system() {
+    57	sadm_write() {
+    58	sadm_write_dbg() {
+    59	sadm_write_err() {
+    60	sadm_write_log()
+    61	sadm_writelog() {

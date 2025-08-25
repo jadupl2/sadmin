@@ -1,0 +1,50 @@
+Fri Aug 22 09:59:23 PM EDT 2025
+     1	def date_to_epoch(wdate : str) -> int:
+     2	def db_close(db_conn,db_cur):
+     3	def db_connect(db_name):
+     4	def elapse_time(wdate1 : str ,wdate2 : str) -> str:
+     5	def epoch_to_date(wepoch : int):
+     6	def get_arch():
+     7	def get_domainname():
+     8	def get_epoch_time():
+     9	def get_fqdn():
+    10	def get_host_ip():
+    11	def get_hostname():
+    12	def get_ip_addresses(family):
+    13	def get_kernel_bitmode():
+    14	def get_kernel_version():
+    15	def get_mac_address(ip_address):
+    16	def get_nb_core_per_socket():
+    17	def get_nb_cpu():
+    18	def get_nb_socket():
+    19	def get_nb_thread_per_core():
+    20	def get_oscodename() :
+    21	def get_osmajorversion() :
+    22	def get_osminorversion() :
+    23	def get_osname(): 
+    24	def get_ostype():
+    25	def get_osversion() :
+    26	def get_packagetype():
+    27	def get_release() :
+    28	def get_serial():
+    29	def getUmask():
+    30	def load_alert_file():
+    31	def load_cmd_path(): 
+    32	def load_config_file(cfg_file):
+    33	def locate_command(cmd) :
+    34	def lock_status(fname, errmsg=True):
+    35	def lock_system(fname, errmsg=True ) :
+    36	def on_sadmin_server():
+    37	def oscommand (command : str) :
+    38	def print_dict_alert():
+    39	def sendmail(mail_addr, mail_subject, mail_body, mail_attach="") :
+    40	def show_version(pver):
+    41	def silentremove(filename : str):
+    42	def sleep(sleep_time=60, sleep_interval=15): 
+    43	def start(pver=0.0,pdesc=pn,db_name="sadmin") : 
+    44	def stop(pexit_code,db_conn='',db_cur='') :
+    45	def touch_file (filename : str) :
+    46	def trimfile(filename,nlines=500) :
+    47	def unlock_system(fname ,errmsg=True): 
+    48	def write_err (wline, lf=True ):
+    49	def write_log (wline, lf=True ):
