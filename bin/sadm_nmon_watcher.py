@@ -73,11 +73,11 @@ phostname   = sa.get_hostname()                                      # Get curre
 pdebug      = 0                                                      # Debug level from 0 to 9
 pexit_code  = 0                                                      # Script default exit code
 
-# Fields used by sa.start(), sa.stop() & DB functions to influence execution of SADMIN library
+# Fields used by sa(), sa.stop() & DB functions to influence execution of SADMIN library
 sa.db_used     = False          # Open/Use DB(True), No DB needed (False), sa.start() auto connect
 sa.db_silent   = False          # True=ReturnErrorNo & No ErrMsg, False=ReturnErrorNo & ShowErrMsg
-sa.db_conn     = None           # Use this Database Connector when using DB,  set by sa.start()
-sa.db_cur      = None           # Use this Database cursor if you use the DB, set by sa.start()
+sa.db_conn     = ''             # Use this Database Connector when using DB,  set by sa.start()
+sa.db_cur      = ''             # Use this Database cursor if you use the DB, set by sa.start()
 sa.db_name     = "sadmin"       # Database Name taken from $SADMIN/cfg/sadmin.cfg 
 sa.db_errno    = 0              # Database Error Number
 sa.db_errmsg   = ""             # Database Error Message
