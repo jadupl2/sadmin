@@ -69,6 +69,7 @@
 #@2024_11_11 client v3.39 Change permission to VM list file '$SADMIN/dat/dr/HOSTNAME_vm_list.txt'.
 #@2025_01_25 client v3.40 Add VM guest version line (SADM_VMGUEST_VERSION) to sysinfo.txt file
 #@2025_02_04 client v3.41 Now using 'VBoxClient' to get current VirtualBox Guest version.
+#@2025_08_25 client v3.42 Location change of 'vmlist.txt' file and review process of creating it.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # Intercept the ^C
 #set -x
@@ -98,7 +99,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.41'                                     # Script version number
+export SADM_VER='3.42'                                     # Script version number
 export SADM_PDESC="Collect hardware & software info of system" # Script Description
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -947,18 +948,28 @@ create_summary_file()
     chmod 644 $HWD_FILE 
     chown "$SADM_USER:$SADM_GROUP" "$HWD_FILE"
 
+
     # If we are on a VirtualBox System, create a sorted list of vm on the system to file $VMLIST.
-    # Application 'vboxmanage' MUST be run by '$SADM_VM_USER' defined in $SADMIN/cfg/sadmin.cfg.
+    # SADM_VMLIST="$SADM_DAT_DIR/vm_list.txt"                           # List all VMs & Hosts 
+    # Application 'vboxmanage' MUST be run by '$SADM_VM_USER' user defined in $SADMIN/cfg/sadmin.cfg
     if [ -f "$SADM_VMLIST" ] ; then rm -f "$SADM_VMLIST" >/dev/null 2>&1 ; fi
-    command -v vboxmanage > /dev/null 2>&1                              # If VirtualBox mgr exist
+    command -v vboxmanage > /dev/null 2>&1                              # Chk VirtualBox Mgr exist
     if [ $? -eq 0 ]                                                     # Yes it's present on system
         then VBMGR=$(command -v vboxmanage)                             # Get PATH of vboxmanage
-             su "$SADM_VM_USER" -c "$VBMGR list vms" |sort |awk '{print $1}' |tr -d '"' >"$SADM_TMP_FILE1"
-             touch "$SADM_VMLIST"                                            # Create Empty VM List file
-             # Example of line of VMLIST: 'anemone,ubuntu2204,/opt/sadmin'
-             while read GUEST
+             su - $SADM_VM_USER "-c $VBMGR list vms" > $SADM_TMP_FILE3
+             chmod 777 $SADM_TMP_FILE3 ; chown "$SADM_USER:$SADM_GROUP" "$SADM_TMP_FILE3" 
+             sort $SADM_TMP_FILE3 | awk '{print $1}' |tr -d '"'  > $SADM_TMP_FILE1
+             chmod 777 $SADM_TMP_FILE1 ; chown "$SADM_USER:$SADM_GROUP" "$SADM_TMP_FILE1" 
+
+             # Example of line in VMLIST: anemone,ubuntu2204,/opt/sadmin
+             sadm_write_log " "
+             sadm_write_log "List of VM on this machine in '$SADM_VMLIST' : "
+             vmcount=1
+             while read GUEST           
                 do
                    echo "${SADM_HOSTNAME},${GUEST},$SADMIN"  >> "$SADM_VMLIST"   
+                   sadm_write_log "${vmcount}-${SADM_HOSTNAME},${GUEST},$SADMIN"
+                   ((vmcount++))                                        # Increment VM Counter
                 done < "$SADM_TMP_FILE1"
              chmod 644 "$SADM_VMLIST"
              chown "$SADM_USER:$SADM_GROUP" "$SADM_VMLIST" 
