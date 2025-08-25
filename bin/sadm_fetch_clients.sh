@@ -149,7 +149,7 @@ export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader 
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
 export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
 export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
-export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
+export SADM_DEBUG=6                                        # Debug Level(0-9) 0=NoDebug
 export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
 export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") 
 export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX") 
@@ -395,8 +395,8 @@ update_rear_crontab ()
     SSH_PORT=$8
 
     # To Display Parameters received - Used for Debugging Purpose ----------------------------------
-    if [ "$SADM_DEBUG" -gt 5 ] 
-        then sadm_write_log "[ DEBUG ] I'm in update crontab"
+    if [ "$SADM_DEBUG" -gt 4 ] 
+        then sadm_write_log "[ DEBUG ] I'm in update rear crontab"
              sadm_write_log "[ DEBUG ] cserver  = $cserver"                        # Server to run script
              sadm_write_log "[ DEBUG ] cscript  = $cscript"                        # Script to execute
              sadm_write_log "[ DEBUG ] cmonth   = $cmonth"                         # Month String YNYNYNYNYNY..
@@ -650,7 +650,7 @@ update_vmexport_crontab ()
                 wchar=$(expr substr $cmonth $i 1)
                 xmth=$(expr $i - 1)                                     # Mth = Index -1 ,Cron Mth
                 if [ "$wchar" = "Y" ]                                   # If Month Set to Yes 
-                    then if [ $flag_mth -eq 0 ]                         # If 1st Insert in Cron Line
+                    then if [ $flag_mth -eq 0 ]                 cscript        # If 1st Insert in Cron Line
                             then fmth=$(printf "%02d" "$xmth")          # Add Month to Final Months
                                  flag_mth=1                             # No Longer the first Month
                             else wmth=$(printf "%02d" "$xmth")          # Format the Month number
@@ -896,6 +896,7 @@ create_crontab_files_header()
     echo "# "                                                       >> "$SADM_CRON_FILE" 
     echo "SADMIN=$SADM_BASE_DIR"                                    >> "$SADM_CRON_FILE"
     echo "# "                                                       >> "$SADM_CRON_FILE"
+    echo "# "                                                       >> "$SADM_CRON_FILE"
 
     # Header for" Backup Crontab Filn"
     echo "# "                                                        > "$SADM_BACKUP_NEWCRON" 
@@ -906,6 +907,7 @@ create_crontab_files_header()
     echo "# Day 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat"          >> "$SADM_BACKUP_NEWCRON"
     echo "# "                                                       >> "$SADM_BACKUP_NEWCRON" 
     echo "SADMIN=$SADM_BASE_DIR"                                    >> "$SADM_BACKUP_NEWCRON"
+    echo "# "                                                       >> "$SADM_BACKUP_NEWCRON"
     echo "# "                                                       >> "$SADM_BACKUP_NEWCRON"
 
     # Header for Rear Crontab File
@@ -918,6 +920,7 @@ create_crontab_files_header()
     echo "# "                                                       >> "$SADM_REAR_NEWCRON"
     echo "SADMIN=$SADM_BASE_DIR"                                    >> "$SADM_REAR_NEWCRON"
     echo "# "                                                       >> "$SADM_REAR_NEWCRON"
+    echo "# "                                                       >> "$SADM_REAR_NEWCRON"
 
     # Header for Virtual system export 
     echo "# "                                                        > "$SADM_VMEXPORT_NEWCRON"
@@ -925,7 +928,7 @@ create_crontab_files_header()
     echo "# Please don't edit manually, SADMIN will update it."     >> "$SADM_VMEXPORT_NEWCRON"
     echo "# "                                                       >> "$SADM_VMEXPORT_NEWCRON"
     echo "# Min, Hrs, Date, Mth, Day, User, Script"                 >> "$SADM_VMEXPORT_NEWCRON"
-    echo "# Day 0or7=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat"       >> "$SADM_VMEXPORT_NEWCRON"
+    echo "# Day = 0or7=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat"     >> "$SADM_VMEXPORT_NEWCRON"
     echo "# "                                                       >> "$SADM_VMEXPORT_NEWCRON"
     echo "SADMIN=$SADM_BASE_DIR"                                    >> "$SADM_VMEXPORT_NEWCRON"
     echo "RMCMD_LOCK=$SADMIN/bin/sadm_rmcmd_lock.sh"                >> "$SADM_VMEXPORT_NEWCRON"
@@ -959,6 +962,7 @@ check_host_connectivity()
 {
     if [ "$SADM_DEBUG" -ne 0 ] ; then sadm_write_log "$FUNCNAME[0] of $1 on port $2" ;fi
 
+
     # If parameters received is not 2, return error to caller
     if [ $# -ne 2 ]
         then sadm_write_log "Error: Function $FUNCNAME[0] did not receive 2 parameters."
@@ -971,6 +975,7 @@ check_host_connectivity()
     SSH_PORT="$2"                                                       # Port No. to SSH to system
     SNAME=$(echo "$FQDN_SNAME" | awk -F\. '{print $1}')                 # System Name without Domain
 
+
     # Can we resolve the hostname ?
     if ! host "$SNAME" >/dev/null 2>&1                                  # Name is resolvable ? 
            then SMSG="Can't process '$SNAME', because hostname can't be resolved."
@@ -978,12 +983,13 @@ check_host_connectivity()
                 return 1                                                # Return Error to Caller
     fi
 
+
     # Get uptime of remote system & we are testing at same time if ssh to remote system is working.
-    if [ "$SADM_SERVER" = "$FQDN_SNAME" ]                               # If on SADMIN server
+    if [ "$SADM_HOST_TYPE" = "S" ]                                      # If on the SADMIN Server    
         then wuptime=$(uptime 2>/dev/null)                              # Get local system uptime 
-             uptime_rc=$?
+             uptime_rc=$?                                               # Save Result Code
         else wuptime=$($SADM_SSH -qnp $SSH_PORT -o ConnectTimeout=2 -o ConnectionAttempts=2 $FQDN_SNAME uptime 2>/dev/null)
-             uptime_rc=$?
+             uptime_rc=$?                                               # Save Result Code
     fi
 
     # Update system uptime in the Database, if was able to obtain the uptime of the system, 
@@ -991,7 +997,7 @@ check_host_connectivity()
         then GLOB_UPTIME=$(echo "$wuptime" |awk -F, '{print $1}' |awk '{gsub(/^[ ]+/,""); print $0}')
              update_server_uptime "$SNAME" "$GLOB_UPTIME"               # Update Server Uptime in DB
              return 0
-        else echo "$server_uptime" | grep -iq "up"                       # Grep for "up" in uptime? 
+        else echo "$server_uptime" | grep -iq "up"                      # Grep for "up" in uptime? 
              if [ $? -eq 0 ]                                            # String "up" is in uptime
                 then GLOB_UPTIME="OFF $(date "+%C%y.%m.%d %H:%M")"      # Date/Time came offline
                      update_server_uptime "$SNAME" "$GLOB_UPTIME"       # Update system uptime in DB
@@ -1011,10 +1017,10 @@ check_host_connectivity()
     fi 
 
     # We know that SSH to the system is not working at this point
-    sadm_write_err "[ ERROR ] Can't SSH to '${SNAME}' (System may be down)." 
+    RPT_MSG="Can't SSH to $SNAME (System may be down)" 
+    sadm_write_err "[ ERROR ] $RPT_MSG" 
     
     # Create Error Line in Global Error Report File (rpt)
-    RPT_MSG="Can't SSH to $SNAME (System may be down)" 
     RPT_DATE=$(date "+%Y.%m.%d;%H:%M")                                     # Current Date/Time
     update_rpt_file "E" "$SNAME" "$(sadm_get_ostype)" "NETWORK" "$RPT_MSG" "$SADM_ALERT_GROUP" "$SADM_ALERT_GROUP"
     return 1    
@@ -1302,9 +1308,9 @@ process_servers()
         fi
         
 
-        # If lock file already exist
+        # Check if system is lock 
         sadm_lock_status "$server_name"                                 # Check if system is locked 
-        if [ $? -eq 1 ]                                
+        if [ $? -eq 1 ]                                                 #If system is lock
             then sadm_write_log "[ WARNING ] System '$server_name' is locked, skipping it."
                  LOCK_FILE="${SADMIN}/${server_name}.lock"
                  sadm_write_log "  - Content of actual lock file : $(cat $LOCK_FILE)"
@@ -1312,15 +1318,16 @@ process_servers()
         fi  
 
 
-        # Test SSH connectivity (if not on SADMIN server) and update the 'uptime' in SADMIN database.
-        if [ "$SADM_SERVER" != "$fqdn_server" ]     
+        # If not on the SADMIN server, test SSH connectivity and update the 'uptime' in SADMIN DB.
+        declare -i connectivity_rc                                      # Make sure it's an integer
+        connectivity_rc=0                                               # Default OK to SSH system
+        if [ "$SADM_HOST_TYPE" != "S" ]                                 # If not on SADMIN Server
             then check_host_connectivity "$fqdn_server" "$ssh_port"     # Test SSH, Upd uptime in DB
-                 connectivity_rc=$?                                     # Connectivity result code 
+                 connectivity_rc=$?                                     # 0=OK 1=Error 2+Warning
                  if [ "$SADM_DEBUG" -ne 0 ] 
                     then sadm_write_log "[ DEBUG ] '$fqdn_server' connectivity RC=$connectivity_rc"
                  fi
         fi 
-        #sadm_write_log "Host '$server_name' connectivity result code is $connectivity_rc"
 
         SYSTEM_ONLINE="N"                                               # Default, system not online
         case $connectivity_rc in
@@ -1329,10 +1336,12 @@ process_servers()
             1)  ((ERROR_COUNT++))                                       # Error, Can't connect
                 SYSTEM_ONLINE="N"                                       # Not able to connect 
                 sadm_write_log "Total error(s) is now $ERROR_COUNT"
+                #continue
                 ;;
             2)  ((WARNING_COUNT++))                                     # Warn. sporadic,monitor off
                 SYSTEM_ONLINE="N"                                       # Not able to connect 
                 sadm_write_log "Total warning is now $WARNING_COUNT"
+                #continue
                 ;;
             *)  ((ERROR_COUNT++))                                       # Error, Can't connect
                 SYSTEM_ONLINE="N"                                       # Not able to connect 
@@ -1354,17 +1363,16 @@ process_servers()
         fi
 
         # Generate Crontab Entry for this server in ReaR crontab work file
-        if [ "$SADM_DEBUG" -gt 2 ] ;then sadm_write_log "[ DEBUG ] Crontab entries for Rear Backup" ;fi
         if [ $rear_auto -eq 1 ] && [ "$SYSTEM_ONLINE" = "Y" ]           # If Rear Backup set to Yes 
             then update_rear_crontab "$server_name" "${server_dir}/bin/$REAR_SCRIPT" "$rear_min" "$rear_hrs" "$rear_mth" "$rear_dom" "$rear_dow" "$ssh_port"
         fi
                 
-        # Generate Crontab Entry for this system in Virtual Box export 
+        # Generate Crontab Entry for this system in VirtualBox export 
         # System Don't need to be alive to do an export of the VM.
         # anemone,holmes,/opt/sadmin
         if [ "$SADM_DEBUG" -gt 2 ] ;then sadm_write_log "[ DEBUG ] Crontab entries for VM export" ;fi
         if [ "$server_vm" -eq 1 ]                                       # 1-Virtual System, 0=Hardw
-            then HOST_SADMIN=$(find $SADM_WWW_DAT_DIR -type f -name "*_vmlist.txt" -exec cat {} \; | grep $server_name | awk -F, '{print $3}')
+            then HOST_SADMIN=$(find $SADM_WWW_DAT_DIR -type f -name "*_vmlist.txt" -exec cat {} \; | grep "$server_name" | awk -F, '{print $3}')
                  #sadm_write_log "HOST_SADMIN=$HOST_SADMIN" 
                  sadm_write_log "find $SADM_WWW_DAT_DIR -type f -name '*_vmlist.txt' -exec cat {} \; | grep $export_host | awk -F, '{print $3}'"
                  update_vmexport_crontab "$server_name" "${HOST_SADMIN}/bin/$EXPORT_SCRIPT" "$export_min" "$export_hrs" "$export_mth" "$export_dom" "$export_dow" "$ssh_port" "$export_host"
@@ -1791,12 +1799,15 @@ crontab_update()
     sadm_write_log "${SADM_TEN_DASH}"    
     sadm_write_log "${BOLD}${YELLOW}Crontab Update Summary${NORMAL}"
 
+    # O/S UPDATE CRONTAB FILE
     # Create sha1sum on newly created and actual backup crontab.
     # Compare the two sha1sum and if they are different, then the new crontab become the actual.
-    nsha1="" ; asha1=""
+    # SADM_CRON_FILE="$SADM_CFG_DIR/.sadm_osupdate"   = Newly Reconstructed cron file
+    # SADM_CRONTAB="/etc/cron.d/sadm_osupdate"        = Actual crontab O/S Update file
+    nsha1="" ; asha1=""                                                 # Clear sha1sum results
     if [ -f "$SADM_CRON_FILE" ] ; then work_sha1=$(sha1sum "$SADM_CRON_FILE" |awk '{print $1}') ;fi 
     if [ -f "$SADM_CRONTAB" ]   ; then real_sha1=$(sha1sum "$SADM_CRONTAB"   |awk '{print $1}') ;fi 
-    if [ "$work_sha1" != "$real_sha1" ]                                 # New Different than Actual?
+    if [ "$work_sha1" != "$real_sha1" ]                                 # If any change to make 
        then cp "$SADM_CRON_FILE" "$SADM_CRONTAB"                        # Put in place New Crontab
             sadm_write_log "  - O/S update schedule crontab ($SADM_CRONTAB) was updated."
        else sadm_write_log "  - No need to update the O/S update schedule crontab '$SADM_CRONTAB'."
@@ -1806,26 +1817,30 @@ crontab_update()
     rm -f $SADM_CRON_FILE  >/dev/null 2>&1                              # Remove crontab work file
 
 
+    # SADMIN BACKUP CRONTAB FILE
     # Create sha1sum on newly created and actual backup crontab.
     # Compare the two sha1sum and if they are different, then the new crontab become the actual.
-    nsha1="" ; asha1=""
+    # SADM_BACKUP_NEWCRON="$SADM_CFG_DIR/.sadm_backup" = Newly reconstructed daily backup Cron file
+    # SADM_BACKUP_CRONTAB="/etc/cron.d/sadm_backup"    = Actual crontab file for daily backup 
+    nsha1="" ; asha1=""                                                 # Clear sha1sum results
     if [ -f "$SADM_BACKUP_NEWCRON" ] ; then nsha1=$(sha1sum "$SADM_BACKUP_NEWCRON" |awk '{print $1}') ;fi
     if [ -f "$SADM_BACKUP_CRONTAB" ] ; then asha1=$(sha1sum "$SADM_BACKUP_CRONTAB" |awk '{print $1}') ;fi 
     if [ "$nsha1" != "$asha1" ]                                         # New Different than Actual?
-       then if [ -f "$SADM_BACKUP_NEWCRON" ]
-                then cp "$SADM_BACKUP_NEWCRON" "$SADM_BACKUP_CRONTAB"   # Put in place New Crontab
-                     sadm_write_log "  - Clients backup schedule crontab '$SADM_BACKUP_CRONTAB' updated." 
-            fi
-       else sadm_write_log "  - No need to update the backup crontab '$SADM_BACKUP_CRONTAB)'."
+       then cp "$SADM_BACKUP_NEWCRON" "$SADM_BACKUP_CRONTAB"            # Put in place New Crontab
+            sadm_write_log "  - Clients backup schedule crontab '$SADM_BACKUP_CRONTAB' updated." 
+       else sadm_write_log "  - No need to update the backup crontab '$SADM_BACKUP_CRONTAB'."
     fi
     chmod 644 "$SADM_BACKUP_CRONTAB" 
     chown root:root "$SADM_BACKUP_CRONTAB"
     rm -f $SADM_BACKUP_NEWCRON  >/dev/null 2>&1                         # Remove crontab work file
 
 
+    # SADMIN REAR CRONTAB FILE
     # Create sha1sum on newly created and live ReaR backup crontab.
     # Compare the two sha1sum and if they are different, then the new crontab become the actual.
-    nsha1="" ; asha1=""
+    # SADM_REAR_NEWCRON="$SADM_CFG_DIR/.sadm_rear_backup"  = Newly reconstructed ReaR Crontab file
+    # SADM_REAR_CRONTAB="/etc/cron.d/sadm_rear_backup"     = Actual crontab file Rear Crontab file
+    nsha1="" ; asha1=""                                                 # Clear sha1sum results
     if [ -f "$SADM_REAR_NEWCRON" ] ;then nsha1=$(sha1sum "$SADM_REAR_NEWCRON" |awk '{print $1}') ;fi
     if [ -f "$SADM_REAR_CRONTAB" ] ;then asha1=$(sha1sum "$SADM_REAR_CRONTAB" |awk '{print $1}') ;fi 
     if [ "$nsha1" != "$asha1" ]                                         # New Different than Actual?
@@ -1838,9 +1853,11 @@ crontab_update()
     rm -f $SADM_REAR_NEWCRON  >/dev/null 2>&1                           # Remove crontab work file
 
 
-
+    # SADMIN VIRTUAL EXPORT CRONTAB 
     # Create sha1sum on newly and actual VM export crontab.
     # Compare the two sha1sum and if they are different, then the new crontab become the actual.
+    # SADM_VMEXPORT_NEWCRON="$SADM_CFG_DIR/.sadm_vm_export"     = Newly rebuild export VM Crontab
+    # SADM_VMEXPORT_CRONTAB="/etc/cron.d/sadm_vm"               = Actual crontab for VM export
     nsha1="" ; asha1=""
     if [ -f "$SADM_VMEXPORT_NEWCRON" ] ;then nsha1=$(sha1sum "$SADM_VMEXPORT_NEWCRON" |awk '{print $1}') ;fi
     if [ -f "$SADM_VMEXPORT_CRONTAB" ] ;then asha1=$(sha1sum "$SADM_VMEXPORT_CRONTAB" |awk '{print $1}') ;fi 
@@ -1852,7 +1869,6 @@ crontab_update()
     chmod 644 "$SADM_VMEXPORT_CRONTAB" 
     chown root:root "$SADM_VMEXPORT_CRONTAB"
     rm -f $SADM_VMEXPORT_NEWCRON  >/dev/null 2>&1                       # Remove crontab work file
-
 
     sadm_write_log " "
     return 0
