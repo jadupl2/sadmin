@@ -50,11 +50,12 @@
 # 2023_08_18 server v3.21 Update to SADMIN section v2.3 & update database I/O functions.
 # 2025_01_25 server v3.22 Update VM Guest version in Database for sysinfo.txt file.
 #@2025_08_15 server v3.23 Added restriction to run only on 'SADMIN' server.
+#@2025_08_25 server v3.24 Updated to align to change to Python library
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
 try :
-    import os,time,sys,argparse,pdb,socket,datetime,glob,fnmatch 
+    import os,time,sys,argparse,pdb,socket,datetime,pymysql,glob,fnmatch 
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
@@ -76,18 +77,18 @@ except ImportError as e:                                                # If Err
     sys.exit(1)                                                         # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver        = "3.23"                                                    # Program version
+pver        = "3.24"                                                    # Program version
 pdesc       = "Update SADMIN database with information collected from each system."
 phostname   = sa.get_hostname()                                         # Get current `hostname -s`
 pdebug      = 0                                                         # Debug level from 0 to 9
 pexit_code  = 0                                                         # Script default exit code
+db_conn     = ''                                                        # Database Connector Object
+db_cur      = ''                                                        # Database Cursor Object
 
 # Fields used by sa.start(),sa.stop() & DB functions that influence execution of SADMIN library
 sa.db_used        = True           # Open/Use DB(True), No DB needed (False), sa.start() auto connect
 sa.db_silent      = False          # When DB Error Return(Error), True = NoErrMsg, False = ShowErrMsg
-sa.db_conn        = None           # Use this Database Connector when using DB,  set by sa.start()
-sa.db_cur         = None           # Use this Database cursor if you use the DB, set by sa.start()
-sa.db_name        = ""             # Database Name default to name define in $SADMIN/cfg/sadmin.cfg
+sa.db_name        = ""             # Database Name, default to name define in $SADMIN/cfg/sadmin.cfg
 sa.db_errno       = 0              # Database Error Number
 sa.db_errmsg      = ""             # Database Error Message
 #
@@ -125,7 +126,7 @@ wdict           = {}                                                    # Dict f
 
 # UPDATE ROW INTO FROM THE WROW DICTIONARY THE SERVER TABLE
 #===================================================================================================
-def update_row(wdict):
+def update_row(wdict,db_conn,db_cur):
     sa.write_log ("Updating %s.%s data in Database" % (wdict['srv_name'],wdict['srv_domain']))
 
 
@@ -136,7 +137,7 @@ def update_row(wdict):
     if sa.get_release() < "1.3.4" :                                            # Change made in 1.3.3
         sql="ALTER TABLE server MODIFY COLUMN srv_kernel_version VARCHAR(40);"
         try:
-            sa.db_cur.execute(sql);                                         # Execute the Select SQL
+            db_cur.execute(sql);                                         # Execute the Select SQL
         except(pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as error:
             enum, emsg = error.args                                         # Get Error No. & Msg
             print (">>>>>>>>>>>>>",enum,emsg)                               # Print Error No. & Msg
@@ -144,7 +145,7 @@ def update_row(wdict):
         #
         sql="ALTER TABLE server MODIFY COLUMN srv_model VARCHAR(30);"
         try:
-            sa.db_cur.execute(sql);                                         # Execute the Select SQL
+            db_cur_execute(sql);                                         # Execute the Select SQL
         except(pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as error:
             enum, emsg = error.args                                         # Get Error No. & Msg
             print (">>>>>>>>>>>>>",enum,emsg)                               # Print Error No. & Msg
@@ -214,8 +215,8 @@ def update_row(wdict):
     # Execute the SQL Update Statement
     try:
         if pdebug > 4: sa.write_log("sql=%s" % (sql))
-        sa.db_cur.execute(sql)                                          # Update Server Data
-        sa.db_conn.commit()                                             # Commit the transaction
+        db_cur.execute(sql)                                          # Update Server Data
+        db_conn.commit()                                             # Commit the transaction
         sa.write_log("[OK] %s update Succeeded" % (wdict['srv_name']))  # Advise User Update is OK
         return (0)                                                      # return (0) Insert Worked
     except pymysql.DataError as e:
@@ -236,9 +237,9 @@ def update_row(wdict):
     except pymysql.ProgrammingError as e:
         print("ProgrammingError")
         print(e)
-    except pymysql.UnboundLocalError as e:
-        print("UnboundLocalError")
-        print(e)        
+#    except pymysql.UnboundLocalError as e:
+#        print("UnboundLocalError")
+#        print(e)        
     except :
         print("Unknown error occurred")
         print(e)
@@ -262,24 +263,26 @@ def update_row(wdict):
 
 # Process all your active(s) server(s) in the Database (Used if want to process selected servers)
 # --------------------------------------------------------------------------------------------------
-def process_servers():
-
+def process_servers(db_conn,db_cur):
     sa.write_log ("Processing all actives systems")
 
-    # Fetch all actives Systems
+    # Build the SQL to retreive all active systems, sorted by hostname.
     sql  = "SELECT srv_name, srv_desc, srv_domain, srv_osname  "
     sql += " FROM server WHERE srv_active = %s " % ('True')
     sql += " order by srv_name;"
+
     try :
-        sa.db_cur.execute(sql)
-        rows = sa.db_cur.fetchall()
-    except(pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as error:
-        enum,emsg = error.args                                          # Get Error No. & Message
+        e=''                        
+        db_cur.execute(sql)
+        rows = db_cur.fetchall()
+    except(pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as e:
+        enum,emsg = e.args                                          # Get Error No. & Message
         print (">>>>>>>>>>>>>",enum,emsg)                               # Print Error No. & Message
         return (1)
-    except:
-        print ("Error: unable to fetch data")
-        return (1)
+    #except:
+    #    sa.write_err ("[ ERROR ] Unable to fetch data: ")
+    #    sa.write_err ("%s" % e)
+    #    return (1)
     
     # Under debug show all actives systems that was fetch
     if pdebug > 4:
@@ -496,7 +499,7 @@ def process_servers():
                 total_error = total_error + 1                           # Add 1 To Total Error
                 sa.stop(1)
                 sys.exit(1)
-            RC = update_row(wdict)                         # Go Update Row
+            RC = update_row(wdict,db_conn,db_cur)                       # Go Update Row
             total_error = total_error + RC                              # RC=0=Success RC=1=Error
             if (total_error != 0):                                      # Not SHow if Total Error=0
                 sa.write_log(" ")                                       # Space line
@@ -556,9 +559,15 @@ def cmd_options(argv):
 def main(argv):
     (pdebug) = cmd_options(argv)                                        # Analyse cmdline options
     pexit_code = 0                                                      # Pgm Exit Code Default
-    sa.start(pver, pdesc)                                               # Initialize SADMIN env.
-    pexit_code = process_servers()                                      # Loop All Active systems
-    sa.stop(pexit_code)                                                 # Gracefully exit SADMIN
+
+    #sa.start(pver, pdesc)                                               # Initialize SADMIN env.
+    #pexit_code = process_servers()                                      # Loop All Active systems
+    
+    (db_conn,db_cur) = sa.start(pver, pdesc, "sadmin")                  # Initialize SADMIN env.
+    pexit_code = process_servers(db_conn,db_cur)                        # Loop All Active systems
+
+
+    sa.stop(pexit_code,db_conn,db_cur)                                                 # Gracefully exit SADMIN
     sys.exit(pexit_code)                                                # Back to O/S with Exit Code
 
 # This idiom means the below code only runs when executed from command line
