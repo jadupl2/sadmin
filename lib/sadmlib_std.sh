@@ -283,8 +283,6 @@ export SADM_PKG_DIR="$SADM_BASE_DIR/pkg"                                # Packag
 export SADM_SETUP_DIR="$SADM_BASE_DIR/setup"                            # Package rpm,deb  directory
 export SADM_NMON_DIR="$SADM_DAT_DIR/nmon"                               # Where nmon file reside
 export SADM_DR_DIR="$SADM_DAT_DIR/dr"                                   # Disaster Recovery  files
-export SADM_VMLIST="$SADM_DR_DIR/vm_list.txt"                           # List of VMs for this host
-export SADM_VMHOSTS="$SADM_DR_DIR/vm_hosts.txt"                         # List all VM on all Hosts
 export SADM_RCH_DIR="$SADM_DAT_DIR/rch"                                 # Result Code History Dir
 export SADM_NET_DIR="$SADM_DAT_DIR/net"                                 # Network SubNet Info Dir
 export SADM_RPT_DIR="$SADM_DAT_DIR/rpt"                                 # SADM Sysmon Report Dir
@@ -350,6 +348,9 @@ export SADM_CFG_HIDDEN="$SADM_CFG_DIR/.sadmin.cfg"                      # Defaul
 export SADM_DOCLINK="$SADM_WWW_DOC_DIR/sadm_commands/pgm2doc_link.cfg"  # Script to Doc Link File
 export SADM_WEBSITE="https://sadmin.ca"                                 # sadmin website URL
 export SADM_VM_EXCLUDE_TEMPLATE="$SADM_CFG_DIR/.sadm_vm_exclude_start.txt" # VM Start exclude file
+export SADM_VMLIST_ALL="$SADM_WWW_DAT_DIR/global_vm_list.txt"           # List all VMs on all hosts
+export SADM_VMHOST_ALL="$SADM_WWW_DAT_DIR/global_vm_hosts.txt"          # List all VMs on all Hosts
+export SADM_VMLIST="$SADM_DR_DIR/vm_list.txt"                           # List of VMs for this host
 
 
 # Definition of SADMIN log, error log, Result Code  History (.rch) and Monitor report file (*.rpt).
