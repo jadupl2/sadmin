@@ -75,6 +75,8 @@
 #@2025_08_07 lib v4.60 If don't use RCH, (sa.use_rch=False), won't delete (sa,rch_file) script 'rch'.
 #@2025_08_15 lib v4.61 MySQL & Python module 'pymysql' must be present, if db_used is set to true.
 #@2025_08_25 lib v4.62 Database update functions 'db_close' 'db_connect'and 'start' to fix some error.
+#@2025_08_27 lib v4.63 Move the import 'pymysql' module in the start function. 
+
 # 
 # --------------------------------------------------------------------------------------------------
 
@@ -111,7 +113,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.62"                                # This Library Version
+lib_ver             = "4.63"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -2435,6 +2437,15 @@ def start(pver=0.0,pdesc=pn,db_name="sadmin") :
         print ("\ndb_used=%s,sadm_host_type=%s,db_name=%s" % (db_used,sadm_host_type,db_name))
 
     if db_used and sadm_host_type == "S" : 
+        try : 
+            import pymysql 
+        except ImportError as e:
+            if db_used :
+                print ("\nVar. 'db_used' set to True, but Python library 'pymysql' isn't installed: \n%s\n " % e)
+                sys.exit(1)
+            else : 
+                print ("\nError trying to import Module pymysql.\n")
+                sys.exit(1)
         (db_conn,db_cur,db_errno,db_errmsg) = db_connect(db_name) 
     else : 
          db_conn=''
@@ -2805,12 +2816,12 @@ load_cmd_path()                                                         # Load C
 dict_alert = load_alert_file()                                          # Load Alert group in dict
 if (lib_debug > 0) : print_dict_alert()                                 # Print Alert Group Dict
 
-# Load MySQL module if it exist
-try : 
-    import pymysql 
-except ImportError as e:
-    if db_used :
-        print ("\nVar. 'db_used' set to True, but library 'pymysql' isn't installed: \n%s\n " % e)
-        sys.exit(1)
-    else : 
-        print ("\nModule pymysql loaded.\n")
+## Load MySQL module if it exist
+#try : 
+#    import pymysql 
+#except ImportError as e:
+#    if sa.db_used :
+#        print ("\nVar. 'db_used' set to True, but library 'pymysql' isn't installed: \n%s\n " % e)
+#        sys.exit(1)
+#    else : 
+#        print ("\nModule pymysql loaded.\n")
