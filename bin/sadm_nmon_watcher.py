@@ -34,6 +34,7 @@
 # 2023_11_29 lib v1.6 Crash when could not start 'nmon' (performance monitor).
 # 2023_12_03 lib v1.7 Fix problem starting 'nmon' at system startup.
 # 2024_11_11 lib v1.8 Standardize messages to users.
+#@2025_08_27 lib v1.9 Refresh code with new SADMIN section & don't import 'pymsql' if not use.
 # --------------------------------------------------------------------------------------------------
 #
 # Modules needed by this script SADMIN Tools and they all come with Standard Python 3.
@@ -48,7 +49,7 @@ except ImportError as e:                                            # Trap Impor
 
 
 # --------------------------------------------------------------------------------------------------
-# SADMIN CODE SECTION v2.3
+# SADMIN CODE SECTION 1.56
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your Python code.    
 # --------------------------------------------------------------------------------------------------
@@ -67,41 +68,48 @@ except ImportError as e:                                             # If Error 
     sys.exit(1)                                                      # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver        = "1.8"                                                  # Program version no.
-pdesc       = "This script ensure that 'nmon' performance monitor is running."
-phostname   = sa.get_hostname()                                      # Get current `hostname -s`
-pdebug      = 0                                                      # Debug level from 0 to 9
-pexit_code  = 0                                                      # Script default exit code
+pver        = "1.9"                                                  # Program version no.
+pdesc       = "Script ensure that 'nmon' daemon performance monitor is running."
+phostname   = sa.get_hostname()   # Get current `hostname -s`
+pdebug      = 0                   # Debug level from 0 to 9
+pexit_code  = 0                   # Script default exit code
+db_conn     = None                # Database Connector (if used)
+db_cur      = None                # Database Cursor (if used)
 
-# Fields used by sa(), sa.stop() & DB functions to influence execution of SADMIN library
-sa.db_used     = False          # Open/Use DB(True), No DB needed (False), sa.start() auto connect
-sa.db_silent   = False          # True=ReturnErrorNo & No ErrMsg, False=ReturnErrorNo & ShowErrMsg
-sa.db_conn     = ''             # Use this Database Connector when using DB,  set by sa.start()
-sa.db_cur      = ''             # Use this Database cursor if you use the DB, set by sa.start()
-sa.db_name     = "sadmin"       # Database Name taken from $SADMIN/cfg/sadmin.cfg 
-sa.db_errno    = 0              # Database Error Number
-sa.db_errmsg   = ""             # Database Error Message
+# Fields used by sa.start(),sa.stop() & DB functions that influence execution of SADMIN library
+sa.db_used           = False      # Open/Use DB(True), No DB needed (False), sa.start() auto connect
+sa.db_silent         = False      # True=ReturnErrorNo & No ErrMsg, False=ReturnErrorNo & ShowErrMsg
+sa.db_name           = "sadmin"   # Database Name default to name define in $SADMIN/cfg/sadmin.cfg
+sa.db_errno          = 0          # Database Error Number
+sa.db_errmsg         = ""         # Database Error Message
 #
 sa.use_rch           = True       # Generate entry in Result Code History (.rch)
 sa.log_type          = 'B'        # Output goes to [S]creen to [L]ogFile or [B]oth
 sa.log_append        = True       # Append Existing Log(True) or Create New One(False)
 sa.log_header        = True       # Show/Generate Header in script log (.log)
 sa.log_footer        = True       # Show/Generate Footer in script log (.log)
-sa.multiple_exec     = "Y"        # Allow running multiple copy at same time ?
-sa.proot_only        = False      # Pgm run by root only ?
+sa.multiple_exec     = "N"        # Allow running multiple copy at same time ?
+sa.proot_only        = True       # Pgm run by root only ?
 sa.psadm_server_only = False      # Run only on SADMIN server ?
 sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (sa.cmd_ssh,sa.sadm_ssh_port)
 
 # The values of fields below, are loaded from sadmin.cfg when you import the SADMIN library.
-# Change them to fit your need, they influence execution of SADMIN standard library
+# Change them to fit your need, they are use by start() & stop() functions of SADMIN Python Libr.
+#
 #sa.sadm_alert_type  = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
 #sa.sadm_alert_group = "default"  # Valid Alert Group defined in $SADMIN/cfg/alert_group.cfg
 sa.max_logline      = 400        # Max. lines to keep in log (0=No trim) after execution.
-sa.max_rchline      = 20         # Max. lines to keep in rch (0=No trim) after execution.
+sa.max_rchline      = 25         # Max. lines to keep in rch (0=No trim) after execution.
 #sa.sadm_mail_addr   = ""         # All mail goes to this email (Default is in sadmin.cfg)
-#sa.pid_timeout      = 7200       # PID File Default Time to Live in seconds.
+#sa.pid_timeout      = 7200       # Default Time to Live in seconds for the PID File
 #sa.lock_timeout     = 3600       # A host can be lock for this number of seconds, auto unlock after
 # ==================================================================================================
+
+
+
+
+
+
 
 
 
@@ -300,11 +308,18 @@ def cmd_options(argv):
 # Main Function
 # --------------------------------------------------------------------------------------------------
 def main(argv):
-    pdebug = cmd_options(argv)                                          # Analyze cmdline options
-    sa.start(pver, pdesc)                                               # Initialize SADMIN env.
-    pexit_code = main_process()                                         # Main Process
-    sa.stop(pexit_code)                                                 # Gracefully exit SADMIN
+    (pdebug) = cmd_options(argv)                                        # Analyze cmdline options
+
+    if sa.db_used : 
+        (db_conn,db_cur) = sa.start(pver,pdesc)                         # Initialize SADMIN env.
+        pexit_code = process_servers(db_conn,db_cur)                    # Loop All Active systems
+        sa.stop(pexit_code,db_conn,db_cur)                              # Exit Gracefully & Close DB
+    else: 
+        sa.start(pver,pdesc)                                            # Initialize SADMIN env.
+        pexit_code = main_process()                                  # Loop All Active systems
+        sa.stop(pexit_code)                                             # Exit Gracefully SADMIN Lib
     sys.exit(pexit_code)                                                # Back to O/S with Exit Code
+                                              # Back to O/S with Exit Code
 
 # This idiom means the below code only runs when executed from command line
 if __name__ == "__main__": main(sys.argv)
