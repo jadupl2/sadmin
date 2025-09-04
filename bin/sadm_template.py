@@ -26,13 +26,13 @@
 # VERSION CHANGE LOG
 # ------------------
 # 2025_08_25 lib v1.00 Initial Version
+#@2025_09_04 lib v1.01 Now ONE template for Python & remove the need of importing pymysql.
 # --------------------------------------------------------------------------------------------------
 #
 
 # Modules needed by this script SADMIN Tools and they all come with Standard Python 3.
 try:
     import os, sys, argparse, time, datetime, socket, platform, re  # Import Std Python3 Modules
-    import pymysql                                                  # Use for MySQL DB
 #   import pdb                                                      # Python Debugger (If needed)
 except ImportError as e:                                            # Trap Import Error
     print("Import Error : %s " % e)                                 # Print Import Error Message
@@ -62,7 +62,7 @@ except ImportError as e:                                             # If Error 
     sys.exit(1)                                                      # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver        = "1.3"               # Program version no.
+pver        = "1.01"              # Program version no.
 pdesc       = "Put here a description of your script."
 phostname   = sa.get_hostname()   # Get current `hostname -s`
 pdebug      = 0                   # Debug level from 0 to 9
@@ -102,7 +102,7 @@ sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (s
 
 
 
-# Scripts Global Variables
+# SCript Global Variables Definition Section
 # --------------------------------------------------------------------------------------------------
 
 
