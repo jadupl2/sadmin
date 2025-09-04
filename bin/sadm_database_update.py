@@ -51,11 +51,12 @@
 # 2025_01_25 server v3.22 Update VM Guest version in Database for sysinfo.txt file.
 #@2025_08_15 server v3.23 Added restriction to run only on 'SADMIN' server.
 #@2025_08_25 server v3.24 Updated to align to change to Python library
+#@2025_09_04 server v3.25 Remove the need to import pymysql in the script, now done in SADMIN lib.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
 try :
-    import os,time,sys,argparse,pdb,socket,datetime,pymysql,glob,fnmatch 
+    import os,time,sys,argparse,pdb,socket,datetime,glob,fnmatch    # Standard Python Modules
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
@@ -77,7 +78,7 @@ except ImportError as e:                                                # If Err
     sys.exit(1)                                                         # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver        = "3.24"                                                    # Program version
+pver        = "3.25"                                                    # Program version
 pdesc       = "Update SADMIN database with information collected from each system."
 phostname   = sa.get_hostname()                                         # Get current `hostname -s`
 pdebug      = 0                                                         # Debug level from 0 to 9
@@ -244,18 +245,6 @@ def update_row(wdict,db_conn,db_cur):
         print("Unknown error occurred")
         print(e)
 
-    #except (pymysql.err.InternalError, pymysql.err.IntegrityError) as error:
-    #    enum, emsg = error.args                                         # Get Error No. & Message
-    #    sa.write_log("[ERROR] (%s) %s " % (enum,error))                  # Print Error No. & Message
-    #    if pdebug > 4: sa.write_log("sql=%s" % (sql))
-    #    sa.db_conn.rollback()                                                # RollBack Transaction
-    #    return (1)                                                      # return (1) to indicate Err
-    #except Exception as error:
-    #    enum, emsg = error.args                                         # Get Error No. & Message
-    #    sa.write_log("[ERROR] (%s) %s " % (enum,error))                  # Print Error No. & Message
-    #    if pdebug > 4: sa.write_log("sql=%s" % (sql))
-    #    sa.db_conn.rollback()                                                # RollBack Transaction
-    #    return (1)                                                      # return (1) to indicate Err
     return(0)                                                           # Return 0 = update went OK
 
 
@@ -560,14 +549,15 @@ def main(argv):
     (pdebug) = cmd_options(argv)                                        # Analyse cmdline options
     pexit_code = 0                                                      # Pgm Exit Code Default
 
-    #sa.start(pver, pdesc)                                               # Initialize SADMIN env.
-    #pexit_code = process_servers()                                      # Loop All Active systems
-    
-    (db_conn,db_cur) = sa.start(pver, pdesc, "sadmin")                  # Initialize SADMIN env.
-    pexit_code = process_servers(db_conn,db_cur)                        # Loop All Active systems
+    if sa.db_used : 
+        (db_conn,db_cur) = sa.start(pver,pdesc)                         # Initialize SADMIN env.
+        pexit_code = process_servers(db_conn,db_cur)                    # Loop All Active systems
+        sa.stop(pexit_code,db_conn,db_cur)                              # Exit Gracefully & Close DB
+    else: 
+        sa.start(pver,pdesc)                                            # Initialize SADMIN env.
+        pexit_code = main_process()                                  # Loop All Active systems
+        sa.stop(pexit_code)                                             # Exit Gracefully SADMIN Lib
 
-
-    sa.stop(pexit_code,db_conn,db_cur)                                                 # Gracefully exit SADMIN
     sys.exit(pexit_code)                                                # Back to O/S with Exit Code
 
 # This idiom means the below code only runs when executed from command line
