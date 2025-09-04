@@ -76,7 +76,7 @@
 #@2025_08_15 lib v4.61 MySQL & Python module 'pymysql' must be present, if db_used is set to true.
 #@2025_08_25 lib v4.62 Database update functions 'db_close' 'db_connect'and 'start' to fix some error.
 #@2025_08_27 lib v4.63 Move the import 'pymysql' module in the start function. 
-
+#@2025_08_28 lib v4.64 Fix error when 'db_used=True' and 'pymysql' module not installed.    
 # 
 # --------------------------------------------------------------------------------------------------
 
@@ -102,6 +102,7 @@ try :
     import linecache                                        # Text lines Random access 
     import subprocess                                       # Subprocess management
     import multiprocessing                                  # Process-based parallelism
+    import pymysql 
 #   import pdb                                              # Python Debugger
 except ImportError as e:
     print ("Import Error : %s " % e)
@@ -113,7 +114,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.63"                                # This Library Version
+lib_ver             = "4.64"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -2350,7 +2351,8 @@ def start(pver=0.0,pdesc=pn,db_name="sadmin") :
         sys.exit(1)                                                     # Back to O/S 
 
     # If this script can only be run on the SADMIN server
-    if on_sadmin_server() == "N" and psadm_server_only : 
+#    if on_sadmin_server() == "N" and psadm_server_only : 
+    if sadm_host_type != "S" and psadm_server_only: 
         print("This script can only run on a 'SADMIN' server.\n")
         print("These are the requirements to access the 'SADMIN' database : ")
         print(" - Variable 'SADM_HOST_TYPE' in $SADMIN/cfg/sadmin.cfg must be 'S'.")
@@ -2437,15 +2439,6 @@ def start(pver=0.0,pdesc=pn,db_name="sadmin") :
         print ("\ndb_used=%s,sadm_host_type=%s,db_name=%s" % (db_used,sadm_host_type,db_name))
 
     if db_used and sadm_host_type == "S" : 
-        try : 
-            import pymysql 
-        except ImportError as e:
-            if db_used :
-                print ("\nVar. 'db_used' set to True, but Python library 'pymysql' isn't installed: \n%s\n " % e)
-                sys.exit(1)
-            else : 
-                print ("\nError trying to import Module pymysql.\n")
-                sys.exit(1)
         (db_conn,db_cur,db_errno,db_errmsg) = db_connect(db_name) 
     else : 
          db_conn=''
@@ -2675,8 +2668,8 @@ def db_connect(db_name):
     #global db_name, db_conn, db_cur, db_errno, db_errmsg
 
     if db_name == "" : db_name = "sadmin"
-#    db_conn     = None                                                  # Database connector Obj
-#    db_cur      = None                                                  # Database cursor Obj
+    db_conn     = ""                                                  # Database connector Obj
+    db_cur      = ""                                                  # Database cursor Obj
     db_errno    = 0                                                     # Error No to return
     db_errmsg   = ""                                                    # Error Mess. to return
 
@@ -2700,7 +2693,7 @@ def db_connect(db_name):
             charset='utf8mb4',
             cursorclass=pymysql.cursors.DictCursor
         )
-    except pymysql.Error as e:
+    except (pymysql.Error,NameError) as e:
         (enum,emsg) = e.args                                            # Get Error No. & Message
         # emsg = e                                                      # Get Error No. & Message
         db_errno  = enum
@@ -2709,8 +2702,7 @@ def db_connect(db_name):
             write_err("%s" % (db_errmsg))
             write_err("[ ERROR ] '%s': '%s'" % (enum,emsg))             # Error Message 
         return(1)
-    finally: 
-        if lib_debug > 0 : write_log ("[ OK ] Connect to %s database establish." % (db_name))
+    #write_log ("[ OK ] Connection to %s database establish." % (db_name))
 
 
     # Define a cursor object using cursor() method
@@ -2815,13 +2807,3 @@ load_config_file(cfg_file)                                              # Load s
 load_cmd_path()                                                         # Load Cmd Path Variables
 dict_alert = load_alert_file()                                          # Load Alert group in dict
 if (lib_debug > 0) : print_dict_alert()                                 # Print Alert Group Dict
-
-## Load MySQL module if it exist
-#try : 
-#    import pymysql 
-#except ImportError as e:
-#    if sa.db_used :
-#        print ("\nVar. 'db_used' set to True, but library 'pymysql' isn't installed: \n%s\n " % e)
-#        sys.exit(1)
-#    else : 
-#        print ("\nModule pymysql loaded.\n")
