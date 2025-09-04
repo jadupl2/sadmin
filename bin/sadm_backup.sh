@@ -683,11 +683,11 @@ mount_nfs()
 
     if [ "$SADM_OS_TYPE" = "DARWIN" ]                                   # If on MacOS
         then sadm_write_log "mount -t nfs -o resvport,rw ${REM_MOUNT} ${LOCAL_MOUNT}"
-             mount -t nfs -o resvport,rw ${REM_MOUNT} ${LOCAL_MOUNT} >>$SADM_LOG 2>&1
+             mount -t nfs -o resvport,rw ${REM_MOUNT} ${LOCAL_MOUNT} 1>>$SADM_LOG 2>>$SADM_ELOG
              RC=$?
         else NFS_OPT="-t nfs -o vers=$SADM_BACKUP_NFS_SERVER_VER "
              sadm_write_log "mount $NFS_OPT ${REM_MOUNT} ${LOCAL_MOUNT}" 
-             mount $NFS_OPT ${REM_MOUNT} ${LOCAL_MOUNT} >>$SADM_LOG 2>&1
+             mount $NFS_OPT ${REM_MOUNT} ${LOCAL_MOUNT} 1>>$SADM_LOG 2>>$SADM_ELOG
              RC=$?
     fi
     if [ $RC -ne 0 ]                                                    # If Error trying to mount
@@ -701,10 +701,10 @@ mount_nfs()
                      sadm_write_err "'mount $NFS_OPT ${REM_MOUNT} ${LOCAL_MOUNT}'"
                      mount $NFS_OPT ${REM_MOUNT} ${LOCAL_MOUNT} >>$SADM_LOG 2>&1
                      if [ "$?" -ne 0 ] 
-                        then sadm_write_err "[ Error ] NFS mount failed - backup aborted."
+                        then sadm_write_err "[ ERROR ] NFS mount failed - backup aborted."
                              return 1                                   # End Function with error
                      fi 
-                else sadm_write_err "[ Error ] Mount NFS failed - backup aborted."
+                else sadm_write_err "[ ERROR ] Mount NFS failed - backup aborted."
                      return 1                                           # End Function with error
              fi 
         else sadm_write_log "[ SUCCESS ] NFS mount succeeded."          # NFS Mount Succeeded Msg
