@@ -250,6 +250,7 @@
 #@2025_07_20 lib v4.72 Change log directory permission 775 instead of 755
 #@2025_08_09 lib v4.73 When on sadmin server, update the way we update the global log/rch directory.
 #@2025_08_25 lib v4.74 Change location of 'vm_list.txt' & 'vm_hosts.txt' to '$SADMIN/dat/dr' dir. 
+#@2025_09_04 lib v4.75 SHow Process ID of the script already running of the script.
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -260,7 +261,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.74"                                              # This Library Version
+export SADM_LIB_VER="4.75"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -528,6 +529,7 @@ if [ -z "$TERM" ] || [ "$TERM" = "dumb" ] || [ "$TERM" = "unknown" ]
          export CLRSCR=$(tput clear)       2>/dev/null      # Clear Screen
          export BLINK=$(tput blink)        2>/dev/null      # Blinking on
          export NORMAL=$(tput sgr0)        2>/dev/null      # Reset Screen
+         export RESET=$(tput sgr0)         2>/dev/null      # Reset Screen
          export BLACK=$(tput setaf 0)      2>/dev/null      # Foreground Color Black
          export RED=$(tput setaf 1)        2>/dev/null      # Foreground Color Red
          export GREEN=$(tput setaf 2)      2>/dev/null      # Foreground Color Green
@@ -2493,11 +2495,12 @@ sadm_start() {
             sadm_write_err "  - Can't run simultaneous copy of this script (\$SADM_MULTIPLE_EXEC='N')." 
             sadm_write_err "  - PID file ('\${SADMIN}/tmp/${SADM_INST}.pid'), was created $f_elapse seconds ago."
             sadm_write_err "  - The PID timeout ('\$SADM_PID_TIMEOUT') is set to $f_timeout seconds."
+            ps -ef | grep "$SADM_PN" | grep -v grep | grep -v "$$" | nl | tee -a $SADM_ELOG 2>&1
             #sadm_write_err " "
             #sadm_write_err " "
             if [ -z "$SADM_PID_TIMEOUT" ]                               # SADM_PID_TIMEOUT defined ?
                 then sadm_write_err "Script can't run unless one of the following action is done :"
-                     ps -ef |grep "$SADM_PN" |grep -v grep |nl |tee -a $SADM_ELOG 2>&1
+                     ps -ef |grep "$SADM_PN" |grep -v grep | grep -v "$$" |nl |tee -a $SADM_ELOG 2>&1
                      sadm_write_err "  - Remove the PID File '\${SADMIN}/tmp/${SADM_INST}.pid'."
                      sadm_write_err "  - Set 'SADM_MULTIPLE_EXEC' variable to 'Y' in your script."
                      sadm_write_err "  - Wait till PID timeout '\$SADM_PID_TIMEOUT' is reach."
