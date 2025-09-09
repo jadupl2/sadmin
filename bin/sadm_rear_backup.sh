@@ -574,7 +574,7 @@ rear_housekeeping()
 
     # Verify integrity of ReaR backup file (*.tgz)
     sadm_write_log " " 
-    sadm_write_log "Verifying that the compressed ReaR backup file '$REAR_CUR_TGZ' is restorable".
+    sadm_write_log "Creating a list of every files included in the ReaR backup file '$REAR_CUR_TGZ'"
     sadm_write_log "tar -xOf '$REAR_CUR_TGZ' > /dev/null 2>&1" 
     tar -xOf "$REAR_CUR_TGZ" > /dev/null 2>&1
     if [ $? -ne 0 ] 
