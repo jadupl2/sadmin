@@ -60,6 +60,7 @@ export SADM_VER='4.4'                                      # Script version numb
 export SADM_PDESC="SADMIN template shell script"           # Script Optional Desc.(Not use if empty)
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
+export SADM_QUIET="N"                                      # N=Show Err.Msg Y=ReturnErrorCode No Msg
 export SADM_LOG_TYPE="B"                                   # Write log to [S]creen, [L]og, [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoLogHeader
@@ -84,7 +85,6 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #export SADM_ALERT_GROUP="default"                          # Error Group Define in alert_group.cfg
 #export SADM_WARNING_GROUP="default"                        # Warning alert Group (alert_group.cfg)   
 #export SADM_INFO_GROUP="default"                           # Info alert Group (in alert_group.cfg)
-#export SADM_QUIET="N"                                      # N=Show Err.Msg Y=ReturnCodeOnly No Msg
 #export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
 #export SADM_ALERT_GROUP="default"                          # Alert Group to advise
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log

@@ -269,6 +269,8 @@ export SADM_TEN_DASH=$(printf %10s |tr ' ' '-')                         # 10 das
 export SADM_STIME=""                                                    # Script Start Time
 export DELETE_PID="Y"                                                   # Default Delete PID On Exit
 export LIB_DEBUG=0                                                      # This Library Debug Level
+export SADM_QUIET="N"                                       # N=Show Err.Msg Y=ReturnCodeOnly No Msg
+
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 export SADM_BASE_DIR=${SADMIN:="/opt/sadmin"}                           # Script Root Base Dir.
@@ -470,7 +472,6 @@ export SADM_VM_EXPORT_DIF=25                                # When Size 25% grea
 
 # To be a valid SADMIN server 'SADM_HOST_TYPE' must be "S" and 'SADM_SERVER' IP must exist on host.
 export SADM_ON_SADMIN_SERVER="N"                            # Valid SADMIN Server Y/N ?
-export SADM_QUIET="N"                                       # N=Show Err.Msg Y=ReturnCodeOnly No Msg
 
 # Array of O/S Supported & Package Family
 #export SADM_OS_SUPPORTED=( 'REDHAT' 'CENTOS' 'FEDORA' 'ALMA' 'ROCKY'
@@ -747,10 +748,10 @@ sadm_write_dbg() {
 # --------------------------------------------------------------------------------------------------
 # Mount NFS Directory.
 # Example: sadm_nfs_mount "batnas.maison.ca" "/volume1/software" "$MountPoint" 
-#    NFS_SERVER="$1"                                                    # NFS Server name or IP
-#    NFS_DIR="$2"                                                       # NFS Directory to mount
-#    NFS_MOUNT_POINT="$3"                                               # Local dir. to mount nfs
-#    NFS_MOUNT_OPTIONS=$4                                               # NFS Mount option (-o) use
+#    NFS_SERVER="$1"                              # NFS Server name or IP
+#    NFS_DIR="$2"                                 # NFS Directory to mount
+#    NFS_MOUNT_POINT="$3"                         # Local dir. to mount nfs
+#    NFS_MOUNT_OPTIONS=$4                         # Optional NFS Mount option (-o)
 # --------------------------------------------------------------------------------------------------
 sadm_nfs_mount()
 {
@@ -773,11 +774,11 @@ sadm_nfs_mount()
     ping -c2 "$NFS_SERVER" > /dev/null 2>&1                             # Ping NFS server
     if [ $? -ne 0 ]                                                     # Problem pinging NFS server
         then if [ "$SADM_QUIET" == "N" ]                                # User want error message
-                then sadm_write_err "[ ERROR ] NFS server '$NFS_SERVER' seems to be down."
+                then sadm_write_err "[ ERROR ] System '$NFS_SERVER' seems to be down."
              fi 
              return 1 
         else if [ "$SADM_QUIET" == "N" ] 
-                then sadm_write_log "[ OK ] NFS server '$NFS_SERVER' alive." 
+                then sadm_write_log "[ OK ] NFS server '$NFS_SERVER' is alive." 
              fi
     fi
   
@@ -808,7 +809,7 @@ sadm_nfs_mount()
     # Mount Succeeded 
     if [ "$SADM_QUIET" = "N" ]                                          # User want message
        then sadm_write_log "[ OK ] $CMD"                                # Show command that failed.
-            df -h |grep "$NFS_MOUNT_POINT" |tee -a "$SADM_LOG"          # Show disk usage after mount
+#            df -h |grep "$NFS_MOUNT_POINT" |tee -a "$SADM_LOG"          # Show disk usage after mount
             RC=0
     fi
     return $RC                                                          # Return Mount Status to Usr
@@ -818,6 +819,10 @@ sadm_nfs_mount()
 
 # --------------------------------------------------------------------------------------------------
 # Unmount NFS Directory 
+# 
+# Parameter : NFS_MOUNT_POINT                    # Local mount point to unmount
+#
+# Example: sadm_nfs_unmount "$MountPoint"
 # --------------------------------------------------------------------------------------------------
 sadm_nfs_unmount()
 {
