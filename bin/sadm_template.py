@@ -67,6 +67,7 @@ pdesc       = "Put here a description of your script."
 phostname   = sa.get_hostname()   # Get current `hostname -s`
 pdebug      = 0                   # Debug level from 0 to 9
 pexit_code  = 0                   # Script default exit code
+pquiet      = False               # True=ReturnErrorNo & No ErrMsg, False=ReturnErrorNo & ShowErrMsg
 db_conn     = None                # Database Connector (if used)
 db_cur      = None                # Database Cursor (if used)
 
