@@ -29,6 +29,7 @@
 #@2025_04_10 web v1.6 Modify disposition on web page.
 #@2025_05_07 web v1.7 Minor adjustments to web page layout.
 #@2025_07_27 web v1.8 Change Legend at the bottom of the page & enhance layout.
+#@2025_09_19 web v1.9 Show only active systems and virtual machines.
 # ==================================================================================================
 
 
@@ -100,7 +101,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 $DEBUG              = False ;                                           # Debug Activated True/False
-$WVER               = "1.8" ;                                           # Current version number
+$WVER               = "1.9" ;                                           # Current version number
 $URL_HOME           = '/index.php';                                     # Site Main Page
 
 # Server Static Data Maintenance
@@ -448,7 +449,7 @@ function export_legend()
 
     # Get all active virtual systems from the SADMIN Database
     # $sql = "SELECT * FROM server where srv_vm = True and srv_active = True order by srv_name;";
-    $sql = "SELECT * FROM server where srv_vm = 1 order by srv_name;";
+    $sql = "SELECT * FROM server where srv_vm = 1 and srv_active = 1 order by srv_name;";
     $result=mysqli_query($con,$sql) ;     
     $NUMROW = mysqli_num_rows($result);                         # Get Nb of rows returned
     if ($NUMROW == 0)  {                                                # If No Server found
