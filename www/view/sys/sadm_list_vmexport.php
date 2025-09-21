@@ -464,7 +464,7 @@ function export_legend()
 
     # Show Virtual system schedule status page heading
 
-    display_lib_heading("NotHome","Virtual Box Export Status","Only virtual systems are shown on this page",$WVER);
+    display_lib_heading("NotHome","Virtual Box Export Status","Only active virtual systems are shown",$WVER);
     setup_table();                                                      # Create HTML Table/Heading
     
     # Loop Through Retrieved Data and Display each Row

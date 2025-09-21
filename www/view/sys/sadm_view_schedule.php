@@ -207,19 +207,18 @@ function display_data($count, $row) {
 
     # Last O/S Update Date & Time.
     if (file_exists($rch_name)) {
-        $file = file("$rch_name");                                   # Load RCH File
+        $file = file("$rch_name");                                      # Load RCH File
         $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
         # $whost,$wdate1,$wtime1,$wdate2,$wtime2,$welapse,$wscript,$walert,$gtype,$wcode
         #    0      1       2       3       4       5       6        7       8      9
         #$rch_array  = explode(" ",$rch_line); 
         list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapse,$cname,$calert,$ctype,$ccode) = explode(" ",$lastline);
-
         $WLAST_UPDATE = "$cdate1 $ctime1";
     }else{
         if (substr($row['srv_date_osupdate'],0,16) == "0000-00-00 00:00") {
             $WLAST_UPDATE = "None";  
             echo "<td align='center'>";
-            $tooltip = "There is no O/S update that was perform yet.";
+            $tooltip = "There is no O/S update that was perform yet (No rch file).";
             echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
             echo "None yet</span></td>";
         }else{
@@ -266,7 +265,7 @@ function display_data($count, $row) {
                   break ;
         case 2  : echo "<td align='center' style='bgcolor='#DAF7A6'><b>Running</b>"; 
                   break ;
-        default : echo "<td align='center' style='bgcolor='#DAF7A6'>None yet"; 
+        default : echo "<td align='center' style='bgcolor=#DAF7A6'>None yet"; 
                   break ;
     }
     echo "</td>\n";  
