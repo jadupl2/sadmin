@@ -68,6 +68,7 @@
 #@2024_11_25 osupdate v5.7 Fix minor problem with system lock.
 #@2025_04_22 osupdate v5.8 Reduce sleep time from 8 minutes to 4 to restart system app.
 #@2025_06_10 nolog    v5.9 Minor changes - No Log
+#@2025_09_21 osupdate v6.0 Fix intermittent problem with o/s update (ssh) on SADMIN server.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -116,7 +117,7 @@ export SADM_PN="${SADM_INST}.${SADM_EXT}"                  # Script name(with ex
 
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='5.9'                                      # Script version number
+export SADM_VER='6.0'                                      # Script version number
 export SADM_PDESC="Run the O/S update script on the selected remote system."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -282,8 +283,11 @@ rcmd_osupdate()
     fi 
 
     # Check existence of script on remote server and that it is executable.
-    pgm="${server_sadmin_dir}/bin/$USCRIPT"                         # Path To o/s update script
-    response=$($SADM_SSH -qnp $server_ssh_port $fqdn_server "if [ -x $pgm ] ;then echo 'ok' ;else echo 'error' ;fi")
+    pgm="${server_sadmin_dir}/bin/$USCRIPT"                             # Path To o/s update script
+    if [ "$SADM_HOST_TYPE" = "S" ]                                      # If SADMIN Server is local
+        then response=$(if [ -x $pgm ] ;then echo 'ok' ;else echo 'error' ;fi)
+        else response=$($SADM_SSH -qnp $server_ssh_port $fqdn_server "if [ -x $pgm ] ;then echo ok ;else echo error ;fi")
+    fi 
     if [ "$response" != "ok" ]
         then sadm_write_err "[ ERROR ] '$pgm' don't exist or not executable on $fqdn_server."
              sadm_write_err "No O/S Update will be perform."
@@ -320,14 +324,14 @@ rcmd_osupdate()
     sadm_write_log "Starting the O/S update on '${server_name}'."
 
     # Check if on a valid SADMIN server, if so use 'ssh' else run locally.
-    if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If not on SADMIN Server                                          # SADMIN Server? 0=No 1=Yes
+    if [ "$SADM_HOST_TYPE" != "S" ]                                     # If not on SADMIN Server 
         then sadm_write_log "Starting the O/S update on '$fqdn_server'"
              sadm_write_log "$SADM_SSH -qnp $server_ssh_port $fqdn_server '${server_sadmin_dir}/bin/$USCRIPT ${WREBOOT}'"
              sadm_write_log " "
              sadm_write_log " "
-             $SADM_SSH -qnp $server_ssh_port $fqdn_server ${server_sadmin_dir}/bin/$USCRIPT $WREBOOT
+             $SADM_SSH -qnp $server_ssh_port $fqdn_server $pgm $WREBOOT
              RC=$? 
-        else sadm_write_log "Starting execution of ${server_sadmin_dir}/bin/${USCRIPT}."
+        else sadm_write_log "Starting execution of $pgm on local SADMIN server."
              sadm_write_log " "
              sadm_write_log " "
              ${server_sadmin_dir}/bin/$USCRIPT                       # Run Locally when on SADMIN
