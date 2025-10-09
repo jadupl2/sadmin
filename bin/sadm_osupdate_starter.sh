@@ -351,7 +351,8 @@ rcmd_osupdate()
     # We need to wait and give time for the system to reboot and be available again.
     # We sleep ($REBOOT_TIME) 240 sec. (4 Min.) to give system time to restart & to start it's apps.
     if [ "$WREBOOT" != "" ]                                             # if Reboot requested
-        then sadm_write_log "System $fqdn_server is now rebooting in $REBOOT_TIME seconds."
+        then sadm_write_log "  " 
+             sadm_write_log "System $fqdn_server is now rebooting in $REBOOT_TIME seconds."
              sadm_write_log "Give time for '$server_name' to be available, we will wait $REBOOT_TIME sec."
              sadm_sleep $REBOOT_TIME 20 
     fi 
