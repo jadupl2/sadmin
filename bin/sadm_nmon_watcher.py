@@ -233,16 +233,19 @@ def main_process():
 
 
     sa.write_log ("The 'nmon' daemon is not running.")
+    sa.write_log (" ")
     sa.write_log ("We will start a fresh one that will terminate at 23:58.")
     sa.write_log ("We calculated that there will be %d snapshots till then." % (total_snapshots))
 
-    CMD = "%s -f -s120 -c%d -t -m %s " % (sa.cmd_nmon,total_snapshots,sa.dir_nmon)
+    sa.write_log (" ")
     sa.write_log ("Starting 'nmon' daemon ...")
+    CMD = "%s -f -s120 -c%d -t -m %s " % (sa.cmd_nmon,total_snapshots,sa.dir_nmon)
     sa.write_log ("Running : %s" % (CMD))
     ccode, std_out, std_err = sa.oscommand(CMD)                    
     time.sleep(5)               # Time to come up
     pcount = count_process(nmon_name)
     ccode, cstdout, cstderr = sa.oscommand("ps -ef | grep '/nmon ' | grep -v grep") 
+    sa.write_log (" ")
     #sa.write_log("pcount=%d before starting it :\n%s" % (pcount,cstdout))
     if pcount == 1 :
         sa.write_log("[ OK ] Process named '%s' is now running." % (nmon_name))
@@ -319,7 +322,6 @@ def main(argv):
         pexit_code = main_process()                                  # Loop All Active systems
         sa.stop(pexit_code)                                             # Exit Gracefully SADMIN Lib
     sys.exit(pexit_code)                                                # Back to O/S with Exit Code
-                                              # Back to O/S with Exit Code
 
 # This idiom means the below code only runs when executed from command line
 if __name__ == "__main__": main(sys.argv)
