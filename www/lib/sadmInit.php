@@ -277,9 +277,10 @@ if (!is_readable(SADM_ALERT_FILE)) {
         echo "\n<br>SADM_RO_DBUSER = ..." . SADM_RO_DBUSER  ."...";
         echo "\n<br>SADM_RO_DBPWD  = ..." . SADM_RO_DBPWD   ."...";
         echo "\n<br>SADM_DBHOST    = ..." . SADM_DBHOST     ."...";
+        echo "\n<br>SADM_DBPORT    = ..." . SADM_DBPORT     ."...";
         echo "\n<br>SADM_DBNAME    = ..." . SADM_DBNAME     ."...";
     }
-    $con = mysqli_connect(SADM_DBHOST,SADM_RW_DBUSER,SADM_RW_DBPWD,SADM_DBNAME);
+    $con = mysqli_connect(SADM_DBHOST,SADM_RW_DBUSER,SADM_RW_DBPWD,SADM_DBNAME,SADM_DBPORT);
     if (mysqli_connect_errno()) {                                   # Check if Error Connecting
         echo "<BR>\n>>>>> Failed to connect to MySQL Database: '" . SADM_DBNAME . "'";
         echo "<BR>\n>>>>> Error (" . mysqli_connect_error() . ") " . "'<br/>";
