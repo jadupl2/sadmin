@@ -77,6 +77,7 @@
 #@2025_08_25 lib v4.62 Database update functions 'db_close' 'db_connect'and 'start' to fix some error.
 #@2025_08_27 lib v4.63 Move the import 'pymysql' module in the start function. 
 #@2025_08_28 lib v4.64 Fix error when 'db_used=True' and 'pymysql' module not installed.    
+#@2025_10_88 lib v4.65 Fix caching problem of script log.
 # 
 # --------------------------------------------------------------------------------------------------
 
@@ -87,7 +88,6 @@ try :
     import shutil                                           # HighLevel File Operations
     import platform                                         # Platform identifying data
     #import psutil                                           # Get all IPs defined on host
-    import pwd                                              # Pwd /etc/passwd Database 
     import base64                                           # To Encrypt, decrypt password file
     import inspect                                          # Check Object Type
     import time                                             # Time access & conversions
@@ -108,13 +108,27 @@ except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
 
+try :
+    if platform.system() == 'Linux' or platform.system() == 'Darwin' :
+        #print("Running on Linux or MacOS system")
+        import pwd                                          # Pwd /etc/passwd Database 
+    if platform.system() == 'Windows':
+        print("Running on Windows")
+        import win32security
+except ImportError as e:
+    print ("Import Error : %s " % e)
+    sys.exit(1)
+
+
+
+
 
     
 
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.64"                                # This Library Version
+lib_ver             = "4.65"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -256,8 +270,8 @@ if platform.system().upper() != "DARWIN":                   # If not on MAc
 
 
 # O/S Path to various commands used by SADM Tools
-cmd_which           = "/usr/bin/which"                     # which Path - Required
-cmd_locate          = "/usr/bin/locate"                    # Locate command 
+cmd_which           = "/usr/bin/which"                      # which Path - Required
+cmd_locate          = "/usr/bin/locate"                     # Locate command 
 cmd_lsb_release     = ""                                    # Command lsb_release Path
 cmd_dmidecode       = ""                                    # Command dmidecode Path
 cmd_bc              = ""                                    # Command bc (Do Some Math)
@@ -319,22 +333,22 @@ dir_www_rch        = dir_www_host + '/rch'                  # Web Data RCH Dir
 pid_file           = "%s/%s.pid" % (dir_tmp, pinst)                     # Process ID File
 rel_file           = dir_cfg + '/.release'                              # SADMIN Release Version No.
 dbpass_file        = dir_cfg + '/.dbpass'                               # SADMIN DB User/Pwd file
-dbpass_file_fh     = ""                                                 # SADMIN DB User/Pwd Handler
+dbpass_file_fh     = ""                                                 # SADMIN DB User/Pwd Handle
 gmpw_file_txt      = dir_cfg + '/.gmpw'                                 # SMTP old password file
 gmpw_file_b64      = dir_cfg + '/.gmpw64'                               # SMTP new password file
-gmpw_file_fh       = ""                                                 # SMTP Passwd file Handler
+gmpw_file_fh       = ""                                                 # SMTP Passwd file Handle
 log_file           = dir_log + '/' + phostname + '_' + pinst + '.log'   # Log File Name
-log_file_fh        = ""                                                 # Log File Handler
+log_file_fh        = ""                                                 # Log File Handle
 err_file           = dir_log + '/' + phostname + '_' + pinst + '_e.log' # Error log File Name
-err_file_fh        = ""                                                 # Error log File Handler
+err_file_fh        = ""                                                 # Error log File Handle
 rch_file           = dir_rch + '/' + phostname + '_' + pinst + '.rch'   # Result Code History file
-rch_file_fh        = ""                                                 # RCH File Handler
+rch_file_fh        = ""                                                 # RCH File Handle
 rpt_file           = dir_rpt + '/' + phostname + '.rpt'                 # Sysmon Result Report File
 cfg_file           = dir_cfg + '/sadmin.cfg'                            # SADMIN Config Filename
-cfg_file_fh        = ""                                                 # Configuration File Handler
+cfg_file_fh        = ""                                                 # Configuration File Handle
 cfg_hidden         = dir_cfg + '/.sadmin.cfg'                           # SADMIN Initial CFG File
 alert_file         = dir_cfg + '/alert_group.cfg'                       # AlertGroup Definition File
-alert_file_fh      = ""                                                 # AlertGroup File Handler
+alert_file_fh      = ""                                                 # AlertGroup File Handle
 alert_init         = dir_cfg + '/.alert_group.cfg'                      # AlertGroup Initial File
 alert_hist         = dir_cfg + '/alert_history.txt'                     # Alert History Text File
 alert_hini         = dir_cfg + '/.alert_history.txt'                    # Alert History Initial File
@@ -381,14 +395,21 @@ def write_log (wline, lf=True ):
 
     now = datetime.datetime.now()                                       # Get current Time
     logLine = now.strftime("%Y.%m.%d %H:%M:%S") + " - " + wline         # Add Date/Time to Log Line
+
+
+    # Write to [L]og file
     if (log_type.upper() == "L") or (log_type.upper() == "B") :         # Output to Log or Both
         logLine=logLine.replace("\n"," ").strip()                       # Replace \n by " " in Log
         log_file_fh.write ("%s\n" % (logLine))                          # Write to Log
+        log_file_fh.flush()                                             # Write to Log
+
+    # Write to [S]creen 
     if (log_type.upper() == "S") or (log_type.upper() == "B") :         # Output to Screen
         if (lf) :                                                       # If EOL Line feed requested
             print ("%s" % wline)                                        # Line with LineFeed
         else :                                                          # No LineFeed requested
-            print ("%s" % wline, end='')                                # Line without LineFeed
+            print ("%s" % wline, end='')                                # PrintLine without LineFeed
+
     return(0)
 
 
@@ -418,9 +439,10 @@ def write_err (wline, lf=True ):
 
     if (log_type.upper() == "L") or (log_type.upper() == "B") :         # Output to Log or Both
         logLine=logLine.replace("\n"," ").strip()                       # Replace \n by " " in Log
-        log_file_fh.write ("%s\n" % (logLine))                          # Write to log file
+        log_file_fh.write ("%s\n" % (logLine))     
+        log_file_fh.flush()                                             # Write to log file
         err_file_fh.write ("%s\n" % (logLine))                          # Write to error file
-    
+        err_file_fh.flush()   
     if (log_type.upper() == "S") or (log_type.upper() == "B") :         # Output to Screen
         if (lf) :                                                       # If EOL Line feed requested
             print ("%s" % wline)                                        # Line with LineFeed
@@ -2177,7 +2199,6 @@ def stop(pexit_code,db_conn='',db_cur='') :
 # --------------------------------------------------------------------------------------------------
 def start(pver=0.0,pdesc=pn,db_name="sadmin") : 
     
-    global log_file_fh, err_file_fh, start_time, start_epoch, delete_pid, dict_alert
 
     """
     Initialize the SADMIN environment
@@ -2199,6 +2220,9 @@ def start(pver=0.0,pdesc=pn,db_name="sadmin") :
             - db_cur    : Return Database cursor.
 
     """
+    
+    global log_file_fh, err_file_fh, start_time, start_epoch, delete_pid, dict_alert
+
     lib_debug=0
     if lib_debug > 0 : print ("\npver=%s, pdesc=%s, db_name=%s" % (pver,pdesc,db_name))
 
@@ -2207,7 +2231,7 @@ def start(pver=0.0,pdesc=pn,db_name="sadmin") :
     uid = pwd.getpwnam(sadm_user).pw_uid                                # Get UID User in sadmin.cfg
     gid = grp.getgrnam(sadm_group).gr_gid                               # Get GID User in sadmin.cfg
 
-    # Open LOG file.
+    # Make sure that $SADMIN/log directory is created, get the right permission and owner/group ID.
     try:                                                                # Try to Open/Create Log
         if not os.path.exists(dir_log)  : os.mkdir(dir_log,2775)        # Create SADM Log Dir
         if (log_append):                                                # User Want to Append to Log
@@ -2228,7 +2252,10 @@ def start(pver=0.0,pdesc=pn,db_name="sadmin") :
         os.chown(log_file,uid,gid)                                      # Set Owner of log file
         os.chmod(log_file,0o664)                                        # Chg log file Perm.
 
-    # Open script ERROR log file. 
+
+    # Crete a new log ($SADMIN/log/phostname_pinst.log)  script ERROR log file. 
+    # Log File Name   - log_file = dir_log + '/' + phostname + '_' + pinst + '.log' 
+    # Log File Handle - log_file_fh  
     try: 
         if (log_append):                                                # User Want to Append to Log
             err_file_fh=open(err_file,'a')                              # Open ErrLog append  mode
@@ -2807,3 +2834,4 @@ load_config_file(cfg_file)                                              # Load s
 load_cmd_path()                                                         # Load Cmd Path Variables
 dict_alert = load_alert_file()                                          # Load Alert group in dict
 if (lib_debug > 0) : print_dict_alert()                                 # Print Alert Group Dict
+
