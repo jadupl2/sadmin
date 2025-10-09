@@ -48,7 +48,7 @@ except ImportError as e:                                            # Trap Impor
 # To use SADMIN tools, this section MUST be present near the top of your Python code.    
 # --------------------------------------------------------------------------------------------------
 try:
-    SADM = os.environ['SADMIN']                                      # Get SADMIN Env. Var. Dir.
+    SADM = os.environ['SADMIN']                                      # Get SADMIN Env. Variable
 except KeyError as e:                                                # If SADMIN is not define
     print("Environment variable 'SADMIN' is not defined.\n%s\nScript aborted.\n" % e) 
     sys.exit(1)                                                      # Go Back to O/S with Error
@@ -72,7 +72,7 @@ db_conn     = None                # Database Connector (if used)
 db_cur      = None                # Database Cursor (if used)
 
 # Fields used by sa.start(),sa.stop() & DB functions that influence execution of SADMIN library
-sa.db_used           = True      # Open/Use DB(True), No DB needed (False), sa.start() auto connect
+sa.db_used           = False      # Open/Use DB(True), No DB needed (False), sa.start() auto connect
 sa.db_silent         = False      # True=ReturnErrorNo & No ErrMsg, False=ReturnErrorNo & ShowErrMsg
 sa.db_name           = "sadmin"   # Database Name default to name define in $SADMIN/cfg/sadmin.cfg
 sa.db_errno          = 0          # Database Error Number
@@ -103,7 +103,7 @@ sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (s
 
 
 
-# SCript Global Variables Definition Section
+# Script Global Variables Definition Section
 # --------------------------------------------------------------------------------------------------
 
 
@@ -113,7 +113,7 @@ sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (s
 # Process all your active(s) server(s) in the Database (Used if want to process selected servers)
 # Called when 'sa.db_used' is set to 'True'.
 # --------------------------------------------------------------------------------------------------
-def process_servers(fconn=db_conn,fcur=db_cur):
+def process_servers(fconn=db_conn, fcur=db_cur):
 
     sa.write_log("Processing all actives server(s)")                    # Enter Servers Processing
 
@@ -198,13 +198,13 @@ def process_servers(fconn=db_conn,fcur=db_cur):
 # Main Process (Insert here your main process (Called when 'sa.db_used' is set to 'False'.)
 # --------------------------------------------------------------------------------------------------
 def main_process():
+    sa.write_log ("In main_process")
 
-    sa.write_log ("Insert your code here.")
-    sa.sleep(8,2)
-    sa.write_log(" ")
+    sa.sleep(6,2)                                                       # Sleep 6 sec progress 2 sec
+    sa.write_log(" ")                                                   # Blank line on screen & Log
 
-    # Return Result code to caller
-    return(pexit_code)
+    
+    return(pexit_code)                                                  # Result Code to caller
 
 
 
@@ -259,13 +259,13 @@ def cmd_options(argv):
 def main(argv):
     (pdebug) = cmd_options(argv)                                        # Analyze cmdline options
 
-    if sa.db_used : 
+    if sa.db_used :                                                     # Using SADMIN DB
         (db_conn,db_cur) = sa.start(pver,pdesc)                         # Initialize SADMIN env.
         pexit_code = process_servers(db_conn,db_cur)                    # Loop All Active systems
         sa.stop(pexit_code,db_conn,db_cur)                              # Exit Gracefully & Close DB
     else: 
         sa.start(pver,pdesc)                                            # Initialize SADMIN env.
-        pexit_code = main_process()                                  # Loop All Active systems
+        pexit_code = main_process()                                     # Default: Run main_process
         sa.stop(pexit_code)                                             # Exit Gracefully SADMIN Lib
     sys.exit(pexit_code)                                                # Back to O/S with Exit Code
 

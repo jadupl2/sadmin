@@ -2,7 +2,7 @@
 # --------------------------------------------------------------------------------------------------
 #   Author      :  Jacques Duplessis
 #   Script name :  sadm_rch_scr_summary.sh
-#   Synopsis    :  Display from CLI the Result File (RCH Files) Summary
+#   Synopsis    :  From CLI Result Files (.rch) summary
 #   Version     :  1.5
 #   Date        :  14 December 2015
 #   Requires    :  sh
@@ -38,6 +38,7 @@
 # 2022_05_11 cmdline v1.19 Replace "sadm_send_alert()" call by "sadm_sendmail()". 
 # 2022_08_17 cmdline v1.20 Updated with new SADMIN section v1.52
 # 2023_10_27 cmdline v1.21 Exclude script specify in 'SADM_MONITOR_RECENT_EXCLUDE' variable in sadmin.cfg.
+#@2025_10_01 cmdline v1.22 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -68,8 +69,8 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='1.21'                                     # Script version number
-export SADM_PDESC="Scripts monitoring from command line that show status of all result file (RCH)."  
+export SADM_VER='1.22'                                     # Script version number
+export SADM_PDESC="From the command line show the Result Files (.rch) summary"  # Short description of script
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
