@@ -341,6 +341,7 @@ rmcmd_start()
 
 
         # Time to run the requested $SCRIPT on remote system
+        sadm_write_log " " ;  sadm_write_log " " ; sadm_write_log " " 
         sadm_write_log "[ OK ] Starting '$REM_SCRIPT' on '$REM_SERVER'."
         CMD="$SADM_SSH -qnp $server_ssh_port -o BatchMode=yes ${REM_USER}\@$REM_SERVER "
         CMD="$CMD $REM_SCRIPT $REM_SCRIPT_ARGS"
