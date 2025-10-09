@@ -1401,10 +1401,10 @@ process_servers()
             then find $SADM_WWW_DAT_DIR -name "vm_list.txt" -exec cat {} \; > $SADM_TMP_FILE2
                  grep -q "$server_name" $SADM_TMP_FILE2  
                  if [ $? -ne 0 ] 
-                    then sadm_write_err "'$server_name' is set as a VM in database 'server_vm' = 1"
-                         sadm_write_err "But not in any 'vm_list' files ? "                                                           
-                    else update_vmexport_crontab "$server_name" "${server_dir}/bin/$EXPORT_SCRIPT" "$export_min" "$export_hrs" "$export_mth" "$export_dom" "$export_dow" "$ssh_port" "$export_host"
+                    then sadm_write_err "[ WARNING ] The system '$server_name' is set as a VM in database 'server_vm'=1"
+                         sadm_write_err "[ WARNING ] But not in any 'vm_list' files under $SADM_WWW_DAT_DIR ? "                                                           
                  fi 
+                 update_vmexport_crontab "$server_name" "${server_dir}/bin/$EXPORT_SCRIPT" "$export_min" "$export_hrs" "$export_mth" "$export_dom" "$export_dow" "$ssh_port" "$export_host"
         fi
                 
         # Set remote $SADMIN/cfg Dir. and local www/dat/${server_name}/cfg directory.
@@ -2486,7 +2486,7 @@ function cmd_options()
 
 # Main Script Start HERE
 # --------------------------------------------------------------------------------------------------
-    cmd_options "$@"                                                    # Check command-line Options    
+    cmd_options "$@"                                                    # Check command-line Options   
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
     main_process                                                        # rsync from all clients
