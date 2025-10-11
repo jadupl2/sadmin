@@ -30,7 +30,7 @@
 # --------------------------------------------------------------------------------------------------
 #
 
-# Modules needed by this script SADMIN Tools and they all come with Standard Python 3.
+# Modules needed by this script and they all come with Standard Python 3.
 try:
     import os, sys, argparse, time, datetime, socket, platform, re  # Import Std Python3 Modules
 #   import pdb                                                      # Python Debugger (If needed)
@@ -62,7 +62,7 @@ except ImportError as e:                                             # If Error 
     sys.exit(1)                                                      # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver        = "1.01"              # Program version no.
+pver        = "0.01"              # Program version no.
 pdesc       = "Put here a description of your script."
 phostname   = sa.get_hostname()   # Get current `hostname -s`
 pdebug      = 0                   # Debug level from 0 to 9
@@ -78,14 +78,14 @@ sa.db_name           = "sadmin"   # Database Name default to name define in $SAD
 sa.db_errno          = 0          # Database Error Number
 sa.db_errmsg         = ""         # Database Error Message
 #
-sa.use_rch           = True       # Generate entry in Result Code History (.rch)
-sa.log_type          = 'B'        # Output goes to [S]creen to [L]ogFile or [B]oth
-sa.log_append        = False      # Append Existing Log(True) or Create New One(False)
+sa.use_rch           = True       # Generate entry in Result Code History file (.rch)
+sa.log_type          = 'B'        # Output goes to [S]creen, [L]ogFile or [B]oth
+sa.log_append        = False      # Append Existing Log (True) or Create New Log (False)
 sa.log_header        = True       # Show/Generate Header in script log (.log)
 sa.log_footer        = True       # Show/Generate Footer in script log (.log)
-sa.multiple_exec     = "N"        # Allow running multiple copy at same time ?
-sa.proot_only        = False      # Pgm run by root only ?
-sa.psadm_server_only = False      # Run only on SADMIN server ?
+sa.multiple_exec     = "N"        # Allow multiple copy to run at same time 'Y' else 'N'.
+sa.proot_only        = False      # True = Script can only be run by 'root' user only else 'N'.
+sa.psadm_server_only = False      # True = Script can only be run on SADMIN server else 'N'.
 sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (sa.cmd_ssh,sa.sadm_ssh_port)
 
 # The values of fields below, are loaded from sadmin.cfg when you import the SADMIN library.
@@ -115,7 +115,7 @@ sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (s
 # --------------------------------------------------------------------------------------------------
 def process_servers(fconn=db_conn, fcur=db_cur):
 
-    sa.write_log("Processing all actives server(s)")                    # Enter Servers Processing
+    sa.write_log("Processing all active system(s)")                     # Enter Servers Processing
 
     if (sa.db_used == False) :                                          # Make sure db_used is True
         sa.write_err ("Variable 'sa.db_used' must be set to 'True' to have access to the database.")
@@ -200,7 +200,7 @@ def process_servers(fconn=db_conn, fcur=db_cur):
 def main_process():
     sa.write_log ("In main_process")
 
-    sa.sleep(6,2)                                                       # Sleep 6 sec progress 2 sec
+    sa.sleep(3,1)                                                       # Sleep 6 sec progress 2 sec
     sa.write_log(" ")                                                   # Blank line on screen & Log
 
     
@@ -213,15 +213,16 @@ def main_process():
 # Command line Options
 # --------------------------------------------------------------------------------------------------
 def cmd_options(argv):
-    """ Command line Options functions - Evaluate Command Line Switch Options
+
+    """ Command line Options Function - Evaluate Command Line Switch Used (if any).
 
         Args:
             (argv): Arguments pass on the comand line.
-              [-d 0-9]  Set Debug (verbose) Level
-              [-h]      Show this help message
-              [-v]      Show script version information
+              [-d 0-9]      Set Debug (verbose) Level
+              [-h]          Show this help message
+              [-v]          Show script version information
         Returns:
-            pdebug (int)          : Set to the debug level [0-9] (Default is 0)
+            pdebug (int)    Set to the debug level [0-9] (Default is 0)
     """
 
     global pdebug                                                       # Script Debug Level (0-9)
@@ -231,7 +232,7 @@ def cmd_options(argv):
     parser.add_argument("-v",
                         action="store_true",
                         dest='version',
-                        help="Show script version")
+                        help="Show script information")
     parser.add_argument("-d",
                         metavar="0-9",
                         type=int,

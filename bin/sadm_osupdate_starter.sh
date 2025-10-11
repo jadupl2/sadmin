@@ -104,14 +104,14 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 # SPECIAL DEROGATION TO INSERT THE NAME OF THE SYSTEM TO UPDATE IN THE FILENAME OF LOG AND RCH FILE.
 
 # Making sure at least one parameter is received (Should be the system name to update"
-if [ $# -ne 1 ]                                            # MUST be hostname to update
+if [ $# -ne 1 ]                                            # Param. MUST be the hostname to update
     then printf "\n[ ERROR ] Please specify the remote system name.\n\n"
          exit 1                                            # Exit To O/S
     else export SYSTEM_NAME=$1                             # Save Server Name to Update
 fi 
 export SADM_EXT=$(echo "$SADM_PN" | cut -d'.' -f2)         # Save Script extension (sh, py, php,.)
-export SADM_INST="${SADM_INST}_${SYSTEM_NAME}"             # Insert VMName to export in rch & log
-export SADM_HOSTNAME="$SYSTEM_NAME"                        # SystemName that we are going to update
+export SADM_INST="${SADM_INST}_${SYSTEM_NAME}"             # Insert hostname to rch/log name
+export SADM_HOSTNAME="$SYSTEM_NAME"                        # System Name that we are going to update
 export SADM_PN="${SADM_INST}.${SADM_EXT}"                  # Script name(with extension)
 # --------------------------------------------------------------------------------------------------
 
@@ -145,8 +145,8 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
 #export SADM_ALERT_GROUP="default"                          # Alert Group to advise
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
-export SADM_MAX_LOGLINE=800                                # Nb Lines to trim(0=NoTrim)
-export SADM_MAX_RCLINE=60                                  # Nb Lines to trim(0=NoTrim)
+export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
+export SADM_MAX_RCLINE=50                                  # Nb Lines to trim(0=NoTrim)
 #export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
 #export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
 # ---------------------------------------------------------------------------------------
@@ -192,14 +192,15 @@ update_server_db()
 {
     WSERVER=$1                                                          # Server Name to Update
     WSTATUS=$2                                                          # Status of OS Update (F/S)
-    WCURDAT=$(date "+%C%y.%m.%d %H:%M:%S")                              # Get & Format Update Date
 
-    # Construct SQL Update Statement
     #if [ "$WSTATUS" = "F" ]
     #    then sadm_write "Set O/S update status to 'Failed' in Database "   # Advise user of result
     #    else sadm_write "Set O/S update status to 'Success' in Database "  # Advise user of result
     #fi
+
+    # Construct SQL Update Statement
     SQL1="UPDATE server SET "                                           # SQL Update Statement
+    WCURDAT=$(date "+%C%y.%m.%d %H:%M:%S")                              # Get & Format Current Date
     SQL2="srv_date_osupdate = '${WCURDAT}', "                           # Update Date of this Update
     SQL3="srv_update_status = '${WSTATUS}' "                            # [S]uccess [F]ail [R]unning
     SQL4="where srv_name = '${WSERVER}' ;"                              # Server name to update
@@ -236,6 +237,7 @@ rcmd_osupdate()
     SQL3="where srv_ostype = 'linux' and srv_active = True "            # Got to Be a Linux & Active
     SQL4="and srv_name = '$SYSTEM_NAME' ;"                              # Select server to update
     SQL="${SQL1}${SQL2}${SQL3}${SQL4}"                                  # Build Final SQL Statement 
+    
     WAUTH="-u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD "                       # Set Authentication String 
     CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
     CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL'"        # Build Full Command Line
@@ -246,7 +248,7 @@ rcmd_osupdate()
    
     # Result file not readable or is empty = Server Name not found in Database
     if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File not readable or 0 len
-        then sadm_write_err "[ ERROR ] System '$SYSTEM_NAME' is not a valid system, not in database."
+        then sadm_write_err "[ ERROR ] No System to update or '$SYSTEM_NAME' is not in database."
              return 1                                                   # Return Error to Caller
     fi 
     
