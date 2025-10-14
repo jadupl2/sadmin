@@ -251,6 +251,7 @@
 #@2025_08_09 lib v4.73 When on sadmin server, update the way we update the global log/rch directory.
 #@2025_08_25 lib v4.74 Change location of 'vm_list.txt' & 'vm_hosts.txt' to '$SADMIN/dat/dr' dir. 
 #@2025_09_04 lib v4.75 SHow Process ID of the script already running of the script.
+#@2025_10_13 lib v4.76 Enhance sadm_stop() to copy .rch/.log to Global Dir. when run on SADMIN master
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -261,7 +262,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.75"                                              # This Library Version
+export SADM_LIB_VER="4.76"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -2755,33 +2756,24 @@ sadm_stop() {
     if [ ! -s "$SADM_RCH_FILE" ] ; then rm -f $SADM_RCH_FILE >/dev/null 2>&1 ; fi
 
 
-    # If script is running on the SADMIN server, copy log and rch immediatly to global web dir.
+    # If script is running on the SADMIN server, rsync log and rch immediatly to global web dir.
     if [ "$SADM_HOST_TYPE" = "S" ] && [ $(id -u) -eq 0 ]                # Only run on SADMIN server
        then 
-            # Rsync Local 'log' directory ($SADMIN/log) 
-            # to Global log web dir. ($SADMIN/www/dat/$SADM_HOSTNAME/log)
+            # Rsync Local 'log' directory ($SADMIN/log) to $SADMIN/www/dat/$SADM_HOSTNAME/log.
             WLOGDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/log"          # Dest. Main log Directory
             if [ ! -d "${WLOGDIR}" ] ;then mkdir -p -m 775 $WLOGDIR ;fi # Create Dir if not exist
-            WLOG="${WLOGDIR}/${SADM_INST}.log"                          # Global Log FileName & Dir.
-            rsync -ar --no-t --delete ${SADM_LOG_DIR}/ ${WLOGDIR}/ >/dev/null 2>&1 
-            if [ $? -ne 0 ] 
-                then sadm_write_err "[ ERROR ] Doing rsync between $SADM_LOG_DIR to $WLOGDIR"
-                     sadm_write_err "Command used: 'rsync -ar --no-t --delete ${SADM_LOG_DIR}/ ${WLOGDIR}/'" 
-            fi
+            CMD="rsync -ar --delete ${SADM_LOG_DIR}/ ${WLOGDIR}/" 
+            eval "$CMD" >>$SADM_LOG 2>&1
+            if [ $? -ne 0 ] ; then sadm_write_err "[ ERROR ] Doing : $CMD" ; fi
             if [ $(id -u) -eq 0 ] ; then chown -R $SADM_WWW_USER:$SADM_GROUP "$WLOGDIR"  ;fi 
 
-            # Rsync Local 'rch' directory 
-            # to Global rch web directory ($SADMIN/www/dat/$SADM_HOSTNAME)/rch)
+            # Rsync system Local 'rch' directory to ($SADMIN/www/dat/$SADM_HOSTNAME)/rch)
             WRCHDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"          # Host Main RCH Directory
             if [ ! -d "${WRCHDIR}" ] ;then mkdir -p -m 775 $WRCHDIR ;fi # Create Dir if not exist
-
-            WRCH="${WRCHDIR}/${SADM_INST}.rch"                          # RCH File Name in Main Dir
-            
-            rsync -ar --no-t --delete ${SADM_RCH_DIR}/ ${WRCHDIR}/ >/dev/null 2>&1 
-            if [ $? -ne 0 ] 
-                then sadm_write_err "[ ERROR ] Doing rsync between $SADM_RCH_DIR to $WRCHDIR" 
-                     sadm_write_err "Command used: 'rsync -ar --no-t --delete ${SADM_RCH_DIR}/ ${WRCHDIR}/'" 
-            fi
+            CMD="rsync -ar --delete  ${SADM_RCH_DIR}/ ${WRCHDIR}/" 
+            eval "$CMD" >>$SADM_LOG 2>&1
+            if [ $? -ne 0 ] ; then sadm_write_err "[ ERROR ] Doing : $CMD" ; fi
+            if [ $(id -u) -eq 0 ] ; then chown -R $SADM_WWW_USER:$SADM_GROUP "$WRCHDIR"  ;fi 
     fi
     return $SADM_EXIT_CODE
 }
