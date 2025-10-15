@@ -45,55 +45,74 @@
 # 2018_06_09    v2.1 Change Help and Version Function, Change Script Name, Change Startup Order
 # 2018_07_14    v2.2 Switch to Bash Shell instead of sh (Causing Problem with Dash on Debian/Ubuntu)
 # 2018_09_17    v2.3 Insert Default Alert Group 
-# 2018_11_26 Fix v2.4 Problem running on RHEL8 with rrdtool 1.7, wasn't updating the rrd database.
+# 2018_11_26 srv v2.4 Problem running on RHEL8 with rrdtool 1.7, wasn't updating the rrd database.
+#@2025_10_15 srv v2.5 Adapt to the lastest SADMIN section and improve perfomance
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
 
 
 
+# --------------------------  S A D M I N   C O D E    S E C T I O N  ------------------------------
+# v1.56 - Setup for Global variables and load the SADMIN standard library.
+#       - To use SADMIN tools, this section MUST be present near the top of your code.
 
-#===================================================================================================
-# Setup SADMIN Global Variables and Load SADMIN Shell Library
-#===================================================================================================
-#
-    # TEST IF SADMIN LIBRARY IS ACCESSIBLE
-    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
-        then echo "Please set 'SADMIN' Environment Variable to the install directory." 
-             exit 1                                     # Exit to Shell with Error
-    fi
-    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
-        then echo "SADMIN Library can't be located"     # Without it, it won't work 
-             exit 1                                     # Exit to Shell with Error
-    fi
+# Make sure environment variable 'SADMIN' is defined.
+if [ -r /etc/environment ] && [ -z "$SADMIN" ] ; then source /etc/environment ; fi 
+if [ -z "$SADMIN" ]                                        # Advise user, SADMIN Env. Var. is a MUST
+   then printf "\nSet 'SADMIN' environment variable to the install directory." 
+        printf "\nAdd a line similar to 'SADMIN=/opt/sadmin' in /etc/environment." 
+        exit 1 ; fi 
+if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                   # If SADMIN shell library doesn't exist 
+   then printf "\nSADMIN library '$SADMIN/lib/sadmlib_std.sh' can't be found.\n" ; exit 1 ; fi 
 
-    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.4'                               # Current Script Version
-    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
-    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
+# YOU CAN USE THE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+export SADM_PN=${0##*/}                                    # Script name(with extension)
+export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
+export SADM_TPID="$$"                                      # Script Process ID.
+export SADM_HOSTNAME=$(hostname -s)                        # Host name without Domain Name
+export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_USERNAME=$(id -un)                             # Current user name.
 
-    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
-    export SADM_PN=${0##*/}                             # Current Script name
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
-    export SADM_TPID="$$"                               # Current Script PID
-    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
+# YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
+export SADM_VER='2.5'                                      # Script version number
+export SADM_PDESC="Update the performance database (.rrd) of every active systems " 
+export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
+export SADM_QUIET="N"                                      # N=Show Err.Msg Y=ReturnErrorCode No Msg
+export SADM_LOG_TYPE="B"                                   # Write log to [S]creen, [L]og, [B]oth
+export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
+export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoLogHeader
+export SADM_LOG_FOOTER="Y"                                 # Y=IncludeLogFooter N=NoLogFooter
+export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
+export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
+export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
+export SADM_EXIT_CODE=0                                    # Script Default Exit Code
+export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") # WorkFile, remove by sadm_stop()
+export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") # WorkFile, remove by sadm_stop()
+export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX") # WorkFile, remove by sadm_stop()
 
-    # Load SADMIN Standard Shell Library 
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
+# LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
+. "${SADMIN}/lib/sadmlib_std.sh"                           # Load SADMIN Shell Library
+export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
+export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.5)
+export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
+#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
-    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
-    # But some can overriden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                            # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
-    #export SADM_ALERT_GROUP="default"                   # AlertGroup Used to Alert (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    export SADM_MAX_LOGLINE=150000                       # When Script End Trim log file to 1000 Lines
-    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
-    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
-#===================================================================================================
+# VARIABLES DEFINE BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
+# BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).export SADM_WARNING_GRP="default"
+#export SADM_ALERT_GROUP="default"                          # Error Group Define in alert_group.cfg
+#export SADM_WARNING_GROUP="default"                        # Warning alert Group (alert_group.cfg)   
+#export SADM_INFO_GROUP="default"                           # Info alert Group (in alert_group.cfg)
+#export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
+#export SADM_ALERT_GROUP="default"                          # Alert Group to advise
+#export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
+#export SADM_MAX_LOGLINE=400                                # Nb Lines to trim(0=NoTrim)
+#export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
+#export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
+#export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
+# -------------------  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
+
 
 
 
@@ -101,7 +120,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #===================================================================================================
 #                               Script environment variables
 #===================================================================================================
-DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
+SADM_DEBUG=0                               ; export SADM_DEBUG        # 0=NoDebug Higher=+Verbose
 RC=0                                        ; export RC                 # Script Return Code
 CUR_DATE=`date +"%Y_%m_%d"`                 ; export CUR_DATE           # Current Date (2013_01_30)
 CUR_TIME=`date +"%H_%M_%S"`                 ; export CUR_TIME           # Current Time (19_09_06)
@@ -219,7 +238,7 @@ read_nmon_info_and_setup_rrd()
     fi
  
     # If Debug is Activated - Display Important Variables before exiting function
-    if [ "$DEBUG_LEVEL" -gt 1 ]
+    if [ "$SADM_DEBUG" -gt 1 ]
         then sadm_writelog "NMON_HOST      = $NMON_HOST"
              sadm_writelog "NMON_OS        = $NMON_OS"
              sadm_writelog "NMON_INTERVAL  = $NMON_INTERVAL"
@@ -273,9 +292,9 @@ build_cpu_array()
         ARRAY_CPU[$INDX]="${NUSER},${NSYST},${NWAIT},${NIDLE},${NTOTAL}" # Put Stat. in Array
         
         # If Debug is Activated - Display Important Variables before exiting function
-        if [ $DEBUG_LEVEL -gt 3 ]
+        if [ $SADM_DEBUG -gt 3 ]
             then sadm_writelog "CPU_ALL LINE = $wline"
-                 if [ $DEBUG_LEVEL -gt 5 ] 
+                 if [ $SADM_DEBUG -gt 5 ] 
                     then SVAL="SNAPSHOT=$SNAPSHOT NUSER=$NUSER NSYST=$NSYST "
                          SVAL="$SVAL NWAIT=$NWAIT NIDLE=$NIDLE NTOTAL=$NTOTAL"
                          sadm_writelog "    - $SVAL"
@@ -285,12 +304,12 @@ build_cpu_array()
         done <  $SADM_TMP_FILE1
 
     # Array is now loaded - Debug at 1,3 or 3 Display Number of array Elements
-    if [ $DEBUG_LEVEL -gt 0 ] 
+    if [ $SADM_DEBUG -gt 0 ] 
         then sadm_writelog "${#ARRAY_CPU[*]} Elements in CPU array."
     fi
     
     # Array is now loaded - Debug at 7,8 or 9 DIsplay Array content
-    if [ $DEBUG_LEVEL -gt 6 ] 
+    if [ $SADM_DEBUG -gt 6 ] 
         then for (( i = 1 ; i <= ${#ARRAY_CPU[@]} ; i++ ))
                 do
                 sadm_writelog "CPU Array Index [$i]: Value : ${ARRAY_CPU[$i]}"
@@ -352,7 +371,7 @@ build_epoch_array()
 
         # Store Epoch and Date/Time in Snapshot Array
         ARRAY_TIME[$ZCOUNT]="${NMON_EPOCH},${ZDD}/${ZMM}/${ZYY} ${ZHRS}:${ZMIN}:${ZSEC}"
-        if [ $DEBUG_LEVEL -gt 3 ]                                       # If Debug Activated
+        if [ $SADM_DEBUG -gt 3 ]                                       # If Debug Activated
             then sadm_writelog "Processing ZZZ Line : $wline"           # Show ZZZ Current Line
                  A="ARRAY_TIME[$ZCOUNT]=${NMON_EPOCH},${ZDD}/${ZMM}/${ZYY} ${ZHRS}:${ZMIN}:${ZSEC}"
                  sadm_writelog "   - ${A}"                              # Show Debug Info
@@ -360,7 +379,7 @@ build_epoch_array()
         done <  $SADM_TMP_FILE1
 
     # Array is now loaded - Debug at 7,8 or 9 DIsplay Array content
-    if [ $DEBUG_LEVEL -gt 6 ] 
+    if [ $SADM_DEBUG -gt 6 ] 
         then sadm_writelog " "
              for (( i = 1 ; i <= ${#ARRAY_TIME[@]} ; i++ ))             # Debug Display Epoch Array
                 do
@@ -368,7 +387,7 @@ build_epoch_array()
                 done      
     fi 
     # Array is now loaded - Debug at 1,3 or 3 Display Number of array Elements
-    if [ $DEBUG_LEVEL -gt 0 ] 
+    if [ $SADM_DEBUG -gt 0 ] 
         then sadm_writelog "${#ARRAY_TIME[*]} Elements in SnapShot/Epoch array"
     fi
     #sadm_writelog "End of Processing ZZZZ Time Lines."
@@ -408,7 +427,7 @@ build_runqueue_array()
         ARRAY_RUNQ[$INDX]="${NRUNQ}"                                    # Put Stat. in Array
         
         # If Debug is Activated - Display Important Variables before exiting function
-        if [ $DEBUG_LEVEL -gt 3 ]
+        if [ $SADM_DEBUG -gt 3 ]
             then sadm_writelog "PROC,T LINE = $wline"
                  sadm_writelog "    - INDEX = $INDX - RUNQUEUE = ${ARRAY_RUNQ[${INDX}]}"
         fi    
@@ -477,19 +496,19 @@ build_disk_read_array()
         if [ "$INDX" -eq 1  ]  ; then NBDEV=$NCOUNT ; fi                # Save Nb Disks Dealing with
 
         WTOTAL=0                                                        # Clear line total field
-        if [ $DEBUG_LEVEL -eq 9 ] ; then sadm_writelog "Disk Read Line: $wline" ;fi
+        if [ $SADM_DEBUG -eq 9 ] ; then sadm_writelog "Disk Read Line: $wline" ;fi
         for i in $(seq 3 $NCOUNT)                                       # Process all fields on line
             do
-            WFIELD=`echo $wline | $CUT -d, -f $i`                       # Get Field on line
+            WFIELD=`echo $wline | cut -d, -f $i`                        # Get Field on line
             WTOTAL=`echo $WTOTAL + $WFIELD | $SADM_BC -l `              # Add Field to Line Total
-            if [ $DEBUG_LEVEL -eq 9 ]                                   # Full Debug Info
+            if [ $SADM_DEBUG -eq 9 ]                                    # Full Debug Info
                 then sadm_writelog "Add $WFIELD & Total Read : $WTOTAL" # Show KBS Added & Total
             fi
             done
         #ARRAY_DISKREAD[$INDX]=`echo "${WTOTAL} / 1024"| $SADM_BC -l`    # Convert KBS>MBS in Array
         ARRAY_DISKREAD[$INDX]=${WTOTAL}                                 # Total Read KBS in Array
-        if [ $DEBUG_LEVEL -gt 4 ] ;then sadm_writelog "LINE=$wline" ;fi # Show Processing Line 
-        if [ $DEBUG_LEVEL -gt 1 ]                                       # Debug Activated 
+        if [ $SADM_DEBUG -gt 4 ] ;then sadm_writelog "LINE=$wline" ;fi # Show Processing Line 
+        if [ $SADM_DEBUG -gt 1 ]                                       # Debug Activated 
             then sadm_writelog "Snapshot $INDX Read at ${ARRAY_DISKREAD[${INDX}]} Mb/s"
         fi    
         done <  $SADM_TMP_FILE1
@@ -549,19 +568,19 @@ build_disk_write_array()
         if [ "$INDX" -eq 1  ]  ; then NBDEV=$NCOUNT ; fi                # Save Nb Disks Dealing with
 
         WTOTAL=0                                                        # Clear line total field
-        if [ $DEBUG_LEVEL -eq 9 ] ; then sadm_writelog "Disk Write Line: $wline" ;fi
+        if [ $SADM_DEBUG -eq 9 ] ; then sadm_writelog "Disk Write Line: $wline" ;fi
         for i in $(seq 3 $NCOUNT)                                       # Process all fields on line
             do
-            WFIELD=`echo $wline | $CUT -d, -f $i`                       # Get Field on line
+            WFIELD=`echo $wline | cut -d, -f $i`                        # Get Field on line
             WTOTAL=`echo $WTOTAL + $WFIELD | $SADM_BC -l `              # Add Field to Line Total
-            if [ $DEBUG_LEVEL -eq 9 ]                                   # Full Debug Info
+            if [ $SADM_DEBUG -eq 9 ]                                    # Full Debug Info
                 then sadm_writelog "Add $WFIELD & Total Write: $WTOTAL" # Show KBS Added & Total
             fi
             done
         #ARRAY_DISKWRITE[$INDX]=`echo "${WTOTAL} / 1024"| $SADM_BC -l`   # Convert KBS>MBS in Array
         ARRAY_DISKWRITE[$INDX]=${WTOTAL}                                # Total Write KBS in Array
-        if [ $DEBUG_LEVEL -gt 4 ] ;then sadm_writelog "LINE=$wline" ;fi # Show Processing Line 
-        if [ $DEBUG_LEVEL -gt 1 ]                                       # Debug Activated 
+        if [ $SADM_DEBUG -gt 4 ] ;then sadm_writelog "LINE=$wline" ;fi # Show Processing Line 
+        if [ $SADM_DEBUG -gt 1 ]                                       # Debug Activated 
             then sadm_writelog "Snapshot $INDX Write at ${ARRAY_DISKWRITE[${INDX}]} Mb/s"
         fi    
         done <  $SADM_TMP_FILE1
@@ -605,7 +624,7 @@ build_net_array()
     NBFLD=`echo $HDLINE | awk -F, '{ print NF }'`                       # Get Nb Field on Heading
     if  [ ${HDLINE: -1} = "," ] ; then let NBFLD="$NBFLD - 1" ; fi      # extra , at end of line ??
     #if [ "$NMON_OS" = "LINUX" ] ; then let NBFLD="$NBFLD - 1" ; fi     # extra , at end of line ??
-    if [ $DEBUG_LEVEL -gt 6 ] 
+    if [ $SADM_DEBUG -gt 6 ] 
         then sadm_writelog "Nb.Fields= $NBFLD Heading Line= $HDLINE"    # Show Net Heading Line 
     fi
     let NBDEV="($NBFLD - 4) / 2"                                        # Remove Heading + lo device
@@ -623,7 +642,7 @@ build_net_array()
         typename=$(echo $HDLINE | cut -d, -f ${indx} | cut -d'-' -f 2)  # Get read or write string
         colname=`  echo $HDLINE | cut -d, -f ${indx}`                   # Extract Column Name
         if [ "$devname" != "lo" ] && [ "$devname" != "lo0" ]            # Don't need loop interface
-            then if [ $DEBUG_LEVEL -gt 7 ]                              # Show Line added to file
+            then if [ $SADM_DEBUG -gt 7 ]                              # Show Line added to file
                     then echo "colnum= ${indx} Dev= $devname typename= $typename colname= $colname" 
                  fi
                  echo "${devname},${typename},${indx}" >>$SADM_TMP_FILE2 # Add Net Dev info to file
@@ -636,7 +655,7 @@ build_net_array()
     # Example : eth0,read,4
     #           eth0,write,10
     cat $SADM_TMP_FILE2 | sort | uniq > $SADM_TMP_FILE3                 # Sort file, No Dup
-    if [ $DEBUG_LEVEL -gt 4 ]           
+    if [ $SADM_DEBUG -gt 4 ]           
         then sadm_writelog "Network Devices in nmon file and column where stat are"
              cat $SADM_TMP_FILE3
     fi
@@ -691,7 +710,7 @@ build_net_array()
         fi
         let COUNTER=COUNTER+1 
         done < $SADM_TMP_FILE2
-        if [ $DEBUG_LEVEL -gt 4 ]                                       # Interface Read/Write Col
+        if [ $SADM_DEBUG -gt 4 ]                                       # Interface Read/Write Col
             then sadm_writelog "if1rc=$if1rc if2rc=$if2rc if3rc=$if3rc if4rc=$if4rc" # Show ReadCol
                  sadm_writelog "if1wc=$if1wc if2wc=$if2wc if3wc=$if3wc if4wc=$if4wc" # Show WriteCol
         fi  
@@ -701,7 +720,7 @@ build_net_array()
     # Example of Line: NET,T0002,79.9,313.2,13.2,0.0,0.0,0.0,79.9,1607.3,2790.8,0.0,0.0,0.0,
     while read wline                                                    # Read Network Stat Lines
         do
-        if [ $DEBUG_LEVEL -gt 4 ] ; then sadm_writelog "NET Line = $wline" ;fi # Show Net Line 
+        if [ $SADM_DEBUG -gt 4 ] ; then sadm_writelog "NET Line = $wline" ;fi # Show Net Line 
         SNAPSHOT=`echo $wline | awk -F, '{ print $2 }'| cut -c2-5`      # Get SnapShot Number
         INDX=`expr ${SNAPSHOT} + 0`                                     # Empty field are Zero now
         if [ "$if1rc" -ne 0 ] ; then if1r=$(echo $wline |cut -d, -f ${if1rc}) ; fi  # if1 Read Stat
@@ -713,12 +732,12 @@ build_net_array()
         if [ "$if3wc" -ne 0 ] ; then if3w=$(echo $wline |cut -d, -f ${if3wc}) ; fi  # if3 Write Stat
         if [ "$if4wc" -ne 0 ] ; then if4w=$(echo $wline |cut -d, -f ${if4wc}) ; fi  # if4 Write Stat
         ARRAY_NET[$INDX]="$if1r,$if2r,$if3r,$if4r,$if1w,$if2w,$if3w,$if4w"  # Put Stat in Net Array
-        if [ $DEBUG_LEVEL -gt 4 ] 
+        if [ $SADM_DEBUG -gt 4 ] 
             then sadm_writelog "ARRAY_NET[$INDX]=$if1r,$if2r,$if3r,$if4r,$if1w,$if2w,$if3w,$if4w"
         fi    
 
         # Debugging info - List Device Name , Stat Read Column, Stat Write Column, Read & Write Stat
-        if [ $DEBUG_LEVEL -gt 4 ]                                       # High Debug Info
+        if [ $SADM_DEBUG -gt 4 ]                                       # High Debug Info
             then for i in `seq 1 4`;                                    # List info for the 4 NetDev
                     do
                     if [ $i -eq 1 ] &&  [ "$if1name" != "" ]            # third Interface non Blank
@@ -806,8 +825,8 @@ build_memory_array()
         # Put Memory Statistics in Array
         ARRAY_MEMORY[$INDX]="${MEM_TOTAL},${MEM_FREE},${MEM_USE},${VIR_TOTAL},${VIR_FREE},${VIR_USE}"
         
-        if [ $DEBUG_LEVEL -gt 4 ] ;then sadm_writelog "Memory line: $wline" ;fi 
-        if [ $DEBUG_LEVEL -gt 1 ]
+        if [ $SADM_DEBUG -gt 4 ] ;then sadm_writelog "Memory line: $wline" ;fi 
+        if [ $SADM_DEBUG -gt 1 ]
             then SLINE="$INDX ${hd_mem_total}=${MEM_TOTAL}MB  ${hd_mem_free}=${MEM_FREE}MB Use ${MEM_USE}MB" 
                  SLINE="$SLINE ${hd_vir_total}=${VIR_TOTAL}MB ${hd_vir_free}=${VIR_FREE}MB Use ${VIR_USE}MB"
                  sadm_writelog "$SLINE" 
@@ -871,7 +890,7 @@ build_memnew_array()
         # Put Memory Statistics in Array
         ARRAY_MEMNEW[$INDX]="${M_PROCESS},${M_FSCACHE},${M_SYSTEM},${M_FREE},${M_PINNED},${M_USER}"
         
-        if [ $DEBUG_LEVEL -gt 4 ]
+        if [ $SADM_DEBUG -gt 4 ]
             then sadm_writelog "Memory line is $wline"
                  SLINE="$INDX ${hd_proc}=${M_PROCESS} ${hd_fscache}=${M_FSCACHE} ${hd_system}=${M_SYSTEM}"
                  SLINE="$SLINE ${hd_free}=${M_FREE} ${hs_pin}=${M_PINNED} ${hd_user}=${M_USER}"
@@ -939,7 +958,7 @@ build_paging_activity_array()
         ARRAY_PAGING[$INDX]="${PAGE_IN},${PAGE_OUT}"                    # Put Stat. in Array
         
         # If Debug is Activated
-        if [ $DEBUG_LEVEL -gt 4 ]
+        if [ $SADM_DEBUG -gt 4 ]
             then sadm_writelog "Paging line is $wline"
                  sadm_writelog "$SNAPSHOT  ${hd_pgin} = $PAGE_IN  ${hd_pgout} = $PAGE_OUT"
         fi    
@@ -959,7 +978,7 @@ rrd_update()
     for (( i = 1 ; i <= ${#ARRAY_TIME[@]} ; i++ ))                      # Process time Array Size
         do
         ERROR_COUNT=0 ; SUCCESS=0                                       # Reset Error Success Count
-        if [ $DEBUG_LEVEL -gt 1 ]                                       # Debug Activated
+        if [ $SADM_DEBUG -gt 1 ]                                       # Debug Activated
             then sadm_writelog "ARRAY_TIME  [$i]: ${ARRAY_TIME[$i]}"    # Show Time of Snapshot
         fi
     
@@ -1011,7 +1030,7 @@ rrd_update()
         if [ "$A_MPINNED" = "" ]     ; then A_MPINNED="0.0"    ; fi
         if [ "$A_MUSER" = "" ]       ; then A_MUSER="0.0"      ; fi
 
-        if [ $DEBUG_LEVEL -gt 6 ]
+        if [ $SADM_DEBUG -gt 6 ]
         then sadm_writelog "Values before running the rrdupdate"
              sadm_writelog "SNAPSHOT    =   $i"            
              sadm_writelog "A_DATE      =   ..${A_DATE}.."            
@@ -1075,7 +1094,7 @@ rrd_update()
                     then sadm_writelog "[WARNING] NMON Epoch Time (${A_EPOCH}) <= last epoch (${RRD_LAST_EPOCH}) in RRD"
                          TOTAL_WARNING=$(($TOTAL_WARNING+1))            # Increment Total Warning 
                          RC=0
-                    else if [ $DEBUG_LEVEL -gt 0 ] 
+                    else if [ $SADM_DEBUG -gt 0 ] 
                             then sadm_writelog "$RRDUPDATE ${RRD_FILE} -t ${field_name} ${A_EPOCH}:${field_value}"
                          fi
                          $RRDUPDATE ${RRD_FILE} -t ${field_name} ${A_EPOCH}:${field_value} >>$SADM_LOG 2>&1
@@ -1084,12 +1103,12 @@ rrd_update()
         fi
         if [ $RC -ne 0 ] 
             then TOTAL_ERROR=$(($TOTAL_ERROR+1))                        # Increment Total Error  
-                 if [ $DEBUG_LEVEL -gt 0 ] 
+                 if [ $SADM_DEBUG -gt 0 ] 
                     then sadm_writelog "$RRDUPDATE ${RRD_FILE} -t ${field_name} ${A_EPOCH}:${field_value}"
                          sadm_writelog "[ERROR] Return Code $RC"
                  fi
             else TOTAL_SUCCESS=$(($TOTAL_SUCCESS+1))                    # Increment Total Counter 
-                 if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "[Success] Return Code $RC" ; fi
+                 if [ $SADM_DEBUG -gt 0 ] ; then sadm_writelog "[Success] Return Code $RC" ; fi
         fi
         done
     
@@ -1119,7 +1138,24 @@ main_process()
 {
     ERROR_COUNT=0                                                       # Set Error counter to zero
     NMON_COUNT=0                                                        # Process NMON file counter 
-    
+
+    # Check Availibilty of rrdupdate 
+    export RRDUPDATE=$(command -v rrdupdate)
+    if [ $? -ne 0 ]                                                     # Command rrdupdate Not Avail.
+        then sadm_writelog "Script aborted : 'rrdupdate' command not found." 
+             sadm_writelog "Please install 'rrdtool' package and run the script again."
+             sadm_stop 1                                                # Close/Trim Log & Upd. RCH
+             exit 1                                                     # Exit To O/S
+    fi
+    export RRDTOOL=$(command -v rrdtool)
+    if [ $? -ne 0 ]                                                     # Command rrdtool Not Avail.
+        then sadm_writelog "Script aborted : rrdtool command not found" # Show User Error
+             sadm_writelog "Please install 'rrdtool' package and run the script again."
+             sadm_stop 1                                                # Close/Trim Log & Upd. RCH
+             exit 1                                                     # Exit To O/S
+    fi
+
+
     # Produce a list of all Yesterday nmon file (sorted) or use file passed with -f command line
     YESTERDAY=`date -d "1 day ago" '+%y%m%d'`                           # Get Yesterday Date
     if [ "$CMD_FILE" != "" ] 
@@ -1188,90 +1224,50 @@ main_process()
 }
 
  
-#===================================================================================================
-#                                       Script Start HERE
-#===================================================================================================
 
 
+# --------------------------------------------------------------------------------------------------
+# Command line Options functions
 # Evaluate Command Line Switch Options Upfront
-# (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
-    while getopts "hvd:f:" opt ; do                                     # Loop to process Switch
+# By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+# --------------------------------------------------------------------------------------------------
+function cmd_options()
+{
+    while getopts "d:hv" opt ; do                                       # Loop to process Switch
         case $opt in
-            f) CMD_FILE=$OPTARG                                         # Get nmon Filename Specify
-               if [ ! -r "$CMD_FILE" ]                                  # If file not readable
-                    then sadm_writelog "Nmon File $CMD_FILE not found"  # Show User Error 
-                         sadm_stop 0
-                         exit 0
-               fi
-               ;;                                                       # No stop after each page
-            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
-               num=`echo "$DEBUG_LEVEL" | grep -E ^\-?[0-9]?\.?[0-9]+$` #
-               if [ "$num" = "" ] 
-                  then printf "\nDebug Level specified is invalid\n" 
+            d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
+               num=$(echo "$SADM_DEBUG" |grep -E "^\-?[0-9]?\.?[0-9]+$") # Valid if Level is Numeric
+               if [ "$num" = "" ]                            
+                  then printf "\nInvalid debug level.\n"                # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
-                       exit 0
+                       exit 1                                           # Exit Script with Error
                fi
-               ;;                                                       # No stop after each page
+               printf "Debug level set to ${SADM_DEBUG}.\n"             # Display Debug Level
+               ;;                                                       
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
                ;;
-            v) show_version                                             # Show Script Version Info
+            v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
                ;;
-           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
+           \?) printf "\nInvalid option: ${OPTARG}.\n"                  # Invalid Option Message
                show_usage                                               # Display Help Usage
                exit 1                                                   # Exit with Error
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
-
-# Call SADMIN Initialization Procedure
-    sadm_start                                                          # Init Env Dir & RC/Log File
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
-
-# If current user is not 'root', exit to O/S with error code 1 (Optional)
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
-             sadm_writelog "Process aborted"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S with Error
-    fi
-
-# If we are not on the SADMIN Server, exit to O/S with error code 1 (Optional)
-#    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
-#        then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
-#             sadm_writelog "Process aborted"                            # Abort advise message
-#             sadm_stop 1                                                # Close/Trim Log & Del PID
-#             exit 1                                                     # Exit To O/S with error
-#    fi
+    return 
+}
 
 
-# Check Availibilty of rrdupdate and cut command
-    RRDUPDATE=`which rrdupdate 2>/dev/null` ; export RRDUPDATE          # Get Location of rrdupdate
-    if [ $? -ne 0 ]                                                     # Command rrdupdate Not Avail.
-        then sadm_writelog "Script aborted : rrdupdate command not found" # Show User Error
-             sadm_stop 1                                                # Close/Trim Log & Upd. RCH
-             exit 1                                                     # Exit To O/S
-    fi
-    RRDTOOL=`which rrdtool 2>/dev/null` ; export RRDTOOL                # Get Location of rrdtool
-    if [ $? -ne 0 ]                                                     # Command rrdtool Not Avail.
-        then sadm_writelog "Script aborted : rrdtool command not found" # Show User Error
-             sadm_stop 1                                                # Close/Trim Log & Upd. RCH
-             exit 1                                                     # Exit To O/S
-    fi
-    RRDUPDATE="$RRDTOOL update"  ; export RRDUPDATE          # Get Location of rrdupdate
-    CUT=`which cut 2>/dev/null`                 ; export CUT            # Get Path to cut command
-    if [ $? -ne 0 ]                                                     # cut Command not found
-        then sadm_writelog "Script aborted : 'cut' command not found"   # Show User Error
-             sadm_stop 1                                                # Close/Trim Log & Upd. RCH
-             exit 1                                                     # Exit To O/S
-    fi
 
-    main_process                                                        # Execute the main process
-    SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
-
-# SADMIN Closing procedure - Close/Trim log and rch file, Remove PID File, Send email if requested
+#===================================================================================================
+# Main Code Start Here
+#===================================================================================================
+    cmd_options "$@"                                                    # Check command-line Options
+    sadm_start                                                          # Won't come back if error
+    main_process                                                        # Your PGM Main Process
+    SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
-    
+
