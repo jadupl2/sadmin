@@ -252,6 +252,7 @@
 #@2025_08_25 lib v4.74 Change location of 'vm_list.txt' & 'vm_hosts.txt' to '$SADMIN/dat/dr' dir. 
 #@2025_09_04 lib v4.75 SHow Process ID of the script already running of the script.
 #@2025_10_13 lib v4.76 Enhance sadm_stop() to copy .rch/.log to Global Dir. when run on SADMIN master
+#@2025_10_29 lib v4.77 When the PID file epoch time exceed the $SADM_TIMEOUT value.
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -262,7 +263,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.76"                                              # This Library Version
+export SADM_LIB_VER="4.77"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -2489,57 +2490,72 @@ sadm_start() {
             fi
     fi 
 
-    # If PID File exist and user want to run only 1 instance of the script - Abort Script
-    if [ -e "${SADM_PID_FILE}" ] && [ "$SADM_MULTIPLE_EXEC" = "N" ]     # PID file exist & Only 1 
-       then pepoch=$(stat --format="%Y" $SADM_PID_FILE)                 # Epoch time of PID File
-            cepoch=$(sadm_get_epoch_time)                               # Current Epoch Time
-            pelapse=$(( $cepoch - $pepoch ))                            # Nb Sec PID File was create
+    # If PID File exist and user want to run only one instance of the script - Abort Script
+    if [ -e "${SADM_PID_FILE}" ] && [ "$SADM_MULTIPLE_EXEC" = "N" ]     # PID file exist & Run Only1  
+       then scount=$(ps -ef | grep "$SADM_PN" | grep -v grep | grep -v "$$" | wc -l)
+            if [ "$scount" -e 0 ] 
+                then sadm_write_err "[ ERROR ] Script '$SADM_PN' ran but PID file still exist ..."
+                else sadm_write_err "[ ERROR ] Script '$SADM_PN' is already running ..."
+            fi
+
             sadm_write_err "[ ERROR ] Script '$SADM_PN' is already running ..."
-            #sadm_write_err " "
-            f_timeout=$(printf "%'d\n" $SADM_PID_TIMEOUT)
-            f_elapse=$(printf "%'d\n" $pelapse)
-            sadm_write_err "  - Can't run simultaneous copy of this script (\$SADM_MULTIPLE_EXEC='N')." 
-            sadm_write_err "  - PID file ('\${SADMIN}/tmp/${SADM_INST}.pid'), was created $f_elapse seconds ago."
-            sadm_write_err "  - The PID timeout ('\$SADM_PID_TIMEOUT') is set to $f_timeout seconds."
-            ps -ef | grep "$SADM_PN" | grep -v grep | grep -v "$$" | nl | tee -a $SADM_ELOG 2>&1
-            #sadm_write_err " "
-            #sadm_write_err " "
-            if [ -z "$SADM_PID_TIMEOUT" ]                               # SADM_PID_TIMEOUT defined ?
-                then sadm_write_err "Script can't run unless one of the following action is done :"
-                     ps -ef |grep "$SADM_PN" |grep -v grep | grep -v "$$" |nl |tee -a $SADM_ELOG 2>&1
-                     sadm_write_err "  - Remove the PID File '\${SADMIN}/tmp/${SADM_INST}.pid'."
-                     sadm_write_err "  - Set 'SADM_MULTIPLE_EXEC' variable to 'Y' in your script."
-                     sadm_write_err "  - Wait till PID timeout '\$SADM_PID_TIMEOUT' is reach."
+            ps -ef | grep "$SADM_PN" | grep -v grep | grep -v "$$" | nl 
+            ps -ef | grep "$SADM_PN" | grep -v grep | grep -v "$$" | nl >> $SADM_ELOG 2>&1
+
+            # If $SADM_PID_TIMEOUT isn't define in sadmin.cfg or in your script (in SADMIN section).
+            if [ -z "$SADM_PID_TIMEOUT" ] ;then SADM_PID_TIMEOUT=0 ;fi  # Set to default, no timeout
+
+            # If the timeout is set to zero then refuse to run second copy of the script & exit
+            if [ "$SADM_PID_TIMEOUT" -eq 0 ] ; then DELETE_PID="N" ; sadm_stop 1 ; exit 1 ; fi 
+            
+            # Calculate elapse time based of PID file time stamp, and compare it with current epoch.
+            pepoch=$(stat --format="%Y" $SADM_PID_FILE)                 # Epoch time of PID File
+            cepoch=$(sadm_get_epoch_time)                               # Current Epoch Time
+            pelapse=$(( $cepoch - $pepoch ))                            # Nb Sec since PID created
+            runsec=$(printf "%'d\n" $pelapse)                           # Insert comma in Sec.Elapse
+            ptimeout=$(printf "%'d\n" $SADM_PID_TIMEOUT)                # Insert comma in PIDTimeout
+
+            sadm_write_err "  - Can't run multiple copy of this script (\$SADM_MULTIPLE_EXEC='N')." 
+            sadm_write_err "  - PID file ('$SADM_PID_FILE'), was created $runsec seconds ago."
+            sadm_write_err "  - The PID timeout ('\$SADM_PID_TIMEOUT') is set to $ptimeout seconds."
+            #ps -ef | grep "$SADM_PN" | grep -v grep | grep -v "$$"  | nl | tee -a $SADM_ELOG 2>&1
+
+            # If run elapse time is less than timeout limit in seconds and timeout is not 0
+            if [ $pelapse -lt $SADM_PID_TIMEOUT ] && [ "$SADM_PID_TIMEOUT" -ne 0 ]
+                then sadm_write_err "This script continue to run until it finished or reach timeout."
                      DELETE_PID="N"                                     # No Del PID Since running
                      sadm_stop 1                                        # Close,Clean up before exit
-                     exit 1                                             # Exit To O/S with Error
-                else if [ $pelapse -ge $SADM_PID_TIMEOUT ]              # PID Timeout reached
-                        then sadm_write_log "  - The PID file is now expired."
-                             sadm_write_log "  - Let's see if '$SADM_PN' is currently running."
-                             ps -ef | grep "$SADM_PN" | grep -v grep | nl >> $SADM_ELOG 2>&1
-                             proc_count=$(ps -ef | grep "$SADM_PN"| grep -v grep | wc -l)
-                             if [ $proc_count -gt 1 ] 
-                                then sadm_write_err "  - More than 1 process are running with the name '$SADM_PN'."
-                                     ps -ef |grep "$SADM_PN" |grep -v grep |nl |tee -a $SADM_LOG 2>&1
-                                     sadm_write_err "  - Refusing to run another copy of this script."
-                                     DELETE_PID="N"                     # No Del PID Since running
-                                     sadm_stop 1                        # Close,Clean up before exit
-                                     exit 1                             # Exit To O/S with Error
-                                else sadm_write_log "  - No process with the name '$SADM_PN' is currently running." 
-                                     sadm_write_log "  - Assuming that the script was aborted abnormally."
-                                     sadm_write_log "  - Script execution will now start and the PID file recreated."
-                                     sadm_write_log " "
-                                     echo "SADM_TPID" > ${SADM_PID_FILE} >/dev/null 2>&1  
-                                     DELETE_PID="Y"                     # Del PID Since running
-                             fi
-                        else DELETE_PID="N"                             # No Del PID Since running
-                             sadm_stop 1                                # Close,Clean up before exit
-                             exit 1                                     # Exit with Error
-                     fi
-            fi                                                          # Close and Trim Log
+                     exit 1                                             # Exit with Error
+            fi
+            
+            # If the variable $SADM_PID_TIMEOUT = 0, then script can run indefiniyly 
+            # Otherwise variable $SADM_PID_TIMEOUT = Maximum number of seconds the sctipt can run.
+            if [ $pelapse -ge $SADM_PID_TIMEOUT ]  && [ "$SADM_PID_TIMEOUT" -ne 0 ] 
+               then sadm_write_err " " 
+                    sadm_write_err "  - The PID file is now expired."
+                    ps -ef | grep "$SADM_PN" | grep -v grep | grep -v "$$" | nl >> $SADM_ELOG 2>&1
+
+                    sadm_write_log "  - List of '$SADM_PN' process actually running :" 
+                    ps -ef | grep "$SADM_PN" | grep -v grep | grep -v "$$" | nl 
+                    ps -ef | grep "$SADM_PN" | grep -v grep | grep -v "$$" | nl >> $SADM_ELOG 2>&1
+
+                    sadm_write_err "  - Killing these processes now : "
+                    ps -ef | grep "$SADM_PN" | grep -v grep | awk '{print $2}' 
+                    ps -ef | grep "$SADM_PN" | grep -v grep | awk '{print $2}' | xargs kill -9 
+
+                    sadm_write_log "  - List of '$SADM_PN' process actually running :" 
+                    ps -ef | grep "$SADM_PN" | grep -v grep | grep -v "$$" | nl 
+                    ps -ef | grep "$SADM_PN" | grep -v grep | grep -v "$$" | nl >> $SADM_ELOG 2>&1
+
+                    sadm_write_log "  - Script execution will now start and the PID file recreated."
+                    sadm_write_log " "
+                    echo "SADM_TPID" > ${SADM_PID_FILE} >/dev/null 2>&1  
+                    DELETE_PID="Y"                                      # Del PID Since running
+            fi
        else echo "$SADM_TPID" > $SADM_PID_FILE                          # Create the PID File
-            DELETE_PID="Y"                                              # Del PID Since running
-    fi
+            DELETE_PID="Y"                                              # Del PID at end, by stop()
+    fi 
+
 
     # If System Startup Script does not exist - Create one from the startup template script
     [ ! -r "$SADM_SYS_STARTUP" ] && cp $SADM_SYS_START $SADM_SYS_STARTUP
