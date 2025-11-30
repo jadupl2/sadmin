@@ -253,6 +253,8 @@
 #@2025_09_04 lib v4.75 SHow Process ID of the script already running of the script.
 #@2025_10_13 lib v4.76 Enhance sadm_stop() to copy .rch/.log to Global Dir. when run on SADMIN master
 #@2025_10_29 lib v4.77 When the PID file epoch time exceed the $SADM_TIMEOUT value.
+#@2025_11_30 lib v4.78 Fix some PID file expiration problems.
+#@2025_11_30 lib v4.79 Add 'sadm_convert_sec2hms()' convert seconds into hours:minutes:seconds.
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -263,7 +265,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.77"                                              # This Library Version
+export SADM_LIB_VER="4.79"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -1192,6 +1194,49 @@ sadm_date_to_epoch() {
 
 
 
+# Convert seconds into a formatted hours:minutes:seconds
+sadm_convert_sec2hms()
+{
+    # Total number of seconds to show and format like HH:MM:SS
+    declare -i total_seconds=$1    
+    declare -i remaining_sec                            
+    
+
+    # Calculate how many hours ($HOURS) in the number of seconds received.
+    if [ "$total_seconds" -gt 3600 ]                                    # More than 1 hour (3600sec)
+        then full_hours=$(echo "$total_seconds / 3600" | $SADM_BC)      # How many hours 
+             HOURS=${full_hours%.*}                                     # Float result to integer
+             #w=$((HOURS * 3600 ))
+             remaining_sec=$(( total_seconds - ((HOURS * 3600 ))  ))    # Substract hours * 3600
+        else HOURS=0                                                    # No hours = 0 
+             remaining_sec=$total_seconds                               # Set remaining seconds
+    fi
+    #sadm_write_log "caca $HOURS Hours in $total_seconds sec., remaining seconds: $remaining_sec" 
+
+    # With the remaining seconds, calculate how many minutes (MINUTES)
+    if [ "$remaining_sec" -gt 60 ]                                      # Remaining Sec > 60sec=1Min
+        then #echo "coco0 remaning sec:$remaining_sec bc=$SADM_BC"
+             full_minutes=$(echo "$remaining_sec / 60" | $SADM_BC)      # Nb minute in sec.remaining
+             #echo "coco1 full_minutes:$full_minutes" 
+             MINUTES=${full_minutes%.*}                                 # Float result to integer
+             #echo "coco2 full_minutes:$full_minutes MINUTES=$MINUTES" 
+             #$w=$(( MINUTES * 60 ))                                    # Float to integer
+             (( SECONDS = $remaining_sec - (( MINUTES * 60 )) ))        # Calculate remaining second
+             #remaining_sec=$SECONDS                                        
+        else SECONDS=$remaining_sec
+             MINUTES=0 
+    fi
+    #sadm_write_log "$HOURS Hours & $MINUTES minutes & $SECONDS seconds, remaining seconds: $remaining_sec"
+
+    if [ "$HOURS"   -ne 0 ] ; then hrs=$(printf "%-d hrs " $HOURS)   ;else hrs="" ; fi 
+    if [ "$MINUTES" -ne 0 ] ; then min=$(printf "%-d min " $MINUTES) ;else min="" ; fi
+    if  [ "$HOURS"  -eq 0 ] && [ "$MINUTES" -eq 0 ] && [ "$SECONDS" -eq 0 ] ; then SECONDS=1 ; fi
+    if [ "$SECONDS" -ne 0 ] ; then sec=$(printf "%-d sec " $SECONDS) ;else sec="" ; fi
+    echo "${hrs}${min}${sec}"
+}
+
+
+
 # --------------------------------------------------------------------------------------------------
 #    Calculate elapse time between date1 (YYYY.MM.DD HH:MM:SS) and date2 (YYYY.MM.DD HH:MM:SS)
 #    Date 1 MUST be greater than date 2  (Date 1 = Like End time,  Date 2 = Start Time )
@@ -1212,18 +1257,20 @@ sadm_elapse() {
     if [ "$epoch_elapse" = "" ] ; then epoch_elapse=0 ; fi              # If nb Sec Greater than 1Hr
     whour=00 ; wmin=00 ; wsec=00
 
+    #sadm_elapse=$(sadm_convert_sec2hms $epoch_elapse)
+
     # Calculate number of hours (1 hr = 3600 Seconds)
     if [ "$epoch_elapse" -gt 3599 ]                                     # If nb Sec Greater than 1Hr
         then whour=`echo "$epoch_elapse / 3600" | $SADM_BC`             # Calculate nb of Hours
              epoch_elapse=`echo "$epoch_elapse - ($whour * 3600)" | $SADM_BC` # Sub Hr*Sec from elapse
     fi
-
+#
     # Calculate number of minutes 1 Min = 60 Seconds)
     if [ "$epoch_elapse" -gt 59 ]                                       # If more than 1 min left
        then  wmin=`echo "$epoch_elapse / 60" | $SADM_BC`                # Calc. Nb of minutes
              epoch_elapse=`echo  "$epoch_elapse - ($wmin * 60)" | $SADM_BC` # Sub Min*Sec from elapse
     fi
-
+#
     wsec=$epoch_elapse                                                  # left is less than 60 sec
     sadm_elapse=`printf "%02d:%02d:%02d" ${whour} ${wmin} ${wsec}`      # Format Result
     echo "$sadm_elapse"                                                 # Return Result to caller
@@ -2493,14 +2540,14 @@ sadm_start() {
     # If PID File exist and user want to run only one instance of the script - Abort Script
     if [ -e "${SADM_PID_FILE}" ] && [ "$SADM_MULTIPLE_EXEC" = "N" ]     # PID file exist & Run Only1  
        then scount=$(ps -ef | grep "$SADM_PN" | grep -v grep | grep -v "$$" | wc -l)
-            if [ "$scount" -e 0 ] 
+            if [ "$scount" -eq 0 ] 
                 then sadm_write_err "[ ERROR ] Script '$SADM_PN' ran but PID file still exist ..."
                 else sadm_write_err "[ ERROR ] Script '$SADM_PN' is already running ..."
             fi
 
-            sadm_write_err "[ ERROR ] Script '$SADM_PN' is already running ..."
-            ps -ef | grep "$SADM_PN" | grep -v grep | grep -v "$$" | nl 
-            ps -ef | grep "$SADM_PN" | grep -v grep | grep -v "$$" | nl >> $SADM_ELOG 2>&1
+            ps -ef | grep -v grep | grep "$SADM_PN" | while read wline ; do sadm_write_log "    - $wline"; done
+            #ps -ef | grep "$SADM_PN" | grep -v grep | grep -v "$$" | nl 
+            #ps -ef | grep "$SADM_PN" | grep -v grep | grep -v "$$" | nl >> $SADM_ELOG 2>&1
 
             # If $SADM_PID_TIMEOUT isn't define in sadmin.cfg or in your script (in SADMIN section).
             if [ -z "$SADM_PID_TIMEOUT" ] ;then SADM_PID_TIMEOUT=0 ;fi  # Set to default, no timeout
@@ -2514,41 +2561,36 @@ sadm_start() {
             pelapse=$(( $cepoch - $pepoch ))                            # Nb Sec since PID created
             runsec=$(printf "%'d\n" $pelapse)                           # Insert comma in Sec.Elapse
             ptimeout=$(printf "%'d\n" $SADM_PID_TIMEOUT)                # Insert comma in PIDTimeout
+            pid_TimeLeft=$(( $SADM_PID_TIMEOUT - $pelapse ))            # Nb Sec Till PID times out
 
+            sadm_write_err " "
             sadm_write_err "  - Can't run multiple copy of this script (\$SADM_MULTIPLE_EXEC='N')." 
-            sadm_write_err "  - PID file ('$SADM_PID_FILE'), was created $runsec seconds ago."
-            sadm_write_err "  - The PID timeout ('\$SADM_PID_TIMEOUT') is set to $ptimeout seconds."
-            #ps -ef | grep "$SADM_PN" | grep -v grep | grep -v "$$"  | nl | tee -a $SADM_ELOG 2>&1
+            sadm_write_err "  - PID file ('$SADM_PID_FILE'), was created $runsec seconds ago, meaning $(sadm_convert_sec2hms $pelapse)"
+            sadm_write_err "  - The PID timeout ('\$SADM_PID_TIMEOUT') is set to $ptimeout seconds, meaning $(sadm_convert_sec2hms $SADM_PID_TIMEOUT)"
+            if [ $pid_TimeLeft -gt 0 ] 
+                then sadm_write_err "  - So the PID file will be automatically remove in $(sadm_convert_sec2hms $pid_TimeLeft)"
+            fi 
 
             # If run elapse time is less than timeout limit in seconds and timeout is not 0
             if [ $pelapse -lt $SADM_PID_TIMEOUT ] && [ "$SADM_PID_TIMEOUT" -ne 0 ]
-                then sadm_write_err "This script continue to run until it finished or reach timeout."
+                then #sadm_write_err " " 
+                     sadm_write_err "  - Current script continue to run until it finished or it reach the PID timeout."
+                     #ps -ef | grep -v grep | grep "$SADM_PN" | while read wline ; do sadm_write_log "    - $wline"; done
                      DELETE_PID="N"                                     # No Del PID Since running
                      sadm_stop 1                                        # Close,Clean up before exit
                      exit 1                                             # Exit with Error
             fi
             
-            # If the variable $SADM_PID_TIMEOUT = 0, then script can run indefiniyly 
-            # Otherwise variable $SADM_PID_TIMEOUT = Maximum number of seconds the sctipt can run.
+            # If the variable $SADM_PID_TIMEOUT = 0, then the script can run indefinitly 
+            # Otherwise use variable $SADM_PID_TIMEOUT & set max. number of seconds script can run.
             if [ $pelapse -ge $SADM_PID_TIMEOUT ]  && [ "$SADM_PID_TIMEOUT" -ne 0 ] 
                then sadm_write_err " " 
                     sadm_write_err "  - The PID file is now expired."
-                    ps -ef | grep "$SADM_PN" | grep -v grep | grep -v "$$" | nl >> $SADM_ELOG 2>&1
+                    ps -ef | grep "$SADM_PN" | grep -v grep | grep -v "$$" | nl | while read wline ; do sadm_write_log "$wline"; done
 
-                    sadm_write_log "  - List of '$SADM_PN' process actually running :" 
-                    ps -ef | grep "$SADM_PN" | grep -v grep | grep -v "$$" | nl 
-                    ps -ef | grep "$SADM_PN" | grep -v grep | grep -v "$$" | nl >> $SADM_ELOG 2>&1
-
-                    sadm_write_err "  - Killing these processes now : "
-                    ps -ef | grep "$SADM_PN" | grep -v grep | awk '{print $2}' 
-                    ps -ef | grep "$SADM_PN" | grep -v grep | awk '{print $2}' | xargs kill -9 
-
-                    sadm_write_log "  - List of '$SADM_PN' process actually running :" 
-                    ps -ef | grep "$SADM_PN" | grep -v grep | grep -v "$$" | nl 
-                    ps -ef | grep "$SADM_PN" | grep -v grep | grep -v "$$" | nl >> $SADM_ELOG 2>&1
-
-                    sadm_write_log "  - Script execution will now start and the PID file recreated."
-                    sadm_write_log " "
+                    rm -f "$SADM_PID_FILE" > /dev/null 2>&1
+                    sadm_write_err "  - The PID file ('$SADM_PID_FILE') is now removed." 
+                    sadm_write_err "  - The script will continue as normal, new PID file created."                      
                     echo "SADM_TPID" > ${SADM_PID_FILE} >/dev/null 2>&1  
                     DELETE_PID="Y"                                      # Del PID Since running
             fi
@@ -2643,7 +2685,7 @@ sadm_stop() {
                 then foot1="Script exit code is ${SADM_EXIT_CODE} (Success)" # Success 
                 else foot1="Script exit code is ${SADM_EXIT_CODE} (Failed)"  # Failed 
              fi 
-             sadm_write_log "$foot1 and execution time was ${sadm_elapse}" # Write the Elapse Time
+             sadm_write_log "$foot1 and execution time was ${sadm_elapse}." # Write the Elapse Time
     fi
 
     # Update RCH File and Trim It to $SADM_MAX_RCLINE lines define in sadmin.cfg
@@ -2738,9 +2780,9 @@ sadm_stop() {
              fi 
              sadm_write_log "End of ${SADM_PN} - `date`"                # Write End Time To Log
              sadm_write_log "${SADM_80_DASH}"                           # Write 80 Dash Line
-             sadm_write_log " "                                         # Write 80 Dash Line
-             sadm_write_log " "                                         # Write 80 Dash Line
-             sadm_write_log " "                                         # Write 80 Dash Line
+             sadm_write_log " "                                         
+             sadm_write_log " "                                         
+             sadm_write_log " "                                         
              cat $SADM_LOG > /dev/null                                  # Force buffer to flush
              if [ $SADM_MAX_LOGLINE -ne 0 ] && [ "$SADM_LOG_APPEND" = "Y" ] # Max Line in Log Not 0 
                 then sadm_trimfile "$SADM_LOG" "$SADM_MAX_LOGLINE"      # Trim the Log
