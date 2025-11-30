@@ -43,7 +43,7 @@
 #@2025_01_31 web v3.1 Combine Category & Group & insert the last uptime for each systems.
 #@2025_03_04 web v3.2 Change page layour (Add uptime, disk space, cpu,... )
 #@2025_04_27 web v3.3 Display VM Hostname where applicable.
-#@2025_05_19 web v3.4 Emnlarge uptime column to accmodate offline date/time. 
+#@2025_05_19 web v3.4 Enlarge uptime column to show offline date/time. 
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -197,7 +197,7 @@ function display_data($count,$con,$row) {
     echo "\n<br>" . $row['srv_desc'] ;
     echo "\n</td>";   
 
-    # Display System Uptime
+    # Uptime of system 
     $wordList = explode (" ", $row['srv_uptime']) ;
     if ( strtoupper($wordList[0]) == "OFF" ) { 
         echo "\n<td align=center>Offline since\n" . $wordList[1] ."&nbsp;". $wordList[2] . "</td>";
