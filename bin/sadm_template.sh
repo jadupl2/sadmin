@@ -107,7 +107,6 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 
 
 
-# --------------------------------------------------------------------------------------------------
 # Show script command line options
 # --------------------------------------------------------------------------------------------------
 show_usage()
@@ -118,6 +117,7 @@ show_usage()
     printf "\n   ${BOLD}${YELLOW}[-d 0-9]${NORMAL}\t\tSet Debug (verbose) Level"
     printf "\n   ${BOLD}${YELLOW}[-h]${NORMAL}\t\t\tShow this help message"
     printf "\n   ${BOLD}${YELLOW}[-v]${NORMAL}\t\t\tShow script version information"
+    printf "\n   ${BOLD}${YELLOW}[-X]${NORMAL}\t\t\tDelete the PID file & run script"
     printf "\n\n" 
 }
 
@@ -130,21 +130,25 @@ show_usage()
 #===================================================================================================
 main_process()
 {
+
+    # If script is run from command line, ask user if want to continue (To avoid causing damage).
+    # $SHLVL variable indicate the level of shell nesting (1 or 2 = Run from Command line)
+    if (( SHLVL < 3 ))                                                  
+        then sadm_write_log "${SADM_PN} ${SADM_VER} ${SADM_PDESC} ($SHLVL)"
+             sadm_ask "Continue"                                        # Continue (y/n) ? 
+             if [ $? -eq 0 ] ; then sadm_stop 0 ; exit 0 ; fi           # 0 = Don't want to continue
+        else sadm_write_log "Script executed by another script" 
+    fi
     
-    # If invoke from command line, ask if user want to continue (To avoid error).
-#    if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              
-#        then sadm_ask "${SADM_PN} ${SADM_VER} ${SADM_PDESC} continue"
-#             if [ $? -eq 0 ] ; then sadm_stop 0 ; exit 0 ; fi 
-#    fi
-    
+
     sadm_write_log "Starting Main Process ..."                          # Starting processing Mess.
 
     # PROCESSING CAN BE PUT HERE
     # If Error occurred, set SADM_EXIT_CODE to 1 before returning to caller, else return 0 (default)
     # ........
 
-    sadm_sleep 6 2                                                      # Sleep 10Sec, 2sec interval
-    sadm_write_log " "                                                  # Write an empty line
+
+    #sadm_sleep 6 2                                                     # Sleep 6Sec, 2sec increment
     return "$SADM_EXIT_CODE"                                            # Return ErrorCode to Caller
 }
 
@@ -157,7 +161,7 @@ main_process()
 # --------------------------------------------------------------------------------------------------
 function cmd_options()
 {
-    while getopts "d:hv" opt ; do                                       # Loop to process Switch
+    while getopts "d:hvX" opt ; do                                      # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
                num=$(echo "$SADM_DEBUG" |grep -E "^\-?[0-9]?\.?[0-9]+$") # Valid if Level is Numeric
@@ -173,6 +177,9 @@ function cmd_options()
                ;;
             v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
+               ;;
+            X) /usr/bin/rm -f "${SADMIN}/tmp/${SADM_INST}.pid" >/dev/null 2>&1
+               printf "\n${BOLD}${BLINK}${YELLOW}The PID File ("${SADMIN}/tmp/${SADM_INST}.pid") is now removed.${NORMAL}\n" 
                ;;
            \?) printf "\nInvalid option: ${OPTARG}.\n"                  # Invalid Option Message
                show_usage                                               # Display Help Usage
