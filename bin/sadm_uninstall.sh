@@ -4,7 +4,7 @@
 #   Script Name :   sadm_uninstall.sh
 #   Date        :   2019/-3/23
 #   Requires    :   sh and SADMIN Shell Library
-#   Description :   Uninstall SADMIN from system.
+#   Description :   Uninstall SADMIN tools from the system.
 #
 # Note : All scripts (Shell,Python,php), configuration file and screen output are formatted to 
 #        have and use a 100 characters per line. Comments in script always begin at column 73. 
