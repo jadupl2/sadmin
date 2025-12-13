@@ -202,9 +202,9 @@ function display_data($count, $row) {
     # Virtual machine name
     echo "\n<td>";
     echo "<a href='" .$URL_SERVER_INFO. "?sel=" .$row['srv_name']. "&back=" .$URL_VIEW_VBEXPORT. "'";
-    if ($row['srv_desc']   != "") { $sysinfo = $row['srv_desc'] ; }else{ $sysinfo=""; };
-    if ($row['srv_note']   != "") { $sysinfo = $sysinfo .', '.  $row['srv_note']    ; };
-    if ($row['srv_osname'] != "") { $sysinfo = $sysinfo .', '.  ucwords(strtolower($row['srv_osname'])) ; };
+    if ($row['srv_desc']   != "")    { $sysinfo = $row['srv_desc'] ; }else{ $sysinfo=""; };
+    if ($row['srv_note']   != "")    { $sysinfo = $sysinfo .', '.  $row['srv_note']    ; };
+    if ($row['srv_osname'] != "")    { $sysinfo = $sysinfo .', '.  ucwords(strtolower($row['srv_osname'])) ; };
     if ($row['srv_osversion'] != "") { $sysinfo = $sysinfo . "&nbsp;" . $row['srv_osversion']  ; };
     echo " title='" . $sysinfo . "'>" . $row['srv_name'] ."</a></td>\n";
 

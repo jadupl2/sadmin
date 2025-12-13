@@ -325,7 +325,7 @@ def process_servers(db_conn,db_cur):
         wdict['srv_update_status'] = "U"                                # Def. O/S Update Status
         wdict['srv_arch'] = ""                                          # Def. Server Architecture
         wdict['srv_rear_ver'] = "N/A"                                   # Default for Rear Version
-        wdict['srv_vm_version'] = ""
+        wdict['srv_vm_version'] = ""                                    # VM Guest Addition Version
         
         for cfg_line in FH:                                             # Loop until all lines parse
             wline = cfg_line.strip()                                    # Strip CR/LF/Trailing space

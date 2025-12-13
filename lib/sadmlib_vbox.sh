@@ -428,7 +428,7 @@ sadm_list_vm_running()
 #===================================================================================================
 sadm_list_vm_status()
 {
-    # We will use two temp file, make sure they don't exist
+    # We will use two temp files, make sure they don't exist
     VMTMP1=$(mktemp -u) 
     VMTMP2=$(mktemp -u) 
 
@@ -490,6 +490,7 @@ sadm_list_vm_status()
     fi 
 
     # Virtual Box machine list header
+    printf "VirtualBox $(vboxmanage -V) on ${HOSTNAME}\n" 
     printf "${SADM_80_DASH}\n" | tee -a $SADM_LOG
     printf "%-3s%-17s%-8s%-14s%-8s%-6s%-15s%-s\n" "No" "Name" "State" "Additions" "Memory" "CPU" "VM IP" "VRDE Port" | tee -a $SADM_LOG
     printf "${SADM_80_DASH}\n" | tee -a $SADM_LOG

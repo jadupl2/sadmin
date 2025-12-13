@@ -252,9 +252,9 @@ function cmd_options()
                ;;                                                       
             l) OPT_LIST=true                                            # List VMs Option
                ;;                                                       
-            b) OPT_EXPORT=true                                          # List VMs Option
+            b) OPT_EXPORT=true                                          # Export Option Activated
                ;;                                                       
-            r) OPT_RUNLIST=true                                         # List Running VMs 
+            r) OPT_RUNLIST=true                                         # List Running VMs Only
                OPT_LIST=true                                            # List VMs Option
                ;;                                                       
             s) OPT_START=true                                           # Start VM Option  

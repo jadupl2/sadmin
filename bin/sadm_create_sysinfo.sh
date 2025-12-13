@@ -936,10 +936,10 @@ create_summary_file()
     # Get VM Guest Version
     command -v VBoxClient >/dev/null
     if [ $? -eq 0 ] 
-       then VBOXSERVICE=$(command -v VBoxClient)
-            SADM_VMGUEST_VERSION=$($VBOXSERVICE -V)
+       then SADM_VMGUEST_VERSION=$(VBoxClient -V)
             if [ $? -ne 0 ] 
                 then sadm_write_err "[ ERROR ] Getting VM guest version."
+                     sadm_write_err "[ ERROR ] Install package 'virtualbox-guest-additions' to provide command 'VBoxClient'"
                      SADM_VMGUEST_VERSION=""
             fi 
     fi 
