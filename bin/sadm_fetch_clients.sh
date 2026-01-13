@@ -153,7 +153,7 @@ export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader 
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
 export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
 export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
-export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
+export SADM_DEBUG=5                                        # Debug Level(0-9) 0=NoDebug
 export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
 export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") 
 export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX") 
@@ -1012,19 +1012,23 @@ check_host_connectivity()
         else wuptime=$($SADM_SSH -qnp $SSH_PORT -o ConnectTimeout=2 -o ConnectionAttempts=2 $FQDN_SNAME uptime 2>/dev/null)
              uptime_rc=$?                                               # Save Result Code
     fi
-    if [ "$SADM_DEBUG" -gt 4 ] ;then sadm_write_log "wuptime: $wuptime" ;fi 
+    if [ "$SADM_DEBUG" -gt 4 ] ;then sadm_write_log "wuptime: $wuptime uptime_rc=$uptime_rc" ;fi 
 
     # If was able to get system uptime
-    if [ "$uptime_rc" -eq 0 ]                                           # Was able to get uptime
-        then GLOB_UPTIME=$(echo "$wuptime" |awk -F, '{print $1}' |awk '{gsub(/^[ ]+/,""); print $0}')
+    if [ "$uptime_rc" -eq 0 ]   
+        then if [ "$SADM_DEBUG" -gt 4 ] ; then sadm_write_log "Getting uptime of system '$SNAME'"; fi             
+             GLOB_UPTIME=$(echo "$wuptime" |awk -F, '{print $1}' |awk '{gsub(/^[ ]+/,""); print $0}')
+             GLOB_UPTIME=$(echo "$wuptime" |awk -F, '{print $1}' |awk '{gsub(/^[ ]+/,""); print $0}')
+             if [ "$SADM_DEBUG" -gt 4 ] ; then sadm_write_log "Uptime returned is '$GLOB_UPTIME'" ;fi
              update_server_uptime "$SNAME" "$GLOB_UPTIME"               # Update Server Uptime in DB
              return 0
     fi 
 
-    # Update system uptime in the Database, if was able to obtain the uptime of the system, 
-     if [ "$uptime_rc" -ne 0 ] && [ "${LAST_UPTIME:0:4}" != "OFF " ]    # Was Not able to get uptime
-        then GLOB_UPTIME="OFF $(date "+%C%y.%m.%d %H:%M")"      # Date/Time came offline
-             update_server_uptime "$SNAME" "$GLOB_UPTIME"       # Update system uptime in DB
+    # Update system uptime in the Database
+    # - if error getting uptime of the system & not already OFF Line
+    if [ "$uptime_rc" -ne 0 ] && [ "${LAST_UPTIME:0:4}" != "OFF " ]    # Was Not able to get uptime
+        then GLOB_UPTIME="OFF $(date "+%C%y.%m.%d %H:%M")"              # Date/Time came offline
+             update_server_uptime "$SNAME" "$GLOB_UPTIME"               # Update system uptime in DB
     fi 
 
     # SSH didn't work, but is it a sporadic system (Laptop,Test... system) don't report as an error)
@@ -1231,14 +1235,14 @@ build_server_list()
 # --------------------------------------------------------------------------------------------------
 # process_servers()
 #
-# Process each Operating System received in parameter (aix/linux,darwin)
+# Process all actives systems.
 # 
 #--------------------------------------------------------------------------------------------------
 process_servers()
 {
     if [ "$SADM_DEBUG" -gt 1 ] ; then sadm_write_log "In function ${FUNCNAME[0]}." ; fi
 
-    # Build a list of active system of the O/S type received and output to $SADM_TMP_FILE1 file.
+    # Build a list of active systems and output data to $SADM_TMP_FILE1 file.
     build_server_list                                                   # Create List in TMP_FILE1
     if [ $? -ne 0 ] ; then return 1 ; fi                                # Return Error to caller 
     
@@ -1358,7 +1362,7 @@ process_servers()
         connectivity_rc=0                                               # Default OK to SSH system
         if [ "$SADM_SERVER" != "$fqdn_server" ]                         # If system not SADMIN Server
             then check_host_connectivity "$fqdn_server" "$ssh_port" "$server_uptime" # Test SSH,uptime
-                 connectivity_rc=$?                                     # 0=OK 1=Error 2+Warning
+                 connectivity_rc=$?                                     # 0=OK 1=Error 2=Warning
                  if [ "$SADM_DEBUG" -ne 0 ] 
                     then sadm_write_log "[ DEBUG ] '$fqdn_server' connectivity RC=$connectivity_rc"
                  fi
