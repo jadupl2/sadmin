@@ -125,7 +125,6 @@ function std_page_footer($wcon="") {
     
     #echo  "\n\n<center><img src='/images/pencil2.gif'></center>\n"; 
 
-
     echo "\n\n<div id='sadmFooter'>";
     echo "\nCopyright &copy; 2015-2025 - sadmin.ca - Suggestions, Questions or Report a problem at ";
     echo '<a href="mailto:sadmlinux@gmail.com">sadmlinux@gmail.com</a></small>';
@@ -678,8 +677,10 @@ function time_difference ( $wstart, $wend)
     $TOTAL_SEC = $wtime2 - $wtime1 ;
 
     #echo "<BR>Total Sec before is $TOTAL_SEC";
+    # If span two days.
     if ($TOTAL_SEC < 0) { $TOTAL_SEC = ((24*60*60) - $wtime1) + $wtime2 ;}
     #echo "<BR>Total Sec after is $TOTAL_SEC";
+#    EXEC_TOTAL_SEC = $TOTAL_SEC + $EXEC_TOTAL_SEC
 
     $fhrs = 0 ;
     if ($TOTAL_SEC > 3600) {
@@ -696,6 +697,7 @@ function time_difference ( $wstart, $wend)
     }
     $MIN = sprintf("%02d",number_format($fmin,0));
     $fsec = $TOTAL_SEC ;
+
     $SEC = sprintf("%02d",number_format($fsec,0));
     $DUREE = $HOURS . ":" . $MIN . ":" . $SEC ;
     return ($DUREE);

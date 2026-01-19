@@ -223,7 +223,7 @@ function display_data($count, $row) {
     # System last export date, Get the last export date & time from the last line of the '.rch'.
     # Determine the number of days since the last export date.
     if (! file_exists($rch_name))  {                                    # If no '.rch' file.
-        echo "<td align=center>No export</td>";  
+        echo "<td align=center bgcolor='#DAF7A6'>Missing .rch</td>";  
     }else{
         $file      = file("$rch_name");                                 # Load export rch File 
         $lastline  = $file[count($file) - 1];                           # Extract Last line of RCH

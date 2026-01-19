@@ -464,11 +464,11 @@ rear_housekeeping()
     if command -v isohybrid > /dev/null
         then if [ -r "$REAR_CUR_ISO" ] 
                 then cp ${REAR_CUR_ISO} ${REAR_USB_ISO} 
-                     #sadm_write_log "Creating USB bootable iso image" 
+                     sadm_write_log "Creating USB bootable iso image" 
                      isohybrid ${REAR_USB_ISO} 
                      if [ $? -ne 0 ]
                         then sadm_write_err " "
-                             sadm_write_err "[ ERROR ] Running 'isohybrid ${REAR_USB_ISO}'."
+                             sadm_write_err "[ ERROR ] Creating bootable USB ISO with 'isohybrid ${REAR_USB_ISO}'."
                              ((FNC_ERROR++))                            # Incr. Error counter
 #                            return 1 
                         else sadm_write_log " "
@@ -484,6 +484,7 @@ rear_housekeeping()
 #             return 1 
     fi 
 
+    sadm_write_log "[ INFO ] Setting permission on backup files."
     if [ -r "$REAR_CUR_ISO" ] ; then chmod 664 ${REAR_CUR_ISO} ; fi
     if [ -r "$REAR_USB_ISO" ] ; then chmod 664 ${REAR_USB_ISO} ; fi
     if [ -r "$REAR_ISO_LOG" ] ; then chmod 664 ${REAR_ISO_LOG} ; fi
@@ -492,7 +493,6 @@ rear_housekeeping()
     if [ -r "$REAR_README" ]  ; then chmod 664 ${REAR_README}  ; fi
     if [ -r "$REAR_VERSION" ] ; then chmod 664 ${REAR_VERSION} ; fi
     if [ -r "$REAR_CUR_LOG" ] ; then chmod 664 ${REAR_CUR_LOG} ; fi
-    sadm_write_log "[ OK ] Set permission on backup files."
 
     sadm_write_log " "
     sadm_write_log "Based on the field 'SADM_REAR_BACKUP_TO_KEEP' in SADMIN configuration file :"

@@ -493,7 +493,7 @@ def update_client_crontab_file(logfile,sroot,wostype,wuser) :
     hcron.write ("*/30 * * * *  %s sudo ${SADMIN}/bin/sadm_nmon_watcher.py > /dev/null 2>&1\n" % (wuser))
     hcron.write ("# " + '\n')
     hcron.write ("# sadm_client_sunset.sh, run these four scripts in sequence, just before midnight every day:\n")
-    hcron.write ("# (1) sadm_housekeeping_client.sh (Make sure files in $SADMIN have proper owner:group & permission)\n")
+    hcron.write ("# (1) sadm_client_housekeeping.sh (Make sure files in $SADMIN have proper owner:group & permission)\n")
     hcron.write ("# (2) sadm_dr_savefs.sh (Save lvm filesystems metadata to recreate them easily in Disaster Recovery)\n")
     hcron.write ("# (3) sadm_create_cfg2html.sh (Run cfg2html tool - Produce system configuration web page).\n")
     hcron.write ("# (4) sadm_create_sysinfo.sh (Collect hardware & software info of system to update SADMIN database).\n")

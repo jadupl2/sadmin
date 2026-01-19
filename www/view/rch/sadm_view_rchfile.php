@@ -177,10 +177,11 @@ function display_rch_file ($GET_HOSTNAME, $GET_RCHFILE, $SORTED_RCHFILE)
     $fh = fopen($SORTED_RCHFILE, "r") or exit ("Unable to open file : " . $SORTED_RCHFILE); 
         
     $count = 0 ;                                                        # Reset Line Counter 
-    while (($wline   = fgets($fh)) !== false) {                         # While Still Line to read
+    while (($wline   = fgets($fh)) !== false)                           # While Still Line to read
+    { 
         $rch_array   = explode(" ",$wline);                             # Split rch line into array
         $now         = time();                                          # Get Current epoch time
-        $your_date   = strtotime(str_replace(".", "-",$rch_array[1]));  # RCH Date in epoch time
+        $your_date   = strtotime(str_replace(".", "-",$rch_array[1]));  # RCH start date in epoch 
         $datedif     = $now - $your_date;                               # Sec. diff. now & RCH date
         $rchline_age = round($datediff / (60 * 60 * 24));               # Convert sec. in Days 
 
@@ -243,7 +244,7 @@ function display_rch_file ($GET_HOSTNAME, $GET_RCHFILE, $SORTED_RCHFILE)
 
         echo "\n</tr>\n";
     }
-
+    echo "\nAverage execution time of the $count execution(s) is ${average}.";
     fclose($fh);
     return ;
 }
