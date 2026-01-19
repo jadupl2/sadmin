@@ -153,7 +153,7 @@ export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader 
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
 export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
 export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
-export SADM_DEBUG=5                                        # Debug Level(0-9) 0=NoDebug
+export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
 export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
 export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") 
 export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX") 
