@@ -50,13 +50,11 @@
 .vscode/
 bitbucket-pipelines.yml
 
+
+
 # --------------------------------------
 # SADMIN PROJECT 
 # -------------------------------------- 
-
-# Exclude old stuff to Keep 
-old2keep/*
-
 
 # Exclude the SADMIN System monitor lock file.
 sysmon.lock
