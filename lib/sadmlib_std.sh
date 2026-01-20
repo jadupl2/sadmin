@@ -255,6 +255,7 @@
 #@2025_10_29 lib v4.77 When the PID file epoch time exceed the $SADM_TIMEOUT value.
 #@2025_11_30 lib v4.78 Fix some PID file expiration problems.
 #@2025_11_30 lib v4.79 Add 'sadm_convert_sec2hms()' convert seconds into hours:minutes:seconds.
+#@2026_01_19 lib v4.80 Add global variable "SADM_REAR_DEL_FAILED_BACKUP" with value from sadmin.cfg.
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -265,7 +266,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.79"                                              # This Library Version
+export SADM_LIB_VER="4.80"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -439,6 +440,7 @@ export SADM_REAR_NFS_MOUNT_POINT=""                         # ReaR Mount Point
 export SADM_REAR_BACKUP_TO_KEEP=3                           # Rear Nb.Copy
 export SADM_REAR_BACKUP_DIF=25                              # % size diff cur. vs prev.
 export SADM_REAR_BACKUP_INTERVAL=7                          # Alert when 7 days without 
+export SADM_REAR_DEL_FAILED_BACKUP="Y"                      # Del backup that failed integrity check
 #
 export SADM_BACKUP_NFS_SERVER=""                            # Backup NFS Server
 export SADM_BACKUP_NFS_SERVER_VER=3                         # NFS mount version (3-4)
@@ -2269,6 +2271,8 @@ sadm_load_config_file() {
                                             ;;
             "SADM_REAR_BACKUP_INTERVAL")    SADM_REAR_BACKUP_INTERVAL=$VALUE
                                             ;;
+            "SADM_REAR_DEL_FAILED_BACKUP")  SADM_REAR_DEL_FAILED_BACKUP=$VALUE
+                                            ;;
             "SADM_NETWORK1")                SADM_NETWORK1=$VALUE
                                             ;;
             "SADM_NETWORK2")                SADM_NETWORK2=$VALUE
@@ -3287,6 +3291,12 @@ EOF
     fi 
     
 }
+
+
+
+
+
+
 
 
 # --------------------------------------------------------------------------------------------------
