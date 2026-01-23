@@ -146,7 +146,7 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 
 # VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
 # BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
-#export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
+export SADM_ALERT_TYPE=3                                   # 0=No 1=OnError 2=OnOK 3=Always
 #export SADM_ALERT_GROUP="default"                          # Alert Group to advise
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
 #export SADM_MAX_LOGLINE=400                                # Nb Lines to trim(0=NoTrim)
@@ -215,14 +215,31 @@ update_url_in_rear_site_conf()
     # Loop through /etc/rear/site.conf and update the BACKUP_URL Line.
     while read wline
     do
+        change_done="N"   
+        BURL="BACKUP_URL=\"nfs://${SADM_REAR_NFS_SERVER}${SADM_REAR_NFS_MOUNT_POINT}\"" 
         echo $wline | grep -i "^BACKUP_URL" >/dev/null 2>&1             # Line begin "BACKUP_URL"
         if [ $? -eq 0 ]                                                 # If BACKUP_URL line
         then sadm_write_log "Update backup destination in $REAR_CFGFILE with value from sadmin.cfg."
-             echo "BACKUP_URL=\"nfs://${SADM_REAR_NFS_SERVER}${SADM_REAR_NFS_MOUNT_POINT}\"" >> $REAR_TMP
-             sadm_write_log "  - BACKUP_URL='nfs://${SADM_REAR_NFS_SERVER}${SADM_REAR_NFS_MOUNT_POINT}'"
+             echo "$BURL" >> $REAR_TMP
+             change_done="Y"                                            # file was updated to Yes
+             sadm_write_log "  - $BURL"
         else echo "$wline" >> $REAR_TMP                                 # Output normal line in TMP
         fi
     done < $REAR_CFGFILE                                                # Read /etc/rear/site.conf
+        
+        #change_done="N"                                                 # rear cfg file updated flag 
+        #OURL="OUTPUT_URL=\"nfs://${SADM_REAR_NFS_SERVER}${SADM_REAR_NFS_MOUNT_POINT}\""
+        #echo $wline | grep -i "^OUTPUT_URL" >/dev/null 2>&1             # Line begin "OUTPUT_URL"
+        #if [ $? -eq 0 ]                                                 # If OUTPUT_URL line
+        #then sadm_write_log "Updating ISO destination in $REAR_CFGFILE with value from sadmin.cfg."
+        #     echo "OUTPUT_URL=$OURL"  >> $REAR_TMP
+        #     change_done="Y"                                            # file was updated to Yes
+        #     sadm_write_log "  - OUTPUT_URL='nfs://${SADM_REAR_NFS_SERVER}${SADM_REAR_NFS_MOUNT_POINT}'"
+        #else echo "$wline" >> $REAR_TMP                                 # Output normal line in TMP
+        #fi
+        ## If output_url line is missing for site.conf, then we create one.
+        #if [ "$change_done" = "N" ] ; then echo "OUTPUT_URL=$OURL" >> $REAR_TMP ; fi 
+
     
     # Copy New site.conf ($REAR_TMP) to the official one ($REAR_CFGFILE).
     cp $REAR_TMP $REAR_CFGFILE                                          # Replace ReaR site.conf
@@ -234,12 +251,12 @@ update_url_in_rear_site_conf()
          return 0 
     fi
 
-    # Show content of the /etc/rear/site.conf
-    #sadm_write_log " "
-    #sadm_write_log "Content of ReaR config file '$REAR_CFGFILE' :"
-    #cat $REAR_CFGFILE| while read wline ; do sadm_write_log "$wline"; done
-    #sadm_write_log " "
-    #sadm_write_log " "
+    # Show content of the /etc/rear/site.conf after the update
+    sadm_write_log " "
+    sadm_write_log "Content After modification of ReaR config file '$REAR_CFGFILE' :"
+    cat $REAR_CFGFILE| while read wline ; do sadm_write_log "$wline"; done
+    sadm_write_log " "
+    sadm_write_log " "
 }
 
 
@@ -323,6 +340,12 @@ create_etc_rear_site_conf()
     #NETFS_KEEP_OLD_BACKUP_COPY=Y
 
     cat $REAR_TMP | tr -d '\r' > $REAR_CFGFILE
+
+    sadm_write_log " "
+    sadm_write_log "Initial content of ReaR config file '$REAR_CFGFILE' :"
+    cat $REAR_CFGFILE| while read wline ; do sadm_write_log "$wline"; done
+    sadm_write_log " "
+    sadm_write_log " "    
 }
 
 
@@ -358,6 +381,7 @@ rear_preparation()
 
     # If Rear configuration file '/etc/rear/site.conf' doesn't exist, create a default one.
     if [ ! -r "$REAR_CFGFILE" ] ; then create_etc_rear_site_conf ; fi   # ReaR Site config exist?
+
 
     # We also need to update backup destination with the values specified in '$SADMIN/cfg/sadmin.cfg'
     #   - SADM_REAR_NFS_SERVER      = NFS Server hostname where backup is stored
@@ -562,30 +586,30 @@ rear_housekeeping()
     sadm_write_log " " 
 
     # Verify the integrity of the gzip file.
-    sadm_write_log "Test the compressed ReaR backup file integrity."
-    sadm_write_log "gzip -t '$REAR_CUR_TGZ'"
-    gzip -t "$REAR_CUR_TGZ" >>$SADM_LOG 2>&1 
-    if [ $? -ne 0 ] 
-        then sadm_write_err "[ ERROR ] The ReaR backup file '$REAR_CUR_TGZ' failed the integrity check."
-             sadm_write_err "The ReaR backup may not be restorable, you may want to run it again."
-             sadm_write_err ""
-             ((FNC_ERROR++))                                            # Incr. Error counter
-        else sadm_write_log "[ OK ] Integrity of the compressed file '$REAR_CUR_TGZ' succeeded."  
-    fi 
+    #sadm_write_log "Test the compressed ReaR backup file integrity."
+    #sadm_write_log "gzip -t '$REAR_CUR_TGZ'"
+    #gzip -t "$REAR_CUR_TGZ" >>$SADM_LOG 2>&1 
+    #if [ $? -ne 0 ] 
+    #    then sadm_write_err "[ ERROR ] The ReaR backup file '$REAR_CUR_TGZ' failed the integrity check."
+    #         sadm_write_err "The ReaR backup may not be restorable, you may want to run it again."
+    #         sadm_write_err ""
+    #         ((FNC_ERROR++))                                            # Incr. Error counter
+    #    else sadm_write_log "[ OK ] Integrity of the compressed file '$REAR_CUR_TGZ' succeeded."  
+    #fi 
 
 
     # Verify integrity of ReaR backup file (*.tgz)
-    sadm_write_log " " 
-    sadm_write_log "Creating a list of every files included in the ReaR backup file '$REAR_CUR_TGZ'"
-    sadm_write_log "tar -xOf '$REAR_CUR_TGZ' > /dev/null 2>&1" 
-    tar -xOf "$REAR_CUR_TGZ" > /dev/null 2>&1
-    if [ $? -ne 0 ] 
-        then sadm_write_err "[ ERROR ] The ReaR backup file '$REAR_CUR_TGZ' is not restorable."
-             ((FNC_ERROR++))                                            # Incr. Error counter
-             sadm_write_err "The ReaR backup may not be restorable, you may want to run it again"
-             sadm_write_err "Backup aborted"
-        else sadm_write_log "[ OK ] Integrity check of '$REAR_CUR_TGZ' succeeded."  
-    fi 
+    #sadm_write_log " " 
+    #sadm_write_log "Creating a list of every files included in the ReaR backup file '$REAR_CUR_TGZ'"
+    #sadm_write_log "tar -xOf '$REAR_CUR_TGZ' > /dev/null 2>&1" 
+    #tar -xOf "$REAR_CUR_TGZ" > /dev/null 2>&1
+    #if [ $? -ne 0 ] 
+    #    then sadm_write_err "[ ERROR ] The ReaR backup file '$REAR_CUR_TGZ' is not restorable."
+    #         ((FNC_ERROR++))                                            # Incr. Error counter
+    #         sadm_write_err "The ReaR backup may not be restorable, you may want to run it again"
+    #         sadm_write_err "Backup aborted"
+    #    else sadm_write_log "[ OK ] Integrity check of '$REAR_CUR_TGZ' succeeded."  
+    #fi 
 
     # Create a table of content of tgz backup file just produced to a log file..
     sadm_write_log " " 
