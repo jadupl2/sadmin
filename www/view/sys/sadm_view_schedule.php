@@ -217,8 +217,8 @@ function display_data($count, $row) {
     }else{
         if (substr($row['srv_date_osupdate'],0,16) == "0000-00-00 00:00") {
             $WLAST_UPDATE = "None";  
-            echo "<td align='center'>";
-            $tooltip = "There is no O/S update that was perform yet (No rch file).";
+            echo "<td align='center' bgcolor='#DAF7A6'>";
+            $tooltip = "No O/S update perform yet (No rch file).";
             echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
             echo "None yet</span></td>";
         }else{
@@ -265,7 +265,7 @@ function display_data($count, $row) {
                   break ;
         case 2  : echo "<td align='center' style='bgcolor='#DAF7A6'><b>Running</b>"; 
                   break ;
-        default : echo "<td align='center' style='bgcolor=#DAF7A6'>None yet"; 
+        default : echo "<td align='center' style='bgcolor='#DAF7A6'>None yet"; 
                   break ;
     }
     echo "</td>\n";  

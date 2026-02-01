@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
-#   Title    :  sadm_housekeeping.sh
+#   Title    :  sadm_client_housekeeping.sh
 #   Synopsis :  Verify existence of SADMIN Dir. along with their Prot/Priv and purge old log,rch,nmon.
 #   Version  :  1.0
 #   Date     :  19 December 2015

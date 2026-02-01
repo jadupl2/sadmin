@@ -144,13 +144,16 @@ run_script()
              return 1                                                   # Return Error to Caller
     fi 
 
+    sadm_write_log " " 
+    sadm_write_log " " 
+    sadm_write_log " " 
     sadm_write_log "Running '${SADM_BIN_DIR}/${SCRIPT}' ... " "NOLF"
     $SCMD  >>$SADM_LOG 2>&1                                             # Run the Script
     if [ $? -ne 0 ]                                                     # If Error was encounter
         then sadm_write_err "[ ERROR ] Encounter while running '${SCRIPT}'."   
              sadm_write_err "  - Verify the log file : ${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SCRIPT}.log"  
              return 1
-        else sadm_write_log "[ OK ] "                                   # Advise user it's OK
+        else sadm_write_log "[ SUCCESS ] '${SCRIPT}' terminated with success."     
     fi
     return 0                                                            # Return Success to Caller
 }
