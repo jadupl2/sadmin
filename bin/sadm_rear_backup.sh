@@ -3,7 +3,7 @@
 #   Author   :  Jacques Duplessis
 #   Title    :  sadm_rear_backup.sh
 #   Synopsis :  Produce a ReaR bootable iso and a restorable backup on an NFS server
-#   Version  :  1.6
+#   Version  :  1.0
 #   Date     :  14 December 2016
 #   Requires :  sh
 #
@@ -406,7 +406,7 @@ rear_preparation()
              sadm_write_err "Error #$RC on NFS mount - Process aborted."
              sadm_write_err "Function '${FUNCNAME[1]}' at line no.$LINENO."
              RC=1
-             umount ${NFS_MOUNT} > /dev/null 2>&1
+             unmount_batnas
              rmdir  ${NFS_MOUNT} > /dev/null 2>&1
              return 1
         else sadm_write_log "[ OK ] NFS share on '$SADM_REAR_NFS_SERVER' is now mounted."
@@ -418,7 +418,9 @@ rear_preparation()
         then mkdir ${NFS_MOUNT}/${SADM_HOSTNAME}
              if [ $? -ne 0 ]
                 then sadm_write_err "[ ERROR ] Creating directory ${NFS_MOUNT}/${SADM_HOSTNAME}"
+                     unmount_batnas
                      return 1
+                else sadm_write_log "[ OK ] Rear backup directory created for ${SADM_HOSTNAME}."
              fi
     fi
 
@@ -427,6 +429,7 @@ rear_preparation()
     touch ${TEST_FILE} >> $SADM_LOG 2>&1                                # Create empty test file
     if [ $? -ne 0 ]                                                     # If error on chmod command
         then sadm_write_err "[ ERROR ] Can't write test file ${TEST_FILE}."
+             unmount_batnas
              return 1                                                   # Back to caller with error
         else sadm_write_log "[ OK ] Write test to NFS mount succeeded"  # Feed user and log
     fi
@@ -574,7 +577,8 @@ rear_housekeeping()
              if [ $? -ne 0 ]
                 then sadm_write_err "[ ERROR ] Problem deleting backup directory [ ERROR ]"
                      ((FNC_ERROR++))                                    # Incr. Error counter
-#                     return 1
+#                     unmount_batnas
+#                    return 1
                 else sadm_write_log "[ OK ] Oldest backup directory removed"
              fi
         else sadm_write_log "[ OK ] No need to remove any directories."
