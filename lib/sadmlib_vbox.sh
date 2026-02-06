@@ -49,6 +49,7 @@
 #@2025_03_25 virtualbox v2.9 Was not showing the current VirtualBox Guest addition version.
 #@2025_04_09 virtualbox v3.0 Minor changes.
 #@2025_07_09 virtualbox v3.1 Minor adjustment in heading & Change total calculation
+#@2026_02_06 virtualbox v3.2 New way to get VBox guest version.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -59,7 +60,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 
 # Global Variables
 # --------------------------------------------------------------------------------------------------
-export VMLIBVER="3.1"                                                   # This Library version
+export VMLIBVER="3.2"                                                   # This Library version
 export VMLIB_DEBUG="N"                                                  # Activate Debug output Y/N
 export VMLIST="$(mktemp "$SADMIN/tmp/${SADM_INST}vm_list1_XXX")"        # List of all VM in VBox
 export VMRUNLIST="$(mktemp "$SADMIN/tmp/${SADM_INST}vm_runlist_XXX")"   # Tmp File to list RunningVM 
@@ -533,7 +534,8 @@ sadm_list_vm_status()
 
         # Get Virtual Box Guest extension version
         #vm_verext=$($VBOXMANAGE guestproperty enumerate $vm_name |grep '/VirtualBox/HostInfo/VBoxVerExt' |awk '{print $3}' |tr -d "\'")
-        vm_verext=$($VBOXMANAGE showvminfo $vm_name |grep 'Additions version' |awk -F: '{print $2}' |tr -d ' ')
+        #vm_verext=$($VBOXMANAGE showvminfo $vm_name |grep 'Additions version' |awk -F: '{print $2}' |tr -d ' ')
+        vm_verext=$($VBOXMANAGE guestproperty get "$vm_name" "/VirtualBox/GuestAdd/Version"  | awk -F: '{ print $2 }' | tr -d ' ')
 
         # Remote Desktop State
         #printf "vrde\n"
