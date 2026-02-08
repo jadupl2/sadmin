@@ -256,6 +256,7 @@
 #@2025_11_30 lib v4.78 Fix some PID file expiration problems.
 #@2025_11_30 lib v4.79 Add 'sadm_convert_sec2hms()' convert seconds into hours:minutes:seconds.
 #@2026_01_19 lib v4.80 Add global variable "SADM_REAR_DEL_FAILED_BACKUP" with value from sadmin.cfg.
+#@2026_02_07 lib v4.81 Change owner & permission on $SADMIN directories.
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -266,7 +267,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.80"                                              # This Library Version
+export SADM_LIB_VER="4.81"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -2373,7 +2374,7 @@ sadm_load_config_file() {
 # --------------------------------------------------------------------------------------------------
 sadm_freshen_directories_structure() {
 
-    # Path is needed to perform NFS Backup (It doesn't exist by default on Mac)
+    # On MacOS this path is needed to perform NFS Backup (It doesn't exist by default on Mac)
     if [ "$SADM_OS_TYPE" = "DARWIN" ] && [ ! -d "/tmp/nfs2" ]           # NFS Mount Point not exist
         then mkdir -p -m 755 /tmp/nfs2                                  # Create NFS mount point
     fi
@@ -2392,6 +2393,7 @@ sadm_freshen_directories_structure() {
 
     if [ "$(id -u)" -eq 0 ]
         then chmod 0775 $SADM_LIB_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_LIB_DIR
+             chmod 0775 $SADM_BIN_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_BIN_DIR
              chmod 0775 $SADM_CFG_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_CFG_DIR
              chmod 0775 $SADM_SYS_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_SYS_DIR
              chmod 0775 $SADM_DOC_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_DOC_DIR
@@ -2416,19 +2418,19 @@ sadm_freshen_directories_structure() {
 
     # If on the SADMIN server
     if [ "$SADM_HOST_TYPE" = "S" ] &&  [ "$(id -u)" -eq 0 ]
-        then chmod 0775 $SADM_WWW_DIR      ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_DIR 
-             chmod 0775 $SADM_WWW_DAT_DIR  ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_DAT_DIR 
-             chmod 0775 $SADM_WWW_ARC_DIR  ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_ARC_DIR 
-             chmod 0775 $SADM_WWW_DOC_DIR  ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_DOC_DIR 
-             chmod 0775 $SADM_WWW_LIB_DIR  ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_LIB_DIR 
-             chmod 0775 $SADM_WWW_IMG_DIR  ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_IMG_DIR 
-             chmod 1777 $SADM_WWW_TMP_DIR  ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_TMP_DIR 
-             chmod 0775 $SADM_WWW_NET_DIR  ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_NET_DIR
-             chmod 1777 $SADM_WWW_PERF_DIR ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_PERF_DIR
-             chmod 0775 $SADM_WWW_CRUD_DIR ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_CRUD_DIR
-             chmod 0775 $SADM_WWW_CSS_DIR  ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_CSS_DIR
-             chmod 0775 $SADM_WWW_VIEW_DIR ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_VIEW_DIR
-             chmod 0775 $SADM_WWW_RRD_DIR  ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_RRD_DIR
+        then chmod 0775 $SADM_WWW_DIR      ; chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_DIR 
+             chmod 0775 $SADM_WWW_DAT_DIR  ; chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_DAT_DIR 
+             chmod 0775 $SADM_WWW_ARC_DIR  ; chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_ARC_DIR 
+             chmod 0775 $SADM_WWW_DOC_DIR  ; chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_DOC_DIR 
+             chmod 0775 $SADM_WWW_LIB_DIR  ; chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_LIB_DIR 
+             chmod 0775 $SADM_WWW_IMG_DIR  ; chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_IMG_DIR 
+             chmod 1777 $SADM_WWW_TMP_DIR  ; chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_TMP_DIR 
+             chmod 0775 $SADM_WWW_NET_DIR  ; chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_NET_DIR
+             chmod 1777 $SADM_WWW_PERF_DIR ; chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_PERF_DIR
+             chmod 0775 $SADM_WWW_CRUD_DIR ; chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_CRUD_DIR
+             chmod 0775 $SADM_WWW_CSS_DIR  ; chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_CSS_DIR
+             chmod 0775 $SADM_WWW_VIEW_DIR ; chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_VIEW_DIR
+             chmod 0775 $SADM_WWW_RRD_DIR  ; chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_RRD_DIR
     fi
 }
 
