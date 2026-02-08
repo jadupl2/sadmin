@@ -49,6 +49,7 @@
 #@2024_12_17 server v2.23 Code revision and optimization.
 #@2025_01_04 server v2.24 Also apply removal policy of old .rch, log and *.nmon  in $SADMIN/www/dat.
 #@2025_04_01 server v2.25 Delete any *.lock older than 1 day in $SADMIN.
+#@2026_02_07 server v2.26 Code enhancement.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
@@ -78,7 +79,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.25'                                     # Script version number
+export SADM_VER='2.26'                                     # Script version number
 export SADM_PDESC="Move alert old alert to history archive and set permission in www directories."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -124,29 +125,31 @@ export ERROR_COUNT=0                                                    # Error 
 
 
 
-# --------------------------------------------------------------------------------------------------
+
 # Show script command line options
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\nUsage: %s%s%s%s [options]" "${BOLD}" "${CYAN}" $(basename "$0") "${NORMAL}"
+    printf "\nUsage: %s%s%s%s [options]" "${BOLD}" "${CYAN}" "$(basename "$0")" "${NORMAL}"
     printf "\nDesc.: %s" "${BOLD}${CYAN}${SADM_PDESC}${NORMAL}"
     printf "\n\n${BOLD}${GREEN}Options:${NORMAL}"
     printf "\n   ${BOLD}${YELLOW}[-d 0-9]${NORMAL}\t\tSet Debug (verbose) Level"
     printf "\n   ${BOLD}${YELLOW}[-h]${NORMAL}\t\t\tShow this help message"
     printf "\n   ${BOLD}${YELLOW}[-v]${NORMAL}\t\t\tShow script version information"
+    printf "\n   ${BOLD}${YELLOW}[-X]${NORMAL}\t\t\tRemove the PID file & run script"
     printf "\n\n" 
 }
 
 
 
-
 # --------------------------------------------------------------------------------------------------
-# Move alert older than $SADM_DAYS_HISTORY days,
+# Move alert older than $SADM_DAYS_HISTORY days in $SADMIN/cfg/sadmin.cfg,
 # from $SADMIN/cfg/alert_history.txt to $SADMIN/cfg/alert_archive.txt
 # --------------------------------------------------------------------------------------------------
 alert_housekeeping()
 {
+    sadm_write_log "ARCHIVING OF ALERTS"
+
     sadm_write_log "Before moving alerts older than $SADM_DAYS_HISTORY days from the alert history file to the alert archive file."
     sadm_write_log "Alert history file : '$SADM_ALERT_HIST' have $(wc -l $SADM_ALERT_HIST | cut -d' ' -f1) lines."
     sadm_write_log "Alert archive file : '$SADM_ALERT_ARC' have $(wc -l $SADM_ALERT_ARC  | cut -d' ' -f1) lines."
@@ -237,20 +240,24 @@ set_file()
     RETURN_CODE=0                                                       # Reset Error Counter
 
     if [ -f "$VAL_FILE" ]                                               # If file exist
-        then sadm_write_log "  - chmod ${VAL_OCTAL} ${VAL_FILE} " "NOLF"
-             chmod ${VAL_OCTAL} ${VAL_FILE}
-             if [ $? -ne 0 ]
-                then sadm_write_err "[ ERROR ] On 'chmod' operation on ${VAL_FILE}."
-                     RETURN_CODE=1                                      # Error = Return Code to 1
-                else sadm_write_log "[ OK ]"
-             fi
-             sadm_write_log "  - chown ${VAL_OWNER}:${VAL_GROUP} ${VAL_FILE} " "NOLF"
-             chown ${VAL_OWNER}:${VAL_GROUP} ${VAL_FILE}
-             if [ $? -ne 0 ]
-                then sadm_write_err "[ ERROR ] On 'chown' operation on ${VAL_FILE}."
-                     RETURN_CODE=1                                      # Error = Return Code to 1
-                else sadm_write_log "[ OK ]"
-             fi
+        then 
+             CMD="chmod ${VAL_OCTAL} ${VAL_FILE}"
+             f=$(mktemp) ; { eval "$CMD" ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; RC=$(cat $f) 
+             RC=$?                                                      # Save Exit Code 
+             if [ $RC -eq 0 ]                                           # Complete with no Error ?
+                 then sadm_write_log "[ OK ] $CMD" 
+                 else sadm_write_err "[ ERROR ] $CMD"
+                      ((RETURN_CODE++))
+             fi 
+
+             CMD="chown ${VAL_OWNER}:${VAL_GROUP} ${VAL_FILE}"
+             f=$(mktemp) ; { eval "$CMD" ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; RC=$(cat $f) 
+             RC=$?                                                      # Save Exit Code 
+             if [ $RC -eq 0 ]                                           # Complete with no Error ?
+                 then sadm_write_log "[ OK ] $CMD" 
+                 else sadm_write_err "[ ERROR ] $CMD"
+                      ((RETURN_CODE++))
+             fi 
     fi
     return $RETURN_CODE
 }
@@ -265,10 +272,11 @@ dir_housekeeping()
     sadm_write_log "SERVER DIRECTORIES HOUSEKEEPING"
     if [ ! -d "$SADM_WWW_DIR" ] 
         then sadm_write_err "[ ERROR ] Directory '$SADM_WWW_DIR' doesn't exist." 
+             sadm_write_err "[ ERROR ] You may not be on the SADMIN server." 
              return 1
     fi 
 
-    # Reset privilege on WWW Directory files
+    # ALL directories in $SADMIN/www must be 775 
     CMD="find $SADM_WWW_DIR -type d -exec chmod -R 775 {} \;"
     find $SADM_WWW_DIR -type d -exec chmod -R 775 {} \; >/dev/null 2>&1
     if [ $? -ne 0 ]
@@ -278,26 +286,53 @@ dir_housekeeping()
             if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
     fi
 
-    # SADMIN /www/tmp directories
-    CMD="find $SADM_WWW_DIR -type f -exec chown ${SADM_WWW_USER}:${SADM_GROUP} {} \; "
-    find "$SADM_WWW_DIR" -type f -exec chown $SADM_WWW_USER:$SADM_GROUP {} \; 
-    if [ $? -ne 0 ]
+    # ALL Directories $SADMIN/www must be own by SADM_WWW_USER:SADM_GROUP
+    CMD="find $SADM_WWW_DIR -type d -exec chown ${SADM_WWW_USER}:${SADM_GROUP} {} \; "
+    f=$(mktemp) ; { eval "$CMD" ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; RC=$(cat $f) 
+    RC=$?                                                               # Save rsync Exit Code 
+    if [ $RC -eq 0 ]                                                    # Complete with no Error ?
+        then sadm_write_log "[ OK ] $CMD" 
+        else sadm_write_err "[ ERROR ] $CMD"
+             ((ERROR_COUNT++))
+    fi 
+
+    CMD="find $SADM_WWW_DIR -type f -exec chown $SADM_WWW_USER:$SADM_GROUP {} \;"
+    f=$(mktemp) ; { eval "$CMD" ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; RC=$(cat $f) 
+    RC=$?                                                               # Save rsync Exit Code 
+    if [ $RC -eq 0 ]                                                    # Complete with no Error ?
+        then sadm_write_log "[ OK ] $CMD" 
+        else sadm_write_err "[ ERROR ] $CMD"
+             ((ERROR_COUNT++))
+    fi 
+
+    # Change Permission and Owner on $SADMIN/www/tmp
+    CMD="chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_TMP_DIR && chmod 1777 '$SADM_WWW_TMP_DIR'"
+    f=$(mktemp) ; { eval "$CMD" ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; RC=$(cat $f) 
+    RC=$?                                                               # Save rsync Exit Code 
+    if [ $RC -eq 0 ]                                                    # Complete with no Error ?
+        then sadm_write_log "[ OK ] $CMD" 
+        else sadm_write_err "[ ERROR ] $CMD"
+             ((ERROR_COUNT++))
+    fi 
+  
+    # Change Permission and Owner on $SADMIN/www/tmp/perf
+    CMD="chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_PERF_DIR && chmod 1777 '$SADM_WWW_PERF_DIR'" 
+    f=$(mktemp) ; { eval "$CMD" ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; RC=$(cat $f) 
+    RC=$?                                                               # Save rsync Exit Code 
+    if [ $RC -ne 0 ]                                                    # Complete with no Error ?
        then sadm_write_err "[ ERROR ] running ${CMD}"
             ((ERROR_COUNT++))
        else sadm_write_log "[ OK ] ${CMD}"
-            if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
     fi
-    chown ${SADM_WWW_USER}:${SADM_GROUP} "$SADM_WWW_TMP_DIR"  ; chmod 1777 "$SADM_WWW_TMP_DIR"
-    chown ${SADM_WWW_USER}:${SADM_GROUP} "$SADM_WWW_PERF_DIR" ; chmod 1777 "$SADM_WWW_PERF_DIR" 
     
-    
-    CMD="find $SADM_WWW_DAT_DIR -type f -exec chmod 0664 {}\; "
-    find "$SADM_WWW_DAT_DIR" -type f -exec chmod 0664 {} \; 
-    if [ $? -ne 0 ]
+    # Change permission on all files in $SADMIN/www/dat to 664
+    CMD="find $SADM_WWW_DAT_DIR -type f -exec chmod 0664 {} \;"
+    f=$(mktemp) ; { eval "$CMD" ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; RC=$(cat $f) 
+    RC=$?                                                               # Save rsync Exit Code 
+    if [ $RC -ne 0 ]                                                    # Complete with no Error ?
        then sadm_write_err "[ ERROR ] running ${CMD}"
             ((ERROR_COUNT++))
        else sadm_write_log "[ OK ] ${CMD}"
-            if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
     fi
     
     if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at ${ERROR_COUNT}." ;fi
@@ -308,10 +343,10 @@ dir_housekeeping()
 # --------------------------------------------------------------------------------------------------
 #                               General Files Housekeeping Function
 # --------------------------------------------------------------------------------------------------
-file_housekeeping()
+files_housekeeping()
 {
     sadm_write_log " "
-    sadm_write_log "Server Files HouseKeeping. "
+    sadm_write_log "SERVER FILES HOUSEKEEPING. "
 
     # Make sure crontab for SADMIN server have proper permission and owner
     sadm_write_log "Make sure SADMIN crontab file have proper permission and owner"
@@ -325,15 +360,14 @@ file_housekeeping()
     # Delete performance graph (*.png) generated by web interface older than 5 days.
     if [ -d "$SADM_WWW_PERF_DIR" ]
         then sadm_write_log " " 
-             sadm_write_log "Delete any *.png files older than 5 days in ${SADM_WWW_PERF_DIR}."
+             sadm_write_log "Delete any graph generated (*.png) older than 5 days in ${SADM_WWW_PERF_DIR}."
              CMD="find $SADM_WWW_PERF_DIR -type f -mtime +5 -name '*.png' -exec rm -f {} \;"
-             find "$SADM_WWW_PERF_DIR" -type f -mtime +5 -name "*.png" -exec rm -f {} \; | tee -a $SADM_LOG
-             if [ $? -ne 0 ]
+             f=$(mktemp) ; { eval "$CMD" ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; RC=$(cat $f) 
+             if [ $RC -ne 0 ]                                           # Complete with no Error ?
                 then sadm_write_err "[ ERROR ] running ${CMD}"
                      ((ERROR_COUNT++))
-                else sadm_write_log "[ OK ] running ${CMD}"
-                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
-             fi
+                else sadm_write_log "[ OK ] ${CMD}"
+             fi             
     fi
 
     # Delete tmp files older than 1 days in $SADMIN/www/tmp
@@ -341,27 +375,25 @@ file_housekeeping()
         then sadm_write_log " " 
              sadm_write_log "Delete tmp files older than 1 days in ${SADM_WWW_TMP_DIR}."
              CMD="find $SADM_WWW_TMP_DIR -type f -mtime +1 -exec rm -f {} \;"
-             find $SADM_WWW_TMP_DIR  -type f -mtime +1 -exec rm -f {} \; >/dev/null 2>&1
-             if [ $? -ne 0 ]
+             f=$(mktemp) ; { eval "$CMD" ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; RC=$(cat $f) 
+             if [ $RC -ne 0 ]                                           # Complete with no Error ?
                 then sadm_write_err "[ ERROR ] running ${CMD}"
                      ((ERROR_COUNT++))
-                else sadm_write_log "${SADM_OK} ${CMD}"
-                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
-             fi
+                else sadm_write_log "[ OK ] ${CMD}"
+             fi             
     fi 
 
-    # Delete *.nmon files older than $SADM_NMON_KEEPDAYS days in $SADMIN/www/dat/
+    # Delete nmon data (*.nmon) files older than $SADM_NMON_KEEPDAYS days in $SADMIN/www/dat/
     if [ -d "$SADM_NMON_DIR" ]
         then sadm_write_log " " 
              sadm_write_log "Delete *.nmon files older than $SADM_NMON_KEEPDAYS days ('SADM_NMON_KEEPDAYS') in ${SADM_NMON_DIR}."
              CMD="find ${SADM_NMON_DIR} -name \"*.nmon\" -type f -mtime +${SADM_NMON_KEEPDAYS} -exec rm -f {} \;"
-             find ${SADM_NMON_DIR} -name "*.nmon" -type f -mtime +${SADM_NMON_KEEPDAYS} -exec rm -f {} \; >/dev/null 2>&1
-             if [ $? -ne 0 ]
-                then sadm_write_err "[ ERROR ] running '${CMD}'"
+             f=$(mktemp) ; { eval "$CMD" ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; RC=$(cat $f) 
+             if [ $RC -ne 0 ]                                           # Complete with no Error ?
+                then sadm_write_err "[ ERROR ] running ${CMD}"
                      ((ERROR_COUNT++))
-                else sadm_write_log "${SADM_OK} ${CMD}"
-             fi
-             if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
+                else sadm_write_log "[ OK ] ${CMD}"
+             fi             
     fi 
 
 
@@ -370,27 +402,26 @@ file_housekeeping()
         then sadm_write_log " " 
              sadm_write_log "Delete *.rch files older than ${SADM_RCH_KEEPDAYS} days in ${SADM_RCH_DIR}."
              CMD="find $SADM_RCH_DIR -name \"*.rch\" -type f -mtime +${SADM_RCH_KEEPDAYS} -exec rm -f {} \;"
-             find $SADM_RCH_DIR -name "*.rch" -type f -mtime +${SADM_RCH_KEEPDAYS} -exec rm -f {} \; >/dev/null 2>&1
-             if [ $? -ne 0 ]
-                then sadm_write_err "[ ERROR ] running '${CMD}'"
+             f=$(mktemp) ; { eval "$CMD" ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; RC=$(cat $f) 
+             if [ $RC -ne 0 ]                                           # Complete with no Error ?
+                then sadm_write_err "[ ERROR ] running ${CMD}"
                      ((ERROR_COUNT++))
-                else sadm_write_log "${SADM_OK} ${CMD}"
-             fi
-             if [ $ERROR_COUNT -ne 0 ] ; then sadm_write_log "Total Error at $ERROR_COUNT" ; fi
+                else sadm_write_log "[ OK ] ${CMD}"
+             fi  
     fi 
 
 
-    # Delete *.log files older than ${SADM_LOG_KEEPDAYS}  days in $SADMIN/www/dat
+    # Delete *.log files older than ${SADM_LOG_KEEPDAYS} days in $SADMIN/log
     if [ -d "$SADM_LOG_DIR" ]
         then sadm_write_log " " 
              sadm_write_log "Delete *.log files older than ${SADM_LOG_KEEPDAYS} days in ${SADM_LOG_DIR}."
              CMD="find $SADM_LOG_DIR -name \"*.log\" -type f -mtime +${SADM_LOG_KEEPDAYS} -exec rm -f {} \;"
-             find $SADM_LOG_DIR -name "*.log" -type f -mtime +${SADM_LOG_KEEPDAYS} -exec rm -f {} \; >/dev/null 2>&1
-             if [ $? -ne 0 ]
-                then sadm_write_err "[ ERROR ] running '${CMD}'"
+             f=$(mktemp) ; { eval "$CMD" ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; RC=$(cat $f) 
+             if [ $RC -ne 0 ]                                           # Complete with no Error ?
+                then sadm_write_err "[ ERROR ] running ${CMD}"
                      ((ERROR_COUNT++))
                 else sadm_write_log "[ OK ] ${CMD}"
-             fi
+             fi  
              if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
     fi 
     
@@ -398,17 +429,15 @@ file_housekeeping()
     sadm_write_log " " 
     sadm_write_log "Delete any lock files older than 1 days in '$SADMIN'."
     CMD="find $SADMIN -name \"*.lock\" -type f -mtime +1 -exec rm -f {} \;"
-    find $SADMIN -name \"*.lock\" -type f -mtime +1 -exec rm -f {} \; >/dev/null 2>&1
-    if [ $? -ne 0 ]
+    f=$(mktemp) ; { eval "$CMD" ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; RC=$(cat $f) 
+    if [ $RC -ne 0 ]                                           # Complete with no Error ?
        then sadm_write_err "[ ERROR ] running ${CMD}"
             ((ERROR_COUNT++))
        else sadm_write_log "[ OK ] ${CMD}"
-            if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
-    fi
+    fi  
+    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
     
-    # $SADMIN/www/tmp writable by everyone (If not cause intermittent problem with monitor page refresh)
-    chmod 1777 $SADM_WWW_TMP_DIR  
-
+    # set 664 on password file on Sadmin server
     if [ -f "$DBPASSFILE" ]     ; then chmod 644 $DBPASSFILE ; fi 
     if [ -f "$GMPW_FILE_TXT" ]  ; then chmod 644 $GMPW_FILE_TXT ; fi 
     if [ -f "$GMPW_FILE_B64" ]  ; then chmod 644 $GMPW_FILE_B64 ; fi 
@@ -435,11 +464,11 @@ function adjust_server_crontab()
     grep -q 'sadm_push_sadmin.sh' $F 
     if [ $? -ne 0 ] 
        then echo "#" >> $F 
-            echo "# Daily push of $SADMIN/\(lib,bin,/cfg/\.\*\) to all active servers - Optional" >>$F 
-            echo "#   -c to push \$SADMIN/cfg/sadmin_client.cfg to active sadmin clients."  >> $F
-            echo "#   -s To include push of $SADMIN/sys" >> $F
-            echo "#   -u To include push of $SADMIN/\(usr/bin usr/lib usr/cfg\)" >> $F 
-            echo "#30 11,20 * * * root ${SADMIN}/bin/sadm_push_sadmin.sh > /dev/null 2>&1" >>$F 
+            echo "# Daily push of \$SADMIN/(lib,bin,cfg/\.\*\) to all active clients - Optional"         >>$F 
+            echo "#   -c to push \$SADMIN/cfg/sadmin_client.cfg to active sadmin clients as sadmin.cfg." >>$F
+            echo "#   -s to push \$SADMIN/sys (to have the same startup/shutdown script on all client)"  >>$F
+            echo "#   -u to push \$SADMIN/usr/(bin lib cfg) to all client."                              >>$F 
+            echo "#30 11,20 * * * root \${SADMIN}/bin/sadm_push_sadmin.sh > /dev/null 2>&1"              >>$F 
             echo "#" >> $F  
             sadm_write_log "${BOLD}${YELLOW}Daily Push of SADMIN Scripts added to ${F}${NORMAL}." 
     fi 
@@ -464,17 +493,18 @@ main_process()
 
     dir_housekeeping                                                    # Do Dir HouseKeeping
     if [ $? -eq 0 ]
-       then sadm_write_log "[ OK ] Directories housekeeping."
+       then sadm_write_log "[ SUCCESS ] Directories housekeeping."
        else sadm_write_err "[ ERROR ] While doing directories housekeeping."
             ((ERROR_COUNT++)) 
     fi 
 
-    file_housekeeping                                                   # Do File HouseKeeping
+    files_housekeeping                                                   # Do File HouseKeeping
     if [ $? -eq 0 ]
-       then sadm_write_log "[ OK ] File housekeeping."
+       then sadm_write_log "[ SUCCESS ] File housekeeping."
        else sadm_write_err "[ ERROR ] While doing the files housekeeping."
             ((ERROR_COUNT++)) 
     fi 
+    return $SADM_EXIT_CODE
 }
 
 
@@ -483,26 +513,29 @@ main_process()
 # --------------------------------------------------------------------------------------------------
 # Command line Options functions
 # Evaluate Command Line Switch Options Upfront
-# By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+# -h) Show Help Usage, -v) Show Script Version,  -d0-9] Set Debug Level  -X=Delete PID file.
 # --------------------------------------------------------------------------------------------------
 function cmd_options()
 {
-    while getopts "d:hv" opt ; do                                       # Loop to process Switch
+    while getopts "d:hvX" opt ; do                                      # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
-               num=$(echo "$SADM_DEBUG" |grep -E "^\-?[0-9]?\.?[0-9]+$") # Valid Level is Numeric
+               num=$(echo "$SADM_DEBUG" |grep -E "^\-?[0-9]?\.?[0-9]+$") # Valid if Level is Numeric
                if [ "$num" = "" ]                            
-                  then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
+                  then printf "\nInvalid debug level.\n"                # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
                        exit 1                                           # Exit Script with Error
                fi
-               printf "Debug Level set to ${SADM_DEBUG}.\n"             # Display Debug Level
+               printf "Debug level set to ${SADM_DEBUG}.\n"             # Display Debug Level
                ;;                                                       
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
                ;;
             v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
+               ;;
+            X) /usr/bin/rm -f "${SADMIN}/tmp/${SADM_INST}.pid" >/dev/null 2>&1
+               printf "\n${BOLD}${BLINK}${YELLOW}The PID File ("${SADMIN}/tmp/${SADM_INST}.pid") is now removed.${NORMAL}\n" 
                ;;
            \?) printf "\nInvalid option: ${OPTARG}.\n"                  # Invalid Option Message
                show_usage                                               # Display Help Usage
@@ -515,13 +548,13 @@ function cmd_options()
 
 
 
+
 # --------------------------------------------------------------------------------------------------
 #                                Script Start HERE
 # --------------------------------------------------------------------------------------------------
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Create Dir.,PID,log,rch
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
     main_process                                                        # Main processing function
-    if [ $ERROR_COUNT -ne 0 ] ;then SADM_EXIT_CODE=1 ;else SADM_EXIT_CODE=0 ;fi
+    SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
