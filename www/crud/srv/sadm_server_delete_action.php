@@ -177,7 +177,7 @@ $CREATE_BUTTON = False ;                                                # Don't 
     # Display Note to user
     echo "<br><br>";
     if (! file_exists($archive_name)) {                                 # No Archive already exist ?
-       echo "Note: An archive of server data will be created in '" .SADM_WWW_ARC_DIR. "/' directory";
+       echo "Note: An archive of the system data will be created in '" .SADM_WWW_ARC_DIR. "/' directory.";
        echo "<br>      The name of the archive will be '" .$wkey. ".tgz'";
     }else{
        echo "<br>An archive already exist for that server and it won't be overwritten.";
