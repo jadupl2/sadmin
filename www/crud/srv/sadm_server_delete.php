@@ -86,7 +86,7 @@ $CREATE_BUTTON = False ;                                                # Don't 
     }
     if (! $KeyExist) {                                                  # If Key was not found
         $err_line = (__LINE__ -1) ;                                     # Error on line No.
-        $err_msg1 = "Server '" . $wkey . "' not found.";                # Row was not found Msg.
+        $err_msg1 = "System '" . $wkey . "' not found.";                # Row was not found Msg.
         $err_msg2 = "\nAt line " .$err_line. " in " .basename(__FILE__);# Insert Filename 
         sadm_alert ($err_msg1 . $err_msg2);                             # Display Msg. Box for User
         echo "<script>location.replace('" . $BACKURL . "');</script>";  # Backup to Caller URL           
