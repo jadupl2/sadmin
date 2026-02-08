@@ -117,7 +117,7 @@ show_usage()
     printf "\n   ${BOLD}${YELLOW}[-d 0-9]${NORMAL}\t\tSet Debug (verbose) Level"
     printf "\n   ${BOLD}${YELLOW}[-h]${NORMAL}\t\t\tShow this help message"
     printf "\n   ${BOLD}${YELLOW}[-v]${NORMAL}\t\t\tShow script version information"
-    printf "\n   ${BOLD}${YELLOW}[-X]${NORMAL}\t\t\tDelete the PID file & run script"
+    printf "\n   ${BOLD}${YELLOW}[-X]${NORMAL}\t\t\tRemove the PID file & run script"
     printf "\n\n" 
 }
 
