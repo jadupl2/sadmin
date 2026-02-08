@@ -147,7 +147,7 @@ run_script()
     sadm_write_log " " 
     sadm_write_log " " 
     sadm_write_log " " 
-    sadm_write_log "Running '${SADM_BIN_DIR}/${SCRIPT}' ... " "NOLF"
+    sadm_write_log "Running '${SADM_BIN_DIR}/${SCRIPT}' ... " 
     $SCMD  >>$SADM_LOG 2>&1                                             # Run the Script
     if [ $? -ne 0 ]                                                     # If Error was encounter
         then sadm_write_err "[ ERROR ] Encounter while running '${SCRIPT}'."   
