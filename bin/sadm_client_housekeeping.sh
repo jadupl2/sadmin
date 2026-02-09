@@ -88,6 +88,7 @@
 #@2025_04_22 client v2.24 Fix bug concerning verification of 'SADMIN_USER' account expiration.
 #@2025_05_26 client v2.25 Enhance log presentation and code optimization.
 #@2026_02_07 client v2.26 Add cmdline option -X and change script logic
+#@2026_02_09 client v2.27 Fix chowm error on $SADMIN/www if exist.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -118,7 +119,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.26'                                      # Script version number
+export SADM_VER='2.27'                                      # Script version number
 export SADM_PDESC="Set \$SADMIN owner/group/permission, prune old log,rch files ,check sadmin account."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -577,7 +578,7 @@ file_housekeeping()
     # Set the owner/group and privilege of all files in these directories.
     set_files_recursive "$SADM_DAT_DIR"        "0664" "${SADM_USER}" "${SADM_GROUP}" 
     set_files_recursive "$SADM_DOC_DIR"        "0664" "${SADM_USER}" "${SADM_GROUP}" 
-    set_files_recursive "$SADM_WWW_DIR"        "0664" "${SADM_WWW_USER}" "${SADM_GROUP}" 
+    set_files_recursive "$SADM_WWW_DIR"        "0664" "${SADM_USER}" "${SADM_GROUP}" 
     set_files_recursive "$SADM_LOG_DIR"        "0664" "${SADM_USER}" "${SADM_GROUP}" 
     set_files_recursive "$SADM_CFG_DIR"        "0664" "${SADM_USER}" "${SADM_GROUP}" 
     set_files_recursive "$SADM_USR_DIR"        "0644" "${SADM_USER}" "${SADM_GROUP}" 
