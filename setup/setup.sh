@@ -457,9 +457,8 @@ check_host_command()
               fi 
     fi 
     if [ "$SADM_PACKTYPE" = "deb" ] 
-        then printf "   - Installing bind9-host"
+        then printf "\n   - Running 'apt -y install bind9-host'"| tee -a $SLOG
              apt update >> $SLOG 2>&1
-             printf "\n   - Running 'apt -y install bind9-host'"| tee -a $SLOG
              apt -y install bind9-host >>$SLOG 2>&1
     fi 
     
@@ -582,11 +581,11 @@ check_hostname()
     # Get system domain name
     S_DOMAIN=$(hostname | awk -F\. '{printf "%s.%s\n",$2,$3}') 
     #S_DOMAIN=$(domainname -d)
-    #if [ "$S_DOMAIN" = "" ]
-    #    then S_DOMAIN=$(host $SADM_HOSTNAME |awk '{print $1}' |awk -F\. '{printf "%s.%s\n",$2,$3}')
-    #fi 
+    if [ "$S_DOMAIN" = "" ]
+        then S_DOMAIN=$(host $SADM_HOSTNAME |awk '{print $1}' |awk -F\. '{printf "%s.%s\n",$2,$3}')
+    fi 
 
-    printf "\nMaking sure '$SADM_HOSTNAME.$S_DOMAIN' is defined in /etc/hosts " | tee -a $SLOG
+    printf "\n   - Making sure '$SADM_HOSTNAME.$S_DOMAIN' is defined in /etc/hosts " | tee -a $SLOG
 
     # Insert Server into /etc/hosts (If not already there)
     grep -Ei "^$S_IPADDR " /etc/hosts | grep -q $SADM_HOSTNAME
