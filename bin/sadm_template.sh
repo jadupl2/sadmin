@@ -157,7 +157,10 @@ main_process()
 # --------------------------------------------------------------------------------------------------
 # Command line Options functions
 # Evaluate Command Line Switch Options Upfront
-# -h) Show Help Usage, -v) Show Script Version,  -d0-9] Set Debug Level  -X=Delete PID file.
+# -d[0-9] Set Debug Level  
+# -h) Show Help Usage, 
+# -v) Show Script Version,  
+# -X) Delete the script PID file before running the script.
 # --------------------------------------------------------------------------------------------------
 function cmd_options()
 {
