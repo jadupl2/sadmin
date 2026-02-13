@@ -6,13 +6,14 @@
 # Updated:      2021-03-29 
 # Tag:          man sadm_backup 
 # Category:     backup 
-# Description:
-# Backup files and directories to backup are specified in the file ${SADMIN}/cfg/backup_list.txt.
-# Files & directories to exclude are specified in the exclude list ${SADMIN}/cfg/backup_exclude.txt.
+#
+# Description:  
+# Backup files and directories specified in the file ${SADMIN}/cfg/backup_list.txt.
+# Exclude files & directories specified in the exclude list ${SADMIN}/cfg/backup_exclude.txt.
 # Backup is compress by default, unless you specify not to (-n).
+#
 # Destination of the backup (NFS Server & Directory) is specified within the SADMIN configuration
-# file ($SADMIN/cfg/sadmin.cfg) with the fields 'SADM_BACKUP_NFS_SERVER' and 
-# 'SADM_BACKUP_NFS_MOUNT_POINT'.
+# file (sadmin.cfg) with the fields 'SADM_BACKUP_NFS_SERVER' and 'SADM_BACKUP_NFS_MOUNT_POINT'.
 # Only the number of copies specified in the backup section of SADMIN configuration
 # file ($SADMIN/cfg/sadmin.cfg) will be kept, old backup are deleted at the end of each backup.
 # Should be run Daily (Recommended).
@@ -93,6 +94,8 @@
 #@2025_02_01 backup v3.49 Fix 'mount.nfs: Cannot allocate memory' on Raspi O/S
 #@2025_02_22 backup v3.50 Fix problem with 'mount.nfs: Cannot allocate memory' on Raspbian.
 #@2025_07_09 backup v3.51 Correct typo error, when unmount NFS drive.
+#@2026_02_13 backup v3.52 Change message when NFS mount failed & retry after clearing the cache.
+#@2026_02_13 backup v3.53 Add argument '-X' when we want to delete PID file prior to execute script.
 #===================================================================================================
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -121,7 +124,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.51'                                     # Script version number
+export SADM_VER='3.53'                                     # Script version number
 export SADM_PDESC="Backup files and directories specified in the backup list file."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -190,6 +193,7 @@ show_usage()
     printf "\n\t${BOLD}${YELLOW}-n${NORMAL} Backup with NO compression (default compress)"
     printf "\n\t${BOLD}${YELLOW}-v${NORMAL} Show script version info"
     printf "\n\t${BOLD}${YELLOW}-w${NORMAL} Don't show warning (dir. not exist)" 
+    printf "\n\t${BOLD}${YELLOW}-X${NORMAL} Remove the PID file & run script"
     printf "\n\n" 
 }
 
@@ -693,7 +697,8 @@ mount_nfs()
     if [ $RC -ne 0 ]                                                    # If Error trying to mount
         then if [ "$SADM_OS_NAME" = "RASPBIAN" ]                        # If on Raspbian
                 then sadm_write_err "[ WARNING ] First tentative of NFS mount failed."
-                     sadm_write_err "Will clear the cache and try again : "
+                     sadm_write_err "Often, it's because we don't have enough free memory."
+                     sadm_write_err "We will clear the cache to free some memory and try again : "
                      sadm_write_err "'sync && echo 3 > /proc/sys/vm/drop_caches'"
                      sync && echo 3 > /proc/sys/vm/drop_caches
                      sleep 4
@@ -701,10 +706,10 @@ mount_nfs()
                      sadm_write_err "'mount $NFS_OPT ${REM_MOUNT} ${LOCAL_MOUNT}'"
                      mount $NFS_OPT ${REM_MOUNT} ${LOCAL_MOUNT} >>$SADM_LOG 2>&1
                      if [ "$?" -ne 0 ] 
-                        then sadm_write_err "[ ERROR ] NFS mount failed - backup aborted."
+                        then sadm_write_err "[ ERROR ] ($RC) NFS mount failed - backup aborted."
                              return 1                                   # End Function with error
                      fi 
-                else sadm_write_err "[ ERROR ] Mount NFS failed - backup aborted."
+                else sadm_write_err "[ ERROR ] ($RC) Mount NFS failed - backup aborted."
                      return 1                                           # End Function with error
              fi 
         else sadm_write_log "[ SUCCESS ] NFS mount succeeded."          # NFS Mount Succeeded Msg
@@ -752,12 +757,18 @@ umount_nfs()
 # Command line Options functions
 # Evaluate Command Line Switch Options Upfront
 # By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+# -d[0-9] Set Debug Level  
+# -h) Show Help Usage, 
+# -n) Do not compress backup.
+# -v) Show Script Version,  
+# -w) Get a warning if the file or directory in the backup list doesn't exist. 
+# -X) Delete the script PID file before running the script.
 # --------------------------------------------------------------------------------------------------
 function cmd_options()
 {
     COMPRESS="ON"                                                       # Backup Compression Default
     SHOW_WARNING="N"                                                    # Don't show warning
-    while getopts "d:hnvw" opt ; do                                     # Loop to process Switch
+    while getopts "d:hnvwX" opt ; do                                    # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
                num=$(echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$)  # Valid is Level is Numeric
@@ -776,6 +787,9 @@ function cmd_options()
                ;;
             n) COMPRESS="OFF"                                           # No Compress backup
                ;;               
+            X) /usr/bin/rm -f "${SADMIN}/tmp/${SADM_INST}.pid" >/dev/null 2>&1
+               printf "\n${BOLD}${BLINK}${YELLOW}The PID File ("${SADMIN}/tmp/${SADM_INST}.pid") is now removed.${NORMAL}\n" 
+               ;;
             w) SHOW_WARNING="Y"                                         # Show warning 
                ;;               
            \?) printf "\nInvalid option: -${OPTARG}.\n"                 # Invalid Option Message
