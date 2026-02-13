@@ -89,6 +89,7 @@
 #@2025_05_26 client v2.25 Enhance log presentation and code optimization.
 #@2026_02_07 client v2.26 Add cmdline option -X and change script logic
 #@2026_02_09 client v2.27 Fix chowm error on $SADMIN/www if exist.
+#@2026_02_13 client v2.28 Remove $SADMIN/.git if it exist (not needed in prod).
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -119,7 +120,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.27'                                      # Script version number
+export SADM_VER='2.28'                                      # Script version number
 export SADM_PDESC="Set \$SADMIN owner/group/permission, prune old log,rch files ,check sadmin account."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -726,14 +727,14 @@ function remove_client_unwanted_files()
              rm sadmin_client.cfg    >/dev/null 2>&1
              rm .dbpass              >/dev/null 2>&1
              rm .gmpw                >/dev/null 2>&1
-#             if [ -d "$SADMIN/.git" ]
-#                then CMD="rm -fr $SADMIN/.git "
-#                     if [ $? -ne 0 ]
-#                        then sadm_write_err "[ ERROR ] Deleting $SADMIN/.git directories"
-#                             ((ERROR_COUNT++))
-#                        else sadm_write_log "[ OK ] Delete $SADMIN/.git directories"
-#                     fi
-#             fi
+             if [ -d "$SADMIN/.git" ]
+                then CMD="rm -fr $SADMIN/.git "
+                     if [ $? -ne 0 ]
+                        then sadm_write_err "[ ERROR ] Deleting $SADMIN/.git directories"
+                             ((ERROR_COUNT++))
+                        else sadm_write_log "[ OK ] Delete $SADMIN/.git directories"
+                     fi
+             fi
     fi 
     return $ERROR_COUNT
 }
