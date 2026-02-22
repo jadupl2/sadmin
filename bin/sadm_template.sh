@@ -2,7 +2,7 @@
 #---------------------------------------------------------------------------------------------------
 #   Author        : Your Name 
 #   Script Name   : XXXXXXXX.sh
-#   Creation Date : 2025/MM/DD
+#   Creation Date : 2026/MM/DD
 #   Requires      : sh and SADMIN Shell Library
 #   Description   : Template for starting a new shell script
 #
@@ -23,8 +23,15 @@
 # --------------------------------------------------------------------------------------------------
 #
 # ---CHANGE LOG---
-# YYYY-MM-DD GRP vX.XX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.
-# 2025_01_02 lib v0.1  Initial development version.
+# GRP are :
+#   - "Web"     Web Interface modification      - "install"  Install,Uninstall & Update changes.
+#   - "cmdline" Command line tools changes.     - "template" Library,Templates,Libr demo.
+#   - "mon"     System Monitor related.         - "backup"   Backup related modification or fixes.
+#   - "config"  Config files modification.      - "server"   Server related modification or fixes.
+#   - "client"  Client related modifications.   - "osupdate" O/S Update modification or fixes.
+#
+# YYYY-MM-DD GRP      vX.XX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.
+# 2026_01_02 template v0.1  Initial development version.
 #
 #---------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
@@ -133,12 +140,12 @@ main_process()
 
     # If script is run from command line, ask user if want to continue (To avoid causing damage).
     # $SHLVL variable indicate the level of shell nesting (1 or 2 = Run from Command line)
-    if (( SHLVL < 3 ))                                                  
-        then sadm_write_log "${SADM_PN} ${SADM_VER} ${SADM_PDESC} ($SHLVL)"
-             sadm_ask "Continue"                                        # Continue (y/n) ? 
-             if [ $? -eq 0 ] ; then sadm_stop 0 ; exit 0 ; fi           # 0 = Don't want to continue
-        else sadm_write_log "Script executed by another script" 
-    fi
+    #if (( SHLVL < 3 ))                                                  
+    #    then sadm_write_log "${SADM_PN} ${SADM_VER} ${SADM_PDESC} ($SHLVL)"
+    #         sadm_ask "Continue"                                        # Continue (y/n) ? 
+    #         if [ $? -eq 0 ] ; then sadm_stop 0 ; exit 0 ; fi           # 0 = Don't want to continue
+    #    else sadm_write_log "Script executed by another script" 
+    #fi
     
 
     sadm_write_log "Starting Main Process ..."                          # Starting processing Mess.
