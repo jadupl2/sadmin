@@ -276,10 +276,32 @@ check_sadmin_account()
     #
 
     # Set Standard for the SADMIN Account
+    #   -d, --lastday LAST_DAY        set date of last password change to LAST_DAY
+    #   -E, --expiredate EXPIRE_DATE  set account expiration date to EXPIRE_DATE
+    #   -h, --help                    display this help message and exit
+    #   -i, --iso8601                 use YYYY-MM-DD when printing dates
+    #   -I, --inactive INACTIVE       set password inactive after expiration
+    #                                 to INACTIVE
+    #   -l, --list                    show account aging information
+    #   -m, --mindays MIN_DAYS        set minimum number of days before password
+    #                                 change to MIN_DAYS
+    #   -M, --maxdays MAX_DAYS        set maximum number of days before password
+    #                                 change to MAX_DAYS
+    #   -R, --root CHROOT_DIR         directory to chroot into
+    #   -W, --warndays WARN_DAYS      set expiration warning days to WARN_DAYS
+    # 
+    #    if [ "$(sadm_get_ostype)" = "LINUX" ] ; then chage -m 0 -M 90 -W 14 -E -1 -I 100 $SADM_USER ; fi 
+    # 
+    #    Actual
+    #    root@rhel9:~ # chage -m 0 -M 90 -W 14 -E -1 -I 100 sadmin
+    # 
     if [ "$(sadm_get_ostype)" = "LINUX" ] ; then chage -m 0 -M 90 -W 14 -E -1 -I 100 $SADM_USER ; fi 
 
 
     # If we need to generate a new password for SADMIN user
+    # If user want to give "$SADM_USER" a random 16 characters password of daily.
+    # (See "$SADM_PWD_RANDOM" option in $SADMIN/cfg/sadmin.cfg).
+    # Since we use ssh private/public keys for the authentication, we rarely use password.
     if [ "$SADM_PWD_RANDOM" = "Y" ]                                     # If user want new pwd daily
         then random_pwd=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16; echo)  # Generate random pwd
              echo "${SADM_USER}:${random_pwd}" | chpasswd               # Assign pwd to sadmin
@@ -786,6 +808,7 @@ function cmd_options()
 
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Create Dir.,PID,log,rch
+
     check_sadmin_account                                                # SADMIN User Account Lock ?
     ACC_ERROR=$?                                                        # Return number of errors
     if [ "$ACC_ERROR" -eq 0 ]
