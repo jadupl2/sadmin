@@ -38,6 +38,7 @@
 # 2021_08_29 web v2.11 Result Code History viewer, show effective alert group instead of 'default.'
 # 2021_00_05 web v2.13 RCH file viewer; Make rch line more compact.
 #@2025_06_13 web v2.14 Enhance overall page look and add more information.
+#@2026_02_18 web v2.15 Add execution time average for the script.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -111,7 +112,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.13" ;                                                       # Current version number
+$SVER  = "2.14" ;                                                       # Current version number
 
 
 
@@ -129,24 +130,24 @@ function display_heading() {
     echo "\n<thead>\n";
     echo "\n  <tr align=center bgcolor='grey'>";
     echo "\n        <th align='center' width=12>No</th>";
-    echo "\n        <th align='center' width=110>Start Date & Time</th>";
-    echo "\n        <th align='center' width=110>End Date & Time</th>";
-    echo "\n        <th align='center' width=60>Duration"; 
-    echo "\n        <th align='center'>Alert Group</th>";
-    echo "\n        <th align='center'>Notification Type</th>";
-    echo "\n        <th align='center'>Status</th>";
+    echo "\n        <th align='center' width=105>Start Date & Time</th>";
+    echo "\n        <th align='center' width=105>End Date & Time</th>";
+    echo "\n        <th align='center' width=50>Duration"; 
+    echo "\n        <th align='center' width=160 >Notification Group</th>";
+    echo "\n        <th align='center' width=90>When to notify</th>";
+    echo "\n        <th align='center' width=90>Status</th>";
     echo "\n  </tr>";
     echo "\n</thead>\n";
 
     echo "\n<tfoot>";
     echo "\n  <tr align=center bgcolor='grey'>";
     echo "\n        <th align='center' width=12>No</th>";
-    echo "\n        <th align='center' width=110>Start Date & Time</th>";
-    echo "\n        <th align='center' width=110>End Date & Time</th>";
-    echo "\n        <th align='center' width=60>Duration"; 
-    echo "\n        <th align='center'>Alert Group</th>";
-    echo "\n        <th align='center'>Notification Type</th>";
-    echo "\n        <th align='center'>Status</th>";
+    echo "\n        <th align='center' width=105>Start Date & Time</th>";
+    echo "\n        <th align='center' width=105>End Date & Time</th>";
+    echo "\n        <th align='center' width=50>Duration"; 
+    echo "\n        <th align='center' width=160 >Notification Group</th>";
+    echo "\n        <th align='center' width=90>When to notify</th>";
+    echo "\n        <th align='center' width=90>Status</th>";
     echo "\n  </tr>";
     echo "\n</tfoot>\n\n";
 }
@@ -155,7 +156,7 @@ function display_heading() {
 
 
 
-# Display RCH file for the RCH File
+# Display RCH file 
 # Parameters received : 
 #      1- $GET_HOSTNAME System Host Name 
 #      2- The RCH File Name (WNAME)
@@ -177,9 +178,14 @@ function display_rch_file ($GET_HOSTNAME, $GET_RCHFILE, $SORTED_RCHFILE)
     $fh = fopen($SORTED_RCHFILE, "r") or exit ("Unable to open file : " . $SORTED_RCHFILE); 
         
     $count = 0 ;                                                        # Reset Line Counter 
+    $total_seconds = 0 ;                                                # For average exec time calc
+    $total_count = 0 ;                                                  # Nb execution finished 
+
     while (($wline   = fgets($fh)) !== false)                           # While Still Line to read
     { 
         $rch_array   = explode(" ",$wline);                             # Split rch line into array
+        if ($rch_array[5] == '........') { continue; }                  # Skip unfinish executtion
+
         $now         = time();                                          # Get Current epoch time
         $your_date   = strtotime(str_replace(".", "-",$rch_array[1]));  # RCH start date in epoch 
         $datedif     = $now - $your_date;                               # Sec. diff. now & RCH date
@@ -190,15 +196,32 @@ function display_rch_file ($GET_HOSTNAME, $GET_RCHFILE, $SORTED_RCHFILE)
         echo "\n<td align='center'>$count</td>";  
         $BGCOLOR = "lavender";
         if ($count % 2 == 0) { $BGCOLOR="#FFF8C6" ; }else{ $BGCOLOR="#FAAFBE" ;}
+
+        # Start Date & Time
         echo "\n<td align='center'>" . $rch_array[1] . "  ". $rch_array[2] . "</td>";
+
+        # End date & Time.
         echo "\n<td align='center'>" . $rch_array[3] . "  ". $rch_array[4] . "</td>";
-        echo "\n<td align='center'>" . $rch_array[5] . "</td>";
         
+        # Execution Duration in HH:MM:SS
+        echo "\n<td align='center'>" . $rch_array[5] . "</td>";
+        sadm_timeToSeconds($rch_array[5]) ;
+        # Don't include script unfinish
+        if ($rch_array[5] != '........') { 
+            $total_seconds += sadm_timeToSeconds($rch_array[5]) ; 
+            $total_count+=1;
+        } 
+
         # Show Notification Group with Tooltip
-        echo "\n<td width=180 align='left'>";
+        echo "\n<td width=180 align='center'>";
         list($calert, $alert_group_type, $stooltip) = get_alert_group_data ($rch_array[7]) ;
         echo "<span data-toggle='tooltip' title='" . $stooltip . "'>"; 
-        echo $calert . "</span>(" . $alert_group_type . ")</td>";             
+        if ($alert_group_type == "m" ) { 
+            echo "Type '$alert_group_type', email notification to '$calert'"; 
+        }else{
+            echo $calert . "(" . $alert_group_type . ")";             
+        }
+        echo "</span></td>"; 
 
 
         # Show Alert type
@@ -208,43 +231,52 @@ function display_rch_file ($GET_HOSTNAME, $GET_RCHFILE, $SORTED_RCHFILE)
                 $etooltip="'SADM_ALERT' set to 0 in script " . $cname ;
                 break;
             case 1 :                                                # 1=Send Alert on Error
-                $alert_type_msg="Notification only on error (code 1)"; 
+                $alert_type_msg="Notify only on error (code 1)"; 
                 $etooltip="'SADM_ALERT' set to 1 in script " .$cname; # Tooltips  
                 break;
             case 2 :                                                # 2=Send Alert on Success
-                $alert_type_msg="Notification only on success (code 2)"; 
+                $alert_type_msg="Notify only on success (code 2)"; 
                 $etooltip="'SADM_ALERT' set to 2 in script " . $cname ;
                 break;
             case 3 :                                                # 3=Always Send Alert
-                $alert_type_msg="Always send notification (code 3)";
+                $alert_type_msg="Always notify (code 3)";
                 $etooltip="'SADM_ALERT' set to 3 in script " . $cname ;
                 break;
             default:
-                $alert_type_msg="Notification invalid type (code $rch_array[8]).";  
+                $alert_type_msg="Invalid notification type (code $rch_array[8]).";  
                 $etooltip="SADM_ALERT is set to ($rch_array[8]) in script " . $cname ;
                 break;
         }    
 
-        echo "\n<td width=200 align=left'>";
+        echo "\n<td width=160 align=center>";
         echo "<span data-toggle='tooltip' title='" .$etooltip. "'>" .$alert_type_msg. "</span>"; 
-        echo "</td>"; 
+        echo "</td>\n"; 
    
 
         # Display The Result Code 
         switch ($ccode) {
-            case 0:     echo "\n<td width=100 align='center'>Success</td>";
+            case 0:     echo "\n<td width=90 align='center'>Success</td>";
                         break;
-            case 1:     echo "\n<td width=100 align='center'>Failed</td>";
+            case 1:     echo "\n<td width=90 align='center'>Failed</td>";
                         break;
-            case 2:     echo "\n<td width=100 align='center'>Running</td>";
+            case 2:     echo "\n<td width=90 align='center'>Running</td>";
                         break;
-            default:    echo "\n<td width=100 align='center'>" . $ccode . "</td>";
+            default:    echo "\n<td width=90 align='center'>" . $ccode . "</td>";
                         break;
         }    
 
         echo "\n</tr>\n";
     }
-    echo "\nAverage execution time of the $count execution(s) is ${average}.";
+
+    # Average script execution time
+    $average = $total_seconds / $total_count ;                          # Total Sec. / Nb. execution
+    $script_average = sadm_secondsToHHMMSS($average) ;                  # Convert Sec. to HH:MM:SS
+    $script_name = pathinfo($GET_RCHFILE,PATHINFO_FILENAME) ;           # Remove extension of file
+    if ($DEBUG) { 
+        echo "\nAverage = $average - total_seconds = $total_seconds"; 
+        echo "\nTotal_count = $total_count - Script_average = $script_average";
+    } 
+    echo "\n<center><b>'$script_name' average execution time is $script_average</center></b>";
     fclose($fh);
     return ;
 }

@@ -42,7 +42,7 @@
 #@2025_05_07 web v2.8 Change CSS of page to enhance and change appearance of the page.
 #@2025_07_27 web v2.9 Small enhancement on page layout.
 #@2026_01_27 web v3.0 Fix minor bug 
-
+#@2026_02_21 web v3.1 Add backup average execution time and lowest/highest. 
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -114,8 +114,8 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 $DEBUG              = False ;                                           # Debug Activated True/False
-$WVER               = "3.0" ;                                           # Current version number
-$count              = 0 ;                                               # System counter on page
+$WVER               = "3.1" ;                                           # Current version number
+
 $URL_CREATE         = '/crud/srv/sadm_server_create.php';               # Create Page URL
 $URL_UPDATE         = '/crud/srv/sadm_server_update.php';               # Update Page URL
 $URL_DELETE         = '/crud/srv/sadm_server_delete.php';               # Delete Page URL
@@ -160,7 +160,7 @@ function setup_table() {
     echo "\n<th align='center'>Last Backup</th>";
     echo "\n<th align='center'>Duration</th>";
     echo "\n<th align='center'>Status</th>";
-    echo "\n<th align='center'>Log & Hist.</th>";
+    echo "\n<th align='center'>Log & Rch</th>";
     echo "\n<th align='center'>Schedule</th>";
     echo "\n<th align='center'>Sporadic</th>";
     echo "\n<th align='center'>ReaR</th>";
@@ -179,7 +179,7 @@ function setup_table() {
     echo "\n<th align='center'>Last Backup</th>";
     echo "\n<th align='center'>Duration</th>";
     echo "\n<th align='center'>Status</th>";
-    echo "\n<th align='center'>Log & Hist.</th>";
+    echo "\n<th align='center'>Log & Rch</th>";
     echo "\n<th align='center'>Schedule</th>";
     echo "\n<th align='center'>Sporadic</th>";
     echo "\n<th align='center'>ReaR</th>";
@@ -198,285 +198,322 @@ function setup_table() {
 
 # Display main page data from the row received in parameter
 #===================================================================================================
-function display_data($row) {
+function display_data($result) {
     
     global  $URL_HOST_INFO, $URL_VIEW_FILE, $URL_BACKUP, $URL_VIEW_RCH, $URL_UPDATE,
-            $URL_VIEW_BACKUP, $BACKUP_RCH, $BACKUP_LOG, $BACKUP_ELOG, $count;
-
-    # ReaR Not Supported on MacOS and ARM system (Raspberry Pi), return to caller
-    if ((($row['srv_arch']   != "x86_64") and ($row['srv_arch'] != "i686")) 
-        or ($row['srv_ostype'] == "darwin")) {
-        return ; 
-    } 
-
-    # Set the Logs, ErrorLog and rch full path name
-    $log_name  = SADM_WWW_DAT_DIR ."/". $row['srv_name'] ."/log/". $row['srv_name'] ."_". $BACKUP_LOG;
-    $elog_name = SADM_WWW_DAT_DIR ."/". $row['srv_name'] ."/log/". $row['srv_name'] ."_". $BACKUP_ELOG ;
-    $rch_name  = SADM_WWW_DAT_DIR ."/". $row['srv_name'] ."/rch/". $row['srv_name'] ."_". $BACKUP_RCH;
-
-    # Start of row
-    $count+=1;                                                          # Incr system counter
-    echo "\n<tr>\n";  
-
-    # Line Counter
-    echo "\n<td align='center'>" . $count . "</td>";  
-
-    # System Name / Architecture / Description
-    echo "\n<td>" ;
-    echo "<a href='" .$URL_HOST_INFO. "?sel=" .$row['srv_name']. "' data-toggle='tooltip' title='";
-    echo "Note: " . $row['srv_note']. "\n" ; 
-    echo "Model: ". ucfirst(strtolower($row['srv_model'])) ."\nIP: ". $row['srv_ip'] . "'>\n" ;
-    echo $row['srv_name']. "</a>&nbsp;&nbsp;" .$row['srv_arch'] ;
-    echo "\n<br>" . $row['srv_desc'] ;
-    echo "\n</td>";   
-
-    ## Show System name
-    #echo "<td>";
-    #echo "<a href='" . $URL_UPDATE . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP . "'";
-    #echo " title='Click to view system info, $WOS $WVER system - " . $row['srv_note'] . "'>";
-    #echo $row['srv_name']  . "</a>&nbsp;&nbsp;"; 
-    #$WOS   = sadm_clean_data($row['srv_osname']);
-    #echo "<br>" . $row['srv_desc'];
-    #echo "</td>\n";
+            $URL_VIEW_BACKUP, $BACKUP_RCH, $BACKUP_LOG, $BACKUP_ELOG ;
 
 
-    # Last Rear Backup Date/Time & Check if overdue.
-    if (! file_exists($rch_name))  {                                    # No RCH Found,No backup yet
-        echo "<td align='center'>No data";  
-    }else{
-        $file = file("$rch_name");                                      # Load RCH File in Memory
-        $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
-        list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapse,$cname,$calert,$ctype,$ccode) = explode(" ",$lastline);
-        $now = time(); 
-        $your_date = strtotime(str_replace(".", "-",$cdate1));
-        $datediff = $now - $your_date;
-        $backup_age = round($datediff / (60 * 60 * 24));
-        if ($backup_age > SADM_REAR_BACKUP_INTERVAL) { 
-            $tooltip = "Backup is " .$backup_age. " days old, greater than the threshold of " .SADM_REAR_BACKUP_INTERVAL. " days.";
-            echo "<td align='center' style='color:red' bgcolor='#DAF7A6'><b>";
-            echo "<span data-toggle='tooltip' title='"  . $tooltip . "'>";
-            echo "$cdate1" . '&nbsp;' . substr($ctime1,0,5) ;
-            echo "</span>"; 
+    $count = 0;
+    $total_seconds = 0 ;                                                # Total execution Time sec.
+    $total_count   = 0 ;                                                # Nb execution finished 
+    $lowest_time   = 0 ;                                                # Lowest execution time 
+    $highest_time  = 0 ;                                                # Highest execution time
+
+
+    while ($row = mysqli_fetch_assoc($result)) {                        # Gather Result from Query
+       
+        # ReaR do not support MacOS or ARM system (Like Raspberry Pi), go process next system.
+        if ((($row['srv_arch']   != "x86_64") and ($row['srv_arch'] != "i686")) 
+            or ($row['srv_ostype'] == "darwin")) {
+            continue; 
+        } 
+
+        $WOS  = $row['srv_osname'];                                     # Save OS Name
+        $WVER = $row['srv_osversion'];                                  # Save OS Version
+
+        # Set the Logs, ErrorLog and rch full path name
+        $log_name  = SADM_WWW_DAT_DIR ."/". $row['srv_name'] ."/log/". $row['srv_name'] ."_". $BACKUP_LOG;
+        $elog_name = SADM_WWW_DAT_DIR ."/". $row['srv_name'] ."/log/". $row['srv_name'] ."_". $BACKUP_ELOG ;
+        $rch_name  = SADM_WWW_DAT_DIR ."/". $row['srv_name'] ."/rch/". $row['srv_name'] ."_". $BACKUP_RCH;
+
+        # Start of row
+        echo "\n<tr>\n";  
+        
+        # Line Counter
+        $count+=1;                                                          # Incr system counter
+        echo "\n<td align='center'>" . $count . "</td>";  
+
+
+        # System Name / Architecture / Description
+        echo "\n<td>" ;
+        echo "<a href='" .$URL_HOST_INFO. "?sel=" .$row['srv_name']. "' data-toggle='tooltip' title='";
+        echo "Note: " . $row['srv_note']. "\n" ; 
+        echo "Model: ". ucfirst(strtolower($row['srv_model'])) ."\nIP: ". $row['srv_ip'] . "'>\n" ;
+        echo $row['srv_name']. "</a>&nbsp;&nbsp;" .$row['srv_arch'] ;
+        echo "\n<br>" . $row['srv_desc'] ;
+        echo "\n</td>";   
+
+
+        # Last Rear Backup Date/Time & Check if overdue.
+        if (! file_exists($rch_name))  {                                    # No RCH Found,No backup yet
+            echo "<td align='center'>No data";  
         }else{
-            $tooltip = "Backup is " .$backup_age. " days old, will have a tinted background, if greater than " .SADM_REAR_BACKUP_INTERVAL. " days.";
-            echo "<td align='center'>";
-            echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
-            echo "$cdate1" . '&nbsp;' . substr($ctime1,0,5) ; 
-            echo "</span>"; 
-        }
-    }
-    echo "</font></td>\n";  
-
-    
-    # Backup duration time
-    echo "<td align='center'>";
-    if (! file_exists($rch_name))  {                                    # If RCH File Not Found
-        echo "No data</td>";
-    }else{
-        echo nl2br($celapse) . "</td>\n";  
-    }
-
-
-    # Status of Last Backup
-    if (file_exists($rch_name)) {
-        $file = file("$rch_name");                                      # Load RCH File in Memory
-        $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
-        list($cserver, $cdate1, $ctime1, $cdate2, $ctime2, $celapse, $cname, $calert, $ctype, $ccode) = explode(" ", $lastline);
-    } else {
-        $ccode = 9;                                                     # No Log, Backup never ran
-    }
-    switch ($ccode) {
-        case 0:
-            $tooltip = 'ReaR backup completed with success.';
-            echo "\n<td align='center'>";
-            echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
-            echo "Success</span>\n";
-            break;
-        case 1:
-            $tooltip = 'ReaR backup terminated with error.';
-            echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>";
-            echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
-            echo "Failed</span></b>\n";
-            break;
-        case 2:
-            $tooltip = 'ReaR backup is actually running.';
-            echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'>";
-            echo "<span data-toggle='tooltip'  title='" . $tooltip . "'>";
-            echo "Running</span>";
-            break;
-        default:
-            $tooltip = "Unknown status - code: " . $ccode;
-            echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'>";
-            echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
-            echo "No data</span>";
-            break;
-    }
-    echo "</td>\n";
-
-
-
-    # Display link to view Rear Main Backup log
-    echo "<td align='center'>";
-    if (file_exists($log_name)) {
-        echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name . "'" ;
-        echo " title='View Backup Log'>[log]</a>&nbsp;";
-    }else{
-        echo "[NoLog]&nbsp;";
-    }
-
-
-    # Display link to view ReaR backup Error log (If exist)
-    if ((file_exists($elog_name)) and (file_exists($elog_name)) and (filesize($elog_name) != 0)) {
-        echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $elog_name . "'" ;
-        echo " title='View ReaR error Log'>[elog]</a>&nbsp;";
-    }
-
-
-    # Display link to view Rear Backup rch file
-    $rch_www_name  = $row['srv_name'] . "_$BACKUP_RCH";
-    if (file_exists($rch_name)) {
-        echo "<a href='" . $URL_VIEW_RCH . "?host=" . $row['srv_name'] . "&filename=" . $rch_www_name . "'" ;
-        echo " title='View Backup History (rch) file'>[hist]</a>";
-    }else{
-        echo "&nbsp;[NoRCH]";
-    }
-    echo "</td>\n";
-
-
-    # Schedule Update Button
-    $ipath = '/images/UpdateButton.png';
-    if ($row['srv_img_backup'] == TRUE) {                                  # Is Server Active
-        $tooltip = 'Schedule is active, click to edit backup configuration.';
-        echo "\n<td align='center' style='color: green'><b>Y ";
-    } else {                                                              # If not Activate
-        $tooltip = 'Schedule is inactive, click to edit backup configuration.';
-        echo "\n<td  align='center' style='color:red' bgcolor='#DAF7A6'><b>N ";
-    }
-    echo "<a href='" . $URL_BACKUP . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP . "'>";
-    echo "\n<span data-toggle='tooltip' title='" . $tooltip . "'>";
-    echo "\n<button type='button'>Update</button>";             # Display Delete Button
-    echo "</a></span></b></td>";
-
-
-    # Show if System is sporadic or not
-    if ($row['srv_sporadic'] == TRUE ) {
-       echo "\n<td align='center'>Yes</td>";
-    }else{
-       echo "\n<td align='center'>No</td>";
-    }
-
-
-    # Show ReaR Server Version
-    echo "<td align='center'>" . nl2br( $row['srv_rear_ver']) . "</td>\n";  
-
-
-    # Next Rear Backup Date
-    echo "\n<td align='center'>";
-    if ($row['srv_img_backup'] == True ) { 
-        list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_img_dom'], $row['srv_img_month'],
-            $row['srv_img_dow'], $row['srv_img_hour'], $row['srv_img_minute']);
-        echo $UPD_DATE_TIME ;
-    }else{
-        echo "Unknown";
-    }
-    echo "</td>\n";  
-
-
-    # Rear Backup Occurrence
-    echo "\n<td align='center'>\n";
-    if ($row['srv_img_backup'] == True ) { 
-        list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_img_dom'], $row['srv_img_month'],
-            $row['srv_img_dow'], $row['srv_img_hour'], $row['srv_img_minute']);
-        echo $STR_SCHEDULE ;
-    }else{
-        echo "Unknown";
-    }
-    echo "</td>\n"; 
-
-
-    # Get Current Backup Size within the log (Example of line 'Current backup size : 5.4G')
-    $backup_size = 0 ; $num_backup_size = 0 ;                           # Default backup size values
-    if (file_exists($log_name)) {                                       # If backup log exist
-        $pattern = "/Current backup size/i";                            # Cur backup line to search
-        if (preg_grep($pattern, file($log_name))) {                     # If pattern found in log
-            $bstring     = implode (" ", preg_grep($pattern, file($log_name)));
-            $barray      = explode (" ", $bstring) ;
-            $backup_size = $barray[count($barray)-1];                   # Numeric nackup size
-            # Remove any alphanumeric character from string $previous_size
-            $num_backup_size = preg_replace('/[a-zA-Z]/','',$backup_size); # Remove alpha Char.
-        }else{
-            if ($DEBUG) { echo "\n<br>String 'Current backup size' not found in " . $log_name ; } 
-            $backup_size = 0 ; $num_backup_size = 0 ;                   # Default backup size values
-        }
-    }
-
-    # Get Previous backup Size within the log (Example of line 'Previous backup size: 0')
-    $previous_size = 0 ; $num_previous_size = 0 ;                       # Default prev. backup size
-    if (file_exists($log_name)) {                                       # If log exist
-        $pattern = "/Previous backup size/i";                           # Search Prev. Size in log
-        if (preg_grep($pattern, file($log_name))) {                     # If pattern found in log
-            $bstring       = implode (" ", preg_grep($pattern, file($log_name)));
-            $barray        = explode (" ", $bstring) ;
-            $previous_size = $barray[count($barray)-1];                 # Get last String in array
-            #echo "\n<br>barray=" . $barray . "  previous_size: " . $previous_size ."\n<br>";
-            # Remove any alphanumeric character from string $previous_size
-            $num_previous_size = preg_replace('/[a-zA-Z]/','', $previous_size); # Remove alpha Char.
-        }else{
-            if ($DEBUG) { echo "<br>\nPattern 'Previous backup size' not found in " . $log_name ; } 
-            $previous_size = 0 ; $num_previous_size = 0 ;               # Default prev. backup size
-        }
-    } 
-    
-    if ($DEBUG) { 
-        echo "\n<br>" .$row['srv_name'] ."- num_backup size: "   .$num_backup_size   ."backup size  : " .$backup_size;
-        echo "\n<br>" .$row['srv_name'] ."- num_previous size: " .$num_previous_size ."previous size: " .$previous_size;
-    }
-
-    # Show Backup Size
-    if ($num_backup_size != 0) { 
-        if ($num_previous_size == 0) { 
-            echo "<td align='center'>" . $backup_size . "</td>\n";      # Just show Backup Size
-        }else{
-            # Calculate percentage difference between current & previous backup size
-            $PCT = (($num_backup_size - $num_previous_size) / $num_previous_size) * 100;
-            if ($DEBUG) { echo "\n<br>" . $row['srv_name'] ."- PCT: " . $PCT . "- " . number_format($PCT,0); }
-            if (number_format($PCT,1) == 0.0) {                         # If no Pct. difference
-                echo "<td align='center'>" . $backup_size . "</td>\n";  # Just show Backup Size
+            $file = file("$rch_name");                                      # Load RCH File in Memory
+            $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
+            list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapse,$cname,$calert,$ctype,$ccode) = explode(" ",$lastline);
+            $now = time(); 
+            $your_date = strtotime(str_replace(".", "-",$cdate1));
+            $datediff = $now - $your_date;
+            $backup_age = round($datediff / (60 * 60 * 24));
+            if ($backup_age > SADM_REAR_BACKUP_INTERVAL) { 
+                $tooltip = "Backup is " .$backup_age. " days old, greater than the threshold of " .SADM_REAR_BACKUP_INTERVAL. " days.";
+                echo "<td align='center' style='color:red' bgcolor='#DAF7A6'><b>";
+                echo "<span data-toggle='tooltip' title='"  . $tooltip . "'>";
+                echo "$cdate1" . '&nbsp;' . substr($ctime1,0,5) ;
+                echo "</span>"; 
             }else{
-                if (number_format($PCT,0) >= SADM_REAR_BACKUP_DIF) {    # If % >= Warning level
-                    echo "<td align='center' bgcolor='#DAF7A6'><b>" ; # Mod. cell background color 
-                    echo $backup_size . "&nbsp;(+" . number_format($PCT,1); # Show size + Diff.
-                    echo "%)</b></td>\n";                               # End of cell.
+                $tooltip = "Backup is " .$backup_age. " days old, will have a tinted background, if greater than " .SADM_REAR_BACKUP_INTERVAL. " days.";
+                echo "<td align='center'>";
+                echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
+                echo "$cdate1" . '&nbsp;' . substr($ctime1,0,5) ; 
+                echo "</span>"; 
+            }
+        }
+        echo "</font></td>\n";  
+
+    
+        # Backup duration time
+        echo "<td align='center'>";
+        if (! file_exists($rch_name))  {                                    # If RCH File Not Found
+            echo "No data</td>";
+        }else{
+            echo nl2br($celapse) . "</td>\n";  
+        }
+        if ($celapse != '........') {                                       # Ignore job not finish
+            $duration_sec = sadm_timeToSeconds($celapse) ;                  # Convert time to second
+            $total_seconds += $duration_sec ;                               # Add Duration to Total
+            $total_count+=1;                                                # Terminated jobs count
+            if ($lowest_time == 0 || $duration_sec <= $lowest_time) { 
+                $lowest_time    = $duration_sec ;
+                $lowestduration = $celapse ;
+            }
+            if ($highest_time == 0 || $duration_sec > $highest_time) { 
+                $highest_time    = $duration_sec ;
+                $highestduration = $celapse ;
+            }
+        } 
+
+
+        # Status of Last Backup
+        if (file_exists($rch_name)) {
+            $file = file("$rch_name");                                      # Load RCH File in Memory
+            $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
+            list($cserver, $cdate1, $ctime1, $cdate2, $ctime2, $celapse, $cname, $calert, $ctype, $ccode) = explode(" ", $lastline);
+        } else {
+            $ccode = 9;                                                     # No Log, Backup never ran
+        }
+        switch ($ccode) {
+            case 0:
+                $tooltip = 'ReaR backup completed with success.';
+                echo "\n<td align='center'>";
+                echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
+                echo "Success</span>\n";
+                break;
+            case 1:
+                $tooltip = 'ReaR backup terminated with error.';
+                echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>";
+                echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
+                echo "Failed</span></b>\n";
+                break;
+            case 2:
+                $tooltip = 'ReaR backup is actually running.';
+                echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'>";
+                echo "<span data-toggle='tooltip'  title='" . $tooltip . "'>";
+                echo "Running</span>";
+                break;
+            default:
+                $tooltip = "Unknown status - code: " . $ccode;
+                echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'>";
+                echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
+                echo "No data</span>";
+                break;
+        }
+        echo "</td>\n";
+
+
+
+        # Display link to view Rear Main Backup log
+        echo "<td align='center'>";
+        if (file_exists($log_name)) {
+            echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name . "'" ;
+            echo " title='View Backup Log'>[log]</a>&nbsp;";
+        }else{
+            echo "[NoLog]&nbsp;";
+        }
+
+
+        # Display link to view ReaR backup Error log (If exist)
+        if ((file_exists($elog_name)) and (file_exists($elog_name)) and (filesize($elog_name) != 0)) {
+            echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $elog_name . "'" ;
+            echo " title='View ReaR error Log'>[elog]</a>&nbsp;";
+        }
+
+
+        # Display link to view Rear Backup rch file
+        $rch_www_name  = $row['srv_name'] . "_$BACKUP_RCH";
+        if (file_exists($rch_name)) {
+            echo "<a href='" . $URL_VIEW_RCH . "?host=" . $row['srv_name'] . "&filename=" . $rch_www_name . "'" ;
+            echo " title='View Backup (rch) file'>[rch]</a>";
+        }else{
+            echo "&nbsp;[NoRCH]";
+        }
+        echo "</td>\n";
+
+
+        # Schedule Update Button
+        $ipath = '/images/UpdateButton.png';
+        if ($row['srv_img_backup'] == TRUE) {                                  # Is Server Active
+            $tooltip = 'Schedule is active, click to edit backup configuration.';
+            echo "\n<td align='center' style='color: green'><b>Y ";
+        } else {                                                              # If not Activate
+            $tooltip = 'Schedule is inactive, click to edit backup configuration.';
+            echo "\n<td  align='center' style='color:red' bgcolor='#DAF7A6'><b>N ";
+        }
+        echo "<a href='" . $URL_BACKUP . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP . "'>";
+        echo "\n<span data-toggle='tooltip' title='" . $tooltip . "'>";
+        echo "\n<button type='button'>Update</button>";             # Display Delete Button
+        echo "</a></span></b></td>";
+
+
+        # Show if System is sporadic or not
+        if ($row['srv_sporadic'] == TRUE ) {
+           echo "\n<td align='center'>Yes</td>";
+        }else{
+           echo "\n<td align='center'>No</td>";
+        }
+
+
+        # Show ReaR Server Version
+        echo "<td align='center'>" . nl2br( $row['srv_rear_ver']) . "</td>\n";  
+
+
+        # Next Rear Backup Date
+        echo "\n<td align='center'>";
+        if ($row['srv_img_backup'] == True ) { 
+            list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_img_dom'], $row['srv_img_month'],
+                $row['srv_img_dow'], $row['srv_img_hour'], $row['srv_img_minute']);
+            echo $UPD_DATE_TIME ;
+        }else{
+            echo "Unknown";
+        }
+        echo "</td>\n";  
+
+
+        # Rear Backup Occurrence
+        echo "\n<td align='center'>\n";
+        if ($row['srv_img_backup'] == True ) { 
+            list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_img_dom'], $row['srv_img_month'],
+                $row['srv_img_dow'], $row['srv_img_hour'], $row['srv_img_minute']);
+            echo $STR_SCHEDULE ;
+        }else{
+            echo "Unknown";
+        }
+        echo "</td>\n"; 
+
+
+        # Get Current Backup Size within the log (Example of line 'Current backup size : 5.4G')
+        $backup_size = 0 ; $num_backup_size = 0 ;                           # Default backup size values
+        if (file_exists($log_name)) {                                       # If backup log exist
+            $pattern = "/Current backup size/i";                            # Cur backup line to search
+            if (preg_grep($pattern, file($log_name))) {                     # If pattern found in log
+                $bstring     = implode (" ", preg_grep($pattern, file($log_name)));
+                $barray      = explode (" ", $bstring) ;
+                $backup_size = $barray[count($barray)-1];                   # Numeric nackup size
+                # Remove any alphanumeric character from string $previous_size
+                $num_backup_size = preg_replace('/[a-zA-Z]/','',$backup_size); # Remove alpha Char.
+            }else{
+                if ($DEBUG) { echo "\n<br>String 'Current backup size' not found in " . $log_name ; } 
+                $backup_size = 0 ; $num_backup_size = 0 ;                   # Default backup size values
+            }
+        }
+
+        # Get Previous backup Size within the log (Example of line 'Previous backup size: 0')
+        $previous_size = 0 ; $num_previous_size = 0 ;                       # Default prev. backup size
+        if (file_exists($log_name)) {                                       # If log exist
+            $pattern = "/Previous backup size/i";                           # Search Prev. Size in log
+            if (preg_grep($pattern, file($log_name))) {                     # If pattern found in log
+                $bstring       = implode (" ", preg_grep($pattern, file($log_name)));
+                $barray        = explode (" ", $bstring) ;
+                $previous_size = $barray[count($barray)-1];                 # Get last String in array
+                #echo "\n<br>barray=" . $barray . "  previous_size: " . $previous_size ."\n<br>";
+                # Remove any alphanumeric character from string $previous_size
+                $num_previous_size = preg_replace('/[a-zA-Z]/','', $previous_size); # Remove alpha Char.
+            }else{
+                if ($DEBUG) { echo "<br>\nPattern 'Previous backup size' not found in " . $log_name ; } 
+                $previous_size = 0 ; $num_previous_size = 0 ;               # Default prev. backup size
+            }
+        } 
+    
+        if ($DEBUG) { 
+            echo "\n<br>" .$row['srv_name'] ."- num_backup size: "   .$num_backup_size   ."backup size  : " .$backup_size;
+            echo "\n<br>" .$row['srv_name'] ."- num_previous size: " .$num_previous_size ."previous size: " .$previous_size;
+        }
+
+        # Show Backup Size
+        if ($num_backup_size != 0) { 
+            if ($num_previous_size == 0) { 
+                echo "<td align='center'>" . $backup_size . "</td>\n";      # Just show Backup Size
+            }else{
+                # Calculate percentage difference between current & previous backup size
+                $PCT = (($num_backup_size - $num_previous_size) / $num_previous_size) * 100;
+                if ($DEBUG) { echo "\n<br>" . $row['srv_name'] ."- PCT: " . $PCT . "- " . number_format($PCT,0); }
+                if (number_format($PCT,1) == 0.0) {                         # If no Pct. difference
+                    echo "<td align='center'>" . $backup_size . "</td>\n";  # Just show Backup Size
                 }else{
-                    if (number_format($PCT,0) < (SADM_REAR_BACKUP_DIF * -1)) {
-#                    if (number_format($PCT,0) < SADM_REAR_BACKUP_DIF) {
-                        echo "<td align='center' bgcolor='#DAF7A6'><b>" ; # Mod. cell back color 
-                        echo $backup_size . "&nbsp;(" . number_format($PCT,1) ;
-                        echo "%)</b></td>\n";                           # End of cell.
+                    if (number_format($PCT,0) >= SADM_REAR_BACKUP_DIF) {    # If % >= Warning level
+                        echo "<td align='center' bgcolor='#DAF7A6'><b>" ; # Mod. cell background color 
+                        echo $backup_size . "&nbsp;(+" . number_format($PCT,1); # Show size + Diff.
+                        echo "%)</b></td>\n";                               # End of cell.
                     }else{
-                        echo "<td align='center'>" . $backup_size . "</td>\n";  # Just show Backup Size
+                        if (number_format($PCT,0) < (SADM_REAR_BACKUP_DIF * -1)) {
+    #                    if (number_format($PCT,0) < SADM_REAR_BACKUP_DIF) {
+                            echo "<td align='center' bgcolor='#DAF7A6'><b>" ; # Mod. cell back color 
+                            echo $backup_size . "&nbsp;(" . number_format($PCT,1) ;
+                            echo "%)</b></td>\n";                           # End of cell.
+                        }else{
+                            echo "<td align='center'>" . $backup_size . "</td>\n";  # Just show Backup Size
+                        }
                     }
                 }
             }
-        }
-    }else{
-        if ($ccode != 2) {
-            echo "<td align='center'>" . $backup_size . "</td>\n";      # Just show Backup Size
         }else{
-#            echo "<td align='center'>&nbsp</td>\n";
-            echo "<td align='center'>&nbsp</td>\n";
+            if ($ccode != 2) {
+                echo "<td align='center'>" . $backup_size . "</td>\n";      # Just show Backup Size
+            }else{
+    #            echo "<td align='center'>&nbsp</td>\n";
+                echo "<td align='center'>&nbsp</td>\n";
+            }
         }
+
+
+        # Show Previous Backup Size
+        if (($num_previous_size == 0) && ($ccode != 2)) {
+            echo "<td align='center' bgcolor='#DAF7A6'><b>0</b></td>\n";  
+        }else{
+           echo "<td align='center'>$previous_size</td>\n";
+        }
+        echo "</tr>\n"; 
     }
 
-
-    # Show Previous Backup Size
-    if (($num_previous_size == 0) && ($ccode != 2)) {
-        echo "<td align='center' bgcolor='#DAF7A6'><b>0</b></td>\n";  
-    }else{
-       echo "<td align='center'>$previous_size</td>\n";
-    }
-    echo "</tr>\n"; 
-
+    # Average script execution time
+    $average = $total_seconds / $total_count ;                          # Total Sec. / Nb. execution
+    $script_average = sadm_secondsToHHMMSS($average) ;                  # Convert Sec. to HH:MM:SS
+    $script_name = pathinfo($GET_RCHFILE,PATHINFO_FILENAME) ;           # Remove extension of file
+    if ($DEBUG) { 
+        echo "\nAverage = $average - total_seconds = $total_seconds"; 
+        echo "\nTotal_count = $total_count - Script_average = $script_average";
+    } 
+    echo "\n<center><b>";
+    echo "Average ReaR backup execution time is $script_average - ";
+    if ( substr($lowestduration, 0, 3) == "00:") {
+        $lowestduration= substr($lowestduration,3, strlen($lowestduration));
+    }       
+    if ( substr($highestduration, 0, 3) == "00:") {
+        $highestduration= substr($highestduration,3, strlen($highestduration));
+    }       
+    echo "(lowest : $lowestduration - highest : $highestduration)";
+    echo "</center></b>\n";
 }
 
 
@@ -511,10 +548,8 @@ function display_data($row) {
     
     # Loop Through Retrieved Data and Display each Row
     setup_table();                                                      # Create HTML Table/Heading
-    $count=0;   
-    while ($row = mysqli_fetch_assoc($result)) {                        # Gather Result from Query
-        display_data($row);                                             # Display Next Server
-    }
+    display_data($result);                                              # Display Rear Backup Data
+
     echo "\n</tbody>\n</table>\n";                                      # End of tbody & table
 
 #    echo "<center>"; 

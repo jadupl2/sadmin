@@ -112,8 +112,8 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/lib/sadmPageWrapper.php');    # Headi
 
 # Local Variables
 #===================================================================================================
-$DEBUG              = False;                                           # Debug Activated True/False
-$WVER               = "2.9";                                           # Current version number
+$DEBUG              = False;                                            # Debug Activated True/False
+$WVER               = "2.10";                                           # Current version number
 $URL_CREATE         = '/crud/srv/sadm_server_create.php';               # Create Page URL
 $URL_UPDATE         = '/crud/srv/sadm_server_update.php';               # Update Page URL
 $URL_DELETE         = '/crud/srv/sadm_server_delete.php';               # Delete Page URL
@@ -131,11 +131,12 @@ $URL_REAR_REPORT    = "/view/daily_rear_report.html";                   # Rear D
 $URL_BACKUP_REPORT  = "/view/daily_backup_report.html";                 # Backup Daily Report Page
 $URL_STORIX_REPORT  = "/view/daily_storix_report.html";                 # Storix Daily Report Page
 $URL_SCRIPTS_REPORT = "/view/daily_scripts_report.html";                # Scripts Daily Report Page
-$CREATE_BUTTON      = False;                                           # Yes Display Create Button
+$CREATE_BUTTON      = False;                                            # Yes Display Create Button
 #
 $BACKUP_RCH         = 'sadm_backup.rch';                                # Backup RCH 
 $BACKUP_LOG         = 'sadm_backup.log';                                # Backup LOG 
 $BACKUP_ELOG        = 'sadm_backup_e.log';                              # Backup Error LOG 
+
 
 
 
@@ -160,7 +161,7 @@ function setup_table()
     echo "\n<th align='center'>End Backup</th>";
     echo "\n<th align='center'>Duration</th>";
     echo "\n<th align='center'>Status</th>";
-    echo "\n<th align='center'>Log/Hist</th>";
+    echo "\n<th align='center'>log/rch</th>";
     echo "\n<th align='center'>Schedule</th>";
     echo "\n<th align='center'>Sporadic</th>";
     echo "\n<th align='center'>Backup<br>Size in GB</th>";
@@ -177,7 +178,7 @@ function setup_table()
     echo "\n<th align='center'>End Backup</th>";
     echo "\n<th align='center'>Duration</th>";
     echo "\n<th align='center'>Status</th>";
-    echo "\n<th align='center'>Log/Hist</th>";
+    echo "\n<th align='center'>log/rch</th>";
     echo "\n<th align='center'>Schedule</th>";
     echo "\n<th align='center'>Sporadic</th>";
     echo "\n<th align='center'>Backup<br>Size in GB</th>";
@@ -194,59 +195,73 @@ function setup_table()
 
 # Display Main Page Data from the row received in parameter
 #===================================================================================================
-function display_data($count, $row)
+function display_data($result)
 {
 
-    global  $URL_HOST_INFO, $URL_VIEW_FILE, $URL_VIEW_RCH, $URL_BACKUP, $URL_SERVER_UPDATE,
-            $URL_VIEW_BACKUP, $BACKUP_RCH, $BACKUP_LOG, $BACKUP_ELOG;
+    global  $URL_HOST_INFO, $URL_VIEW_FILE, $URL_VIEW_RCH, $URL_BACKUP, $URL_SERVER_UPDATE ,$DEBUG,
+            $URL_VIEW_BACKUP, $BACKUP_RCH, $BACKUP_LOG, $BACKUP_ELOG; $total_seconds; $total_count;
 
-    $WOS  = $row['srv_osname'];                                         # Save OS Name
-    $WVER = $row['srv_osversion'];                                      # Save OS Version
+    
+    $count = 0;
+    $total_seconds = 0 ;                                                # Total execution Time sec.
+    $total_count   = 0 ;                                                # Nb execution finished 
+    $lowest_time   = 0 ;                                                # Lowest execution time 
+    $highest_time  = 0 ;                                                # Highest execution time
 
-    $log_name  = SADM_WWW_DAT_DIR ."/". $row['srv_name'] ."/log/". $row['srv_name'] ."_". $BACKUP_LOG;
-    $elog_name = SADM_WWW_DAT_DIR ."/". $row['srv_name'] ."/log/". $row['srv_name'] ."_". $BACKUP_ELOG;
-    $rch_name  = SADM_WWW_DAT_DIR ."/". $row['srv_name'] ."/rch/". $row['srv_name'] ."_". $BACKUP_RCH;
+    while ($row = mysqli_fetch_assoc($result)) {                        # Gather Result from Query
+        $count += 1;                                                    # Incr Line Counter
+        $WOS  = $row['srv_osname'];                                     # Save OS Name
+        $WVER = $row['srv_osversion'];                                  # Save OS Version
 
-    # Start of the row
-    echo "\n<tr>";
+        $log_name  = SADM_WWW_DAT_DIR ."/". $row['srv_name'] ."/log/". $row['srv_name'] ."_". $BACKUP_LOG;
+        $elog_name = SADM_WWW_DAT_DIR ."/". $row['srv_name'] ."/log/". $row['srv_name'] ."_". $BACKUP_ELOG;
+        $rch_name  = SADM_WWW_DAT_DIR ."/". $row['srv_name'] ."/rch/". $row['srv_name'] ."_". $BACKUP_RCH;
+
+        if ($DEBUG) {                                                       # Show parameters received
+            echo "<br>SERVER NAME    = " . $row['srv_name'] ;    
+            echo "<br>LOG NAME       = " . $log_name ; 
+            echo "<br>RCH NAME       = " . $rch_name ; 
+        } 
+
+        # Start of the row
+        echo "\n<tr>";
+        echo "\n<td align='center'>" . $count . "</td>";                # Line counter
 
 
-    # Line Counter
-    echo "\n<td align='center'>" . $count . "</td>";  
+        # Show System Hostname
+        echo "\n<td>";
+        echo "<a href='" . $URL_HOST_INFO . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP ;
+        echo "' title='Click to view system info, $WOS $WVER system - " . $row['srv_note'] . "'>";
+        echo $row['srv_name']  . "</a><br>" . $row['srv_desc'] ;
+        echo "</td>";
 
 
-    # Show System Hostname
-    echo "\n<td>";
-    echo "<a href='" . $URL_HOST_INFO . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP ;
-    echo "' title='Click to view system info, $WOS $WVER system - " . $row['srv_note'] . "'>";
-    echo $row['srv_name']  . "</a><br>" . $row['srv_desc'] ;
-    echo "</td>";
-
-
-    # Start Backup Date
-    if (! file_exists($rch_name) ) {                                    # If RCH File doesn't exist
-        echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>No data</b></td>";
-    } else {
-        $file = file("$rch_name");                                      # Load RCH File in Memory
-        $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
-        $rch_array  = explode(" ", $lastline);                          # Load Lines in rch_array
-        $now        = time();                                           # Get current Epoch Time
-        $your_date  = strtotime(str_replace(".", "-", $rch_array[1]));  # Event Start Date in epoch
-        $datediff   = $now - $your_date;                                # Event Elapse time in seconds 
-        $backup_age = round($datediff / (60 * 60 * 24));                # Event Elapse in Nb. Days
-        if ($backup_age > SADM_BACKUP_INTERVAL) {                       # Event  Date older than threshold  
-            $tooltip = "Backup is " .$backup_age. " days old, exceeding the treshold of " .SADM_BACKUP_INTERVAL. " days.";
-            echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'>";
-            echo "<span data-toggle='tooltip' title='" .$tooltip. "'><b>" .$rch_array[1]. "</b></span>";
+        # Start Backup Date
+        if ( ! file_exists($rch_name) ) {                                   # If RCH File doesn't exist
+            echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>No data</b></td>";
         } else {
-            $tooltip = "Backup is " .$backup_age. " days old, threshold at " .SADM_BACKUP_INTERVAL. " days.";
-            if (date("Y.m.d") != $rch_array[1]) {
+            $file = file("$rch_name");                                      # Load RCH File in Memory
+            $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
+            $rch_array  = explode(" ", $lastline);                          # Load Lines in rch_array
+            $now        = time();                                           # Get current Epoch Time
+            $your_date  = strtotime(str_replace(".", "-", $rch_array[1]));  # Event Start Date in epoch
+            $datediff   = $now - $your_date;                                # Event Elapse time in seconds 
+            $backup_age = round($datediff / (60 * 60 * 24));                # Event Elapse in Nb. Days
+            if ($backup_age > SADM_BACKUP_INTERVAL) {                       # Event  Date older than threshold  
+                $tooltip = "Backup is " .$backup_age. " days old, exceeding the treshold of " .SADM_BACKUP_INTERVAL. " days.";
                 echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'>";
+                echo "<span data-toggle='tooltip' title='" .$tooltip. "'><b>" .$rch_array[1]. "</b></span>";
             } else {
-                echo "\n<td align='center'>" ;
+                $tooltip = "Backup is " .$backup_age. " days old, threshold at " .SADM_BACKUP_INTERVAL. " days.";
+                if (date("Y.m.d") != $rch_array[1]) {
+                    echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'>";
+                } else {
+                    echo "\n<td align='center'>" ;
+                }
+                echo "<span data-toggle='tooltip' title='" . $tooltip . "'>" .$rch_array[1]. "</span>";
             }
-            echo "<span data-toggle='tooltip' title='" . $tooltip . "'>" .$rch_array[1]. "</span>";
-        }
+        } 
+
 
         # Start Backup Time
         echo "&nbsp;" ; 
@@ -263,231 +278,265 @@ function display_data($count, $row)
         }else{
             echo "<style='color:red' bgcolor='#DAF7A6'><b>Deactivated</b>";
         } 
-    }
-    echo "</td>";
+        echo "</td>";
 
 
-    # End Backup Date and Time.
-    # RCH Line Example: 
-    #   - $whost,$wdate1,$wtime1,$wdate2,$wtime2,$welapse,$wscript,$walert,$gtype,$wcode    
-    if (!file_exists($rch_name)) {                                      # If RCH File doesn't exist
-        echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>No data</b></td>";
-    }else{ 
-        $file = file("$rch_name");                                      # Load RCH File in Memory
-        $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
-        $rch_array  = explode(" ", $lastline);                          # Load Lines in rch_array
-        echo "\n<td align='center'>" . $rch_array[3] . "&nbsp" . substr($rch_array[4],0,5)  ;  
-    }
-    echo "</td>";
+        # End Backup Date and Time.
+        # RCH Line Example: 
+        #   - $whost,$wdate1,$wtime1,$wdate2,$wtime2,$welapse,$wscript,$walert,$gtype,$wcode    
+        if (!file_exists($rch_name)) {                                      # If RCH File doesn't exist
+            echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>No data</b></td>";
+        }else{ 
+            $file = file("$rch_name");                                      # Load RCH File in Memory
+            $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
+            $rch_array  = explode(" ", $lastline);                          # Load Lines in rch_array
+            echo "\n<td align='center'>" . $rch_array[3] . "&nbsp" . substr($rch_array[4],0,5)  ;  
+        }
+        echo "</td>";
 
 
-    # Backup duration time
-    if (!file_exists($rch_name)) {                                    # If RCH File Not Found
-        echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>No data</b></td>";
-    } else {
-        echo "\n<td align='center'>" . $rch_array[5] . "</td>";
-    }
+        # Backup duration time
+        if (!file_exists($rch_name)) {                                    # If RCH File Not Found
+            echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>No data</b></td>";
+        } else {
+            echo "\n<td align='center'>" . $rch_array[5] . "</td>";
+        }
 
-
-    # Status of Last Backup
-    if (file_exists($rch_name)) {
-        $file = file("$rch_name");                                      # Load RCH File in Memory
-        $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
-        list($cserver, $cdate1, $ctime1, $cdate2, $ctime2, $celapse, $cname, $calert, $ctype, $ccode) = explode(" ", $lastline);
-    } else {
-        $ccode = 9;                                                     # No Log, Backup never ran
-    }
-    switch ($ccode) {
-        case 0:
-            $tooltip = 'Backup completed with success.';
-            echo "\n<td align='center'>";
-            echo "<span data-toggle='tooltip' title='" . $tooltip . "'>Success</span></td>";
-            break;
-        case 1:
-            $tooltip = 'Backup terminated with error.';
-            echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'>";
-            echo "<span data-toggle='tooltip' title='" . $tooltip . "'><b>Failed</span></b></td>";
-            break;
-        case 2:
-            $tooltip = 'Backup is actually running.';
-            echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'>";
-            echo "<span data-toggle='tooltip' title='" . $tooltip . "'><b>Running</b></span></td>";
-            break;
-        default:
-            $tooltip = "Unknown status - code: " . $ccode;
-            echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'>";
-            echo "<span data-toggle='tooltip' title='" .$tooltip. "'><b>No data</b></span></td>";
-            break;
-    }
-
-
-    # Show [log] to view backup log
-    if (file_exists($log_name)) {
-        echo "\n<td align='center'  style='color:blue' >";
-        echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name . "'";
-        echo " title='View Backup Log'>[log]</a>&nbsp;";
-    } else {
-        echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>No data</b>";
-    }
-
-    # Show [elog] to view backup error log (If exist)
-    if ((file_exists($elog_name)) and (filesize($elog_name) != 0)) {
-        echo "\n<a href='" . $URL_VIEW_FILE . "?&filename=" . $elog_name . "'";
-        echo " title='View error log'>[elog]</a>&nbsp;";
-    } else {
-        echo "&nbsp;";
-    }
-
-    # Show [his] (rch) history file.
-    $rch_www_name  = $row['srv_name'] . "_$BACKUP_RCH";
-    if (file_exists($rch_name)) {
-        echo "\n<a href='" . $URL_VIEW_RCH . "?host=" . $row['srv_name'] . "&filename=" . $rch_www_name . "'";
-        echo " title='View backup history (rch) file'>[hist]</a>";
-    }
-    echo "</td>" ;
-
-
-    # Schedule Update Button
-    $ipath = '/images/UpdateButton.png';
-    if ($row['srv_backup'] == TRUE) {                                  # Is Server Active
-        $tooltip = 'Schedule is active, click to edit backup configuration.';
-        echo "\n<td style='color: green' align='center'><b>Y ";
-    } else {                                                              # If not Activate
-        $tooltip = 'Schedule is inactive, click to edit backup configuration.';
-        echo "\n<td style='color: red' align='center'><b>N ";
-    }
-    echo "<a href='" . $URL_BACKUP . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP . "'>";
-    echo "\n<span data-toggle='tooltip' title='" . $tooltip . "'>";
-    echo "\n<button type='button'>Update</button>";             # Display Delete Button
-    echo "</a></span></b></td>";
-
-
-    # Is server sporadically offline (Can be offline like laptop).
-    if ($row['srv_sporadic'] == TRUE) {                                # Is Server Active
-        $tooltip = "System can be running or offline (Do not alert the sysadmin).";
-        echo "\n<td align='center'><span data-toggle='tooltip' title='" . $tooltip . "'>";
-        echo "<b>Yes</b></span></td>";
-    } else {                                                              # If not Activate
-        $tooltip = 'System should be up and running, otherwise alert the sysadmin.';
-        echo "\n<td align='center'><span data-toggle='tooltip' title='" . $tooltip . "'>";
-        echo "No</span></td>";
-    }
-
-    # Calculate Current Backup Size. 
-    $backup_size = $num_backup_size = 0; $backup_unit = "";
-    if (file_exists($log_name)) {
-        $pattern = "/current backup size/i";                            # String to search in log
-        if (preg_grep($pattern, file($log_name))) {                     # String appear in the log
-            $barray      = preg_grep($pattern, file($log_name));        # backup size line in array
-            # line example: 2023.03.09 01:15:15 Daily previous backup size = 4.2M
-            $bstring     = implode(" ",$barray);                        # Turn array into a string
-            $pos_colon   = strpos($bstring,"=");                        # Get the '=' position
-            $backup_size = trim(substr($bstring,$pos_colon +1));      # Extract the backup size 
-            $backup_unit = strtoupper(substr($backup_size,-1));       # Unit Size of backup M,G,T
-            $num_backup_size = trim(substr($backup_size,0,strlen($backup_size) -1) ); # Extract the Total size 
-            switch ($backup_unit) {
-                case "K":   $num_backup_size = ($num_backup_size / 1024 / 1024); # Convert KB to GB
-                            break;
-                case "M":   $num_backup_size = ($num_backup_size / 1024); # Convert MB to GB
-                            break;
-                case "G":   break;                                      # Leave as it is for GB
-                case "T":   $num_backup_size = ($num_backup_size * 1024); # Convert TB to GB
-                            break;
-                default:    $backup_unit="?";
-                            break;
-            } 
+        sadm_timeToSeconds($rch_array[5]) ;                                 # Calc. duration in sec.
+        if ($rch_array[5] != '........') {                                  # Ignore job not finished
+            $duration_sec = sadm_timeToSeconds($rch_array[5]) ;             # Convert time to seconds
+            $total_seconds += $duration_sec ;                               # Add Duration to Total
+            $total_count+=1;                                                # Terminated jobs count
+            if ($lowest_time == 0 || $duration_sec <= $lowest_time) { 
+                $lowest_time    = $duration_sec ;
+                $lowestduration = $rch_array[5] ;
+            }
+            if ($highest_time == 0 || $duration_sec > $highest_time) { 
+                $highest_time    = $duration_sec ;
+                $highestduration = $rch_array[5] ;
+            }
         } 
-    }
 
 
-    # Calculate Previous Backup Size. 
-    $previous_size = $num_previous_size = 0; $previous_unit = "";
-    if (file_exists($log_name)) {
-        $pattern = "/previous backup size/i";
-        if (preg_grep($pattern, file($log_name))) {
-            # line example: 2023.03.09 01:15:15 Daily previous backup size = 4.2M
-            $barray      = preg_grep($pattern, file($log_name));        # backup size line in array
-            $bstring     = implode(" ",$barray);                        # Turn array into a string
-            $pos_colon   = strpos($bstring,"=");                        # Get the '=' position
-            $previous_size = trim(substr($bstring,$pos_colon +1));      # Extract the backup size 
-            $previous_unit = strtoupper(substr($previous_size,-1));       # Unit Size of backup M,G,T
-            $num_previous_size = trim(substr($previous_size,0,strlen($previous_size) -1) ); # Extract the Total size 
-            switch ($previous_unit) {
-                case "K":   $num_previous_size = ($num_previous_size / 1024 / 1024); # Convert KB to GB
-                            break;
-                case "M":   $num_previous_size = ($num_previous_size / 1024); # Convert MB to GB
-                            break;
-                case "G":   break;                                      # Leave as it is for GB
-                case "T":   $num_previous_size = ($num_previous_size * 1024); # Convert TB to GB
-                            break;
-                default:    $previous_unit="?";
-                            break;
+        # Status of Last Backup
+        if (file_exists($rch_name)) {
+            $file = file("$rch_name");                                      # Load RCH File in Memory
+            $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
+            list($cserver, $cdate1, $ctime1, $cdate2, $ctime2, $celapse, $cname, $calert, $ctype, $ccode) = explode(" ", $lastline);
+        } else {
+            $ccode = 9;                                                     # No Log, Backup never ran
+        }
+        switch ($ccode) {
+            case 0:
+                $tooltip = 'Backup completed with success.';
+                echo "\n<td align='center'>";
+                echo "<span data-toggle='tooltip' title='" . $tooltip . "'>Success</span></td>";
+                break;
+            case 1:
+                $tooltip = 'Backup terminated with error.';
+                echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'>";
+                echo "<span data-toggle='tooltip' title='" . $tooltip . "'><b>Failed</span></b></td>";
+                break;
+            case 2:
+                $tooltip = 'Backup is actually running.';
+                echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'>";
+                echo "<span data-toggle='tooltip' title='" . $tooltip . "'><b>Running</b></span></td>";
+                break;
+            default:
+                $tooltip = "Unknown status - code: " . $ccode;
+                echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'>";
+                echo "<span data-toggle='tooltip' title='" .$tooltip. "'><b>No data</b></span></td>";
+                break;
+        }
+
+
+        # Show [log] link to view backup log
+        if (file_exists($log_name)) {
+            echo "\n<td align='center'  style='color:blue' >";
+            echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name . "'";
+            echo " title='View Backup Log'>[log]</a>&nbsp;";
+        } else {
+            echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>No data</b>";
+        }
+
+        # Show [elog] link to view backup error log (If exist)
+        if ((file_exists($elog_name)) and (filesize($elog_name) != 0)) {
+            echo "\n<a href='" . $URL_VIEW_FILE . "?&filename=" . $elog_name . "'";
+            echo " title='View error log'>[elog]</a>&nbsp;";
+        } else {
+            echo "&nbsp;";
+        }
+
+        # Show [his] (rch) history file link
+        $rch_www_name  = $row['srv_name'] . "_$BACKUP_RCH";
+        if (file_exists($rch_name)) {
+            echo "\n<a href='" . $URL_VIEW_RCH . "?host=" . $row['srv_name'] . "&filename=" . $rch_www_name . "'";
+            echo " title='View backup history (rch) file'>[rch]</a>";
+        }
+        echo "</td>" ;
+
+
+        # Schedule Update Button
+        $ipath = '/images/UpdateButton.png';
+        if ($row['srv_backup'] == TRUE) {                                  # Is Server Active
+            $tooltip = 'Schedule is active, click to edit backup configuration.';
+            echo "\n<td style='color: green' align='center'><b>Y ";
+        } else {                                                              # If not Activate
+            $tooltip = 'Schedule is inactive, click to edit backup configuration.';
+            echo "\n<td style='color: red' align='center'><b>N ";
+        }
+        echo "<a href='" . $URL_BACKUP . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP . "'>";
+        echo "\n<span data-toggle='tooltip' title='" . $tooltip . "'>";
+        echo "\n<button type='button'>Update</button>";             # Display Delete Button
+        echo "</a></span></b></td>";
+
+
+        # Is server sporadically offline (Can be offline like laptop).
+        if ($row['srv_sporadic'] == TRUE) {                                # Is Server Active
+            $tooltip = "System can be running or offline (Do not alert the sysadmin).";
+            echo "\n<td align='center'><span data-toggle='tooltip' title='" . $tooltip . "'>";
+            echo "<b>Yes</b></span></td>";
+        } else {                                                              # If not Activate
+            $tooltip = 'System should be up and running, otherwise alert the sysadmin.';
+            echo "\n<td align='center'><span data-toggle='tooltip' title='" . $tooltip . "'>";
+            echo "No</span></td>";
+        }
+
+        # Calculate Current Backup Size. 
+        $backup_size = $num_backup_size = 0; $backup_unit = "";
+        if (file_exists($log_name)) {
+            $pattern = "/current backup size/i";                            # String to search in log
+            if (preg_grep($pattern, file($log_name))) {                     # String appear in the log
+                $barray      = preg_grep($pattern, file($log_name));        # backup size line in array
+                # line example: 2023.03.09 01:15:15 Daily previous backup size = 4.2M
+                $bstring     = implode(" ",$barray);                        # Turn array into a string
+                $pos_colon   = strpos($bstring,"=");                        # Get the '=' position
+                $backup_size = trim(substr($bstring,$pos_colon +1));      # Extract the backup size 
+                $backup_unit = strtoupper(substr($backup_size,-1));       # Unit Size of backup M,G,T
+                $num_backup_size = trim(substr($backup_size,0,strlen($backup_size) -1) ); # Extract the Total size 
+                switch ($backup_unit) {
+                    case "K":   $num_backup_size = ($num_backup_size / 1024 / 1024); # Convert KB to GB
+                                break;
+                    case "M":   $num_backup_size = ($num_backup_size / 1024); # Convert MB to GB
+                                break;
+                    case "G":   break;                                      # Leave as it is for GB
+                    case "T":   $num_backup_size = ($num_backup_size * 1024); # Convert TB to GB
+                                break;
+                    default:    $backup_unit="?";
+                                break;
+                } 
             } 
         }
-    }
 
 
-    # Show current backup Size in GB
-    if (($num_backup_size == 0 || $num_previous_size == 0) && (SADM_BACKUP_DIF != 0)) {
-        echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'>" ;
-        echo "<b>" . number_format($num_backup_size,2) . "</b></td>";
-    } else {
-        $PCT = (($num_backup_size - $num_previous_size) / $num_previous_size) * 100;
-        #echo "$PCT = (($num_backup_size - $num_previous_size) / $num_previous_size) * 100";
-        if (number_format($PCT, 1) != 0.0) {
-            if (number_format($PCT, 0) >= SADM_BACKUP_DIF) {
-                echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>" ;
-                echo number_format($num_backup_size,2) . "&nbsp;(+" ;
-                echo number_format($PCT, 1) . "%)</b></td>";
-            }elseif (number_format($PCT, 0) <= (SADM_BACKUP_DIF * -1)) {
-                echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>" ; 
-                echo number_format($num_backup_size,2) . "&nbsp;(" ;
-                echo number_format($PCT, 1) . "%)</b></td>";
-            }else{    
+        # Calculate Previous Backup Size. 
+        $previous_size = $num_previous_size = 0; $previous_unit = "";
+        if (file_exists($log_name)) {
+            $pattern = "/previous backup size/i";
+            if (preg_grep($pattern, file($log_name))) {
+                # line example: 2023.03.09 01:15:15 Daily previous backup size = 4.2M
+                $barray      = preg_grep($pattern, file($log_name));        # backup size line in array
+                $bstring     = implode(" ",$barray);                        # Turn array into a string
+                $pos_colon   = strpos($bstring,"=");                        # Get the '=' position
+                $previous_size = trim(substr($bstring,$pos_colon +1));      # Extract the backup size 
+                $previous_unit = strtoupper(substr($previous_size,-1));       # Unit Size of backup M,G,T
+                $num_previous_size = trim(substr($previous_size,0,strlen($previous_size) -1) ); # Extract the Total size 
+                switch ($previous_unit) {
+                    case "K":   $num_previous_size = ($num_previous_size / 1024 / 1024); # Convert KB to GB
+                                break;
+                    case "M":   $num_previous_size = ($num_previous_size / 1024); # Convert MB to GB
+                                break;
+                    case "G":   break;                                      # Leave as it is for GB
+                    case "T":   $num_previous_size = ($num_previous_size * 1024); # Convert TB to GB
+                                break;
+                    default:    $previous_unit="?";
+                                break;
+                } 
+            }
+        }
+
+
+        # Show current backup Size in GB
+        if (($num_backup_size == 0 || $num_previous_size == 0) && (SADM_BACKUP_DIF != 0)) {
+            echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'>" ;
+            echo "<b>" . number_format($num_backup_size,2) . "</b></td>";
+        } else {
+            $PCT = (($num_backup_size - $num_previous_size) / $num_previous_size) * 100;
+            #echo "$PCT = (($num_backup_size - $num_previous_size) / $num_previous_size) * 100";
+            if (number_format($PCT, 1) != 0.0) {
+                if (number_format($PCT, 0) >= SADM_BACKUP_DIF) {
+                    echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>" ;
+                    echo number_format($num_backup_size,2) . "&nbsp;(+" ;
+                    echo number_format($PCT, 1) . "%)</b></td>";
+                }elseif (number_format($PCT, 0) <= (SADM_BACKUP_DIF * -1)) {
+                    echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>" ; 
+                    echo number_format($num_backup_size,2) . "&nbsp;(" ;
+                    echo number_format($PCT, 1) . "%)</b></td>";
+                }else{    
+                    echo "\n<td align='center'>" . number_format($num_backup_size,2) . "</td>";
+                }
+            }else{
                 echo "\n<td align='center'>" . number_format($num_backup_size,2) . "</td>";
             }
-        }else{
-            echo "\n<td align='center'>" . number_format($num_backup_size,2) . "</td>";
         }
-    }
 
-    # Show Previous Backup Size
-    if (($num_backup_size == 0 || $num_previous_size == 0) && (SADM_BACKUP_DIF != 0)) {
-        echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'>" ;
-        echo "<b>" . number_format($num_previous_size,2) . "</b></td>";
-    } else {
-        echo "\n<td align='center'>" . number_format($num_previous_size,2) . "</td>";
-    }
-
-
-    # Show total backup space occupied by this host in GB.
-    $num_total_size = 0; 
-    if (file_exists($log_name)) {
-        $pattern = "/Total backup size/i";
-        if (preg_grep($pattern, file($log_name))) {
-            # line example: 2023.04.01 01:50:34 Total backup size = 126G
-            $barray         = preg_grep($pattern, file($log_name));     # backup size line in array
-            $bstring        = implode(" ",$barray);                     # Turn array into a string
-            $pos_colon      = strpos($bstring,"=");                     # Get the '=' position
-            $total_size     = trim(substr($bstring,$pos_colon +1));     # Extract the Total size 
-            $total_unit     = strtoupper(substr($total_size,-1));       # Unit Size of backup M,G,T
-            $num_total_size = trim(substr($total_size,0,strlen($total_size) -1) ); # Extract the Total size 
-            switch ($total_unit) {
-                case "K":   $num_total_size = ($num_total_size / 1024 / 1024); # Convert KB to GB
-                            break;
-                case "M":   $num_total_size = ($num_total_size / 1024); # Convert MB to GB
-                            break;
-                case "G":   break;                                      # Leave as it is for GB
-                case "T":   $num_total_size = ($num_total_size * 1024); # Convert TB to GB
-                            break;
-                default:    $total_unit="?";
-                            break;
-            } 
+        # Show Previous Backup Size
+        if (($num_backup_size == 0 || $num_previous_size == 0) && (SADM_BACKUP_DIF != 0)) {
+            echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'>" ;
+            echo "<b>" . number_format($num_previous_size,2) . "</b></td>";
+        } else {
+            echo "\n<td align='center'>" . number_format($num_previous_size,2) . "</td>";
         }
-    }
-    echo "\n<td align='center'>" . number_format($num_total_size,2) . "</td>";
 
-    echo "\n</tr>\n\n";
+
+        # Show total backup space occupied by this host in GB.
+        $num_total_size = 0; 
+        if (file_exists($log_name)) {
+            $pattern = "/Total backup size/i";
+            if (preg_grep($pattern, file($log_name))) {
+                # line example: 2023.04.01 01:50:34 Total backup size = 126G
+                $barray         = preg_grep($pattern, file($log_name));     # backup size line in array
+                $bstring        = implode(" ",$barray);                     # Turn array into a string
+                $pos_colon      = strpos($bstring,"=");                     # Get the '=' position
+                $total_size     = trim(substr($bstring,$pos_colon +1));     # Extract the Total size 
+                $total_unit     = strtoupper(substr($total_size,-1));       # Unit Size of backup M,G,T
+                $num_total_size = trim(substr($total_size,0,strlen($total_size) -1) ); # Extract the Total size 
+                switch ($total_unit) {
+                    case "K":   $num_total_size = ($num_total_size / 1024 / 1024); # Convert KB to GB
+                                break;
+                    case "M":   $num_total_size = ($num_total_size / 1024); # Convert MB to GB
+                                break;
+                    case "G":   break;                                      # Leave as it is for GB
+                    case "T":   $num_total_size = ($num_total_size * 1024); # Convert TB to GB
+                                break;
+                    default:    $total_unit="?";
+                                break;
+                } 
+            }
+        }
+        echo "\n<td align='center'>" . number_format($num_total_size,2) . "</td>";
+        echo "\n</tr>\n\n";
+    } 
+    
+    # Average script execution time
+    $average = $total_seconds / $total_count ;                          # Total Sec. / Nb. execution
+    $script_average = sadm_secondsToHHMMSS($average) ;                  # Convert Sec. to HH:MM:SS
+    $script_name = pathinfo($GET_RCHFILE,PATHINFO_FILENAME) ;           # Remove extension of file
+    if ($DEBUG) { 
+        echo "\nAverage = $average - total_seconds = $total_seconds"; 
+        echo "\nTotal_count = $total_count - Script_average = $script_average";
+    } 
+    if ( substr($lowestduration,0,3) == "00:") {
+        $lowestduration= substr($lowestduration,3, strlen($lowestduration));
+    }       
+    if ( substr($highestduration,0,3) == "00:") {
+        $highestduration= substr($highestduration,3, strlen($highestduration));
+    }       
+    echo "\n<center><b>";
+    echo "Average backup execution time is $script_average ";
+    echo "(lowest : $lowestduration - highest : $highestduration)";
+    echo "</center></b>\n";
+
 }
 
 
@@ -519,7 +568,7 @@ function backup_legend()
 
     $result = mysqli_query($con, $sql);
     if (!$result) {                                                     # If Server not found
-        $err_msg = "<br>Server " . $HOSTNAME . " not found in the database.";
+        $err_msg = "<br>System " . $HOSTNAME . " not found in the database.";
         $err_msg = $err_msg . mysqli_error($con);                       # Add MySQL Error Msg
         sadm_fatal_error($err_msg);                                     # Display Error & Go Back
         exit();
@@ -527,7 +576,7 @@ function backup_legend()
 
     $NUMROW = mysqli_num_rows($result);                                 # Get Nb of rows returned
     if ($NUMROW == 0) {                                                 # If Server not found
-        $err_msg = "<br>Server " . $HOSTNAME . " not found in Database";# Construct msg to user
+        $err_msg = "<br>Systemr " . $HOSTNAME . " not found in Database";# Construct msg to user
         $err_msg = $err_msg . mysqli_error($con);                       # Add MySQL Error Msg
         if ($DEBUG) {                                                   # In Debug Insert SQL in Msg
             $err_msg = $err_msg . "<br>\nMaybe a problem with SQL Command ?\n" . $query;
@@ -544,18 +593,11 @@ function backup_legend()
     }
 
     display_lib_heading("NotHome", "$title1", "$title2", $WVER);        # Display Content Heading
-
     setup_table();                                                      # Create Table & Heading
-
-# Loop Through Retrieved Data and Display each Row
-    $count = 0;
-    while ($row = mysqli_fetch_assoc($result)) {                        # Gather Result from Query
-        $count += 1;                                                    # Incr Line Counter
-        display_data($count, $row);                                     # Display Next Server
-    }
-    echo "\n</table>\n</tbody>";                                        # End of tbody,table
-
-   #echo "</div> <!-- End of SimpleTable          -->";                 # End Of SimpleTable Div
+    display_data($result);                                              # Display Backup Data
+    echo "\n</table>\n"; 
+    echo "\n</tbody>";                                                  # End of tbody,table
+    #echo "</div> <!-- End of SimpleTable          -->";                 # End Of SimpleTable Div
     backup_legend();                                                    # Display Legend               
     std_page_footer($con);                                              # Close MySQL & HTML Footer
 ?>

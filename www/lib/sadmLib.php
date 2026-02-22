@@ -57,6 +57,7 @@
 #@2025_03_05 lib v2.26 Update O/S Logo and documentation URL.
 #@2025_05_07 lib v2.27 Update O/S Logo and documentation URL.
 #@2025_07_20 lib v2.28 Add pencil image in standard page heading.
+#@2026_02_18 lib v2.29 Add func. 'sadm_timeToSeconds' to convert time (HH:MM:SS) to a number of sec.
 #===================================================================================================
 
 
@@ -66,7 +67,7 @@
 #===================================================================================================
 #
 $DEBUG  = False ;                                                        # Debug Activated True/False
-$LIBVER = "2.28" ;   
+$LIBVER = "2.29" ;   
     
 
 #===================================================================================================
@@ -167,6 +168,7 @@ function netinfo ($ip_address,$ip_nmask) {
 
 # ==================================================================================================
 # Function accept a valid alert group name (like 'default' and defined in 'alert_group.cfg' file) 
+#
 # Return :
 #   - The real group name (in case this function receive 'default' as the group name)
 #   - The group type (M=Mail, S=SLack, T=Texto, C=Cellular)
@@ -222,19 +224,19 @@ function get_alert_group_data ($calert)
 
     # Build to tooltip for the alert group 
     switch (strtoupper($alert_group_type)) {
-        case 'M' :  $stooltip="Alert send by email to " . $alert_member ;  
+        case 'M' :  $stooltip="Notification send by email to " . $alert_member ;  
                     break;
                     ;; 
-        case 'C' :  $stooltip="Alert send by SMS to " . $alert_member ;   
+        case 'C' :  $stooltip="Notification send by SMS to " . $alert_member ;   
                     break;
                     ;; 
-        case 'T' :  $stooltip="Alert send by SMS to " . $alert_member ;
+        case 'T' :  $stooltip="Notification send by SMS to " . $alert_member ;
                     break;
                     ;; 
-        case 'S' :  $stooltip="Alert send with Slack to " . $alert_member ;
+        case 'S' :  $stooltip="Notification send with Slack to " . $alert_member ;
                     break;
                     ;; 
-        default  :  $stooltip="Invalid Alert type(" . $alert_type .")";
+        default  :  $stooltip="Invalid Notification type(" . $alert_type .")";
                     break;
                     ;;
     }                    
@@ -642,6 +644,59 @@ function sadm_return_logo($WOS) {
 
 
 
+// ================================================================================================
+// Convert a time expression (HH:MM:SS) to a number of seconds it represent.
+// Example Usage:
+//      $time1 = "02:30:45";
+//      echo "$time1 in seconds: " . sadm_timeToSeconds($time1) . " seconds\n"; 
+//      Output: 9045 seconds
+// ================================================================================================
+function sadm_timeToSeconds($timeString) {
+    $parts = explode(':', $timeString);
+    
+    // Ensure we have at least minutes and seconds, with hours being optional
+    if (count($parts) == 3) {
+        $hours = (int)$parts[0];
+        $minutes = (int)$parts[1];
+        $seconds = (int)$parts[2];
+    } elseif (count($parts) == 2) {
+        // Handle MM:SS format if necessary, assuming 0 hours
+        $hours = 0;
+        $minutes = (int)$parts[0];
+        $seconds = (int)$parts[1];
+    } else {
+        // Handle invalid format
+        return false; 
+    }
+
+    return ($hours * 3600) + ($minutes * 60) + $seconds;
+}
+
+
+
+
+// ================================================================================================
+// Convert a number of seconds into a time expression (HH:MM:SS) (use for duration time)
+//
+//  Example Usage:
+//      echo secondsToHHMMSS(350);       // Output: 00:05:50
+//      echo secondsToHHMMSS(9290);      // Output: 02:34:50
+//      echo secondsToHHMMSS(100000);    // Output: 27:46:40 (hours > 23)
+//
+// ================================================================================================
+function sadm_secondsToHHMMSS($seconds) {
+    $t = round($seconds);
+    if (floor($t/3600) == 0 ) {
+        return sprintf('%02d:%02d', floor($t/60)%60, $t%60);
+    }else{
+        return sprintf('%02d:%02d:%02d', floor($t/3600), floor($t/60)%60, $t%60);
+    }
+}
+
+
+
+
+
 # ==================================================================================================
 # Show Distribution Logo as a cell in a table
 # ==================================================================================================
@@ -783,7 +838,7 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
     # If no particular date specified, 'sdate' will be empty.
     # If date were specified, 'sdate' (Ex: 1,4,8), 'part1' will contains '1st,4th,8th of '
     $part1 = "";                                                        # Default no date=every mth
-    if (substr($wdom,0,1) != "Y") {             # 1st Char = Y = Each Month
+    if (substr($wdom,0,1) != "Y") {                                     # 1st Char = Y = Each Month
         for ($i = 1; $i < 32; $i = $i + 1) {                            # Loop 1-31 days, Y=date Sel
             # If first of the month is selected                         # If 1st Month selected 
             if ((substr($wdom,$i,1) == "Y") && ($i == 1)) {             
@@ -817,12 +872,12 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
     # - 'part2' will contains the months names (Jan,Apr,Aug) or nothing if every month (1st Char=Y)
     # - 'smonth' will contains the months selected (1,4,8) or nothing if every month is selected.
     $part2 = "";                                                        # Default run every months
-    $mth_name = array('each month,','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec');
-    if (substr($wmth,0,1) == "Y") {             # 1st Char is Y = Each Month
+    $mth_name = array('Each month,','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec');
+    if (substr($wmth,0,1) == "Y") {                                     # 1st Char is Y = Each Month
         if ($part1 != "") { $part2 = $mth_name[0]; }                    # Any Mth ins. "each month"
     }else{                                                              # If Month No. is Specify
         for ($i = 1; $i < 13; $i = $i + 1) {                            # Loop through the 12 Months
-            if (substr($wmth,$i,1) == "Y") {    # If month=Y=Selected
+            if (substr($wmth,$i,1) == "Y") {                            # If month=Y=Selected
                 $part2 = $part2 . $mth_name[$i] . "," ;                 # Insert Mth Name in Part2
                 $smth  = $smth . $i . ",";                              # Insert Mth Num in Sel. Mth
             }
@@ -843,7 +898,7 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
     # If no date and no month specified
     if ((substr($wdom,0,1) == "Y") and
         (substr($wmth,0,1) == "Y")) { 
-        $part2 = "each "; $part3 = ""; 
+        $part2 = "Each "; $part3 = ""; 
         if (substr($wdow,0,1) == "Y") {        # If DOW begin with Y=AllWeek
             $part3 = " day"; 
         }else{                                                         # If not Get Days it Run
