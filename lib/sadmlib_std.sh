@@ -257,6 +257,7 @@
 #@2025_11_30 lib v4.79 Add 'sadm_convert_sec2hms()' convert seconds into hours:minutes:seconds.
 #@2026_01_19 lib v4.80 Add global variable "SADM_REAR_DEL_FAILED_BACKUP" with value from sadmin.cfg.
 #@2026_02_07 lib v4.81 Change owner & permission on $SADMIN directories.
+#@2026_02_22 lib v4.82 Add code name for MacOS, sadm_get_osversion() return minor number for debian.
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -267,7 +268,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.81"                                              # This Library Version
+export SADM_LIB_VER="4.82"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -1287,12 +1288,10 @@ sadm_get_osversion() {
     case "$(sadm_get_ostype)" in
         "LINUX")    if [ "$SADM_LSB_RELEASE" != "" ] && [ -x "$SADM_LSB_RELEASE" ]
                      then osver=$($SADM_LSB_RELEASE -rs | tail -1)
-                            if [ "$(sadm_get_osname)" = "DEBIAN" ] && [ -r /etc/debian_version ] 
-                                then osver=$(cat /etc/debian_version)
-                            fi 
+                          if [ -r /etc/debian_version ] ;then osver=$(cat /etc/debian_version) ;fi
                      elif [ -f $OS_REL ] 
-                            then osver=$(awk -F= '/^VERSION_ID=/ {print $2}' $OS_REL |tr -d '"')
-                            elif [ -f /etc/system-release-cpe ] 
+                          then osver=$(awk -F= '/^VERSION_ID=/ {print $2}' $OS_REL |tr -d '"')
+                          elif [ -f /etc/system-release-cpe ] 
                                    then osver=$(awk -F: '{print $5}' /etc/system-release-cpe)
                      else printf "Couldn't get O/S version\n"
                           osver=0.0
@@ -1329,6 +1328,9 @@ sadm_get_osmajorversion() {
 sadm_get_osminorversion() {
     case "$(sadm_get_ostype)" in
         "LINUX")  wosminorversion=$(echo $(sadm_get_osversion) | awk -F. '{ print $2 }'| tr -d ' ')
+                  if [ -f /etc/debian_version ] 
+                     then wosminorversion=$(head -1 /etc/debian_version | awk -F\. '{ print $2 }')
+                  fi 
                   ;;
         "AIX")    wosminorversion=$(uname -r)
                   ;;
@@ -1351,25 +1353,28 @@ sadm_get_ostype() {
 sadm_get_oscodename() {
     case "$(sadm_get_ostype)" in
         "DARWIN")   wver="$(sadm_get_osmajorversion)"                   # Default is OX Version
-                    if [ "$wver"  = "10.0" ]  ; then oscode="Cheetah"          ;fi
-                    if [ "$wver"  = "10.1" ]  ; then oscode="Puma"             ;fi
-                    if [ "$wver"  = "10.2" ]  ; then oscode="Jaguar"           ;fi
-                    if [ "$wver"  = "10.3" ]  ; then oscode="Panther"          ;fi
-                    if [ "$wver"  = "10.4" ]  ; then oscode="Tiger"            ;fi
-                    if [ "$wver"  = "10.5" ]  ; then oscode="Leopard"          ;fi
-                    if [ "$wver"  = "10.6" ]  ; then oscode="Snow Leopard"     ;fi
-                    if [ "$wver"  = "10.7" ]  ; then oscode="Lion"             ;fi
-                    if [ "$wver"  = "10.8" ]  ; then oscode="Mountain Lion"    ;fi
-                    if [ "$wver"  = "10.9" ]  ; then oscode="Mavericks"        ;fi
-                    if [ "$wver"  = "10.10" ] ; then oscode="Yosemite"         ;fi
-                    if [ "$wver"  = "10.11" ] ; then oscode="El Capitan"       ;fi
-                    if [ "$wver"  = "10.12" ] ; then oscode="Sierra"           ;fi
-                    if [ "$wver"  = "10.13" ] ; then oscode="High Sierra"      ;fi
-                    if [ "$wver"  = "10.14" ] ; then oscode="Mojave"           ;fi
-                    if [ "$wver"  = "10.15" ] ; then oscode="Catalina"         ;fi
-                    if [ "$wver"  = "11" ]    ; then oscode="Big Sur"          ;fi
-                    if [ "$wver"  = "12" ]    ; then oscode="Monterey"         ;fi
-                    if [ "$wver"  = "13" ]    ; then oscode="Ventura"          ;fi
+                    if [ "$wver"  = "10.0" ]  ; then oscode="Cheetah"       ;fi
+                    if [ "$wver"  = "10.1" ]  ; then oscode="Puma"          ;fi
+                    if [ "$wver"  = "10.2" ]  ; then oscode="Jaguar"        ;fi
+                    if [ "$wver"  = "10.3" ]  ; then oscode="Panther"       ;fi
+                    if [ "$wver"  = "10.4" ]  ; then oscode="Tiger"         ;fi
+                    if [ "$wver"  = "10.5" ]  ; then oscode="Leopard"       ;fi
+                    if [ "$wver"  = "10.6" ]  ; then oscode="Snow Leopard"  ;fi
+                    if [ "$wver"  = "10.7" ]  ; then oscode="Lion"          ;fi
+                    if [ "$wver"  = "10.8" ]  ; then oscode="Mountain Lion" ;fi
+                    if [ "$wver"  = "10.9" ]  ; then oscode="Mavericks"     ;fi
+                    if [ "$wver"  = "10.10" ] ; then oscode="Yosemite"      ;fi
+                    if [ "$wver"  = "10.11" ] ; then oscode="El Capitan"    ;fi
+                    if [ "$wver"  = "10.12" ] ; then oscode="Sierra"        ;fi
+                    if [ "$wver"  = "10.13" ] ; then oscode="High Sierra"   ;fi
+                    if [ "$wver"  = "10.14" ] ; then oscode="Mojave"        ;fi
+                    if [ "$wver"  = "10.15" ] ; then oscode="Catalina"      ;fi
+                    if [ "$wver"  = "11" ]    ; then oscode="Big Sur"       ;fi
+                    if [ "$wver"  = "12" ]    ; then oscode="Monterey"      ;fi
+                    if [ "$wver"  = "13" ]    ; then oscode="Ventura"       ;fi
+                    if [ "$wver"  = "14" ]    ; then oscode="Sonoma"        ;fi
+                    if [ "$wver"  = "15" ]    ; then oscode="Sequoia"       ;fi
+                    if [ "$wver"  = "26" ]    ; then oscode="Tahoe"         ;fi
                     ;;
         "LINUX")    if [ "$SADM_LSB_RELEASE" != "" ] && [ -x "$SADM_LSB_RELEASE" ]
                        then oscode=$($SADM_LSB_RELEASE -sc)
@@ -2550,6 +2555,7 @@ sadm_start() {
                 then sadm_write_err "[ ERROR ] Script '$SADM_PN' ran but PID file still exist ..."
                 else sadm_write_err "[ ERROR ] Script '$SADM_PN' is already running ..."
             fi
+            sadm_write_err " "
 
             ps -ef | grep -v grep | grep "$SADM_PN" | while read wline ; do sadm_write_log "    - $wline"; done
             #ps -ef | grep "$SADM_PN" | grep -v grep | grep -v "$$" | nl 
@@ -2574,13 +2580,13 @@ sadm_start() {
             sadm_write_err "  - PID file ('$SADM_PID_FILE'), was created $runsec seconds ago, meaning $(sadm_convert_sec2hms $pelapse)"
             sadm_write_err "  - The PID timeout ('\$SADM_PID_TIMEOUT') is set to $ptimeout seconds, meaning $(sadm_convert_sec2hms $SADM_PID_TIMEOUT)"
             if [ $pid_TimeLeft -gt 0 ] 
-                then sadm_write_err "  - So the PID file will be automatically remove in $(sadm_convert_sec2hms $pid_TimeLeft)"
+                then sadm_write_err "  - So the PID file will automatically be remove in $(sadm_convert_sec2hms $pid_TimeLeft)"
             fi 
 
             # If run elapse time is less than timeout limit in seconds and timeout is not 0
             if [ $pelapse -lt $SADM_PID_TIMEOUT ] && [ "$SADM_PID_TIMEOUT" -ne 0 ]
                 then #sadm_write_err " " 
-                     sadm_write_err "  - Current script continue to run until it finished or it reach the PID timeout."
+                     sadm_write_err "  - Current script will continue to run until it finished or it reach the PID timeout."
                      #ps -ef | grep -v grep | grep "$SADM_PN" | while read wline ; do sadm_write_log "    - $wline"; done
                      DELETE_PID="N"                                     # No Del PID Since running
                      sadm_stop 1                                        # Close,Clean up before exit
@@ -2588,7 +2594,7 @@ sadm_start() {
             fi
             
             # If the variable $SADM_PID_TIMEOUT = 0, then the script can run indefinitly 
-            # Otherwise use variable $SADM_PID_TIMEOUT & set max. number of seconds script can run.
+            # Otherwise use variable $SADM_PID_TIMEOUT & set max. number of seconds a script can run
             if [ $pelapse -ge $SADM_PID_TIMEOUT ]  && [ "$SADM_PID_TIMEOUT" -ne 0 ] 
                then sadm_write_err " " 
                     sadm_write_err "  - The PID file is now expired."
