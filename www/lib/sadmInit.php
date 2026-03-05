@@ -32,6 +32,9 @@
 # 2022_07_26 web v3.11 Set the TimeZone to America/Toronto
 # 2023_03_11 web v3.12 Load Rear backup diff & Interval at start, used on Rear Backup status page.
 #@2025_08_25 web v3.13 Change constant 'SADM_PGM2DOC' to '$SADMIN/doc//sadm_commands/sadm_link_2doc.cfg'
+#@2026_03_03 lib v3.14 New constant: 'SADM_VM_EXPORT_SCRIPT', 'SADM_REAR_BACKUP_SCRIPT'
+#@2026_03_03 lib v3.14 New constant: 'SADM_OSUPDATE_SCRIPT'
+
 # --------------------------------------------------------------------------------------------------
 $DEBUG=False ;  
 #
@@ -39,7 +42,7 @@ $DEBUG=False ;
 
 
     # Set SADMIN PHP Library Version NUmber
-    define("SADM_PHP_LIBVER","3.13");
+    define("SADM_PHP_LIBVER","3.14");
 
     # Setting the HOSTNAME Variable
     list($HOSTNAME) = explode ('.', gethostname());                     # HOSTNAME without domain
@@ -89,6 +92,7 @@ $DEBUG=False ;
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 define("SADM_BIN_DIR"      , SADM_BASE_DIR . "/bin");                   # Script Root binary Dir.
+define("SADM_OSUPDATE"     , SADM_BIN_DIR  . "/sadm_osupdate.sh") ;     # O/S update script name
 define("SADM_TMP_DIR"      , SADM_BASE_DIR . "/tmp");                   # Script Temp  directory
 define("SADM_LIB_DIR"      , SADM_BASE_DIR . "/lib");                   # Script Lib directory
 define("SADM_LOG_DIR"      , SADM_BASE_DIR . "/log");                   # Script log directory
@@ -195,6 +199,8 @@ if ($handle) {                                                          # If Suc
           if (trim($fname) == "SADM_REAR_BACKUP_TO_KEEP")    { define("SADM_REAR_BACKUP_TO_KEEP"    , trim($fvalue));}
           if (trim($fname) == "SADM_REAR_BACKUP_DIF")        { define("SADM_REAR_BACKUP_DIF"        , trim($fvalue));}
           if (trim($fname) == "SADM_REAR_BACKUP_INTERVAL")   { define("SADM_REAR_BACKUP_INTERVAL"   , trim($fvalue));}
+          if (trim($fname) == "SADM_REAR_BACKUP_SCRIPT")     { define("SADM_REAR_BACKUP_SCRIPT"     , trim($fvalue));}
+          if (trim($fname) == "SADM_REAR_DEL_FAILED_BACKUP") { define("SADM_REAR_DEL_FAILED_BACKUP" , strtoupper(trim($fvalue)));}
           if (trim($fname) == "SADM_MONITOR_UPDATE_INTERVAL") {define("SADM_MONITOR_UPDATE_INTERVAL", trim($fvalue));}
           if (trim($fname) == "SADM_MONITOR_RECENT_COUNT")   { define("SADM_MONITOR_RECENT_COUNT"   , trim($fvalue));}
           if (trim($fname) == "SADM_MONITOR_RECENT_EXCLUDE") { define("SADM_MONITOR_RECENT_EXCLUDE" , trim($fvalue));}
@@ -203,11 +209,22 @@ if ($handle) {                                                          # If Suc
           if (trim($fname) == "SADM_VM_EXPORT_TO_KEEP")      { define("SADM_VM_EXPORT_TO_KEEP"      , trim($fvalue));}
           if (trim($fname) == "SADM_VM_EXPORT_INTERVAL")     { define("SADM_VM_EXPORT_INTERVAL"     , trim($fvalue));}
           if (trim($fname) == "SADM_VM_EXPORT_ALERT")        { define("SADM_VM_EXPORT_ALERT"        , trim($fvalue));}
+          if (trim($fname) == "SADM_VM_EXPORT_SCRIPT")       { define("SADM_VM_EXPORT_SCRIPT"       , trim($fvalue));}
           if (trim($fname) == "SADM_VM_USER")                { define("SADM_VM_USER"                , trim($fvalue));}
           if (trim($fname) == "SADM_VM_STOP_TIMEOUT")        { define("SADM_VM_STOP_TIMEOUT"        , trim($fvalue));}
           if (trim($fname) == "SADM_VM_START_INTERVAL")      { define("SADM_VM_START_INTERVAL"      , trim($fvalue));}
           if (trim($fname) == "SADM_VM_EXPORT_DIF")          { define("SADM_VM_EXPORT_DIF"          , trim($fvalue));}
+          if (trim($fname) == "SADM_OSUPDATE_INTERVAL")      { define("SADM_OSUPDATE_INTERVAL"      , trim($fvalue));}
+          if (trim($fname) == "SADM_OSUPDATE_SCRIPT")        { define("SADM_OSUPDATE_SCRIPT"        , trim($fvalue));}
+          if (trim($fname) == "SADM_OSUPDATE_AUTOREMOVE")    { define("SADM_OSUPDATE_AUTOREMOVE"    , strtoupper(trim($fvalue)));}
+          if (trim($fname) == "SADM_OSUPDATE_FLATPAK")       { define("SADM_OSUPDATE_FLATPAK"       , strtoupper(trim($fvalue)));}
+          if (trim($fname) == "SADM_OSUPDATE_SNAP")          { define("SADM_OSUPDATE_SNAP"          , strtoupper(trim($fvalue)));}
     }
+    
+    if (! defined('SADM_VM_EXPORT_SCRIPT'))        {define("SADM_VM_EXPORT_SCRIPT","sadm_vm_export.sh");}
+    if (! defined('SADM_REAR_BACKUP_SCRIPT'))      {define("SADM_REAR_BACKUP_SCRIPT","sadm_rear_backup.sh");}
+    if (! defined('SADM_OSUPDATE_SCRIPT'))         {define("SADM_OSUPDATE_SCRIPT","sadm_osupdate.sh");}
+    if (! defined('SADM_OSUPDATE_INTERVAL'))       {define("SADM_OSUPDATE_INTERVAL" , 15);}
     if (! defined('SADM_MONITOR_RECENT_COUNT'))    {define("SADM_MONITOR_RECENT_COUNT" , 10);}
     if (! defined('SADM_MONITOR_UPDATE_INTERVAL')) {define("SADM_MONITOR_UPDATE_INTERVAL", 60);}
     if (! defined('SADM_MONITOR_RECENT_EXCLUDE'))  {define("SADM_MONITOR_RECENT_EXCLUDE", "sadm_nmon_watcher");}
@@ -218,7 +235,7 @@ if ($handle) {                                                          # If Suc
 }
 
 # Check the Existence of Alert Group File ($SADMIN/cfg/alert_group.cfg) ----------------------------
-if (!is_readable(SADM_ALERT_FILE)) {
+if (! is_readable(SADM_ALERT_FILE)) {
     exit ("The Alert Group File " . SADM_ALERT_FILE . " wasn't found or not readable") ;
 }
 
