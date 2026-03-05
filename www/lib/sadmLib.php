@@ -79,6 +79,7 @@ function display_lib_heading($BACK_URL,$TITLE1,$TITLE2,$WVER) {
     
     # HEADING LINE 1 - Icon on the left
     echo "\n<div style='float: left;'>";                                # Align Left Link Go Back
+    
     if (strtoupper($BACK_URL) != "HOME") {                              # Parameter Recv. = home
         echo "<a href='javascript:history.go(-1)'>";                    # URL Go Back Previous Page
         echo "<span data-toggle='tooltip' title='Back to previous page'>";  # Show Tooltip 
