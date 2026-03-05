@@ -369,9 +369,8 @@ function display_data($result)
         }
 
         # Show [his] (rch) history file link
-        $rch_www_name  = $row['srv_name'] . "_$BACKUP_RCH";
         if (file_exists($rch_name)) {
-            echo "\n<a href='" . $URL_VIEW_RCH . "?host=" . $row['srv_name'] . "&filename=" . $rch_www_name . "'";
+            echo "\n<a href='" . $URL_VIEW_RCH . "?host=" . $row['srv_name'] . "&filename=" . $rch_name . "'";
             echo " title='View backup history (rch) file'>[rch]</a>";
         }
         echo "</td>" ;

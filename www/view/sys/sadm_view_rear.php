@@ -395,9 +395,8 @@ function display_rear_data() {
 
 
         # Display link to view Rear Backup rch file
-        $rch_www_name  = $row['srv_name'] . "_$BACKUP_RCH";
         if (file_exists($rch_name)) {
-            echo "<a href='" . $URL_VIEW_RCH . "?host=" . $row['srv_name'] . "&filename=" . $rch_www_name . "'" ;
+            echo "<a href='" . $URL_VIEW_RCH . "?host=" . $row['srv_name'] . "&filename=" . $rch_name . "'" ;
             echo " title='View Backup (rch) file'>[rch]</a>";
         }else{
             echo "&nbsp;[NoRCH]";

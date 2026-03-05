@@ -365,9 +365,7 @@ function display_data($result) {
         }
 
         # Display link to view o/s update rch file (If exist)
-        $rch_www_name  = $row['srv_name'] . "_sadm_osupdate.rch";
         if (file_exists($rch_name))  {
-#            echo "<a href='" . $URL_VIEW_RCH . "?host=" . $row['srv_name'] . "&filename=" . $rch_www_name . "'" ;
             echo "<a href='" . $URL_VIEW_RCH . "?host=" . $row['srv_name'] . "&filename=" . $rch_name . "'" ;
             echo " title='View Update rch file'>[rch]</a>";
         }else{

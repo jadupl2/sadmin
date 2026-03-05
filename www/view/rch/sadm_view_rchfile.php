@@ -39,6 +39,7 @@
 # 2021_00_05 web v2.13 RCH file viewer; Make rch line more compact.
 #@2025_06_13 web v2.14 Enhance overall page look and add more information.
 #@2026_02_18 web v2.15 Add execution time average for the script.
+#@2026_03_05 web v2.16 Fix could not view rch file (Path is now fix)
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -112,7 +113,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.14" ;                                                       # Current version number
+$SVER  = "2.15" ;                                                       # Current version number
 
 
 
@@ -163,6 +164,8 @@ function display_heading() {
 #      1- $GET_HOSTNAME System Host Name 
 #      2- The RCH File Name (WNAME)
 #      3- The Sorted and Purge RCH File Name (WFILE) file to display 
+#
+# Example : display_rch_file ($GET_HOSTNAME, $GET_RCHFILE, $SORTED_RCHFILE);  
 # =================================================================================================
 function display_rch_file ($GET_HOSTNAME, $GET_RCHFILE, $SORTED_RCHFILE) {
 
@@ -208,12 +211,23 @@ function display_rch_file ($GET_HOSTNAME, $GET_RCHFILE, $SORTED_RCHFILE) {
         
         # Execution Duration in HH:MM:SS
         echo "\n<td align='center'>" . $rch_array[5] . "</td>";
-        sadm_timeToSeconds($rch_array[5]) ;
-        # Don't include script unfinish
-        if ($rch_array[5] != '........') { 
-            $total_seconds += sadm_timeToSeconds($rch_array[5]) ; 
-            $total_count+=1;
+        sadm_timeToSeconds($rch_array[5]) ;                                 # Calc. duration in sec.
+        if ($rch_array[5] != '........') {                                  # Ignore job not finished
+            $duration_sec = sadm_timeToSeconds($rch_array[5]) ;             # Convert time to seconds
+            $total_seconds += $duration_sec ;                               # Add Duration to Total
+            $total_count+=1;                                                # Terminated jobs count
+            if ($lowest_time == 0 || $duration_sec <= $lowest_time) { 
+                $lowest_time    = $duration_sec ;
+                $lowestduration = $rch_array[5] ;
+            }
+            if ($highest_time == 0 || $duration_sec > $highest_time) { 
+                $highest_time    = $duration_sec ;
+                $highestduration = $rch_array[5] ;
+            }
         } 
+
+
+
 
         # Show Notification Group with Tooltip
         echo "\n<td width=180 align='center'>";
@@ -279,7 +293,18 @@ function display_rch_file ($GET_HOSTNAME, $GET_RCHFILE, $SORTED_RCHFILE) {
         echo "\nAverage = $average - total_seconds = $total_seconds"; 
         echo "\nTotal_count = $total_count - Script_average = $script_average";
     } 
-    echo "\n<center><b>'$script_name' average execution time is $script_average</center></b>";
+    if ( substr($lowestduration,0,3) == "00:") {
+        $lowestduration= substr($lowestduration,3, strlen($lowestduration));
+    }       
+    if ( substr($highestduration,0,3) == "00:") {
+        $highestduration= substr($highestduration,3, strlen($highestduration));
+    }       
+    echo "\n<center><b>";
+    echo "Average execution time is $script_average ";
+    echo "(lowest : $lowestduration - highest : $highestduration)";
+    echo "<br>\n$GET_RCHFILE"; 
+
+    echo "</center></b>\n";
 
     fclose($fh);                                                        # Close Working RCH file
 
@@ -355,7 +380,8 @@ function display_rch_file ($GET_HOSTNAME, $GET_RCHFILE, $SORTED_RCHFILE) {
 
     
     # Display Standard page Heading
-    display_lib_heading ("NotHome","[R]esult [C]ode [H]istory Viewer",$GET_RCHFILE,$SVER);      
+#    display_lib_heading ("NotHome","[R]esult [C]ode [H]istory Viewer",$GET_RCHFILE,$SVER);      
+    display_lib_heading ("NotHome","[R]esult [C]ode [H]istory Viewer","",$SVER);      
     display_heading();                                                  # Create Table & Heading
     display_rch_file ($GET_HOSTNAME, $GET_RCHFILE, $SORTED_RCHFILE);    # Go Display RCH File
     echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
