@@ -603,7 +603,7 @@ def load_config_file(cfg_file):
     sadm_monthly_backup_to_keep  ,sadm_yearly_backup_to_keep    ,sadm_weekly_backup_day        ,\
     sadm_monthly_backup_date     ,sadm_yearly_backup_month      ,sadm_yearly_backup_date       ,\
     sadm_rear_nfs_server         ,sadm_rear_nfs_mount_point     ,sadm_rear_backup_to_keep      ,\
-    sadm_rear_backup_dif         ,sadm_rear_backup_interval     ,sadm_rear_backup_script       ,\                                ,\
+    sadm_rear_backup_dif         ,sadm_rear_backup_interval     ,sadm_rear_backup_script       ,\ 
     sadm_network1                ,sadm_network2                 ,sadm_network3                 ,\
     sadm_network4                ,sadm_network5                 ,sadm_monitor_update_interval  ,\
     sadm_monitor_recent_count    ,sadm_monitor_recent_exclude   ,sadm_pid_timeout              ,\
