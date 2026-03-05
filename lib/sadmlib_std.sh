@@ -258,6 +258,8 @@
 #@2026_01_19 lib v4.80 Add global variable "SADM_REAR_DEL_FAILED_BACKUP" with value from sadmin.cfg.
 #@2026_02_07 lib v4.81 Change owner & permission on $SADMIN directories.
 #@2026_02_22 lib v4.82 Add code name for MacOS, sadm_get_osversion() return minor number for debian.
+#@2026_03_03 lib v4.83 New constant: 'SADM_VM_EXPORT_SCRIPT', 'SADM_REAR_BACKUP_SCRIPT'
+#@2026_03_03 lib v4.83 New constant: 'SADM_OSUPDATE_SCRIPT'
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -268,7 +270,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.82"                                              # This Library Version
+export SADM_LIB_VER="4.83"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -444,6 +446,12 @@ export SADM_REAR_BACKUP_DIF=25                              # % size diff cur. v
 export SADM_REAR_BACKUP_INTERVAL=7                          # Alert when 7 days without 
 export SADM_REAR_DEL_FAILED_BACKUP="Y"                      # Del backup that failed integrity check
 #
+export SADM_OSUPDATE_INTERVAL=15                            # Threshold between o/s update in days 
+export SADM_OSUPDATE_SCRIPT="sadm_osupdate.sh"              # Name of O/S update script
+export SADM_OSUPDATE_AUTOREMOVE="N"                         # Remove unused package after update
+export SADM_OSUPDATE_FLATPAK="N"                            # Also Update the Flatpak package,if any
+export SADM_OSUPDATE_SNAP="N"                               # Also Update the Snap package (if any)
+#
 export SADM_BACKUP_NFS_SERVER=""                            # Backup NFS Server
 export SADM_BACKUP_NFS_SERVER_VER=3                         # NFS mount version (3-4)
 export SADM_BACKUP_NFS_MOUNT_POINT=""                       # Backup Mnt Point
@@ -477,6 +485,7 @@ export SADM_VM_USER="UserPartOfVBoxUserGroup"               # User part of vboxu
 export SADM_VM_STOP_TIMEOUT=120                             # Seconds given to stop a VM
 export SADM_VM_START_INTERVAL=30                            # Sec before start of next VM
 export SADM_VM_EXPORT_DIF=25                                # When Size 25% greater 
+export SADM_VM_EXPORT_SCRIPT="sadm_vm_export.sh"            # Default path to export script
 
 # To be a valid SADMIN server 'SADM_HOST_TYPE' must be "S" and 'SADM_SERVER' IP must exist on host.
 export SADM_ON_SADMIN_SERVER="N"                            # Valid SADMIN Server Y/N ?
@@ -2208,7 +2217,6 @@ sadm_load_config_file() {
                                             ;;            
             "SADM_PWD_RANDOM" )             SADM_PWD_RANDOM=$(sadm_toupper "$VALUE")
                                             ;; 
-
             "SADM_WWW_USER")                SADM_WWW_USER=$VALUE
                                             ;;
             "SADM_WWW_GROUP")               SADM_WWW_GROUP=$VALUE
@@ -2277,7 +2285,9 @@ sadm_load_config_file() {
                                             ;;
             "SADM_REAR_BACKUP_INTERVAL")    SADM_REAR_BACKUP_INTERVAL=$VALUE
                                             ;;
-            "SADM_REAR_DEL_FAILED_BACKUP")  SADM_REAR_DEL_FAILED_BACKUP=$VALUE
+            "SADM_REAR_BACKUP_SCRIPT")      SADM_REAR_BACKUP_SCRIPT=$VALUE
+                                            ;;
+            "SADM_REAR_DEL_FAILED_BACKUP")  SADM_REAR_DEL_FAILED_BACKUP=$(sadm_toupper "$VALUE")
                                             ;;
             "SADM_NETWORK1")                SADM_NETWORK1=$VALUE
                                             ;;
@@ -2325,6 +2335,8 @@ sadm_load_config_file() {
                                             ;; 
             "SADM_VM_EXPORT_DIF" )          SADM_VM_EXPORT_DIF=$VALUE
                                             ;; 
+            "SADM_VM_EXPORT_SCRIPT")        SADM_VM_EXPORT_SCRIPT=$VALUE
+                                            ;;
             "SADM_DAYS_HISTORY" )           SADM_DAYS_HISTORY=$VALUE
                                             ;; 
             "SADM_MAX_ARC_LINE" )           SADM_MAX_ARC_LINE=$VALUE
@@ -2332,6 +2344,16 @@ sadm_load_config_file() {
             "SADM_EMAIL_STARTUP" )          SADM_EMAIL_STARTUP=$VALUE
                                             ;; 
             "SADM_EMAIL_SHUTDOWN" )         SADM_EMAIL_SHUTDOWN=$VALUE
+                                            ;; 
+            "SADM_OSUPDATE_INTERVAL" )      SADM_OSUPDATE_INTERVAL=$VALUE
+                                            ;; 
+            "SADM_OSUPDATE_SCRIPT" )        SADM_OSUPDATE_SCRIPT=$VALUE
+                                            ;; 
+            "SADM_OSUPDATE_AUTOREMOVE" )    SADM_OSUPDATE_AUTOREMOVE=$(sadm_toupper "$VALUE")
+                                            ;; 
+            "SADM_OSUPDATE_FLATPAK" )       SADM_OSUPDATE_FLATPAK=$(sadm_toupper "$VALUE")
+                                            ;; 
+            "SADM_OSUPDATE_SNAP" )          SADM_OSUPDATE_SNAP=$(sadm_toupper "$VALUE")
                                             ;; 
         esac
         done < $SADM_CFG_FILE
