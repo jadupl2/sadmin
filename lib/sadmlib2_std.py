@@ -78,7 +78,9 @@
 #@2025_08_27 lib v4.63 Move the import 'pymysql' module in the start function. 
 #@2025_08_28 lib v4.64 Fix error when 'db_used=True' and 'pymysql' module not installed.    
 #@2025_10_88 lib v4.65 Fix caching problem of script log.
-# 
+#@2026_13_03 lib v4.66 Fix caching problem of script log.
+#@2026_03_03 lib v4.67 New variables: 'SADM_VM_EXPORT_SCRIPT', 'SADM_REAR_BACKUP_SCRIPT'
+#@2026_03_03 lib v4.67 New variables: 'SADM_OSUPDATE_SCRIPT'# 
 # --------------------------------------------------------------------------------------------------
 
 try :
@@ -128,7 +130,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.65"                                # This Library Version
+lib_ver             = "4.67"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -222,6 +224,8 @@ sadm_rear_nfs_mount_point     = ""                          # Rear NFS Mount Poi
 sadm_rear_backup_to_keep      = 3                           # Nb of Rear Backup to keep
 sadm_rear_backup_dif          = 25                          # % size diff cur. vs prev.
 sadm_rear_backup_interval     = 7                           # Alert when 7 days without
+sadm_rear_backup_script       = "sadm_rear_backup.sh"       # Name of rear backup script
+sadm_rear_del_failed_backup   = "N"                         # Del backup if it failed
 sadm_network1                 = ""                          # Network Subnet 1 to report
 sadm_network2                 = ""                          # Network Subnet 2 to report
 sadm_network3                 = ""                          # Network Subnet 3 to report
@@ -248,11 +252,16 @@ sadm_vm_user                  = "jacques"                   # User that do the e
 sadm_vm_stop_timeout          = 120                         # Time given to stop a virtual machine
 sadm_vm_start_interval        = 30                          # Time given to start a virtual machine
 sadm_vm_export_dif            = 25                          # Current export size vs previous=warning
+sadm_vm_export_script         = "sadm_vm_export.sh"         # Default name of the VM export script
 sadm_days_history             = 14                          # Days before moving alerts to Archive
 sadm_max_arc_line             = 1000                        # Maximum Nb. of Lines in Alert Archive
 sadm_email_startup            = "N"                         # Send email on startup to sysadmin ?
 sadm_email_shutdown           = "N"                         # Send email on shutdown to sysadmin ?
-
+sadm_osupdate_interval        = 15                          # If backup is 15 days old warning page
+sadm_osupdate_script          = "sadm_osupdate.sh"          # Name of O/S update Script
+sadm_osupdate_autoremove      = "N"                         # Remove non used package
+sadm_osupdate_flatpak         = "N"                         # Update flatpak , if used
+sadm_osupdate_snap            = "N"                         # Update snap , if used
 
 # Logic to get O/S Distribution Information into Dictionary os_dict
 if platform.system().upper() != "DARWIN":                   # If not on MAc
@@ -594,7 +603,7 @@ def load_config_file(cfg_file):
     sadm_monthly_backup_to_keep  ,sadm_yearly_backup_to_keep    ,sadm_weekly_backup_day        ,\
     sadm_monthly_backup_date     ,sadm_yearly_backup_month      ,sadm_yearly_backup_date       ,\
     sadm_rear_nfs_server         ,sadm_rear_nfs_mount_point     ,sadm_rear_backup_to_keep      ,\
-    sadm_rear_backup_dif         ,sadm_rear_backup_interval                                    ,\
+    sadm_rear_backup_dif         ,sadm_rear_backup_interval     ,sadm_rear_backup_script       ,\                                ,\
     sadm_network1                ,sadm_network2                 ,sadm_network3                 ,\
     sadm_network4                ,sadm_network5                 ,sadm_monitor_update_interval  ,\
     sadm_monitor_recent_count    ,sadm_monitor_recent_exclude   ,sadm_pid_timeout              ,\
@@ -605,7 +614,10 @@ def load_config_file(cfg_file):
     sadm_vm_user                 ,sadm_vm_stop_timeout          ,sadm_vm_start_interval        ,\
     sadm_days_history            ,sadm_max_arc_line             ,sadm_email_startup            ,\
     sadm_email_shutdown          ,sadm_vm_export_dif            ,sadm_pwd_random               ,\
-    sadm_backup_nfs_server_ver,  sadm_rear_nfs_server_ver       ,sadm_vm_export_nfs_server_ver
+    sadm_backup_nfs_server_ver   ,sadm_rear_nfs_server_ver      ,sadm_vm_export_nfs_server_ver ,\
+    sadm_osupdate_interval       ,sadm_osupdate_script          ,sadm_osupdate_autoremove      ,\
+    sadm_osupdate_flatpak        ,sadm_osupdate_snap            ,sadm_vm_export_script ;
+      
     
     if lib_debug > 4 :
         print ("Load Configuration file %s" % (cfg_file))
@@ -704,6 +716,8 @@ def load_config_file(cfg_file):
         if "SADM_REAR_BACKUP_TO_KEEP"      in CFG_NAME: sadm_rear_backup_to_keep     = int(CFG_VALUE)
         if "SADM_REAR_BACKUP_DIFF"         in CFG_NAME: sadm_rear_backup_dif         = int(CFG_VALUE)
         if "SADM_REAR_BACKUP_INTERVAL"     in CFG_NAME: sadm_rear_backup_interval    = int(CFG_VALUE)
+        if "SADM_REAR_BACKUP_SCRIPT"       in CFG_NAME: sadm_rear_backup_script      = CFG_VALUE
+        if "SADM_REAR_DEL_FAILED_BACKUP"   in CFG_NAME: sadm_rear_del_failed_backup  = CFG_VALUE.upper()
 # 
         if "SADM_NETWORK1"                 in CFG_NAME: sadm_network1                = CFG_VALUE
         if "SADM_NETWORK2"                 in CFG_NAME: sadm_network2                = CFG_VALUE
@@ -729,11 +743,19 @@ def load_config_file(cfg_file):
         if "SADM_VM_STOP_TIMEOUT"          in CFG_NAME: sadm_vm_stop_timeout         = int(CFG_VALUE)
         if "SADM_VM_START_INTERVAL"        in CFG_NAME: sadm_vm_start_interval       = int(CFG_VALUE)
         if "SADM_VM_EXPORT_DIF"            in CFG_NAME: sadm_vm_export_dif           = int(CFG_VALUE)
+        if "SADM_VM_EXPORT_SCRIPT"         in CFG_NAME: sadm_vm_export_script        = int(CFG_VALUE)
 # 
         if "SADM_DAYS_HISTORY"             in CFG_NAME: sadm_days_history            = int(CFG_VALUE)
         if "SADM_MAX_ARC_LINE"             in CFG_NAME: sadm_max_arc_line            = int(CFG_VALUE)
         if "SADM_EMAIL_STARTUP"            in CFG_NAME: sadm_email_startup           = CFG_VALUE
         if "SADM_EMAIL_SHUTDOWN"           in CFG_NAME: sadm_email_shutdown          = CFG_VALUE
+
+        if "SADM_OSUPDATE_INTERVAL"        in CFG_NAME: sadm_osupdate_interval       = int(CFG_VALUE)
+        if "SADM_OSUPDATE_SCRIPT"          in CFG_NAME: sadm_osupdate_script         = CFG_VALUE
+        if "SADM_OSUPDATE_AUTOREMOVE"      in CFG_NAME: sadm_osupdate_autoremove     = CFG_VALUE.upper()
+        if "SADM_OSUPDATE_FLATPAK"         in CFG_NAME: sadm_osupdate_flatpak        = CFG_VALUE.upper()
+        if "SADM_OSUPDATE_SNAP"            in CFG_NAME: sadm_osupdate_snap           = CFG_VALUE.upper()
+
     cfg_file_fh.close()
 
     # Get Database user password from .dbpass file (Read/Write 'sadmin' and 'squery' Read only)
