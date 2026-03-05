@@ -43,11 +43,13 @@
 #@2025_07_27 web v2.9 Small enhancement on page layout.
 #@2026_01_27 web v3.0 Fix minor bug 
 #@2026_02_21 web v3.1 Add backup average execution time and lowest/highest. 
+#@2026_02_28 web v3.2 Re-Adjust page header and footer.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
-require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
-require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
+#require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
+include ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
+include ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>CSS,JavaScript
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
 
@@ -109,12 +111,28 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 
 <?php
 
+#error_reporting(0); # Turn off
+error_reporting(E_ALL); # Report all errors, warnings, and notices (recommended for development):
+# Alternatively, using the integer value -1 achieves the same result error_reporting(-1); 
+#error_reporting(E_ALL & ~E_NOTICE);   #  Report all errors except E_NOTICE:
+#error_reporting(E_ERROR | E_WARNING | E_PARSE);  # Report only fatal errors, warnings, and parse errors:
+
+# Display errors on screen (development):
+ini_set('display_errors', 1);  
+
+# Hide errors from the screen (production) and log them instead: 
+#ini_set('display_errors', 0);
+#ini_set('log_errors', 1);
+
+
+
+
 
 #===================================================================================================
 #                                       Local Variables
 #===================================================================================================
 $DEBUG              = False ;                                           # Debug Activated True/False
-$WVER               = "3.1" ;                                           # Current version number
+$WVER               = "3.2" ;                                           # Current version number
 
 $URL_CREATE         = '/crud/srv/sadm_server_create.php';               # Create Page URL
 $URL_UPDATE         = '/crud/srv/sadm_server_update.php';               # Update Page URL
@@ -127,36 +145,34 @@ $URL_BACKUP         = '/crud/srv/sadm_server_rear_backup.php';          # Rear S
 $URL_VIEW_FILE      = '/view/log/sadm_view_file.php';                   # View File Content URL
 $URL_VIEW_RCH       = '/view/rch/sadm_view_rchfile.php';                # View RCH File Content URL
 $URL_HOST_INFO      = '/view/srv/sadm_view_server_info.php';            # Display Host Info URL
-$URL_VIEW_BACKUP    = "/view/sys/sadm_view_rear.php";                   # Rear Back Status Page
-$URL_REAR_REPORT    = "/view/daily_rear_report.html";                   # Rear Daily Report Page
-$URL_BACKUP_REPORT  = "/view/daily_backup_report.html";                 # Backup Daily Report Page
-$URL_STORIX_REPORT  = "/view/daily_storix_report.html";                 # Storix Daily Report Page
-$URL_SCRIPTS_REPORT = "/view/daily_scripts_report.html";                # Scripts Daily Report Page
+$URL_VIEW_BACKUP    = '/view/sys/sadm_view_rear.php';                   # Rear Back Status Page
+$URL_REAR_REPORT    = '/view/daily_rear_report.html';                   # Rear Daily Report Page
+$URL_BACKUP_REPORT  = '/view/daily_backup_report.html' ;                # Backup Daily Report Page
+$URL_STORIX_REPORT  = '/view/daily_storix_report.html' ;                # Storix Daily Report Page
+$URL_SCRIPTS_REPORT = '/view/daily_scripts_report.html';                # Scripts Daily Report Page
 $CREATE_BUTTON      = False ;                                           # Yes Display Create Button
 #
-$BACKUP_RCH         = 'sadm_rear_backup.rch';                           # Rear Backup RCH 
-$BACKUP_LOG         = 'sadm_rear_backup.log';                           # Rear Backup Log 
-$BACKUP_ELOG        = 'sadm_rear_backup_e.log';                         # Rear Backup Error LOG 
+#$BACKUP_RCH         = 'sadm_rear_backup.rch';                           # Rear Backup RCH 
+#$BACKUP_LOG         = 'sadm_rear_backup.log';                           # Rear Backup Log 
+#$BACKUP_ELOG        = 'sadm_rear_backup_e.log';                         # Rear Backup Error LOG 
 
 
 #===================================================================================================
-#                              Display SADMIN Main Page Header
+#                              Display Rear backup Status Main Page Header
 #===================================================================================================
-function setup_table() {
+function display_page_heading() { 
 
     echo "\n\n<div id='SimpleTable'>"; 
     
     #echo '<table id="sadmTable" class="display" row-border width="100%">';   
     #echo '<table id="sadmTable" row-border width="100%">';   
     #echo "\n<table class='content-table' width='100%' border=1>\n" ; 
-
     echo "\n<table class='content-table'>\n" ;
 
     echo "\n<thead>";
     echo "\n<tr>";
     echo "\n<th align='center' width=20>No</th>";
-    #echo "\n<th align='left'>System</th>";
-    echo "\n<th width=110 align=left>Name&nbsp;/&nbsp;Arch&nbsp;/&nbsp;Desc.</th>"; 
+    echo "\n<th width=170 align=left>Name&nbsp;/&nbsp;Arch&nbsp;/&nbsp;Desc.</th>"; 
     echo "\n<th align='center'>Last Backup</th>";
     echo "\n<th align='center'>Duration</th>";
     echo "\n<th align='center'>Status</th>";
@@ -174,8 +190,7 @@ function setup_table() {
     echo "\n<tfoot>";
     echo "\n<tr>";
     echo "\n<th align='center' width=20>No</th>";
-    #echo "\n<th align='left'>System</th>";
-    echo "\n<th width=110 align=left>Name&nbsp;/&nbsp;Arch&nbsp;/&nbsp;Desc.</th>"; 
+    echo "\n<th width=170 align=left>Name&nbsp;/&nbsp;Arch&nbsp;/&nbsp;Desc.</th>"; 
     echo "\n<th align='center'>Last Backup</th>";
     echo "\n<th align='center'>Duration</th>";
     echo "\n<th align='center'>Status</th>";
@@ -189,7 +204,6 @@ function setup_table() {
     echo "\n<th align='center'>Prev. Size</th>";
     echo "\n</tr>"; 
     echo "\n</tfoot>\n";
-
     echo "\n<tbody>\n";
 }
 
@@ -198,49 +212,79 @@ function setup_table() {
 
 # Display main page data from the row received in parameter
 #===================================================================================================
-function display_data($result) {
+function display_rear_data() {
     
-    global  $URL_HOST_INFO, $URL_VIEW_FILE, $URL_BACKUP, $URL_VIEW_RCH, $URL_UPDATE,
-            $URL_VIEW_BACKUP, $BACKUP_RCH, $BACKUP_LOG, $BACKUP_ELOG ;
+    global  $URL_HOST_INFO, $URL_VIEW_FILE, $URL_BACKUP, $URL_VIEW_RCH, $URL_UPDATE, $DEBUG,
+            $URL_VIEW_BACKUP, $BACKUP_RCH, $BACKUP_LOG, $BACKUP_ELOG,  $con; 
 
+    # Get all active systems from the SADMIN Database to $result. 
+    $sql = "SELECT * FROM server where srv_active = True order by srv_name;";
+
+    # Database connection object ($con) and the SQL query string ($sql) as parameters. 
+    # Return Values
+    #   The function's behavior depends on the type of query: 
+    #   For SELECT, SHOW, or DESCRIBE: Returns a mysqli_result object on success.
+    #   For INSERT, UPDATE, or DELETE: Returns true on success.
+    #   On Failure: Returns false. 
+    $result=mysqli_query($con,$sql) ;     
+    if (! $result) {                                                    # If no result
+        $err_msg = "<br>Failed to execute sql : " . $sql ;              # Construct msg to user
+        $err_msg = $err_msg . mysqli_error($con) ;                      # Add MySQL Error Msg
+        sadm_fatal_error($err_msg);                                     # Display Error & Go Back
+        exit();  
+    }  
+
+    $NUMROW = mysqli_num_rows($result);                                 # Get Nb of rows returned
+    if ($NUMROW == 0)  {                                                # If No Server found
+        $err_msg = "<br>No active server found in Database";            # Construct msg to user
+        $err_msg = $err_msg . mysqli_error($con) ;                      # Add MySQL Error Msg
+        if ($DEBUG) {                                                   # In Debug Insert SQL in Msg
+            $err_msg = $err_msg . "<br>\nMaybe a problem with SQL Command ?\n" . $query ;
+        }
+        echo "\n\n<br>" . $err_msg ; 
+        sadm_fatal_error($err_msg);                                     # Display Error & Go Back
+        exit();  
+    }
 
     $count = 0;
     $total_seconds = 0 ;                                                # Total execution Time sec.
     $total_count   = 0 ;                                                # Nb execution finished 
     $lowest_time   = 0 ;                                                # Lowest execution time 
     $highest_time  = 0 ;                                                # Highest execution time
-
-
+    
     while ($row = mysqli_fetch_assoc($result)) {                        # Gather Result from Query
-       
         # ReaR do not support MacOS or ARM system (Like Raspberry Pi), go process next system.
         if ((($row['srv_arch']   != "x86_64") and ($row['srv_arch'] != "i686")) 
             or ($row['srv_ostype'] == "darwin")) {
             continue; 
         } 
 
-        $WOS  = $row['srv_osname'];                                     # Save OS Name
-        $WVER = $row['srv_osversion'];                                  # Save OS Version
-
         # Set the Logs, ErrorLog and rch full path name
-        $log_name  = SADM_WWW_DAT_DIR ."/". $row['srv_name'] ."/log/". $row['srv_name'] ."_". $BACKUP_LOG;
-        $elog_name = SADM_WWW_DAT_DIR ."/". $row['srv_name'] ."/log/". $row['srv_name'] ."_". $BACKUP_ELOG ;
-        $rch_name  = SADM_WWW_DAT_DIR ."/". $row['srv_name'] ."/rch/". $row['srv_name'] ."_". $BACKUP_RCH;
+        $sysName =  $row['srv_name']  ;                                  # Save system name 4 later
+        $scriptName = pathinfo(SADM_REAR_BACKUP_SCRIPT, PATHINFO_FILENAME);                          # Script without Extension
+        $log_name  = SADM_WWW_DAT_DIR ."/". $sysName ."/log/". $sysName ."_". $scriptName . ".log" ;
+        $elog_name = SADM_WWW_DAT_DIR ."/". $sysName ."/log/". $sysName ."_". $scriptName . ".elog";
+        $rch_name  = SADM_WWW_DAT_DIR ."/". $sysName ."/rch/". $sysName ."_". $scriptName . ".rch" ;
+        if ($DEBUG) { 
+            echo "\n<br>SADM_REAR_BACKUP_SCRIPT:" . SADM_REAR_BACKUP_SCRIPT ; 
+            echo "\n<br>scriptName             :" . $scriptName ;
+            echo "\n<br>log_filename           :" . $log_name ; 
+            echo "\n<br>elog_filename          :" . $elog_name ; 
+            echo "\n<br>rch filename           :" . $rch_name ; 
+        } 
 
         # Start of row
         echo "\n<tr>\n";  
-        
-        # Line Counter
-        $count+=1;                                                          # Incr system counter
-        echo "\n<td align='center'>" . $count . "</td>";  
+        $count+=1;                                                      # Incr system counter
+        echo "\n<td align='center'>" . $count . "</td>";                # Show line counter
 
 
         # System Name / Architecture / Description
         echo "\n<td>" ;
-        echo "<a href='" .$URL_HOST_INFO. "?sel=" .$row['srv_name']. "' data-toggle='tooltip' title='";
+        echo "<a href='" .$URL_HOST_INFO. "?sel=" .$sysName. "' data-toggle='tooltip' title='";
         echo "Note: " . $row['srv_note']. "\n" ; 
         echo "Model: ". ucfirst(strtolower($row['srv_model'])) ."\nIP: ". $row['srv_ip'] . "'>\n" ;
-        echo $row['srv_name']. "</a>&nbsp;&nbsp;" .$row['srv_arch'] ;
+        echo $sysName. "</a>&nbsp;&nbsp;" .$row['srv_arch'] ;
         echo "\n<br>" . $row['srv_desc'] ;
         echo "\n</td>";   
 
@@ -499,13 +543,13 @@ function display_data($result) {
     # Average script execution time
     $average = $total_seconds / $total_count ;                          # Total Sec. / Nb. execution
     $script_average = sadm_secondsToHHMMSS($average) ;                  # Convert Sec. to HH:MM:SS
-    $script_name = pathinfo($GET_RCHFILE,PATHINFO_FILENAME) ;           # Remove extension of file
+    $script_name = pathinfo($rch_name,PATHINFO_FILENAME) ;           # Remove extension of file
     if ($DEBUG) { 
         echo "\nAverage = $average - total_seconds = $total_seconds"; 
         echo "\nTotal_count = $total_count - Script_average = $script_average";
     } 
     echo "\n<center><b>";
-    echo "Average ReaR backup execution time is $script_average - ";
+    echo "Average execution time is $script_average - ";
     if ( substr($lowestduration, 0, 3) == "00:") {
         $lowestduration= substr($lowestduration,3, strlen($lowestduration));
     }       
@@ -514,6 +558,7 @@ function display_data($result) {
     }       
     echo "(lowest : $lowestduration - highest : $highestduration)";
     echo "</center></b>\n";
+    echo "\n</tbody>\n</table>\n";                                      # End of tbody & table
 }
 
 
@@ -541,21 +586,16 @@ function display_data($result) {
     #    $title2="<a href='" . $URL_REAR_REPORT . "'>View the ReaR Daily Report</a>"; 
     #}     
     
-    $title1="ReaR Backup Status";                                       # Page Title 1
+    $TITLE1 = "ReaR Backup Status";                                     # Main Tile
+    $TITLE2 = "";                                                       # Sub-title 
+    display_lib_heading("NotHome","$TITLE1","$TITLE2",$WVER);           # Display Page Title
+    
+    display_page_heading();                                             # HTML Table/Header/Footer
+    display_rear_data();                                                # Display Rear Backup Data
+
     $title2="<a href='https://relax-and-recover.org'>ReaR</a> support Intel x86 "; 
     $title2="$title2 (32-bit and 64-bit), AMD x86 (64-bit) and PPC64LE architectures"; 
-    display_lib_heading("NotHome","$title1","$title2",$WVER);           # Display Heading
-    
-    # Loop Through Retrieved Data and Display each Row
-    setup_table();                                                      # Create HTML Table/Heading
-    display_data($result);                                              # Display Rear Backup Data
-
-    echo "\n</tbody>\n</table>\n";                                      # End of tbody & table
-
-#    echo "<center>"; 
-#    echo "MacOS & ARM systems aren't shown on this page because they aren't supported by "; 
-#    echo "<a href='https://relax-and-recover.org'>ReaR.</a>"; 
-#    echo "</center>";
+    echo "<center><b>" .$title2 . "</center></b>";
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
     std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>
