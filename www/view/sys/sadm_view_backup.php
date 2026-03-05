@@ -40,6 +40,7 @@
 #@2025_05_29 web v2.7 Backup start up time corrected, was the time of previous to the last backup.
 #@2025_06_20 web v2.8 Modify output when no backup was available.
 #@2025_07_28 web v2.9 Adjust the legend at the bottom of the page.
+#@2026_03_05 web v3.0 Add average execution time statistics.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -113,7 +114,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/lib/sadmPageWrapper.php');    # Headi
 # Local Variables
 #===================================================================================================
 $DEBUG              = False;                                            # Debug Activated True/False
-$WVER               = "2.10";                                           # Current version number
+$WVER               = "3.0";                                           # Current version number
 $URL_CREATE         = '/crud/srv/sadm_server_create.php';               # Create Page URL
 $URL_UPDATE         = '/crud/srv/sadm_server_update.php';               # Update Page URL
 $URL_DELETE         = '/crud/srv/sadm_server_delete.php';               # Delete Page URL
@@ -533,7 +534,7 @@ function display_data($result)
         $highestduration= substr($highestduration,3, strlen($highestduration));
     }       
     echo "\n<center><b>";
-    echo "Average backup execution time is $script_average ";
+    echo "Average execution time is $script_average ";
     echo "(lowest : $lowestduration - highest : $highestduration)";
     echo "</center></b>\n";
 
