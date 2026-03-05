@@ -150,6 +150,8 @@ function display_heading() {
     echo "\n        <th align='center' width=90>Status</th>";
     echo "\n  </tr>";
     echo "\n</tfoot>\n\n";
+
+    echo "\n<tbody>\n";                                                 # Start of Table Body
 }
 
 
@@ -162,12 +164,13 @@ function display_heading() {
 #      2- The RCH File Name (WNAME)
 #      3- The Sorted and Purge RCH File Name (WFILE) file to display 
 # =================================================================================================
-function display_rch_file ($GET_HOSTNAME, $GET_RCHFILE, $SORTED_RCHFILE)
-{
+function display_rch_file ($GET_HOSTNAME, $GET_RCHFILE, $SORTED_RCHFILE) {
+
+    Global $DEBUG;
     if ($DEBUG) {                                                       # Show parameters received
         echo "<br>GET_HOSTNAME   = " . $GET_HOSTNAME ;    
         echo "<br>GET_RCHFILE    = " . $GET_RCHFILE ;    
-        echo "<br>SORTED_RCHFILE = " . $SORDTED_RCHFILE ; 
+        echo "<br>SORTED_RCHFILE = " . $SORTED_RCHFILE ; 
     } 
     
     
@@ -277,7 +280,13 @@ function display_rch_file ($GET_HOSTNAME, $GET_RCHFILE, $SORTED_RCHFILE)
         echo "\nTotal_count = $total_count - Script_average = $script_average";
     } 
     echo "\n<center><b>'$script_name' average execution time is $script_average</center></b>";
-    fclose($fh);
+
+    fclose($fh);                                                        # Close Working RCH file
+
+    # Delete tmp file
+    if (file_exists($SORTED_RCHFILE))  { unlink($SORTED_RCHFILE); }     # Delete Tmp file Sorted
+    
+    echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
     return ;
 }
 
@@ -294,7 +303,7 @@ function display_rch_file ($GET_HOSTNAME, $GET_RCHFILE, $SORTED_RCHFILE)
         if ($DEBUG)  { echo "<br>1st parameter : " . $GET_HOSTNAME; }   # In Debug display RCH Name
         
         # SQL to See if the hostname received is valid.
-        $sql = "SELECT * FROM server where srv_name = '$GET_GET_HOSTNAME' ;";   # Check if in DB 
+        $sql = "SELECT * FROM server where srv_name = '$GET_HOSTNAME' ;";   # Check if in DB 
         if ($DEBUG) { echo "<br>SQL = $sql"; }                          # In Debug Display SQL Stat.
         if ( ! $result=mysqli_query($con,$sql)) {                       # Execute SQL Select
             $err_line = (__LINE__ -1) ;                                 # Error with SQL 
@@ -307,14 +316,19 @@ function display_rch_file ($GET_HOSTNAME, $GET_RCHFILE, $SORTED_RCHFILE)
             $msg = "Host '$GET_HOSTNAME' is not a valid host name.";    # Error Message to user
             sadm_fatal_error($msg);                                     # Display Error & Go Back
         }
+    }else{
+        $msg = "1st parameter is empty (server name missing).";         # In Debug display RCH Name
+        sadm_fatal_error($msg);                                         # Display Error & Go Back
     }
+
 
 
     # (2nd parameter) 
     # Validate that global RCH directory exist (directory where the RCH file reside).
     $GET_RCHFILE = $_GET['filename'];                                   # Extract Filename of RCH
-    if ($DEBUG)  { echo "<br>2nd parameter : " .$GET_RCHFILE; }         # In Debug display RCH Name
-    $DIR = $_SERVER['DOCUMENT_ROOT'] . "/dat/" .$GET_HOSTNAME ."/rch/"; # RCH Host Directory Name
+    if ($DEBUG)  { echo "<br>2nd parameter : " . $GET_RCHFILE; }        # In Debug display RCH Name
+    #$DIR = $_SERVER['DOCUMENT_ROOT'] . "/dat/" .$GET_HOSTNAME ."/rch/"; # RCH Host Directory Name
+    $DIR = dirname($GET_RCHFILE);                                       # RCH Host Directory Name
     if (! is_dir($DIR))  {                                              # If RCH Dir.do not exist
         $msg = "The global RCH directory '" . $DIR . "' does not exist.\n"; 
         $msg = $msg . "No RCH file to display.";                        # Needed to proceed
@@ -323,10 +337,10 @@ function display_rch_file ($GET_HOSTNAME, $GET_RCHFILE, $SORTED_RCHFILE)
 
 
     # If The Rch File Does Not Exist, then advise user and abort page display  .
-    $RCHFILE = $DIR . $GET_RCHFILE ;                                    # Construct Full Path to RCH
-    if ($DEBUG)  { echo "<br>Full path to rch file : $RCHFILE"; }       # Debug print full path RCH
-    if (! file_exists($RCHFILE))  {                                     # If RCH File Not Found
-        $msg = "The requested RCH file '" . $RCHFILE . "' was not found.\n";   # Message to user
+    #$RCHFILE = $DIR . $GET_RCHFILE ;                                    # Construct Full Path to RCH
+    if ($DEBUG)  { echo "<br>Full path to rch file : $GET_RCHFILE"; }       # Debug print full path RCH
+    if (! file_exists($GET_RCHFILE))  {                                     # If RCH File Not Found
+        $msg = "Requested RCH file '" . $GET_RCHFILE . "' wasn't found.\n"; # Message to user
         $msg = $msg . "No RCH file to display.";                        # Needed to proceed
         sadm_fatal_error($msg);                                         # MsgBox to user
     }
@@ -335,21 +349,15 @@ function display_rch_file ($GET_HOSTNAME, $GET_RCHFILE, $SORTED_RCHFILE)
     # Sort the RCH file, with recent date/time first.
     $SORTED_RCHFILE = tempnam ('/tmp/', 'rchfiles_sorted_');            # Create Tmp file Sorted
     if ($DEBUG) { echo "<br>SORTED_RCHFILE : " . $SORTED_RCHFILE ; } 
-    $cmd="sort -t, -rk 1,1 -k 2,2n $RCHFILE > $SORTED_RCHFILE";         # CMD to Sort by date & time
+    $cmd="sort -t, -rk 1,1 -k 2,2n $GET_RCHFILE > $SORTED_RCHFILE";         # CMD to Sort by date & time
     $rchline = system($cmd, $retval);                                   # Execute Sort Command     
     if ($DEBUG) { echo "<br>cmd=$cmd rchline=$rchline retval=$retval"; }
 
     
     # Display Standard page Heading
-    display_lib_heading ("NotHome","[R]esult [C]ode [H]istory Viewer",$RCHFILE,$SVER);      
+    display_lib_heading ("NotHome","[R]esult [C]ode [H]istory Viewer",$GET_RCHFILE,$SVER);      
     display_heading();                                                  # Create Table & Heading
-    echo "\n<tbody>\n";                                                 # Start of Table Body
-
-    
-    # Display the requested RCH file.
     display_rch_file ($GET_HOSTNAME, $GET_RCHFILE, $SORTED_RCHFILE);    # Go Display RCH File
-    #unlink($SORTED_RCHFILE);                                           # Delete Tmp file Sorted
-    
     echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
     std_page_footer($con)                                               # Close MySQL & HTML Footer
