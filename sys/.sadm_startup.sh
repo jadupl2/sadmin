@@ -42,6 +42,7 @@
 #@2024_05_02 startup/shutdown v3.21 Send startup email if 'SADM_EMAIL_STARTUP' = "Y" in sadmin.cfg.
 #@2024_09_12 startup/shutdown v3.22 Change default script description 'SADM_PDESC'.
 #@2025_03_25 startup/shutdown v3.23 Change format of Power ON email to sysadmin.
+#@2026_03_06 startup/shutdown v3.24 Correct typo when an error occur.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x 
@@ -73,7 +74,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.23'                                     # Script version number
+export SADM_VER='3.24'                                     # Script version number
 export SADM_PDESC="Run when the system is started (via sadmin.service)." 
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -160,7 +161,7 @@ main_process()
     rm -f ${SADMIN}/tmp/* >> $SADM_LOG 2>>$SADM_ELOG
 
     sadm_write_log "  Removing SADMIN system monitor lock file ${SADMIN}/sysmon.lock."
-    rm -f ${SADMIN}/sysmon.lock >> "$SADM_LOG" 2>>"$SADM_ELOG"
+    rm -f ${SADMIN}/sysmon.lock >> "$SADM_LOG" 2>>$SADM_ELOG
 
     # Force Date/Time Synchronization at startup with NTP servers (if ntpdate is installed).
     command -v ntpdate >/dev/null 2>&1
