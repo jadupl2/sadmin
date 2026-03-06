@@ -743,7 +743,7 @@ def load_config_file(cfg_file):
         if "SADM_VM_STOP_TIMEOUT"          in CFG_NAME: sadm_vm_stop_timeout         = int(CFG_VALUE)
         if "SADM_VM_START_INTERVAL"        in CFG_NAME: sadm_vm_start_interval       = int(CFG_VALUE)
         if "SADM_VM_EXPORT_DIF"            in CFG_NAME: sadm_vm_export_dif           = int(CFG_VALUE)
-        if "SADM_VM_EXPORT_SCRIPT"         in CFG_NAME: sadm_vm_export_script        = int(CFG_VALUE)
+        if "SADM_VM_EXPORT_SCRIPT"         in CFG_NAME: sadm_vm_export_script        = CFG_VALUE
 # 
         if "SADM_DAYS_HISTORY"             in CFG_NAME: sadm_days_history            = int(CFG_VALUE)
         if "SADM_MAX_ARC_LINE"             in CFG_NAME: sadm_max_arc_line            = int(CFG_VALUE)
