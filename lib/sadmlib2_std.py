@@ -603,7 +603,7 @@ def load_config_file(cfg_file):
     sadm_monthly_backup_to_keep  ,sadm_yearly_backup_to_keep    ,sadm_weekly_backup_day        ,\
     sadm_monthly_backup_date     ,sadm_yearly_backup_month      ,sadm_yearly_backup_date       ,\
     sadm_rear_nfs_server         ,sadm_rear_nfs_mount_point     ,sadm_rear_backup_to_keep      ,\
-    sadm_rear_backup_dif         ,sadm_rear_backup_interval     ,sadm_rear_backup_script       ,\ 
+    sadm_rear_backup_dif         ,sadm_rear_backup_interval     ,sadm_rear_backup_script       ,\
     sadm_network1                ,sadm_network2                 ,sadm_network3                 ,\
     sadm_network4                ,sadm_network5                 ,sadm_monitor_update_interval  ,\
     sadm_monitor_recent_count    ,sadm_monitor_recent_exclude   ,sadm_pid_timeout              ,\
@@ -743,7 +743,7 @@ def load_config_file(cfg_file):
         if "SADM_VM_STOP_TIMEOUT"          in CFG_NAME: sadm_vm_stop_timeout         = int(CFG_VALUE)
         if "SADM_VM_START_INTERVAL"        in CFG_NAME: sadm_vm_start_interval       = int(CFG_VALUE)
         if "SADM_VM_EXPORT_DIF"            in CFG_NAME: sadm_vm_export_dif           = int(CFG_VALUE)
-        if "SADM_VM_EXPORT_SCRIPT"         in CFG_NAME: sadm_vm_export_script        = int(CFG_VALUE)
+        if "SADM_VM_EXPORT_SCRIPT"         in CFG_NAME: sadm_vm_export_script        = CFG_VALUE
 # 
         if "SADM_DAYS_HISTORY"             in CFG_NAME: sadm_days_history            = int(CFG_VALUE)
         if "SADM_MAX_ARC_LINE"             in CFG_NAME: sadm_max_arc_line            = int(CFG_VALUE)
