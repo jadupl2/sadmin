@@ -58,6 +58,7 @@
 # 2023_12_19 lib v3.22 Fix minor problem
 #@2024_05_10 lib v3.23 Add VM export parameters and alert history/archive purge days limit.
 #@2024_12_17 lib v3.24 Add new global variable 'sadm_pwd_random' to auto-generate 'sadmin user' pwd.
+#@2026_03_06 lib v3.25 Show Database info only on the SADMIN server.
 #==================================================================================================
 #
 try :
@@ -92,7 +93,7 @@ except ImportError as e:                                             # If Error 
     sys.exit(1)                                                      # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver        = "3.24"                                                  # Program version no.
+pver        = "3.25"                                                  # Program version no.
 pdesc       = "Demonstrate functions & variables available to developers using SADMIN Tools"
 phostname   = sa.get_hostname()                                      # Get current `hostname -s`
 pdebug      = 0                                                      # Debug level from 0 to 9
@@ -334,8 +335,8 @@ def print_functions():
 def print_python_function():
 #    pdb.set_trace()                                                    # Activate Python Debugging
 
-    (db_conn,db_cur,db_errno,db_errmsg) = sa.db_connect('sadmin')
-    print ("\ndb_conn=%d, db_cur=%d, db_errno=%d, db_errmsg%s\n") % (db_conn,db_cur,db_errno,db_errmsg)
+    #(db_conn,db_cur,db_errno,db_errmsg) = sa.db_connect('sadmin')
+    #print ("\ndb_conn=%d, db_cur=%d, db_errno=%d, db_errmsg%s\n") % (db_conn,db_cur,db_errno,db_errmsg)
     pexample="sa.db_connect('sadmin')"                                  
     pdesc="Open connection to database"                                 # Function Description
     presult="1=Success 1=Error"                                         # Return 3 Value(s)
@@ -1381,10 +1382,10 @@ def cmd_options(argv):
 #
 def main(argv):
     global show_password                                                # Global Variables
-
     (pdebug,show_password) = cmd_options(argv)                          # Analyse cmdline options
     pexit_code = 0                                                      # Pgm Exit Code Default
     sa.start(pver, pdesc)                                               # Initialize SADMIN env.
+
     print_user_variables()                                              # Show User Avail. Variables
     print_functions()                                                   # Display Env. Variables
     print_python_function()                                             # Show Python Specific func.
@@ -1393,8 +1394,9 @@ def main(argv):
     print_directories()                                                 # Show Client Dir. Variables
     print_file_variable()                                               # Show Files Variables
     print_command_path()                                                # Show Command Path
-    if sa.on_sadmin_server() == "Y" :                                   # Only on SADMIN & Use DB
-        print_db_variables()                                            # Show Database Information
+    if (sa.sadm_host_type == "S") :                                     # If on a SADMIN server
+       print_db_variables()                                             # Show Database Information
+
     #print_env()                                                        # Show Env. Variables
     sa.stop(sa.pexit_code)                                              # Close SADM Environment
     sys.exit(sa.pexit_code)                                             # Exit To O/S
