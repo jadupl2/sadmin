@@ -90,6 +90,7 @@
 #@2026_02_07 client v2.26 Add cmdline option -X and change script logic
 #@2026_02_09 client v2.27 Fix chowm error on $SADMIN/www if exist.
 #@2026_02_13 client v2.28 Remove $SADMIN/.git if it exist (not needed in prod).
+#@2026_03_18 client v2.29 Enhance ways to check the status of 'sadmin' user is OK.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -120,7 +121,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.28'                                      # Script version number
+export SADM_VER='2.29'                                      # Script version number
 export SADM_PDESC="Set \$SADMIN owner/group/permission, prune old log,rch files ,check sadmin account."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -220,6 +221,7 @@ generate_password()
 check_sadmin_account()
 {
     sadm_write_log "VERIFYING '$SADM_USER' ACCOUNT STATUS"
+    error_counter=0
 
     # (MacOS) - Don't execute this function under MacOS (Not coded yet)
     if [ "$SADM_OS_TYPE" = "DARWIN" ] 
@@ -261,19 +263,63 @@ check_sadmin_account()
     fi
 
 
-    # User choose to change 'sadmin' user password daily (SADM_PWD_RANDOM=Y in sadmin.cfg)..
-    # The password will be unknown to user (Use 'sudo'or 'su' cmd to access account).
-    # 
-    # We recommend using ssh key authentication mode to connect directly.
-    # -m 0  = Set the minimum number of days between password changes (0 = no minimum).
-    # -M 90 = Set the maximum number of days during which a password is valid (90 Days).
-    # -W 14 = Number of days of warning before a password change is required (14 Days).
-    # -E -1 = Set the date or number of days since January 1, 1970 on which the user's account 
-    #         will no longer be accessible.
-    #         Passing the number -1 as the EXPIRE_DATE will remove an account expiration date.
-    # -I 100  Set the number of days of inactivity after a password has expired before the 
-    #         account is locked. -1= Will not check, never locked.
+
+    # If we need to generate a new password for SADMIN user everytime we run.
+    #   - If user want to give "$SADM_USER" user a random 16 characters password of daily.
+    #       (See "$SADM_PWD_RANDOM" option in $SADMIN/cfg/sadmin.cfg).
+    #   - We rarely uswe password authentication, since we use 'ssh' private/public keys.
     #
+    if [ "$SADM_PWD_RANDOM" = "Y" ] && [ "$(sadm_get_ostype)" = "LINUX" ] # User want new pwd daily
+        then sadm_write_log "  - 'SADM_PWD_RANDOM' is set to 'Y' in 'SADMIN' config file."
+             sadm_write_log "  - Random password generation is activated for user '$SADM_USER'." 
+             sadm_write_log "  - A new random password will be assign to user '${SADM_USER}'."
+             random_pwd=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16; echo)  # Generate random pwd
+             echo "${SADM_USER}:${random_pwd}" | chpasswd               # Change sadmin password
+             if [ $? -ne 0 ]                                            # If error when pwd change
+                then sadm_write_err "[ ERROR ] ${SADM_USER}:${random_pwd} |chpasswd " 
+                     ((error_counter++))                                # Increment Error by 1
+                     return $error_counter                              # Return to caller
+             fi 
+    fi 
+
+    # Check if the account is locked
+    if passwd -S "$SADM_USER" | grep -q " L " 
+        then sadm_write_error "Account '$SADM_USER' is locked."
+             passwd -u $SADM_USER   >/dev/null 2>&1                     # MakeSure acc. is unlock
+             if [ $? -ne 0 ]                                            # If did not work
+                then sadm_write_err "[ ERROR ] passwd -u $SADM_USER"    # Advise user
+                     ((error_counter++))                                # Increment Error by 1
+                     return $error_counter                              # Return to caller
+             fi 
+             sadm_write_err "  - Password of '$SADM_USER' changed and unlocked."
+        else sadm_write_log "  - Account '$SADM_USER' is not locked."
+    fi
+
+    # Check if password is expired
+    if passwd -S "$SADM_USER" | grep -q " E "                           # If passworrd is expire
+        then sadm_write_error "  - User '$SADM_USER' password is expired."          
+             ((error_counter++))                                        # Increment Error by 1
+             return $error_counter                                      # Return to caller
+        else sadm_write_err "  - User '$SADM_USER' password is not expired."
+    fi
+
+    # Check if account is inactive
+    inactive_days=$(chage -l "$SADM_USER" | grep "Account expires" | awk -F: '{print $2}' | xargs)
+    if [ "$inactive_days" == "never" ]
+        then sadm_write_log "  - Account '$SADM_USER' is not inactive."
+        else sadm_write_err "  - Account '$SADM_USER is inactive or will expire on: $inactive_days"
+             ((error_counter++))                                        # Increment Error by 1
+             return $error_counter                                      # Return to caller
+    fi
+    
+ 
+    # Check if account has expired
+    if chage -l "$SADM_USER" | grep "Account expires" | grep -q "never" 
+        then sadm_write_log "  - Account '$SADM_USER not expired."
+        else account_expiry=$(chage -l "$SADM_USER" | grep "Account expires" | awk -F: '{print $2}' | xargs)
+             sadm_write_err "  - Account expired on: $account_expiry"
+    fi
+    
 
     # Set Standard for the SADMIN Account
     #   -d, --lastday LAST_DAY        set date of last password change to LAST_DAY
@@ -293,122 +339,13 @@ check_sadmin_account()
     #    if [ "$(sadm_get_ostype)" = "LINUX" ] ; then chage -m 0 -M 90 -W 14 -E -1 -I 100 $SADM_USER ; fi 
     # 
     #    Actual
-    #    root@rhel9:~ # chage -m 0 -M 90 -W 14 -E -1 -I 100 sadmin
+    #       - # chage -m 0 -M 90 -W 14 -E -1 -I 100 sadmin
     # 
-    if [ "$(sadm_get_ostype)" = "LINUX" ] ; then chage -m 0 -M 90 -W 14 -E -1 -I 100 $SADM_USER ; fi 
-
-
-    # If we need to generate a new password for SADMIN user
-    # If user want to give "$SADM_USER" a random 16 characters password of daily.
-    # (See "$SADM_PWD_RANDOM" option in $SADMIN/cfg/sadmin.cfg).
-    # Since we use ssh private/public keys for the authentication, we rarely use password.
-    if [ "$SADM_PWD_RANDOM" = "Y" ]                                     # If user want new pwd daily
-        then random_pwd=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16; echo)  # Generate random pwd
-             echo "${SADM_USER}:${random_pwd}" | chpasswd               # Assign pwd to sadmin
+    if [ "$(sadm_get_ostype)" = "LINUX" ] 
+        then chage -m 0 -M 90 -W 14 -E -1 -I 100 $SADM_USER 
              if [ $? -ne 0 ] 
-                then sadm_write_err "[ ERROR ] ${SADM_USER}:${random_pwd} |chpasswd " 
-                     ((error_counter++))                                # Increment Error by 1
-                     return $error_counter 
-             fi 
-             passwd -u $SADM_USER   >/dev/null 2>&1                     # MakeSure acc. is unlock
-             if [ $? -ne 0 ] ; then sadm_write_err "[ ERROR ] passwd -u $SADM_USER" ; return 1 ; fi 
-             if [ "$SADM_DEBUG" -ne 0 ] 
-                 then sadm_write_log "  - 'SADM_PWD_RANDOM' is set to 'Y' in SADMIN config file."
-             fi
-             sadm_write_log "  - Random password generation is activated for user '$SADM_USER'." 
-             sadm_write_log "  - A new random password have been assigned to user '${SADM_USER}'."
-             return $error_counter                                      # Error counter to caller
-    fi 
-
-
-    # Check if sadmin account is lock.
-    # 'passwd -S sadmin', display account status information. 
-    # The status information consists of 7 fields. 
-    #   1-  The first field is the user's login name. 
-    #   2-  The second field indicates if the user account has a locked password (L or LK), 
-    #       has no password (NP),or has a usable password (P), and (PS) password set.
-    #   3-  The third field is the date of the last password change. 
-    #   4-7 The next four fields are the minimum age, maximum age, warning period, and inactivity 
-    #       period for the password. These ages are expressed in days.
-    #
-    # Example : passwd -S sadmin
-    #    sadmin P 1970-01-01 0 99999 7 -1
-    #
-    error_counter=0
-    sadm_write_log "Check if user '$SADM_USER' is lock." 
-    acc_status=$(passwd -S $SADM_USER | awk '{ print $2 }')             # Get Account status
-    case $acc_status in
-        L|LK)   sadm_write_err "  - Account '$SADM_USER' is lock with status '$acc_status'." 
-                if [ "$SADM_PWD_RANDOM" = "Y" ]                         # If random passwd needed
-                    then generate_password                              # Generate random passwd
-                         if [ $? -ne 0 ]                                # Error generating password
-                             then sadm_write_err "[ ERROR ] Error generating $SADM_USER password."
-                                  sadm_write_err "User '$SADM_USER' require attention, check aging."
-                                  chage -l $SADM_USER >> $SADM_LOG 2>&1
-                                  ((error_counter++))                   # Increment Error by 1
-                         fi 
-                    else ((error_counter++))                            # Increment Error by 1
-                fi                 
-                ;;           
-        NP)     sadm_write_err "  - Account '$SADM_USER' have no password, status is '$acc_status'." 
-                if [ "$SADM_PWD_RANDOM" = "Y" ]                         # If random passwd needed
-                    then generate_password                              # Generate random passwd
-                         if [ $? -ne 0 ]                                # Error generating password
-                             then sadm_write_err "[ ERROR ] Error generating $SADM_USER password."
-                                  sadm_write_err "User '$SADM_USER' require attention, check aging."
-                                  chage -l $SADM_USER >> $SADM_LOG 2>&1
-                                  ((error_counter++))                   # Increment Error by 1
-                         fi 
-                    else ((error_counter++))                            # Increment Error by 1
-                fi
-                ;;
-        P|PS)   sadm_write_log "  - Valid password for account '$SADM_USER' status is '$acc_status'." 
-                ;;
-            *)  sadm_write_err "Unknown '$SADM_USER' user state, status is '$acc_status'."
-                ((error_counter++))                                     # Increment Error by 1
-                ;;
-    esac   
-
-
-    # Field # 3 in /etc/shadow : 
-    #   - Is the date of the last password change, expressed as the number of days since Jan 1,1970. 
-    #   - A '0' has a special meaning, it force user to change password at the next login.
-    #   - An empty field means that password aging features are disabled.
-    last_passwd_change=$(grep $SADM_USER /etc/shadow | awk -F\: '{ print $3 }')
-    if [ "$last_passwd_change" = "0" ]
-        then sadm_write_err "  - The password of '$SADM_USER' user need to be change." 
-             sadm_write_err "  - The 'sadmin' cron jobs may not run if you don't change it."
-             if [ "$SADM_PWD_RANDOM" = "Y" ]                            # If random passwd needed
-                then generate_password                                  # Generate random passwd
-                     if [ $? -ne 0 ]                                    # Error generating password
-                         then sadm_write_err "[ ERROR ] Error generating $SADM_USER password."
-                              sadm_write_err "User '$SADM_USER' require attention, check aging."
-                              chage -l $SADM_USER >> $SADM_LOG 2>&1
-                              ((error_counter++))                       # Increment Error by 1
-                     fi 
-                else ((error_counter++))                                # Increment Error by 1
-             fi 
-    fi 
-
-
-    # Get password expire date & convert it to epoch time and check if pwd expiry date < today.
-    pwd_expire_date=$(chage -l $SADM_USER | grep -i '^Password expires' | awk -F\: '{ print $NF }')
-    pwd_expire_date=$(echo "$pwd_expire_date" | tr "-" ".")             # Replace dash with dot
-    pwd_expire_epoch=$(sadm_date_to_epoch "$pwd_expire_date 00:00:00")  # Expiry date to Epoch time
-    cur_epoch_time=$(sadm_get_epoch_time)                               # Get Current date to Epoch
-    if [ "$pwd_expire_epoch" -lt "$cur_epoch_time" ]                    # If password expired
-        then sadm_write_err "  - The password of '$SADM_USER' user is expired." 
-             sadm_write_err "  - The 'sadmin' cron jobs may not run if you don't change it."
-             if [ "$SADM_PWD_RANDOM" = "Y" ]                            # If random passwd is OK 
-                then generate_password                                  # Generate random passwd
-                     if [ $? -ne 0 ]                                    # Error generating password
-                         then sadm_write_err "[ ERROR ] Error generating $SADM_USER password."
-                              sadm_write_err "User '$SADM_USER' require attention, check aging."
-                              chage -l $SADM_USER >> $SADM_LOG 2>&1
-                              ((error_counter++))                       # Increment Error by 1
-                     fi 
-                else ((error_counter++))                                # Increment Error by 1
-             fi
+                then sadm_write_err "[ ERROR ] Could not set $SADM_USER account 'chage $SADM_USER' standard."
+             fi              
     fi 
 
     if [ $error_counter -eq 0 ] ; then sadm_write_log "  - Account '$SADM_USER' in valid." ;fi
