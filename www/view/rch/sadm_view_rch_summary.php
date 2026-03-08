@@ -40,6 +40,7 @@
 # 2022_09_05 web v2.12 Scripts status page - Add [doc] & [elog] link to view error log (if exist).
 # 2023_02_14 web v2.13 Scripts status page - Remove 'sadm_nmon_watcher' from list if not in error.
 #@2025_05_07 web v2.14 Scripts status page - Enhance Web Page Layout.
+#@2026_03_07 web v2.15 Allow more space to system name
 
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -61,6 +62,47 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
         } );
     } );
 </script>
+<style>
+.content-table {
+    border-collapse: collapse ;
+    margin: 25px 0; 
+    font-size: 0.9em;
+    min-width: 400px;
+    width: 100%;
+    border-radius: 5px 5px 0 0 ; 
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0,0,0.15);
+}
+
+.content-table thead tr {
+    background-color: #009879;
+    color: #ffffff;
+    text-align: left;
+    font-weight: bold;
+}
+
+.content-table th,
+.content-table td {
+    padding-top: 4px;
+    padding-bottom: 4px;
+    padding-left: 6px;
+    padding-right: 6px;
+}
+
+.content-table tbody tr {
+    border-bottom: 1px solid #dddddd;
+}
+
+.content-table tbody tr:nthof-type(even) {
+    background-color: #f3f3f3;
+}
+
+.content-table tbody tr.active-row {
+    font-weight : bold;
+    color: #009879;
+}
+</style>
+
 <?php
 
 
@@ -70,7 +112,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG              = False ;                                           # Debug Activated True/False
-$SVER               = "2.14" ;                                           # Current version number
+$SVER               = "2.15" ;                                           # Current version number
 $CREATE_BUTTON      = False ;                                           # Yes Display Create Button
 $URL_HOST_INFO      = '/view/srv/sadm_view_server_info.php';            # Display Host Info URL
 $URL_VIEW_RCH       = '/view/rch/sadm_view_rchfile.php';                # View RCH File Content URL
@@ -82,43 +124,49 @@ $URL_SCRIPTS_REPORT = "/view/daily_scripts_report.html";                # Script
 $URL_WEB            = "https://sadmin.ca/";                             # Main Site URL 
 
 
-# ==================================================================================================
+
+
 # SETUP TABLE HEADER AND FOOTER
 # ==================================================================================================
 function setup_table() {
-    echo "\n<br>\n";
+
     
     # TABLE CREATION
+    echo "\n<br>\n";
     echo "\n<div id='SimpleTable'>";                                      # Width Given to Table
-    echo "\n<table id='sadmTable' border=1 class='display' cell-border compact row-border wrap width='100%'>";
+    #echo "\n<table id='sadmTable' border=1 class='display' cell-border compact row-border wrap width='100%'>";
+    #echo "\n<table id='sadmTable' border=1 cell-border row-border width='100%'>";
+    echo "<table class='content-table' border=1>\n" ; 
+
+    #echo "<div id='MyTable'>\n"; 
+    #echo "<table class='content-table' border=1>\n" ; 
+   
     
     # PAGE TABLE HEADING 
     echo "\n<thead>\n";
     echo "<tr>\n";
-    echo "<th width=120 align='center'>System</th>\n";
+    echo "<th width=170 align='center'>System</th>\n";
     echo "<th width=120 align='left'>Script Name / log / rch</th>\n";
-    echo "<th class='dt-center'>Start Time</th>\n";
-    echo "<th class='dt-center'>End Time</th>\n";
-    echo "<th class='dt-center'>Duration</th>\n";
-    echo "<th class='dt-head-center'>Alert Group</th>\n";
-    echo "<th class='dt-head-center'>Alert Type</th>\n";
-    echo "<th class='dt-head-left'>Status</th>\n"; 
-    #echo "<th class='text-center'>Log&nbsp;&&nbsp;History</th>\n";
+    echo "<th width=85  align='center'>Start Time</th>\n";
+    echo "<th width=85  align='center'>End Time</th>\n";
+    echo "<th width=60  align='center'>Duration</th>\n";
+    echo "<th width=80  align='center'>Alert Group</th>\n";
+    echo "<th width=80  align='center'>Alert Type</th>\n";
+    echo "<th width=80  align='center'>Status</th>\n"; 
     echo "</tr>\n";
     echo "</thead>\n";
 
     # PAGE TABLE FOOTER
     echo "<tfoot>\n";
     echo "<tr>\n";
-    echo "<th width=120 align='center'>System</th>\n";
+    echo "<th width=170 align='center'>System</th>\n";
     echo "<th width=120 align='left'>Script Name / log / rch</th>\n";
-    echo "<th class='dt-center'>Start Time</th>\n";
-    echo "<th class='dt-center'>End Time</th>\n";
-    echo "<th class='dt-center'>Duration</th>\n";
-    echo "<th class='dt-head-center'>Alert Group</th>\n";
-    echo "<th class='dt-head-center'>Alert Type</th>\n";
-    echo "<th class='dt-head-left'>Status</th>\n"; 
-    #echo "<th class='text-center'>Log&nbsp;&&nbsp;History</th>\n";
+    echo "<th width=85  align='center'>Start Time</th>\n";
+    echo "<th width=85  align='center'>End Time</th>\n";
+    echo "<th width=60  align='center'>Duration</th>\n";
+    echo "<th width=80  align='center'>Alert Group</th>\n";
+    echo "<th width=80  align='center'>Alert Type</th>\n";
+    echo "<th width=80  align='center'>Status</th>\n"; 
     echo "</tr>\n";
     echo "</tfoot>\n";
 
@@ -164,7 +212,7 @@ function display_script_array($con,$wpage_type,$script_array) {
             echo "</td>" ;
 
             # Display Script Name
-            echo "\n<td class='dt-left'>"   . $cname . "<br>" ;                  # Script Name Cell
+            echo "\n<td align='left'>"   . $cname . "<br>" ;                  # Script Name Cell
             # Display links to access the log file (If exist)
             $LOGFILE = trim("${cserver}_${cname}.log");                 # Add .log to Script Name
             $log_name = SADM_WWW_DAT_DIR . "/" . $cserver . "/log/" . $LOGFILE ;
@@ -221,7 +269,7 @@ function display_script_array($con,$wpage_type,$script_array) {
             list($calert, $alert_group_type, $stooltip) = get_alert_group_data ($calert) ;
             
             # Show Alert Group with Tooltip
-            echo "\n<td class='dt-center'>";
+            echo "\n<td align='center'>";
             echo "<span data-toggle='tooltip' title='" . $stooltip . "'>"; 
             echo $calert . "</span>(" . $alert_group_type . ")</td>"; 
 
@@ -250,13 +298,13 @@ function display_script_array($con,$wpage_type,$script_array) {
                     $etooltip="SADM_ALERT set to ($alert_type) in script " . $cname ;
                     break;
             }        
-            echo "\n<td class='dt-center'>";
+            echo "\n<td align='center'>";
             echo "<span data-toggle='tooltip' title='" . $etooltip . "'>"; 
             echo $alert_type_msg . "</span></td>"; 
 
     
             # DISPLAY THE SCRIPT STATUS BASED ON RETURN CODE ---------------------------------------
-            echo "\n<td class='dt-center'><strong>";
+            echo "\n<td align='center'><strong>";
             switch ($ccode) {
                 case 0:  
                     echo "<font color='black'>Success</font></strong></td>";
