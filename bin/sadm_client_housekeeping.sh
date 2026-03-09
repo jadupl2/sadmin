@@ -185,33 +185,6 @@ show_usage()
 
 
 
-# --------------------------------------------------------------------------------------------------
-#  Set 'sadmin' user with a new generated password & account standard setting. 
-# --------------------------------------------------------------------------------------------------
-generate_password()
-{
-    chage -m 0 -M 30 -W 10 -E -1 -I -1 $SADM_USER              # Setup standard for sadmin
-    random_pwd=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16; echo)  # Generate random pwd
-    echo "${SADM_USER}:${random_pwd}" | chpasswd >> "$SADM_LOG" 2>&1 # Assign pwd to sadmin
-    if [ $? -ne 0 ] 
-       then sadm_write_err "[ ERROR ] ${SADM_USER}:${random_pwd} |chpasswd " 
-            ((error_counter++))                                # Increment Error by 1
-            return $error_counter 
-    fi 
-
-#    random_pwd=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16; echo)     # Generate random password
-#    echo "${SADM_USER}:${random_pwd}" | chpasswd >> "$SADM_LOG" 2>&1    # Assign password to user
-#    passwd -u   $SADM_USER   >> $SADM_LOG 2>&1                          # Unlock user. 
-#    chage -m 5  $SADM_USER                                              # 5 days before change again
-#    chage -M 90 $SADM_USER                                              # password valid for 90 days
-#    chage -W 10 $SADM_USER                                              # Warn 10 days before expire
-#    chage -E -1 $SADM_USER                                              # Account expires to never
-#    chage -I -1 $SADM_USER                                              # Password inactive to never
-    sadm_write_log "  - Value of 'SADM_PWD_RANDOM' is set to 'Y' in sadmin.cfg." 
-    sadm_write_log "  - Random password generation is activated for user '$SADM_USER'." 
-    sadm_write_log "  - A new random password have been assigned to user '${SADM_USER}'."
-}
-
 
 
 
@@ -269,6 +242,9 @@ check_sadmin_account()
     #       (See "$SADM_PWD_RANDOM" option in $SADMIN/cfg/sadmin.cfg).
     #   - We rarely uswe password authentication, since we use 'ssh' private/public keys.
     #
+    sadm_write_log "chage -l $SADM_USER"
+    chage -l "$SADM_USER" >> $SADM_LOG 2>&1
+    
     if [ "$SADM_PWD_RANDOM" = "Y" ] && [ "$(sadm_get_ostype)" = "LINUX" ] # User want new pwd daily
         then sadm_write_log "  - 'SADM_PWD_RANDOM' is set to 'Y' in 'SADMIN' config file."
              sadm_write_log "  - Random password generation is activated for user '$SADM_USER'." 
@@ -347,8 +323,10 @@ check_sadmin_account()
                 then sadm_write_err "[ ERROR ] Could not set $SADM_USER account 'chage $SADM_USER' standard."
              fi              
     fi 
+    sadm_write_log "chage -l $SADM_USER"
+    chage -l "$SADM_USER" >> $SADM_LOG 2>&1
 
-    if [ $error_counter -eq 0 ] ; then sadm_write_log "  - Account '$SADM_USER' in valid." ;fi
+    if [ $error_counter -eq 0 ] ; then sadm_write_log "  - Account '$SADM_USER' in OK." ;fi
     return $error_counter
 }
 
