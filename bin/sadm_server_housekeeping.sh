@@ -50,6 +50,7 @@
 #@2025_01_04 server v2.24 Also apply removal policy of old .rch, log and *.nmon  in $SADMIN/www/dat.
 #@2025_04_01 server v2.25 Delete any *.lock older than 1 day in $SADMIN.
 #@2026_02_07 server v2.26 Code enhancement.
+#@2026_03_09 server v2.27 Change Owner of Database backup.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
@@ -79,7 +80,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.26'                                     # Script version number
+export SADM_VER='2.27'                                     # Script version number
 export SADM_PDESC="Move alert old alert to history archive and set permission in www directories."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -148,20 +149,22 @@ show_usage()
 # --------------------------------------------------------------------------------------------------
 alert_housekeeping()
 {
-    sadm_write_log "ARCHIVING OF ALERTS"
+    sadm_write_log "---------------------------"
+    sadm_write_log "Archiving Of Notifications:"
+    sadm_write_log "---------------------------"
 
     sadm_write_log "Before moving alerts older than $SADM_DAYS_HISTORY days from the alert history file to the alert archive file."
-    sadm_write_log "Alert history file : '$SADM_ALERT_HIST' have $(wc -l $SADM_ALERT_HIST | cut -d' ' -f1) lines."
-    sadm_write_log "Alert archive file : '$SADM_ALERT_ARC' have $(wc -l $SADM_ALERT_ARC  | cut -d' ' -f1) lines."
+    sadm_write_log "Notification history file : '$SADM_ALERT_HIST' have $(wc -l $SADM_ALERT_HIST | cut -d' ' -f1) lines."
+    sadm_write_log "Notification archive file : '$SADM_ALERT_ARC' have $(wc -l $SADM_ALERT_ARC  | cut -d' ' -f1) lines."
 
     # If history archive file doesn't exist, create it.
     if [ ! -f "$SADM_ALERT_ARC" ]                                       # If Archive file not found
-        then sadm_write_log "Alert archive file doesn't exist.'$SADM_ALERT_ARC'." 
+        then sadm_write_log "Notification archive file doesn't exist.'$SADM_ALERT_ARC'." 
              if [ -f $SADM_ALERT_ARCINI ]                               # Alert arc. template exist 
-                then sadm_write_log "Using alert archive template to create initial alert archive." 
+                then sadm_write_log "Using notification archive template to create initial archive." 
                      sadm_write_log "cp $SADM_ALERT_ARCINI $SADM_ALERT_ARC" 
                      cp $SADM_ALERT_ARCINI $SADM_ALERT_ARC              # Use alert archive template
-                else sadm_write_log "No alert archive template, creating an empty alert archive." 
+                else sadm_write_log "No notification archive template, creating an empty archive." 
                      sadm_write_log "touch $SADM_ALERT_ARC" 
                      touch $SADM_ALERT_ARC                              # Not template=Empty arch.
                      touch $SADM_ALERT_ARC                              # Not template=Empty arch.
@@ -217,12 +220,11 @@ alert_housekeeping()
     chmod 664 $SADM_ALERT_HIST
     chown $SADM_USER:$SADM_GROUP $SADM_ALERT_HIST
 
-    sadm_write_log " "
-    sadm_write_log "After moving alert older than $SADM_DAYS_HISTORY days from the alert history file to the alert archive file."
+    #sadm_write_log " "
+    sadm_write_log "After moving notification older than $SADM_DAYS_HISTORY days from the notification history file to the notification  archive file."
     sadm_write_log "Alert history file : '$SADM_ALERT_HIST' have $(wc -l $SADM_ALERT_HIST | cut -d' ' -f1) lines."
     sadm_write_log "Alert archive file : '$SADM_ALERT_ARC' have $(wc -l $SADM_ALERT_ARC  | cut -d' ' -f1) lines."
-
-    sadm_write_log "Trimming alert archive file to a maximum of $SADM_MAX_ARC_LINE lines." 
+    sadm_write_log "Trimming notification archive file to a maximum of $SADM_MAX_ARC_LINE lines." 
     sadm_trimfile "$SADM_ALERT_ARC" "$SADM_MAX_ARC_LINE"
 }
 
@@ -269,14 +271,19 @@ set_file()
 dir_housekeeping()
 {
     sadm_write_log ""
-    sadm_write_log "SERVER DIRECTORIES HOUSEKEEPING"
-    if [ ! -d "$SADM_WWW_DIR" ] 
-        then sadm_write_err "[ ERROR ] Directory '$SADM_WWW_DIR' doesn't exist." 
+    sadm_write_log ""
+    sadm_write_log "-------------------------------"
+    sadm_write_log "Server Directories Housekeeping"
+    sadm_write_log "-------------------------------"
+
+    # Check if $SADMIN/www exist
+    if [ ! -d "$SADM_WWW_DIR" ]                                         # If doesn't exist
+        then sadm_write_err "[ ERROR ] Directory '$SADM_WWW_DIR' doesn't exist ?" 
              sadm_write_err "[ ERROR ] You may not be on the SADMIN server." 
              return 1
     fi 
 
-    # ALL directories in $SADMIN/www must be 775 
+    # All directories in $SADMIN/www must be 775 
     CMD="find $SADM_WWW_DIR -type d -exec chmod -R 775 {} \;"
     find $SADM_WWW_DIR -type d -exec chmod -R 775 {} \; >/dev/null 2>&1
     if [ $? -ne 0 ]
@@ -325,8 +332,20 @@ dir_housekeeping()
        else sadm_write_log "[ OK ] ${CMD}"
     fi
     
+
     # Change permission on all files in $SADMIN/www/dat to 664
     CMD="find $SADM_WWW_DAT_DIR -type f -exec chmod 0664 {} \;"
+    f=$(mktemp) ; { eval "$CMD" ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; RC=$(cat $f) 
+    RC=$?                                                               # Save rsync Exit Code 
+    if [ $RC -ne 0 ]                                                    # Complete with no Error ?
+       then sadm_write_err "[ ERROR ] running ${CMD}."
+            ((ERROR_COUNT++))
+       else sadm_write_log "[ OK ] ${CMD}"
+    fi
+    
+    
+    # Database Backup : Change permission on all files in $SADMIN/dat/dbb to 664
+    CMD="find $SADM_DBB_DIR -type f -exec chmod 0664 {} \;"
     f=$(mktemp) ; { eval "$CMD" ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; RC=$(cat $f) 
     RC=$?                                                               # Save rsync Exit Code 
     if [ $RC -ne 0 ]                                                    # Complete with no Error ?
@@ -335,9 +354,23 @@ dir_housekeeping()
        else sadm_write_log "[ OK ] ${CMD}"
     fi
     
-    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at ${ERROR_COUNT}." ;fi
+    # Database Backup : Make sure all files belongs to "$SADM_USER:$SADM_GROUP" define in sadmin.cfg
+    CMD="find $SADM_DBB_DIR -type f -exec chown $SADM_USER:$SADM_GROUP {} \;"
+    f=$(mktemp) ; { eval "$CMD" ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; RC=$(cat $f) 
+    RC=$?                                                               # Save rsync Exit Code 
+    if [ $RC -ne 0 ]                                                    # Complete with no Error ?
+       then sadm_write_err "[ ERROR ] running ${CMD}"
+            ((ERROR_COUNT++))
+       else sadm_write_log "[ OK ] ${CMD}"
+    fi
+    
+    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total error count at ${ERROR_COUNT}." ;fi
     return $ERROR_COUNT
 }
+
+
+
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -346,7 +379,10 @@ dir_housekeeping()
 files_housekeeping()
 {
     sadm_write_log " "
-    sadm_write_log "SERVER FILES HOUSEKEEPING. "
+    sadm_write_log " "
+    sadm_write_log "-------------------------------"
+    sadm_write_log "Server Files Housekeeping"
+    sadm_write_log "-------------------------------"
 
     # Make sure crontab for SADMIN server have proper permission and owner
     sadm_write_log "Make sure SADMIN crontab file have proper permission and owner"
