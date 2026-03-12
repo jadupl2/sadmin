@@ -111,7 +111,7 @@ define("SADM_WWW_DIR"      , SADM_BASE_DIR . "/www");                   # Web Si
 define("SADM_WWW_DOC_DIR"  , SADM_WWW_DIR  . "/doc");                   # Web server Doc Dir
 define("SADM_WWW_CFG_DIR"  , SADM_WWW_DIR  . "/cfg");                   # Web Server CFG Dir
 define("SADM_WWW_DAT_DIR"  , SADM_WWW_DIR  . "/dat");                   # Web Server Data Dir
-define("SADM_WWW_ARC_DIR"  , SADM_WWW_DAT_DIR  . "/archive");           # Web Server Archive Dir
+define("SADM_WWW_ARC_DIR"  , SADM_WWW_DAT_DIR  . "/archive");           # Archive When System Remove   
 define("SADM_WWW_LIB_DIR"  , SADM_WWW_DIR  . "/lib");                   # Web Server Library Dir
 define("SADM_WWW_RRD_DIR"  , SADM_WWW_DIR  . "/rrd");                   # Web servers RRD Dir
 define("SADM_WWW_TMP_DIR"  , SADM_WWW_DIR  . "/tmp");                   # Web Server Temp Dir
