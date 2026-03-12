@@ -1,15 +1,19 @@
 # --------------------------------------------------------------------------------------------------
-# SADMIN Service Definition V2.7 (Updated April 2024)
-# If you modify this file, run these commands to make your change effective.
-#   Enter   'systemctl disable sadmin.service' 
-#           'systemctl enable  sadmin.service'
-#           'systemctl restart sadmin.service' 
-# --------------------------------------------------------------------------------------------------
+# SADMIN Service Definition V2.8 (Updated March 2026)
+#   If service is enabled : 
+#       - It will execute $SADMIN/sys/sadm_startup.sh when system start.
+#       - It will execute $SADMIN/sys/sadm_shutdown.sh when system shutdown.
 #
+# If you modify this file, run these commands to make your change effective.
+#   Enter   'systemctl enable  sadmin.service'
+#           'systemctl restart sadmin.service' 
+#           'systemctl is-enabled sadmin'...
+# --------------------------------------------------------------------------------------------------
+
 [Unit]
-Description=Execute SADMIN stop/start script.
-Requires=multi-user.target
-After=multi-user.target
+Description=SADMIN system startup and shutdown script.
+Requires=network-online.target
+After=network-online.target
 DefaultDependencies=no
 Before=shutdown.target poweroff.target reboot.target halt.target
 
@@ -17,7 +21,8 @@ Before=shutdown.target poweroff.target reboot.target halt.target
 Type=oneshot
 ExecStart=/bin/bash -a -c 'source /etc/environment && exec $SADMIN/sys/sadm_startup.sh'
 ExecStop=/bin/bash  -a -c 'source /etc/environment && exec $SADMIN/sys/sadm_shutdown.sh'
-RemainAfterExit=yes
+RemainAfterExit=true
 
 [Install]
 WantedBy=multi-user.target
+
