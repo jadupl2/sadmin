@@ -41,6 +41,7 @@
 # 2023_02_14 web v2.13 Scripts status page - Remove 'sadm_nmon_watcher' from list if not in error.
 #@2025_05_07 web v2.14 Scripts status page - Enhance Web Page Layout.
 #@2026_03_07 web v2.15 Allow more space to system name
+#@2026_03_12 web v2.16 More space width adjustement.
 
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -112,7 +113,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG              = False ;                                           # Debug Activated True/False
-$SVER               = "2.15" ;                                           # Current version number
+$SVER               = "2.16" ;                                           # Current version number
 $CREATE_BUTTON      = False ;                                           # Yes Display Create Button
 $URL_HOST_INFO      = '/view/srv/sadm_view_server_info.php';            # Display Host Info URL
 $URL_VIEW_RCH       = '/view/rch/sadm_view_rchfile.php';                # View RCH File Content URL
@@ -135,8 +136,8 @@ function setup_table() {
     echo "\n<br>\n";
     echo "\n<div id='SimpleTable'>";                                      # Width Given to Table
     #echo "\n<table id='sadmTable' border=1 class='display' cell-border compact row-border wrap width='100%'>";
-    #echo "\n<table id='sadmTable' border=1 cell-border row-border width='100%'>";
-    echo "<table class='content-table' border=1>\n" ; 
+    echo "\n<table id='sadmTable' border=1 cell-border row-border width='100%'>";
+#echo "<table class='content-table' border=1>\n" ; 
 
     #echo "<div id='MyTable'>\n"; 
     #echo "<table class='content-table' border=1>\n" ; 
@@ -150,8 +151,8 @@ function setup_table() {
     echo "<th width=85  align='center'>Start Time</th>\n";
     echo "<th width=85  align='center'>End Time</th>\n";
     echo "<th width=60  align='center'>Duration</th>\n";
-    echo "<th width=80  align='center'>Alert Group</th>\n";
-    echo "<th width=80  align='center'>Alert Type</th>\n";
+    echo "<th width=80  align='center'>Notification Group</th>\n";
+    echo "<th width=80  align='center'>Notification Type</th>\n";
     echo "<th width=80  align='center'>Status</th>\n"; 
     echo "</tr>\n";
     echo "</thead>\n";
@@ -164,8 +165,8 @@ function setup_table() {
     echo "<th width=85  align='center'>Start Time</th>\n";
     echo "<th width=85  align='center'>End Time</th>\n";
     echo "<th width=60  align='center'>Duration</th>\n";
-    echo "<th width=80  align='center'>Alert Group</th>\n";
-    echo "<th width=80  align='center'>Alert Type</th>\n";
+    echo "<th width=80  align='center'>Notification Group</th>\n";
+    echo "<th width=80  align='center'>Notification Type</th>\n";
     echo "<th width=80  align='center'>Status</th>\n"; 
     echo "</tr>\n";
     echo "</tfoot>\n";
