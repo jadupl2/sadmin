@@ -107,14 +107,17 @@ $CREATE_BUTTON = False ;                                                # Don't 
  
     # Display Buttons (Delete/Cancel) at the bottom of the form
     echo "\n\n<div class='two_buttons'>";
+
     echo "\n <div class='first_button'>";
     echo "\n   <a href='" . $URL_DEL . "?sel=" .$wkey. "'>";
     echo "     <button type='button'> Delete </button></a>";
     echo "\n </div>";
+    
     echo "\n <div class='second_button'>";
     echo "\n   <a href='" . $URL_MAIN . "'>";
     echo "     <button type='button'> Cancel </button></a>";
     echo "\n </div>";
+    
     echo "\n<div style='clear: both;'> </div>";                         # Clear - Move Down Now
     echo "\n</div>\n\n";
     
