@@ -258,8 +258,8 @@
 #@2026_01_19 lib v4.80 Add global variable "SADM_REAR_DEL_FAILED_BACKUP" with value from sadmin.cfg.
 #@2026_02_07 lib v4.81 Change owner & permission on $SADMIN directories.
 #@2026_02_22 lib v4.82 Add code name for MacOS, sadm_get_osversion() return minor number for debian.
-#@2026_03_03 lib v4.83 New constant: 'SADM_VM_EXPORT_SCRIPT', 'SADM_REAR_BACKUP_SCRIPT'
-#@2026_03_03 lib v4.83 New constant: 'SADM_OSUPDATE_SCRIPT'
+#@2026_03_03 lib v4.83 New constants: 'SADM_VM_EXPORT_SCRIPT', 'SADM_REAR_BACKUP_SCRIPT'
+#@2026_03_03 lib v4.83 New constants: 'SADM_OSUPDATE_SCRIPT'
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -2477,14 +2477,14 @@ sadm_start() {
     sadm_freshen_directories_structure                                  # Chk Dir. Structure & Perm.
 
     # If user don't want to append to existing log, removed them. 
-    if [ "$SADM_LOG_APPEND" = "N" ]                                     # [N]o append to logs
+    if [ "$SADM_LOG_APPEND" = "N" ]                                     # Want [N]ew log each time
         then rm -f "$SADM_LOG" "$SADM_ELOG" >/dev/null 2>&1             # Remove old log & errorlog
     fi 
 
     # Check and make sure script log, errorlog and RCH file exist and will be writable.
-    [ ! -f "$SADM_RCH_FILE" ] && touch $SADM_RCH_FILE                   # Create RCH  If not exist
-    [ ! -f "$SADM_LOG" ]      && touch $SADM_LOG                        # Create LOG  If not exist
-    [ ! -f "$SADM_ELOG" ]     && touch $SADM_ELOG                       # Create ELOG If not exist
+    [ ! -f "$SADM_RCH_FILE" ] && touch "$SADM_RCH_FILE"                 # Create RCH  If not exist
+    [ ! -f "$SADM_LOG" ]      && touch "$SADM_LOG"                      # Create LOG  If not exist
+    [ ! -f "$SADM_ELOG" ]     && touch "$SADM_ELOG"                     # Create ELOG If not exist
 
     # Will work when running with root, don't give error if we are not 'root'.
     chmod 666 "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 # Log & RCH Change Permission 
@@ -2492,7 +2492,7 @@ sadm_start() {
        then chown "${SADM_USER}:${SADM_GROUP}"  "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 
     fi 
 
-    # Check if log and error log are writable.
+    # Check if the log and the error log are writable.
     if [ ! -w "$SADM_LOG" ] || [ ! -w "$SADM_ELOG" ]                    # If can't write to log/elog
        then printf "\n[ ERROR] User '$SADM_USERNAME' don't have permission to write to:"
             printf "\n     - The script log '$SADM_LOG'."
