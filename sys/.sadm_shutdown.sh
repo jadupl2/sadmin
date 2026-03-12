@@ -21,6 +21,7 @@
 # 2023_07_17 startup/shutdown v2.14 Update with latest SADMIN section(v1.56).
 #@2024_05_02 startup/shutdown v2.15 Send shutdown email if 'SADM_EMAIL_SHUTDOWN' = "Y" in sadmin.cfg.
 #@2025_03_25 startup/shutdown v2.16 Change format of shutdown email sent to sysadmin.
+#@2026_03_10 startup/shutdown v2.17 Not appending the log 'SADM_LOG_APPEND="N"' (Create a new one).
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x
@@ -51,11 +52,11 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.16'                                     # Script version number
-export SADM_PDESC="Executed when the system is brought down by the sadmin.service."
+export SADM_VER='2.17'                                     # Script version number
+export SADM_PDESC="Executed when the system is brought down by the 'sadmin.service'."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
-export SADM_LOG_APPEND="Y"                                 # Y=AppendLog, N=CreateNewLog
+export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
 export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
