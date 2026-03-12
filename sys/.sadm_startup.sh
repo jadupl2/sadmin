@@ -43,6 +43,7 @@
 #@2024_09_12 startup/shutdown v3.22 Change default script description 'SADM_PDESC'.
 #@2025_03_25 startup/shutdown v3.23 Change format of Power ON email to sysadmin.
 #@2026_03_06 startup/shutdown v3.24 Correct typo when an error occur.
+#@2026_03_10 startup/shutdown v3.25 Not appending the log 'SADM_LOG_APPEND="N"' (Create a new one).
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x 
@@ -74,11 +75,11 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.24'                                     # Script version number
+export SADM_VER='3.25'                                     # Script version number
 export SADM_PDESC="Run when the system is started (via sadmin.service)." 
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
-export SADM_LOG_APPEND="Y"                                 # Y=AppendLog, N=CreateNewLog
+export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
 export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
