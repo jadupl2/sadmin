@@ -90,7 +90,8 @@
 #@2026_02_07 client v2.26 Add cmdline option -X and change script logic
 #@2026_02_09 client v2.27 Fix chowm error on $SADMIN/www if exist.
 #@2026_02_13 client v2.28 Remove $SADMIN/.git if it exist (not needed in prod).
-#@2026_03_18 client v2.29 Enhance ways to check the status of 'sadmin' user is OK.
+#@2026_03_10 client v2.29 Enhance ways to check the status of 'sadmin' user is OK.
+#@2026_03_12 client v2.30 Adjust output of 'chage' command & small log changes.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -121,7 +122,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.29'                                      # Script version number
+export SADM_VER='2.30'                                     # Script version number
 export SADM_PDESC="Set \$SADMIN owner/group/permission, prune old log,rch files ,check sadmin account."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -242,13 +243,14 @@ check_sadmin_account()
     #       (See "$SADM_PWD_RANDOM" option in $SADMIN/cfg/sadmin.cfg).
     #   - We rarely uswe password authentication, since we use 'ssh' private/public keys.
     #
-    sadm_write_log "chage -l $SADM_USER"
-    chage -l "$SADM_USER" >> $SADM_LOG 2>&1
+    sadm_write_log "  - chage -l $SADM_USER"
+    chage -l  "$SADM_USER" | while read wline ; do sadm_write_log "    - $wline"; done
+    sadm_write_log " "
     
     if [ "$SADM_PWD_RANDOM" = "Y" ] && [ "$(sadm_get_ostype)" = "LINUX" ] # User want new pwd daily
         then sadm_write_log "  - 'SADM_PWD_RANDOM' is set to 'Y' in 'SADMIN' config file."
-             sadm_write_log "  - Random password generation is activated for user '$SADM_USER'." 
-             sadm_write_log "  - A new random password will be assign to user '${SADM_USER}'."
+             sadm_write_log "  - Random password generation is activated." 
+             sadm_write_log "  - A new random 16 characters password is assigned to '${SADM_USER}'."
              random_pwd=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16; echo)  # Generate random pwd
              echo "${SADM_USER}:${random_pwd}" | chpasswd               # Change sadmin password
              if [ $? -ne 0 ]                                            # If error when pwd change
@@ -318,15 +320,20 @@ check_sadmin_account()
     #       - # chage -m 0 -M 90 -W 14 -E -1 -I 100 sadmin
     # 
     if [ "$(sadm_get_ostype)" = "LINUX" ] 
-        then chage -m 0 -M 90 -W 14 -E -1 -I 100 $SADM_USER 
+        then sadm_write_log " "
+             sadm_write_log "  - Set '$SADM_USER' account aging information to SADMIN standard"
+             sadm_write_log "    - chage -m 0 -M 90 -W 14 -E -1 -I 100 $SADM_USER" 
+             chage -m 0 -M 90 -W 14 -E -1 -I 100 $SADM_USER 
              if [ $? -ne 0 ] 
-                then sadm_write_err "[ ERROR ] Could not set $SADM_USER account 'chage $SADM_USER' standard."
+                then sadm_write_err "[ ERROR ] Could not set $SADM_USER account to SADMIN aging standard"
+
              fi              
     fi 
-    sadm_write_log "chage -l $SADM_USER"
-    chage -l "$SADM_USER" >> $SADM_LOG 2>&1
 
-    if [ $error_counter -eq 0 ] ; then sadm_write_log "  - Account '$SADM_USER' in OK." ;fi
+    sadm_write_log "  - chage -l $SADM_USER"
+    chage -l  "$SADM_USER" | while read wline ; do sadm_write_log "    - $wline"; done
+
+    if [ $error_counter -eq 0 ] ; then sadm_write_log "  - Account '$SADM_USER' is validated." ;fi
     return $error_counter
 }
 
@@ -428,7 +435,6 @@ dir_housekeeping()
     
     # Setup basic SADMIN directories structure and permissions
     sadm_freshen_directories_structure
-    sadm_write_log "[ OK ] Directories structure" 
 
     # Taking care of lost+found directory (If present) in AIX and Linux.
     if [ -d "$SADM_BASE_DIR/lost+found" ]
@@ -438,6 +444,7 @@ dir_housekeeping()
              fi
     fi
 
+    sadm_write_log "[ OK ] Directories structure validated." 
     return $ERROR_COUNT
 }
 
