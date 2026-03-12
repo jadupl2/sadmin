@@ -51,6 +51,7 @@
 #@2025_04_01 server v2.25 Delete any *.lock older than 1 day in $SADMIN.
 #@2026_02_07 server v2.26 Code enhancement.
 #@2026_03_09 server v2.27 Change Owner of Database backup.
+#@2026_03_12 server v2.28 Special chown & chmod for $SADMIN/dat/dbb (Database backup)
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
@@ -80,7 +81,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.27'                                     # Script version number
+export SADM_VER='2.28'                                     # Script version number
 export SADM_PDESC="Move alert old alert to history archive and set permission in www directories."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -363,7 +364,28 @@ dir_housekeeping()
             ((ERROR_COUNT++))
        else sadm_write_log "[ OK ] ${CMD}"
     fi
-    
+
+    # Database Backup : Change permission on directories in $SADMIN/dat/dbb to 775
+    CMD="find $SADM_DBB_DIR -type d -exec chmod 0775 {} \;"
+    f=$(mktemp) ; { eval "$CMD" ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; RC=$(cat $f) 
+    RC=$?                                                               # Save rsync Exit Code 
+    if [ $RC -ne 0 ]                                                    # Complete with no Error ?
+       then sadm_write_err "[ ERROR ] running ${CMD}"
+            ((ERROR_COUNT++))
+       else sadm_write_log "[ OK ] ${CMD}"
+    fi
+        
+   
+    # Database Backup : Make sure all backup directories belong to "$SADM_USER:$SADM_GROUP" 
+    CMD="find $SADM_DBB_DIR -type d -exec chown $SADM_USER:$SADM_GROUP {} \;"
+    f=$(mktemp) ; { eval "$CMD" ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; RC=$(cat $f) 
+    RC=$?                                                               # Save rsync Exit Code 
+    if [ $RC -ne 0 ]                                                    # Complete with no Error ?
+       then sadm_write_err "[ ERROR ] running ${CMD}"
+            ((ERROR_COUNT++))
+       else sadm_write_log "[ OK ] ${CMD}"
+    fi
+
     if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total error count at ${ERROR_COUNT}." ;fi
     return $ERROR_COUNT
 }
