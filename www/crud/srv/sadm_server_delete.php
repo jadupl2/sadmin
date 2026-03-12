@@ -32,6 +32,7 @@
 # 2019_08_17 web v2.2 CRUD_client_delete - New parameter, the URL where to go back after update.
 # 2019_12_26 web v2.3 CRUD_client_delete - Deleted server now place in www/dat/archive directory.
 # 2022_09_24 web v2.4 CRUD_client_delete - Change text in header
+#@2026_10_12 web v2.5 CRUD_client_delete - Change text in header
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -44,7 +45,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #                                       Local Variables
 #===================================================================================================
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.4" ;                                                        # Current version number
+$SVER  = "2.5" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
 $URL_DEL    = '/crud/srv/sadm_server_delete_action.php';                # Confirm Delete Server Page
 $URL_HOME   = '/index.php';                                             # Site Main Page
