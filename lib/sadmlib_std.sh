@@ -3206,6 +3206,8 @@ sadmin_cfg_update() {
 #----------------------------------------------------------------------------
 # SADM_VM_EXPORT_NFS_SERVER: 
 #   NFS Server name where the Virtual Machine will be exported.
+# SADM_VM_EXPORT_NFS_SERVER_VER: 
+#   NFS version (3 or 4) to use to mount the export mount point (default 3).
 # SADM_VM_EXPORT_MOUNT_POINT:
 #   NFS mount point where the export files are stored on NFS Server.
 # SADM_VM_EXPORT_TO_KEEP:
@@ -3225,18 +3227,25 @@ sadmin_cfg_update() {
 # SADM_VM_START_INTERVAL: 
 #   When you decide start all VMs, this is the number of seconds we sleep 
 #   before starting the next one.
-#----------------------------------------------------------------------------
-SADM_VM_EXPORT_NFS_SERVER    = batnas.maison.ca
-SADM_VM_EXPORT_MOUNT_POINT   = /volume1/backup_vm/virtualbox_exports
-SADM_VM_EXPORT_TO_KEEP       = 2
-SADM_VM_EXPORT_INTERVAL      = 14 
-SADM_VM_EXPORT_ALERT         = Y 
-SADM_VM_USER                 = jacques
-SADM_VM_STOP_TIMEOUT         = 120
-SADM_VM_START_INTERVAL       = 30
-SADM_VM_EXPORT_DIF           = 25
-
+# SADM_VM_EXPORT_DIF:
+#   To catch your attention, when VM export size differ than the previous
+#   one by more than 25% (for example) it will be hightlighted on the 
+#   'Export Status' web page. Default is 25 (25%).
+# SADM_VM_EXPORT_SCRIPT: 
+#   Name of the script that will perform the Virtual Machine export.
 #
+#----------------------------------------------------------------------------
+SADM_VM_EXPORT_NFS_SERVER      = batnas.maison.ca
+SADM_VM_EXPORT_NFS_SERVER_VER  = 3 
+SADM_VM_EXPORT_MOUNT_POINT     = /volume1/backup/backup_vm/virtualbox_exports
+SADM_VM_EXPORT_TO_KEEP         = 2
+SADM_VM_EXPORT_INTERVAL        = 21 
+SADM_VM_EXPORT_ALERT           = Y 
+SADM_VM_USER                   = jacques
+SADM_VM_STOP_TIMEOUT           = 60
+SADM_VM_START_INTERVAL         = 30
+SADM_VM_EXPORT_DIF             = 25
+SADM_VM_EXPORT_SCRIPT          = sadm_vm_export.sh
 
 EOF
 ) >> $SADM_CFG_FILE
@@ -3260,10 +3269,10 @@ SADM_DAYS_HISTORY = 14
 
 
 #----------------------------------------------------------------------------
-# Number of days to keep in the alert archive file ($SADM_ALERT_ARC).
-# Default is 365 Days.
+# Maximum of lines to keep in the alert archive file ($SADM_ALERT_ARC).
+# Default is 1000 lines
 #----------------------------------------------------------------------------
-SADM_MAX_ARC_LINE = 365
+SADM_MAX_ARC_LINE = 1000
 
 EOF
 ) >> $SADM_CFG_FILE
