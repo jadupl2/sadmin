@@ -92,6 +92,7 @@
 #@2026_02_13 client v2.28 Remove $SADMIN/.git if it exist (not needed in prod).
 #@2026_03_10 client v2.29 Enhance ways to check the status of 'sadmin' user is OK.
 #@2026_03_12 client v2.30 Adjust output of 'chage' command & small log changes.
+#@2026_03_15 client v2.31 Fix removal of $SADMIN.git directory & '.gitignore' (if exist) on client.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -122,8 +123,8 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.30'                                     # Script version number
-export SADM_PDESC="Set \$SADMIN owner/group/permission, prune old log,rch files ,check sadmin account."
+export SADM_VER='2.31'                                     # Script version number
+export SADM_PDESC="Set \$SADMIN owner:group permission, prune old log,rch files & check 'sadmin' account."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -492,10 +493,10 @@ file_housekeeping()
     sadm_write_log "SADMIN CLIENT FILES HOUSEKEEPING"
 
    # Just to make sure .gitkeep file always exist in some directories (for git).
-    if [ ! -f "${SADM_TMP_DIR}/.gitkeep" ]  ; then touch ${SADM_TMP_DIR}/.gitkeep ; fi 
-    if [ ! -f "${SADM_LOG_DIR}/.gitkeep" ]  ; then touch ${SADM_LOG_DIR}/.gitkeep ; fi 
-    if [ ! -f "${SADM_DAT_DIR}/.gitkeep" ]  ; then touch ${SADM_DAT_DIR}/.gitkeep ; fi 
-    if [ ! -f "${SADM_SYS_DIR}/.gitkeep" ]  ; then touch ${SADM_SYS_DIR}/.gitkeep ; fi 
+    if [ ! -f "${SADM_TMP_DIR}/.gitkeep" ]  ; then touch ${SADM_TMP_DIR}/.gitkeep  ; fi 
+    if [ ! -f "${SADM_LOG_DIR}/.gitkeep" ]  ; then touch ${SADM_LOG_DIR}/.gitkeep  ; fi 
+    if [ ! -f "${SADM_DAT_DIR}/.gitkeep" ]  ; then touch ${SADM_DAT_DIR}/.gitkeep  ; fi 
+    if [ ! -f "${SADM_SYS_DIR}/.gitkeep" ]  ; then touch ${SADM_SYS_DIR}/.gitkeep  ; fi 
     if [ ! -f "${SADM_UBIN_DIR}/.gitkeep" ] ; then touch ${SADM_UBIN_DIR}/.gitkeep ; fi 
     if [ ! -f "${SADM_ULIB_DIR}/.gitkeep" ] ; then touch ${SADM_ULIB_DIR}/.gitkeep ; fi 
     if [ ! -f "${SADM_UCFG_DIR}/.gitkeep" ] ; then touch ${SADM_UCFG_DIR}/.gitkeep ; fi 
@@ -648,6 +649,21 @@ file_housekeeping()
              if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error: ${ERROR_COUNT}" ;fi
     fi
     
+    # Delete .git directory only pn sadmin client (SADM_HOST_TYPE = C) in sadmin.cfg
+    if [ -d "${SADMIN}/.git" ] && [ "$SADM_HOST_TYPE" = "C" ]
+        then sadm_write_log " "
+             sadm_write_log "Removing ${SADMIN}/.git directory on n'SADMIN'client." 
+             if [ -d "${SADMIN}/.git"    ] ; then rm -fr "${SADMIN}/.git" ; fi
+             if [ $? -ne 0 ]
+                then sadm_write_err "[ ERROR ] With rm -fr '${SADMIN}/.git'."
+                     ((ERROR_COUNT++))
+                else sadm_write_log "[ OK ] Removing .git directory ${SADMIN}/.git"
+             fi
+             if [ -f "${SADMIN}/.gitignore" ] ; then rm -f "${SADMIN}/.gitignore" ; fi
+
+    fi
+    
+    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error: ${ERROR_COUNT}" ;fi
     return $ERROR_COUNT
 }
 
@@ -658,7 +674,7 @@ file_housekeeping()
 # --------------------------------------------------------------------------------------------------
 # The script Remove some old files or files on client that should not be there
 # --------------------------------------------------------------------------------------------------
-function remove_client_unwanted_files()
+function remove_client_unwanted_files_or_directories()
 {
     sadm_write_log ""
     #sadm_write_log "REMOVE SADMIN SERVER FILES ON CLIENT (if any)"
@@ -671,15 +687,14 @@ function remove_client_unwanted_files()
              rm sadmin_client.cfg    >/dev/null 2>&1
              rm .dbpass              >/dev/null 2>&1
              rm .gmpw                >/dev/null 2>&1
-             if [ -d "$SADMIN/.git" ]
-                then CMD="rm -fr $SADMIN/.git "
-                     if [ $? -ne 0 ]
-                        then sadm_write_err "[ ERROR ] Deleting $SADMIN/.git directories"
-                             ((ERROR_COUNT++))
-                        else sadm_write_log "[ OK ] Delete $SADMIN/.git directories"
-                     fi
-             fi
+#             if [ -d "${SADMIN}/.git"    ] ; then rm -fr "${SADMIN}/.git" ; fi
+#             if [ $? -ne 0 ]
+#                then sadm_write_err "[ ERROR ] With rm -fr '${SADMIN}/.git'."
+#                     ((ERROR_COUNT++))
+#                else sadm_write_log "[ OK ] Removing .git directory ${SADMIN}/.git"
+#             fi
     fi 
+
     return $ERROR_COUNT
 }
 
@@ -743,7 +758,7 @@ function cmd_options()
     fi 
 
     set_new_nmon_watcher                                                # Use Python nmon_watcher  
-    remove_client_unwanted_files                                        # Del Server file not client
+    remove_client_unwanted_files_or_directories                         # Del Server file not client
 
     SADM_EXIT_CODE=$(($DIR_ERROR+$FILE_ERROR+$ACC_ERROR))               # Error= DIR+File+Lock Func.
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
