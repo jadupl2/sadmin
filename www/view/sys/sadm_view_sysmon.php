@@ -64,6 +64,7 @@
 #@2025_01_24 web v2.38 Will now show when a system is lock.
 #@2025_03_27 web v2.39 Enhance the appearance of the page.
 #@2025_06_10 web v2.40 If an invalid status code is encountered, it will be displayed as Unknown.
+#@2026_03_18 web v2.41 Fix broken link to view rch file.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -130,7 +131,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #---------------------------------------------------------------------------------------------------
 #
 $DEBUG         = False ;                                                # Debug Activated True/False
-$SVER          = "2.40" ;                                               # Current version number
+$SVER          = "2.41" ;                                               # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE    = '/crud/srv/sadm_server_create.php';                    # Create Page URL
 $URL_UPDATE    = '/crud/srv/sadm_server_update.php';                    # Update Page URL
@@ -470,7 +471,7 @@ function display_line($line,$con)
     $rch_name = SADM_WWW_DAT_DIR . "/" .$whost. "/rch/" .trim($wrch);   # Full Path to Script rch  
     if (($wsubmod == "SCRIPT") and (file_exists($rch_name)) and (filesize($rch_name) != 0)) {
         echo "&nbsp;\n<a href='" . $URL_VIEW_RCH ;
-        echo "?host=" .$whost. "&filename=" .$wrch. "' title='View script history file - ";
+        echo "?host=" .$whost. "&filename=" .$rch_name. "' title='View script history file - ";
         echo $wrch . "'>[rch]</a>";                                   # Create link to view rch
     }
 
@@ -722,7 +723,7 @@ function show_activity($con,$alert_file) {
         $RCHFILE = trim("${cserver}_${cname}.rch");                     # Add .rch to Script Name
         $rch_name  = SADM_WWW_DAT_DIR . "/" . $cserver . "/rch/" . $RCHFILE ;
         if ((file_exists($rch_name)) and (filesize($rch_name) != 0)) {
-            echo "\n<a href='" . $URL_VIEW_RCH . "?host=". $cserver ."&filename=". $RCHFILE ;
+            echo "\n<a href='" . $URL_VIEW_RCH . "?host=". $cserver ."&filename=". $rch_name ;
             echo "' data-toggle='tooltip' title='View History (rch) file'>[rch]</a>";
         }else{
             echo "&nbsp;";                                      # If no RCH Exist
@@ -912,8 +913,8 @@ function display_data($con,$alert_file) {
 #---------------------------------------------------------------------------------------------------
 
     # Page header
-    $title1="Systems Monitor Status";                                   # Page Title
-    $title2 = date("Y-m-d H:i:s");
+    $title1="Systems Monitor Status";                                   # Main Heading
+    $title2 = date("Y-m-d H:i:s");                                      # Secondary heading line
     display_lib_heading("HOME","$title1","Last update $title2",$SVER);
 
     create_alert_file();                                                # Cr. AlertFile from RPT/RCH
