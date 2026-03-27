@@ -96,6 +96,7 @@
 #@2025_07_09 backup v3.51 Correct typo error, when unmount NFS drive.
 #@2026_02_13 backup v3.52 Change message when NFS mount failed & retry after clearing the cache.
 #@2026_02_13 backup v3.53 Add argument '-X' when we want to delete PID file prior to execute script.
+#@2026_03_27 backup v3.54 If NFS mount failed, retry after dropping the cache (low memory systems).
 #===================================================================================================
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -124,7 +125,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.53'                                     # Script version number
+export SADM_VER='3.54'                                     # Script version number
 export SADM_PDESC="Backup files and directories specified in the backup list file."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -669,6 +670,7 @@ purge_dir()
 # ==================================================================================================
 mount_nfs()
 {
+
     # Make sur the Local Mount Point Exist ---------------------------------------------------------
     if [ ! -d ${LOCAL_MOUNT} ]                                          # Mount Point doesn't exist
         then sadm_write_log "Create local mount point ${LOCAL_MOUNT}"   # Advise user we create Dir.
@@ -680,42 +682,37 @@ mount_nfs()
              chmod 775 ${LOCAL_MOUNT}                                   # Change Protection
     fi
 
-    # Mount the NFS Drive - Where the Backup file will reside -----------------------------------------
-    REM_MOUNT="${SADM_BACKUP_NFS_SERVER}:${SADM_BACKUP_NFS_MOUNT_POINT}"
-    sadm_write_log "Mounting NFS Drive on ${SADM_BACKUP_NFS_SERVER}."   # Show NFS Server Name
-    umount ${LOCAL_MOUNT} > /dev/null 2>&1                              # Make sure not mounted
 
+    # UnMount the mount point in case it's already mounted, 
+    REM_MOUNT="${SADM_BACKUP_NFS_SERVER}:${SADM_BACKUP_NFS_MOUNT_POINT}"
+    umount ${LOCAL_MOUNT} > /dev/null 2>&1                              # Make sure not mounted
+    sadm_write_log "Mounting NFS Drive on ${SADM_BACKUP_NFS_SERVER}."   # Show NFS Server Name
+
+    # Mount the NFS mount point where the backup will reside
     if [ "$SADM_OS_TYPE" = "DARWIN" ]                                   # If on MacOS
         then sadm_write_log "mount -t nfs -o resvport,rw ${REM_MOUNT} ${LOCAL_MOUNT}"
              mount -t nfs -o resvport,rw ${REM_MOUNT} ${LOCAL_MOUNT} 1>>$SADM_LOG 2>>$SADM_ELOG
              RC=$?
-        else NFS_OPT="-t nfs -o vers=$SADM_BACKUP_NFS_SERVER_VER "
+        else NFS_OPT="-t nfs -o vers=$SADM_BACKUP_NFS_SERVER_VER "      # If on Linux 
              sadm_write_log "mount $NFS_OPT ${REM_MOUNT} ${LOCAL_MOUNT}" 
              mount $NFS_OPT ${REM_MOUNT} ${LOCAL_MOUNT} 1>>$SADM_LOG 2>>$SADM_ELOG
              RC=$?
+             if [ $RC -ne 0 ]                                           # Err Cannot allocate memory  
+                then sync; sync; echo 1 > /proc/sys/vm/drop_cache    # Free memory by dropping cache
+                     mount $NFS_OPT ${REM_MOUNT} ${LOCAL_MOUNT} 1>>$SADM_LOG 2>>$SADM_ELOG
+                     RC=$?
+             fi
     fi
     if [ $RC -ne 0 ]                                                    # If Error trying to mount
-        then if [ "$SADM_OS_NAME" = "RASPBIAN" ]                        # If on Raspbian
-                then sadm_write_err "[ WARNING ] First tentative of NFS mount failed."
-                     sadm_write_err "Often, it's because we don't have enough free memory."
-                     sadm_write_err "We will clear the cache to free some memory and try again : "
-                     sadm_write_err "'sync && echo 3 > /proc/sys/vm/drop_caches'"
-                     sync && echo 3 > /proc/sys/vm/drop_caches
-                     sleep 4
-                     sadm_write_err "Try second tentative : "
-                     sadm_write_err "'mount $NFS_OPT ${REM_MOUNT} ${LOCAL_MOUNT}'"
-                     mount $NFS_OPT ${REM_MOUNT} ${LOCAL_MOUNT} >>$SADM_LOG 2>&1
-                     if [ "$?" -ne 0 ] 
-                        then sadm_write_err "[ ERROR ] ($RC) NFS mount failed - backup aborted."
-                             return 1                                   # End Function with error
-                     fi 
-                else sadm_write_err "[ ERROR ] ($RC) Mount NFS failed - backup aborted."
-                     return 1                                           # End Function with error
-             fi 
+        then sadm_write_err "[ ERROR ] ($RC) Mount NFS failed - backup aborted."
+             sadm_write_err "  - Check if NFS server (${SADM_BACKUP_NFS_SERVER}) is still available." 
+             sadm_write_err "  - Check if the network connection is working."
+             return 1                                                   # End Function with error
         else sadm_write_log "[ SUCCESS ] NFS mount succeeded."          # NFS Mount Succeeded Msg
     fi
 
-    # Create System Main Directory
+
+    # Create the Hostname Main Backup Directory
     F="${LOCAL_MOUNT}/${SADM_HOSTNAME}"
     if [ ! -d ${F} ]                                                    # Check if Server Dir Exist
         then mkdir ${F}                                                 # If Not Create it
