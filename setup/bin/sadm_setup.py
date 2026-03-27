@@ -437,51 +437,58 @@ def update_host_file(wdomain,wip) :
 
 
 #===================================================================================================
-#                            MAKE SURE SADMIN CLIENT CRONTAB FILE IS IN PLACE
+# Responsable to create the SADMIN client crontab    
+#
 #===================================================================================================
 def update_client_crontab_file(logfile,sroot,wostype,wuser) :
 
     # Setup crontab filename
-    if wostype == "LINUX" :                                             # Under Linux
+    if wostype == "LINUX" :                                             # Location under Linux
         ccron_file = "/etc/cron.d/sadm_client"                          # Client Crontab File Name
-        if not os.path.exists("/etc/cron.d") :                          # Test if Dir. Exist
+        if not os.path.exists("/etc/cron.d") :                           # Dir. Exist ? 
             writelog("[ ERROR ] Crontab Directory /etc/cron.d doesn't exist ?",'bold')
             writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
             return(1)                                                   # Return to Caller with Err.
-    if wostype == "AIX" :                                               # Under AIX
+    
+    if wostype == "AIX" :                                               # Location under AIX
         ccron_file = "/var/spool/cron/crontabs/%s" % (wuser)            # Client Crontab File Name
         if not os.path.exists("/var/spool/cron/crontabs") :             # Test if Dir. Exist
             writelog("[ ERROR ] Crontab Directory /var/spool/cron/crontabs doesn't exist ?",'bold')
             writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
             return(1)                                                   # Return to Caller with Err.
-    if wostype == "DARWIN" :                                            # Under MacOS 
+    
+    if wostype == "DARWIN" :                                            # Location under MacOS 
         ccron_file = "/var/at/tabs/%s" % (wuser)                        # Crontab File on MacOS
         if not os.path.exists("/var/at/tabs") :                         # Test if Dir. Exist
             writelog("[ ERROR ] Crontab Directory /var/at/tabs doesn't exist ?",'bold')
             writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
             return(1)                                                   # Return to Caller with Err.
 
-    # Check if crontab directory exist - Procedure may not be supported on this O/S
+
+    # Check if sadmin crontab directory exist - Procedure may not be supported on this O/S
+    # If SADMIN old crontab file exist, delete it and recreate it
     writelog('')
     writelog('--------------------')
     writelog ("Creating SADMIN client crontab file (%s)" % (ccron_file),'bold')
-    # If SADMIN old crontab file exist, delete it and recreate it
-    try:                                                                # In case old file exist
-        os.remove(ccron_file)                                           # Remove old crontab file
-    except :                                                            # If not then it's OK
-        pass                                                            # If don't exist continue
+    file_path = "my_file_to_delete.txt"
+
+    # Check if the sadmin client cronfile exists before attempting deletion
+    if os.path.exists(ccron_file): os.remove(ccron_file)
         
-    # Create the SADMIN Client Crontab file
+    # Create the new SADMIN Client Crontab file
     try : 
-        hcron = open(ccron_file,'w')                                    # Open Crontab file
+        hcron = open(ccron_file,'w')                                    # Open the new Crontab file
     except :                                                            # If could not create output
-        writelog("Error Opening %s file" % (ccron_file),'bold')         # Advise Usr couldn't create
-        writelog("Could not create SADMIN crontab file")                # Crontab file not created
+        writelog("Error Opening %s file : " % (ccron_file),'bold')      # Advise Usr couldn't create
+        writelog("Could not open/create SADMIN client crontab file")    # Crontab file not created
         return(1)
 
     # Populate SADMIN Client Crontab File
-    hcron.write ("# SADMIN Client Crontab File \n")
-    #hcron.write ("# Please don't edit manually, SADMIN Tools generated file\n")
+    hcron.write ("# SADMIN Client Crontab File %s\n" % (sver))
+    hcron.write ("# %s " % now().strftime("Y/%m/%d %H:%M:%S") + "\n")
+    hcron.write ("# \n")
+    hcron.write ("Be aware that this file could be change or replace by new version of 'SADMIN'.\n")
+    hcron.write ("# Please don't edit manually, SADMIN Tools generated file\n")
     hcron.write ("# \n")
     hcron.write ("PATH=%s\n" % (os.environ["PATH"]))
     hcron.write ("SADMIN=%s\n" % (sroot))
@@ -1730,7 +1737,7 @@ def update_apache_config(sroot,sfile,sname,svalue):
 
 
 #===================================================================================================
-# Set and/or Validate that SADMIN Environment Variable is set in /etc/environment file
+# Set and/or validate that SADMIN environment variable is set in /etc/environment file
 #===================================================================================================
 #
 def set_sadmin_env(ver) :
@@ -2765,10 +2772,10 @@ def mainflow(sroot):
 
     # Check and if needed install missing packages require.
     satisfy_requirement('C',sroot,packtype,logfile,sosname,sosver,sosbits,sosarch) 
-    # special_install(packtype,sosname,logfile)                           # Install pymysql module
+    # special_install(packtype,sosname,logfile)                         # Install pymysql module
 
     # Create SADMIN user sudo file
-    update_sudo_file(sroot,logfile,uuser)                                     # Create User sudo file
+    update_sudo_file(sroot,logfile,uuser)                               # Create User sudo file
 
     # Create SADMIN User crontab file
     update_client_crontab_file(logfile,sroot,wostype,uuser)             # Create SADM User Crontab 

@@ -34,7 +34,8 @@
 # 2026_01_02 template v0.1  Initial development version.
 #
 #---------------------------------------------------------------------------------------------------
-trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
+# Add trap to catch ^C and stop script gracefully.
+trap 'sadm_stop 1; exit 1' 2                                        
 #set -x
      
 
