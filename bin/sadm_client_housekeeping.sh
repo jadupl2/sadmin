@@ -93,8 +93,10 @@
 #@2026_03_10 client v2.29 Enhance ways to check the status of 'sadmin' user is OK.
 #@2026_03_12 client v2.30 Adjust output of 'chage' command & small log changes.
 #@2026_03_15 client v2.31 Fix removal of $SADMIN.git directory & '.gitignore' (if exist) on client.
+#@2026_03_27 client v2.32 Default set password expiration to never (Since passwd off, use ssh keys).
 # --------------------------------------------------------------------------------------------------
-trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
+# Add trap to catch ^C and stop script gracefully.
+trap 'sadm_stop 1; exit 1' 2                                        
 #set -x
 
 
@@ -123,7 +125,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.31'                                     # Script version number
+export SADM_VER='2.32'                                     # Script version number
 export SADM_PDESC="Set \$SADMIN owner:group permission, prune old log,rch files & check 'sadmin' account."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -204,12 +206,13 @@ check_sadmin_account()
              return 0 
     fi 
 
-    # '$SADM_GROUP' group define in sadmin.cfg, should exist in O/S, if not advise user & abort
+    # Group '$SADM_GROUP' define in sadmin.cfg, should exist on O/S, if not advise user & abort
     grep "^${SADM_GROUP}:"  /etc/group >/dev/null 2>&1                  # $SADMIN Group defined ?
     if [ $? -ne 0 ]                                                     # SADM_GROUP not Defined
        then sadm_write_err "[ ERROR ] Group '$SADM_GROUP' not present." # Advise user will create
-            sadm_write_err "Create group or change 'SADM_GROUP' value in $SADMIN/sadmin.cfg."
-            sadm_write_err "Process Aborted."                           # Abort got be created
+            sadm_write_err "  - Either the group '$SADM_GROUP' does not exist (in /etc/group)."
+            sadm_write_err "  - Or the value of the variable 'SADM_GROUP' in sadmin.cfg is incorrect."
+            sadm_write_err "  - Process Aborted."                       # Abort got be created                
             ((error_counter++))                                         # Increment Error by 1
             return $error_counter 
     fi
@@ -218,20 +221,21 @@ check_sadmin_account()
     grep "^${SADM_USER}:" /etc/passwd >/dev/null 2>&1                   # $SADMIN User Defined ?
     if [ $? -ne 0 ]                                                     # OH Not There
        then sadm_write_err "[ ERROR ] User '$SADM_USER' not present."   # SADM_USER not found
-            sadm_write_err "Create user or change 'SADM_USER' value in $SADMIN/sadmin.cfg."
+            sadm_write_err "  - Either the user '$SADM_USER' does not exist (in /etc/passwd)."
+            sadm_write_err "  - Or the value of the variable 'SADM_USER' in sadmin.cfg is incorrect."
             sadm_write_err "Process Aborted."                           # Abort got be created
             ((error_counter++))                                         # Increment Error by 1
             return $error_counter 
     fi
     
-    # (AIX) - Check if sadmin Aix account is part of the users lock list.
+    # (AIX) - Check if 'sadmin' Aix account is part of the users lock list.
     if [ "$SADM_OS_TYPE"  = "AIX" ]
         then lsuser -a account_locked $SADM_USER | grep -i 'true' >/dev/null 2>&1
              if [ $? -eq 0 ] 
                 then sadm_write_err "[ ERROR ] Account $SADM_USER is lock and need attention."
                      sadm_write_err "  - Please check and unlock it with these commands ; "
-                     sadm_write_err "   - chsec -f /etc/security/lastlog -a 'unsuccessful_login_count=0' -s $SADM_USER "
-                     sadm_write_err "   - chuser 'account_locked=false' $SADM_USER "
+                     sadm_write_err "    - chsec -f /etc/security/lastlog -a 'unsuccessful_login_count=0' -s $SADM_USER "
+                     sadm_write_err "    - chuser 'account_locked=false' $SADM_USER "
                      ((error_counter++))                                # Increment Error by 1
                      return $error_counter 
              fi
@@ -239,19 +243,22 @@ check_sadmin_account()
 
 
 
-    # If we need to generate a new password for SADMIN user everytime we run.
+    # If user requested to change '$SADM_USER' password everyday (SADM_PWD_RANDOM = Y in sadmin.cfg)
     #   - If user want to give "$SADM_USER" user a random 16 characters password of daily.
     #       (See "$SADM_PWD_RANDOM" option in $SADMIN/cfg/sadmin.cfg).
-    #   - We rarely uswe password authentication, since we use 'ssh' private/public keys.
-    #
-    sadm_write_log "  - chage -l $SADM_USER"
-    chage -l  "$SADM_USER" | while read wline ; do sadm_write_log "    - $wline"; done
-    sadm_write_log " "
+    #   - We rarely use password authentication (Turn Off), since we use 'ssh' private/public keys.
+    
+    # Show account aging information if debug is enabled
+    if [ $SADM_DEBUG -ne 0 ]  
+        then sadm_write_log "  - chage -l $SADM_USER"
+             chage -l  "$SADM_USER" | while read wline ; do sadm_write_log "    - $wline"; done
+             sadm_write_log " "
+    fi 
     
     if [ "$SADM_PWD_RANDOM" = "Y" ] && [ "$(sadm_get_ostype)" = "LINUX" ] # User want new pwd daily
-        then sadm_write_log "  - 'SADM_PWD_RANDOM' is set to 'Y' in 'SADMIN' config file."
-             sadm_write_log "  - Random password generation is activated." 
-             sadm_write_log "  - A new random 16 characters password is assigned to '${SADM_USER}'."
+        then sadm_write_log "  - Random password generation is activated." 
+             sadm_write_log "    - 'SADM_PWD_RANDOM' is set to 'Y' in 'SADMIN' config file."
+             sadm_write_log "    - A new random 16 characters password is assigned to '${SADM_USER}'."
              random_pwd=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16; echo)  # Generate random pwd
              echo "${SADM_USER}:${random_pwd}" | chpasswd               # Change sadmin password
              if [ $? -ne 0 ]                                            # If error when pwd change
@@ -276,10 +283,10 @@ check_sadmin_account()
 
     # Check if password is expired
     if passwd -S "$SADM_USER" | grep -q " E "                           # If passworrd is expire
-        then sadm_write_error "  - User '$SADM_USER' password is expired."          
+        then sadm_write_error "  - Account '$SADM_USER' password is expired."          
              ((error_counter++))                                        # Increment Error by 1
              return $error_counter                                      # Return to caller
-        else sadm_write_err "  - User '$SADM_USER' password is not expired."
+        else sadm_write_err "  - Account '$SADM_USER' password is not expired."
     fi
 
     # Check if account is inactive
@@ -311,7 +318,7 @@ check_sadmin_account()
     #   -m, --mindays MIN_DAYS        set minimum number of days before password
     #                                 change to MIN_DAYS
     #   -M, --maxdays MAX_DAYS        set maximum number of days before password
-    #                                 change to MAX_DAYS
+    #                                 change to MAX_DAYS 
     #   -R, --root CHROOT_DIR         directory to chroot into
     #   -W, --warndays WARN_DAYS      set expiration warning days to WARN_DAYS
     # 
@@ -323,16 +330,20 @@ check_sadmin_account()
     if [ "$(sadm_get_ostype)" = "LINUX" ] 
         then sadm_write_log " "
              sadm_write_log "  - Set '$SADM_USER' account aging information to SADMIN standard"
-             sadm_write_log "    - chage -m 0 -M 90 -W 14 -E -1 -I 100 $SADM_USER" 
-             chage -m 0 -M 90 -W 14 -E -1 -I 100 $SADM_USER 
+             sadm_write_log "    - chage -m 0 -M -1 -W 14 -E -1 -I 100 $SADM_USER" 
+             chage -m 0 -M -1 -W 14 -E -1 -I 100 $SADM_USER 
              if [ $? -ne 0 ] 
                 then sadm_write_err "[ ERROR ] Could not set $SADM_USER account to SADMIN aging standard"
 
              fi              
     fi 
 
-    sadm_write_log "  - chage -l $SADM_USER"
-    chage -l  "$SADM_USER" | while read wline ; do sadm_write_log "    - $wline"; done
+    # Show account aging information if debug is enabled
+    if [ $SADM_DEBUG -ne 0 ]  
+        then sadm_write_log "  - chage -l $SADM_USER"
+             chage -l  "$SADM_USER" | while read wline ; do sadm_write_log "    - $wline"; done
+             sadm_write_log " "
+    fi 
 
     if [ $error_counter -eq 0 ] ; then sadm_write_log "  - Account '$SADM_USER' is validated." ;fi
     return $error_counter
@@ -746,7 +757,7 @@ function cmd_options()
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Create Dir.,PID,log,rch
 
-    check_sadmin_account                                                # SADMIN User Account Lock ?
+    check_sadmin_account                                                # SADMIN User Account Usable
     ACC_ERROR=$?                                                        # Return number of errors
     if [ "$ACC_ERROR" -eq 0 ]
         then dir_housekeeping                                           # Do Dir HouseKeeping
@@ -760,6 +771,6 @@ function cmd_options()
     set_new_nmon_watcher                                                # Use Python nmon_watcher  
     remove_client_unwanted_files_or_directories                         # Del Server file not client
 
-    SADM_EXIT_CODE=$(($DIR_ERROR+$FILE_ERROR+$ACC_ERROR))               # Error= DIR+File+Lock Func.
+    SADM_EXIT_CODE=$(($DIR_ERROR+$FILE_ERROR+$ACC_ERROR))               # Count DIR+File+Lock Func.
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
