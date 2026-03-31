@@ -77,9 +77,9 @@ export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous co
 export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
-export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") # WorkFile, remove by sadm_stop()
-export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") # WorkFile, remove by sadm_stop()
-export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX") # WorkFile, remove by sadm_stop()
+export SADM_TMP_FILE1=$(mktemp -q "$SADMIN/tmp/${SADM_INST}1_XXX") # WorkFile, remove by sadm_stop()
+export SADM_TMP_FILE2=$(mktemp -q "$SADMIN/tmp/${SADM_INST}2_XXX") # WorkFile, remove by sadm_stop()
+export SADM_TMP_FILE3=$(mktemp -q "$SADMIN/tmp/${SADM_INST}3_XXX") # WorkFile, remove by sadm_stop()
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
 . "${SADMIN}/lib/sadmlib_std.sh"                           # Load SADMIN Shell Library
@@ -119,8 +119,9 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
+    printf "\n${BOLD}${YELLOW}${SADM_PN} v${SADM_VER} - Hostname ${SADM_HOSTNAME}"
+    printf "\n${BOLD}${YELLOW}${SADM_PDESC}${NORMAL}\n"
     printf "\nUsage: %s%s%s%s [options]" "${BOLD}" "${CYAN}" "$(basename "$0")" "${NORMAL}"
-    printf "\nDesc.: %s" "${BOLD}${CYAN}${SADM_PDESC}${NORMAL}"
     printf "\n\n${BOLD}${GREEN}Options:${NORMAL}"
     printf "\n   ${BOLD}${YELLOW}[-d 0-9]${NORMAL}\t\tSet Debug (verbose) Level"
     printf "\n   ${BOLD}${YELLOW}[-h]${NORMAL}\t\t\tShow this help message"
