@@ -260,6 +260,9 @@
 #@2026_02_22 lib v4.82 Add code name for MacOS, sadm_get_osversion() return minor number for debian.
 #@2026_03_03 lib v4.83 New constants: 'SADM_VM_EXPORT_SCRIPT', 'SADM_REAR_BACKUP_SCRIPT'
 #@2026_03_03 lib v4.83 New constants: 'SADM_OSUPDATE_SCRIPT'
+#@2026_03_30 lib v4.84 Add O/S update options: SADM_OSUPDATE_REBOOT_NEEDED SADM_OSUPDATE_REBOOT_TIME SADM_OSUPDATE_LOCK.
+#@2026_03_30 lib v4.84 Add O/S update options: SADM_OSUPDATE_LOCK.
+#@2026_03_31 lib v4.85 Return value on Ubuntu was not ok on raspberry pi.
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -270,7 +273,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.83"                                              # This Library Version
+export SADM_LIB_VER="4.85"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -451,6 +454,9 @@ export SADM_OSUPDATE_SCRIPT="sadm_osupdate.sh"              # Name of O/S update
 export SADM_OSUPDATE_AUTOREMOVE="N"                         # Remove unused package after update
 export SADM_OSUPDATE_FLATPAK="N"                            # Also Update the Flatpak package,if any
 export SADM_OSUPDATE_SNAP="N"                               # Also Update the Snap package (if any)
+export SADM_OSUPDATE_REBOOT_NEEDED=N                        # If reboot is needed after O/S update
+export SADM_OSUPDATE_REBOOT_TIME=240                        # Seconds to wait for starting Apps.
+export SADM_OSUPDATE_LOCK="Y"                               # Lock system during O/S update Y/N
 #
 export SADM_BACKUP_NFS_SERVER=""                            # Backup NFS Server
 export SADM_BACKUP_NFS_SERVER_VER=3                         # NFS mount version (3-4)
@@ -469,7 +475,7 @@ export SADM_BACKUP_DIF=40                                   # % size diff cur. v
 export SADM_PID_TIMEOUT=7200                                # PID File TTL default
 export SADM_LOCK_TIMEOUT=3600                               # Host Lock File TTL           
 export SADM_MONITOR_RECENT_COUNT=10                         # SysMon Nb Recent Script 
-export SADM_MONITOR_RECENT_EXCLUDE="sadm_nmon_watcher"      # SysMon Recent list Exclude
+export SADM_MONITOR_RECENT_EXCLUDE="sadm_nmon_watcher"      # SysMon Page Recent Exclude List
 export SADM_SMTP_SERVER="smtp.gmail.com"                    # smtp mail relay host name
 export SADM_SMTP_PORT=587                                   # smtp port(25,465,587,2525)
 export SADM_SMTP_SENDER="sadmin.gmail.com"                  # Email address of sender 
@@ -897,6 +903,7 @@ sadm_nfs_unmount()
 #
 sadm_abort()
 {
+    sadm_write_err "[ ERROR ] Aborting execution of script '${SADM_PN}'."
     exit 1
 
 }
@@ -1293,17 +1300,21 @@ sadm_elapse() {
 
 # Function Determine The O/S Version Number
 sadm_get_osversion() {
-    #wosversion="0.0"                                                    # Default Value
+    osver="0.0"                                                    # Default Value
     case "$(sadm_get_ostype)" in
-        "LINUX")    if [ "$SADM_LSB_RELEASE" != "" ] && [ -x "$SADM_LSB_RELEASE" ]
-                     then osver=$($SADM_LSB_RELEASE -rs | tail -1)
-                          if [ -r /etc/debian_version ] ;then osver=$(cat /etc/debian_version) ;fi
-                     elif [ -f $OS_REL ] 
-                          then osver=$(awk -F= '/^VERSION_ID=/ {print $2}' $OS_REL |tr -d '"')
-                          elif [ -f /etc/system-release-cpe ] 
-                                   then osver=$(awk -F: '{print $5}' /etc/system-release-cpe)
-                     else printf "Couldn't get O/S version\n"
-                          osver=0.0
+        "LINUX")    fos_name=$(sadm_get_osname)
+                    os
+                    if [ "$SADM_LSB_RELEASE" != "" ] && [ -x "$SADM_LSB_RELEASE" ]
+                       then osver=$($SADM_LSB_RELEASE -rs | tail -1)
+                    fi 
+                    if [ "$fos_name" = "UBUNTU" ] && [ -r /etc/os-release ]
+                       then osver=$(grep "^VERSION=" /etc/os-release |cut -d'"' -f2 |cut -d' ' -f 1)
+                    fi
+                    if [ "$fos_name" = "DEBIAN" ] && [ -r /etc/debian_version ] 
+                       then osver=$(cat /etc/debian_version) 
+                    fi
+                    if [ "$osver" = "0.0" ] 
+                        then sadm_write_err "[ ERROR ] Couldn't get O/S version on '${fos_name}'."
                     fi 
                     ;;
         "AIX")      osver="$(uname -v).$(uname -r)"                  # Get Aix Version
@@ -2355,6 +2366,13 @@ sadm_load_config_file() {
                                             ;; 
             "SADM_OSUPDATE_SNAP" )          SADM_OSUPDATE_SNAP=$(sadm_toupper "$VALUE")
                                             ;; 
+            "SADM_OSUPDATE_REBOOT_NEEDED" ) SADM_OSUPDATE_REBOOT_NEEDED=$(sadm_toupper "$VALUE")
+                                            ;;
+            "SADM_OSUPDATE_REBOOT_TIME" )   SADM_OSUPDATE_REBOOT_TIME=$VALUE
+                                            ;;
+            "SADM_OSUPDATE_LOCK" )          SADM_OSUPDATE_LOCK=$(sadm_toupper "$VALUE") 
+                                            ;;
+
         esac
         done < $SADM_CFG_FILE
 
