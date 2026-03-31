@@ -1303,7 +1303,6 @@ sadm_get_osversion() {
     osver="0.0"                                                    # Default Value
     case "$(sadm_get_ostype)" in
         "LINUX")    fos_name=$(sadm_get_osname)
-                    os
                     if [ "$SADM_LSB_RELEASE" != "" ] && [ -x "$SADM_LSB_RELEASE" ]
                        then osver=$($SADM_LSB_RELEASE -rs | tail -1)
                     fi 
