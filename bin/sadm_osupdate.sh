@@ -386,26 +386,33 @@ run_apt()
 # --------------------------------------------------------------------------------------------------
 update_sysinfo_file()
 {
-    FINAL_CODE=$1                                                       # Exit code of O/S Update
+    FINAL_CODE=$1                                                       # Update result (1=Err 0=OK)
 
     if [ $SADM_DEBUG -gt 0 ] 
         then sadm_write_log "Updating 'O/S Update' date & status in ${HWD_FILE}."
     fi
 
-    # Update Status in for in sysinfo file
-    if [ -f "$SADM_TMP_FILE1" ] 
+    # Remove these lines in sysinfo file if they exist and add the new one with 
+    # the current date and status of update (S=Success F=Failed)
+    # Example :
+    #   - SADM_OSUPDATE_STATUS                  = S
+    #   - SADM_OSUPDATE_DATE                    = 2026.03.28 11:32:25
+
+    if [ -f "$HWD_FILE" ]                                               # if $(hostname -s)sysinfo.txt
         then grep -vi "SADM_OSUPDATE_" $HWD_FILE > $SADM_TMP_FILE1      # Remove OSUPDATE Lines
     fi 
+
+    # Add the new O/S Update status and date in the sysinfo file
     if [ "$FINAL_CODE" -eq 0 ]                                          # O/S Update was a success
        then echo "SADM_OSUPDATE_STATUS                  = S"  >> $SADM_TMP_FILE1   # Success
        else echo "SADM_OSUPDATE_STATUS                  = F"  >> $SADM_TMP_FILE1   # Failed
     fi 
 
-    TODAY=$(date "+%Y.%m.%d %H:%M:%S")                                   # Get Current Date/Time
+    TODAY=$(date "+%Y.%m.%d %H:%M:%S")                                   # Get Update Date/Time
     echo "SADM_OSUPDATE_DATE                    = $TODAY"  >> $SADM_TMP_FILE1 # Last OS Update Date
     
-    rm -f  $HWD_FILE  >/dev/null 2>&1                                   # Remove sysinfo.txt file
-    cp $SADM_TMP_FILE1 $HWD_FILE                                        # Replace with updated one
+    rm -f  $HWD_FILE  >/dev/null 2>&1                                   # Del.  old sysinfo.txt file
+    cp $SADM_TMP_FILE1 $HWD_FILE                                        # Replace old sysinfo.txt 
 }
 
 
