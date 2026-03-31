@@ -549,7 +549,7 @@ create_backup()
     #ls -l ${BACKUP_DIR} | while read wline ; do write_log "$wline"; done
     #sadm_write_log " "
 
-    return $TOTAL_ERROR                                                 # Return Total of Error
+    return "$TOTAL_ERROR"                                               # Return Total of Error
 }
 
 
@@ -700,7 +700,7 @@ mount_nfs()
              if [ $RC -ne 0 ]                                           # Err Cannot allocate memory  
                 then sadm_write_log "Dropping the cache to free some memory."
                      sadm_write_log "sync; sync; echo 3 > /proc/sys/vm/drop_cache"
-                     sync; sync; echo 3 > /proc/sys/vm/drop_cache    # Free memory by dropping cache
+                     sync; sync; echo 3 > /proc/sys/vm/drop_cache       # Free memory dropping cache
                      mount $NFS_OPT ${REM_MOUNT} ${LOCAL_MOUNT} 1>>$SADM_LOG 2>>$SADM_ELOG
                      RC=$?
              fi
@@ -716,8 +716,8 @@ mount_nfs()
 
     # Create the Hostname Main Backup Directory
     F="${LOCAL_MOUNT}/${SADM_HOSTNAME}"
-    if [ ! -d ${F} ]                                                    # Check if Server Dir Exist
-        then mkdir ${F}                                                 # If Not Create it
+    if [ ! -d "$F" ]                                                    # Check if Server Dir Exist
+        then mkdir "$F"                                                 # If Not Create it
              if [ $? -ne 0 ]                                            # If Error trying to mount
                 then sadm_write_err "[ ERROR ] Creating backup main directory '${F}'."
                      return 1                                           # End Function with error
