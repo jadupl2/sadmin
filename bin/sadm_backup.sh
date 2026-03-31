@@ -699,8 +699,8 @@ mount_nfs()
              RC=$?
              if [ $RC -ne 0 ]                                           # Err Cannot allocate memory  
                 then sadm_write_log "Dropping the cache to free some memory."
-                     sadm_write_log "sync; sync; echo 3 > /proc/sys/vm/drop_cache"
-                     sync; sync; echo 3 > /proc/sys/vm/drop_cache       # Free memory dropping cache
+                     sadm_write_log "sync; sync; echo 3 > /proc/sys/vm/drop_caches"
+                     sync; sync; echo 3 > /proc/sys/vm/drop_caches      # Free memory dropping cache
                      mount $NFS_OPT ${REM_MOUNT} ${LOCAL_MOUNT} 1>>$SADM_LOG 2>>$SADM_ELOG
                      RC=$?
              fi
