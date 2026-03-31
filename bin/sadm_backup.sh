@@ -683,7 +683,7 @@ mount_nfs()
     fi
 
 
-    # UnMount the mount point in case it's already mounted, 
+    # UnMount the mount point in case it's actually mounted, 
     REM_MOUNT="${SADM_BACKUP_NFS_SERVER}:${SADM_BACKUP_NFS_MOUNT_POINT}"
     umount ${LOCAL_MOUNT} > /dev/null 2>&1                              # Make sure not mounted
     sadm_write_log "Mounting NFS Drive on ${SADM_BACKUP_NFS_SERVER}."   # Show NFS Server Name
@@ -698,7 +698,9 @@ mount_nfs()
              mount $NFS_OPT ${REM_MOUNT} ${LOCAL_MOUNT} 1>>$SADM_LOG 2>>$SADM_ELOG
              RC=$?
              if [ $RC -ne 0 ]                                           # Err Cannot allocate memory  
-                then sync; sync; echo 1 > /proc/sys/vm/drop_cache    # Free memory by dropping cache
+                then sadm_write_log "Dropping the cache to free some memory."
+                     sadm_write_log "sync; sync; echo 3 > /proc/sys/vm/drop_cache"
+                     sync; sync; echo 3 > /proc/sys/vm/drop_cache    # Free memory by dropping cache
                      mount $NFS_OPT ${REM_MOUNT} ${LOCAL_MOUNT} 1>>$SADM_LOG 2>>$SADM_ELOG
                      RC=$?
              fi
