@@ -293,7 +293,7 @@ function display_data($result) {
         echo "</td>\n";  
 
     
-        # Server Category
+        # Server Category and Group
         echo "<td align='center'>" ;
         echo nl2br( $row['srv_cat']) . " / " . nl2br( $row['srv_group']) . "</td>\n";  
         
