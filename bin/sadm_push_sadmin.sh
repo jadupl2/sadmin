@@ -466,15 +466,15 @@ process_servers()
 
 
         # If [-c] was specified on cmdline 
-        # [-c] option copy $SADMIN/cfg/sadmin_client.cfg to $SADMIN/cfg/sadmin.cfg on all clients.
+        # Option [-c] copy $SADMIN/cfg/sadmin_client.cfg to $SADMIN/cfg/sadmin.cfg on all clients.
         # Used to have the same sadmin.cfg on all clients, you need to create a sadmin_client.cfg.
         # Copy $SADMIN/cfg/sadmin.cfg to $SADMIN/cfg/sadmin_client.cfg and change the line
         # 'SADM_HOST_TYPE = S' to 'SADM_HOST_TYPE = C'. 
         if [ "$SYNC_CFG" = "Y" ]
-            then sadmin_common="${SADM_CFG_DIR}/sadmin_client.cfg"
+            then sadmin_source="${SADM_CFG_DIR}/sadmin_client.cfg"
                  sadmin_destination="${server_fqdn}:${server_dir}/cfg/sadmin.cfg"
-                 CMD="scp -CqP $server_ssh_port ${sadmin_common} ${sadmin_destination}"
-                 scp -CqP $server_ssh_port ${sadmin_common} ${sadmin_destination} >> $SADM_LOG 2>&1
+                 CMD="scp -CqP $server_ssh_port ${sadmin_source} ${sadmin_destination}"
+                 scp -CqP $server_ssh_port ${sadmin_source} ${sadmin_destination} >> $SADM_LOG 2>&1
                  RC=$? 
                  if [ $RC -ne 0 ]
                     then sadm_write_err "[ ERROR ] $CMD"
@@ -484,23 +484,33 @@ process_servers()
         fi
 
 
+        # CFG directory is the only one that we don't want to delete files on remote side because 
+        # it may contain client specific configuration files that we don't want to delete. 
+        # So we will use rsync with --exclude option to exclude files we don't want to copy and 
+        # NOT use --delete option for this directory.
+        #
         # rsync all dot files (configuration & templates) in "$SADMIN/cfg" to all actives clients.
-        # Except the files '.dbpass' and '.gmpw'.                       # DB passwd & Gmail passwd 
+        # Except the files '.dbpass' (Database Password) and '.gmpw' (Gmail account info). 
+        CFG_EXCL="/tmp/cfg_exclude_$$.txt" 
+        echo ".gmpw"                 > $CFG_EXCL
+        echo ".dbpass"              >> $CFG_EXCL
         CFG_SRC="$SADM_CFG_DIR/.??*"                                    # rsync $SADMIN/sys dot file
         CFG_DST="${server_fqdn}:${server_dir}/cfg/"                     # Destination Dir on CLient
-        CFG_CMD="rsync -ar -e 'ssh -p $server_ssh_port' --exclude '.dbpass' --exclude '.gmpw' $CFG_SRC $CFG_DST"
-#        rsync -var -e "ssh -p $server_ssh_port" --exclude-from $CFG_EXCL $CFG_SRC $CFG_DST
-        rsync -ar -e "ssh -p $server_ssh_port" --exclude '.dbpass' --exclude '.gmpw' $CFG_SRC $CFG_DST >> $SADM_LOG 2>&1
+        CMD="rsync -ar -e 'ssh -p $server_ssh_port' --exclude-from '$CFG_EXCL' $CFG_SRC $CFG_DST"
+        rsync -ar -e "ssh -p $server_ssh_port" --exclude-from "$CFG_EXCL" $CFG_SRC $CFG_DST >>$SADM_LOG 2>&1
         RC=$? 
-        if [ $RC -ne 0 ]
-            then if [ $RC -eq 23 ] 
-                    then sadm_write_err "[ WARNING ] Error 23 - Partial rsync ..." 
-                         ((WARNING_COUNT++))                            # Increase Warning Counter
-                    else sadm_write_err "[ ERROR ] ($RC) $CFG_CMD"
-                         ((ERROR_COUNT++))                              # Increase Error Counter
+        if [ $RC -eq 23 ]                                      # File change during rsync 
+            then sadm_write_err "[ WARNING ] Error 23 denotes a file change during transfer."
+                 sadm_write_err "This can be normal if a file was updated during the rsync process."
+                 sadm_write_err "It can also indicate a problem if it happens on the same file repeatedly." 
+                 ((WARNING_COUNT++))                            # Increase Warning Counter
+            else if [ $RC -ne 0 ]                               # If Rsync returned errror
+                    then sadm_write_err "[ ERROR ] ($RC) $CMD"
+                         ((ERROR_COUNT++))                      # Increase Error Counter
+                    else sadm_write_log "[ OK ] $CMD"
                  fi
-            else sadm_write_log "[ OK ] $CFG_CMD" 
         fi
+        if [ -f "$CFG_EXCL" ] ; then rm -f "$CFG_EXCL" ; fi             # Remove Exclude file
 
 
 
