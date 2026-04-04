@@ -119,15 +119,17 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\n${BOLD}${YELLOW}${SADM_PN} v${SADM_VER} - Hostname ${SADM_HOSTNAME}"
-    printf "\n${BOLD}${YELLOW}${SADM_PDESC}${NORMAL}\n"
-    printf "\nUsage: %s%s%s%s [options]" "${BOLD}" "${CYAN}" "$(basename "$0")" "${NORMAL}"
-    printf "\n\n${BOLD}${GREEN}Options:${NORMAL}"
-    printf "\n   ${BOLD}${YELLOW}[-d 0-9]${NORMAL}\t\tSet Debug (verbose) Level"
-    printf "\n   ${BOLD}${YELLOW}[-h]${NORMAL}\t\t\tShow this help message"
-    printf "\n   ${BOLD}${YELLOW}[-v]${NORMAL}\t\t\tShow script version information"
-    printf "\n   ${BOLD}${YELLOW}[-X]${NORMAL}\t\t\tRemove the PID file & run script"
-    printf "\n\n" 
+    byellow="${BOLD}${YELLOW}" ; bcyan="${BOLD}${CYAN}"; bgreen="${BOLD}${GREEN}"; reset="${NORMAL}"
+    
+    printf "\n${byellow}${SADM_PN} v${SADM_VER} - Hostname '${SADM_HOSTNAME}'"
+    printf "\n${byellow}${SADM_PDESC}${reset}\n"
+    printf "\nUsage: %s%s%s%s [options]" "$bcyan" "$(basename "$0")" "${reset}"
+    printf "\n\n${bgreen}Options:${reset}"
+    printf "\n  ${byellow}[-d 0-9]${reset}\tSet Debug verbose Level."
+    printf "\n  ${byellow}[-h]${reset}\t\tShow this help message."
+    printf "\n  ${byellow}[-v]${reset}\t\tShow script version and information."
+    printf "\n  ${byellow}[-X]${reset}\t\tRemove the PID file & run script."
+    printf "\n\n"
 }
 
 
@@ -141,13 +143,12 @@ main_process()
 {
 
     # If script is run from command line, ask user if want to continue (To avoid causing damage).
-    # $SHLVL variable indicate the level of shell nesting (1 or 2 = Run from Command line)
-    #if (( SHLVL < 3 ))                                                  
-    #    then sadm_write_log "${SADM_PN} ${SADM_VER} ${SADM_PDESC} ($SHLVL)"
-    #         sadm_ask "Continue"                                        # Continue (y/n) ? 
-    #         if [ $? -eq 0 ] ; then sadm_stop 0 ; exit 0 ; fi           # 0 = Don't want to continue
-    #    else sadm_write_log "Script executed by another script" 
-    #fi
+    if [ -t 0 ]
+        then sadm_write_log "$SADM_PN V${SADM_VER} '$SADM_PDESC' executed by user '${SADM_USERNAME}'."
+             sadm_ask "Continue"                                        # Continue (y/n) ? 
+             if [ $? -eq 0 ] ; then sadm_stop 0 ; exit 0 ; fi           # 0 = Don't want to continue
+        else sadm_write_log "Script not executed on the command line." 
+    fi
     
 
     sadm_write_log "Starting Main Process ..."                          # Starting processing Mess.
