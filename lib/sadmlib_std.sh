@@ -2517,6 +2517,7 @@ sadm_start() {
             printf "\n     - Change permission to correct the situation.\n"
             ls -l "$SADM_LOG" "$SADM_ELOG" 
             printf "\nScript Aborted !\n"
+            sadm_stop 1 
             exit 1
     fi 
 
@@ -2531,6 +2532,7 @@ sadm_start() {
                      printf "\n    - Change permission of '$SADM_RCH_FILE'.\n"
                      ls -l "$SADM_RCH_FILE"
                      printf "\nScript Aborted !\n"
+                     sadm_stop 1 
                      exit 1
              fi
     fi
@@ -2567,6 +2569,7 @@ sadm_start() {
         then sadm_write_err "[ ERROR ] This script will only run on the SADMIN server '$SADM_SERVER'."
              sadm_write_err "The variable 'SADM_SERVER_ONLY' is set to 'Y'."
              sadm_write_err "Process aborted."                          # Abort advise message
+             sadm_stop 1
              exit 1                                                     # Exit To O/S
     fi
 
@@ -2582,6 +2585,7 @@ sadm_start() {
                             printf "\nMore info at https://sadmin.ca/sadmin-cfg/#sadmin-default-user-and-group-name"
                             printf "\nAdd '$usrname' to '$SADM_GROUP' group (sudo usermod -a -G $SADM_GROUP $usrname)." 
                             printf "\nScript aborted ...\n\n"
+                            sadm_stop 1                                 # Close normally, clean up 
                             exit 1                                      # Exit with Error
                     fi 
             fi
