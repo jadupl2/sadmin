@@ -226,7 +226,7 @@ show_usage()
 #""
 # command_available()
 # 
-#   Check if the package name received as parameter is available on the server
+#   Check if the package name received as parameter is available on the server.
 #
 #   - If command is found, $SADM_CPATH is set to full command path (return 0)
 #   - If command is not found, $SADM_CPATH is set empty "" (return 1)
