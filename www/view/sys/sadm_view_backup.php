@@ -237,7 +237,7 @@ function display_data($result)
         echo "</td>";
 
 
-        # Start Backup Date
+        # Backup Start Date
         if ( ! file_exists($rch_name) ) {                                   # If RCH File doesn't exist
             echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>No data</b></td>";
         } else {
@@ -264,7 +264,7 @@ function display_data($result)
         } 
 
 
-        # Start Backup Time
+        # Backup Start Time
         echo "&nbsp;" ; 
         if ($row['srv_backup'] == True) {                                   # If Backup Activated
             list($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT(
@@ -303,7 +303,7 @@ function display_data($result)
             echo "\n<td align='center'>" . $rch_array[5] . "</td>";
         }
 
-        sadm_timeToSeconds($rch_array[5]) ;                                 # Calc. duration in sec.
+        #sadm_timeToSeconds($rch_array[5]) ;                                 # Calc. duration in sec.
         if ($rch_array[5] != '........') {                                  # Ignore job not finished
             $duration_sec = sadm_timeToSeconds($rch_array[5]) ;             # Convert time to seconds
             $total_seconds += $duration_sec ;                               # Add Duration to Total
