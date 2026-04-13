@@ -5,8 +5,7 @@
 #   Synopsis :  Push the SADMIN server version to all active clients (No overwrite of config files). 
 #   Version  :  1.0
 #   Date     :  6 September 2015
-#   Requires :  sh
-#   SCCS-Id. :  @(#) sadm_rsync_sadmin.sh 1.0 2015.09.06
+#   Requires :  bash
 # --------------------------------------------------------------------------------------------------
 #    2016 Jacques Duplessis <duplessis.jacques@gmail.com>
 #
@@ -69,7 +68,7 @@
 #@2026_03_04 server v2.50 Added option '-X' to remove the PID file and run the script.
 #@2026_03_04 server v2.51 Only dotfile ".??*" in $SADMIN/cfg are rsync to clients,
 #@2026_03_04 server v2.51 the files ".dbpass" and ".gmpw" are excluded from the rsync process.
-
+#@2026_04_13 server v2.52 Minor comments change
 # --------------------------------------------------------------------------------------------------
 
 # Trap Ctrl-C (SIGINT) and call sadm_stop function to cleanup before exit.
@@ -100,8 +99,8 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.51'                                     # Script version number
-export SADM_PDESC="Copy actual version of SADMIN to all active clients (without overwriting config files)." 
+export SADM_VER='2.52'                                     # Script version number
+export SADM_PDESC="Copy SADMIN version from $SADM_HOSTNAME to all active clients (without overwriting config files)." 
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_QUIET="N"                                      # N=Show Err.Msg Y=ReturnErrorCode No Msg
