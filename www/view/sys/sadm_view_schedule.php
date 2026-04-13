@@ -5,7 +5,7 @@
 #   Version     :  1.5
 #   Date        :  18 February 2017
 #   Requires    :  secure.php.net, mariadb, DataTables.net
-#   Description :  This page allow to view the servers O/S Update schedule and results.
+#   Description :  Web page to view systems O/S Update schedule and results.
 #   
 #    2016 Jacques Duplessis <sadmlinux@gmail.com>
 #
@@ -43,6 +43,7 @@
 #@2024_11_24 web v2.18 O/S update status page - Fix bug when displaying schedule status
 #@2025_05_07 web v2.19 O/S update status page - Enhance Look of the page.
 #@2026_03_05 web v2.20 O/S Add average, lowest and highest execution time in header. 
+#@2026_04_13 web v2.21 O/S Update status page - Add duration column.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -125,7 +126,7 @@ $(document).ready(function() {
 #                                       Local Variables
 #===================================================================================================
 $DEBUG         = False ;                                                # Debug Activated True/False
-$Page_Version  = "2.20" ;                                               # Current version number
+$Page_Version  = "2.21" ;                                               # Current version number
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 
 
@@ -147,7 +148,8 @@ function table_heading_and_footer() {
     echo "\n<tr>";
     echo "\n<th width=10  align='center'>No</td>";    
     echo "\n<th width=170 align='left'>System</td>";
-    echo "\n<th width=80  align='center'>Last Update</th>";
+    echo "\n<th width=70  align='center'>Last Update</th>";
+    echo "\n<th width=50  align='center'>Duration</th>";
     echo "\n<th width=70  align='center'>Status</th>";
     echo "\n<th width=90  align='center'>Cat. / Group</th>";
     echo "\n<th width=40  align='center'>O/S</th>";  
@@ -164,7 +166,8 @@ function table_heading_and_footer() {
     echo "\n<tr>";
     echo "\n<th width=10  align='center'>No</td>";    
     echo "\n<th width=170 align='left'>System</td>";
-    echo "\n<th width=80  align='center'>Last Update</th>";
+    echo "\n<th width=70  align='center'>Last Update</th>";
+    echo "\n<th width=50  align='center'>Duration</th>";
     echo "\n<th width=70  align='center'>Status</th>";
     echo "\n<th width=90  align='center'>Cat. / Group</th>";
     echo "\n<th width=40  align='center'>O/S</th>";  
@@ -193,10 +196,12 @@ function display_data($result) {
     $URL_HOST_INFO  = '/view/srv/sadm_view_server_info.php';            # Display Host Info URL
     $URL_VIEW_SCHED = '/view/sys/sadm_view_schedule.php';               # View O/S Update Schedule
     
+    $count = 0;
     $total_seconds = 0 ;                                                # Total execution Time sec.
     $total_count   = 0 ;                                                # Nb execution finished 
     $lowest_time   = 0 ;                                                # Lowest execution time 
-    $highest_time  = 0 ;                                                # Highest execution time
+    $highest_time  = 0 ;                                                # Highest execution time    
+
 
     while ($row = mysqli_fetch_assoc($result)) {                        # Loop Result from Query
 
@@ -228,7 +233,7 @@ function display_data($result) {
 
 
         # Last O/S Update Date & Time.
-        if (file_exists($rch_name)) {
+        if (file_exists($rch_name)) {                                       # If RCH file exists    
             $file = file("$rch_name");                                      # Load RCH File
             $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
             # $whost,$wdate1,$wtime1,$wdate2,$wtime2,$welapse,$wscript,$walert,$gtype,$wcode
@@ -271,7 +276,30 @@ function display_data($result) {
             }
         }
 
-    
+
+        # Save O/S Update duration & Calculate Total, Lowest and Highest duration
+        echo "<td align='center'>";                                     # Center duration cell
+        $tooltip = "O/S update duration was " . $celapse . "." ;        # Tooltips for duration
+        echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";   # Cell detail
+        echo "$celapse</span></td>";                                    # Print the duration time
+
+        # Cumulate elapse time in seconds and a system counter.
+        # Test if lowest or highest execution time and save it for later display in header.
+        if ($celapse != '........') {                                   # Ignore if running job 
+            $duration_sec   = sadm_timeToSeconds($celapse) ;            # Convert duration time to sec 
+            $total_seconds  += $duration_sec ;                          # Add Duration to Total sec.
+            $total_count    +=1;                                        # O/S Update counter
+            if ($lowest_time == 0 || $duration_sec <= $lowest_time) {   # If the lowest duration sec    
+                $lowest_time    = $duration_sec ;
+                $lowestduration = $celapse ;                            # Save lowest duration Time
+            }
+            if ($highest_time == 0 || $duration_sec > $highest_time) {  # if the highest duration sec
+                $highest_time    = $duration_sec ;                      # Save highest duration sec.
+                $highestduration = $celapse ;                           # Save highest duration Time   
+            }
+        } 
+
+
         # Last Update Status
         if (file_exists($rch_name)) {                                   # If a rch exist for O/S Upd
             $file = file("$rch_name");                                  # Load RCH File in Memory
@@ -297,6 +325,7 @@ function display_data($result) {
         echo "<td align='center'>" ;
         echo nl2br( $row['srv_cat']) . " / " . nl2br( $row['srv_group']) . "</td>\n";  
         
+
         # Display Operating System Logo
         sadm_show_logo ( sadm_clean_data($row['srv_osname']) );                                  
     
@@ -356,6 +385,7 @@ function display_data($result) {
             echo "&nbsp;";
         }
 
+
         # Display link to view o/s update error log file (If exist)g/" . $row['srv_name'] . "_sadm_osupdate_e.log";
         if ( (file_exists($elog_name)) and (file_exists($elog_name)) and (filesize($elog_name) != 0)) {
             echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $elog_name . "'" ;
@@ -363,6 +393,7 @@ function display_data($result) {
         }else{
             echo "&nbsp;";
         }
+
 
         # Display link to view o/s update rch file (If exist)
         if (file_exists($rch_name))  {
@@ -373,6 +404,7 @@ function display_data($result) {
         }
         echo "</td>\n";  
 
+
         # Reboot after Update (Yes/No)
         if ($row['srv_update_reboot']   == True ) { 
             echo "<td align='center'>Yes</td>\n"; 
@@ -382,6 +414,27 @@ function display_data($result) {
 
         echo "</tr>\n"; 
     }
+
+   
+    # Average script execution time
+    $average = $total_seconds / $total_count ;                          # Total Sec. / Nb. execution
+    $script_average = sadm_secondsToHHMMSS($average) ;                  # Convert Sec. to HH:MM:SS
+    $script_name = pathinfo($GET_RCHFILE,PATHINFO_FILENAME) ;           # Remove extension of file
+    if ($DEBUG) { 
+        echo "\nAverage = $average - total_seconds = $total_seconds"; 
+        echo "\nTotal_count = $total_count - Script_average = $script_average";
+    } 
+    if ( substr($lowestduration,0,3) == "00:") {
+        $lowestduration= substr($lowestduration,3, strlen($lowestduration));
+    }       
+    if ( substr($highestduration,0,3) == "00:") {
+        $highestduration= substr($highestduration,3, strlen($highestduration));
+    }       
+    echo "\n<center><b>";
+    echo "O/S Update average execution time is $script_average ";
+    echo "(lowest : $lowestduration - highest : $highestduration)";
+    echo "</center></b>\n";
+
 }
 
 
