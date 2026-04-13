@@ -2620,10 +2620,10 @@ sadm_start() {
 
             sadm_write_err " "
             sadm_write_err "  - Can't run multiple copy of this script (\$SADM_MULTIPLE_EXEC='N')." 
-            sadm_write_err "  - PID file ('$SADM_PID_FILE'), was created $runsec seconds ago, meaning $(sadm_convert_sec2hms $pelapse)"
-            sadm_write_err "  - The PID timeout ('\$SADM_PID_TIMEOUT') is set to $ptimeout seconds, meaning $(sadm_convert_sec2hms $SADM_PID_TIMEOUT)"
+            sadm_write_err "  - ThePID file ('$SADM_PID_FILE'), was created $runsec seconds ago, meaning $(sadm_convert_sec2hms $pelapse)."
+            sadm_write_err "  - The PID timeout ('\$SADM_PID_TIMEOUT') is set to $ptimeout seconds, meaning $(sadm_convert_sec2hms $SADM_PID_TIMEOUT)."
             if [ $pid_TimeLeft -gt 0 ] 
-                then sadm_write_err "  - So the PID file will automatically be remove in $(sadm_convert_sec2hms $pid_TimeLeft)"
+                then sadm_write_err "  - So the PID file will automatically be remove in $(sadm_convert_sec2hms $pid_TimeLeft)."
             fi 
 
             # If run elapse time is less than timeout limit in seconds and timeout is not 0
