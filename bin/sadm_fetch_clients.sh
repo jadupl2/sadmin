@@ -113,6 +113,7 @@
 #@2025_11_30 server v3.59 Fix uptime value when system was down.
 #@2025_11_30 server v3.60 Fix system Connectivity test to client.
 #@2025_11_30 server v3.61 Added -X to delete PID file, then run script.
+#@2026_04_13 server v3.62 Change PID Time out to 600 seconds (10 Min) to prevent false lock.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT the ^C
 #set -x
@@ -142,7 +143,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAN USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.61'                                     # Script version number
+export SADM_VER='3.62'                                     # Script version number
 export SADM_PDESC="Collect scripts results & SysMon status from all systems and send alert if needed." 
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -172,7 +173,7 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
 #export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
 #export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
-#export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
+export SADM_PID_TIMEOUT=600                                 # Sec. before PID Lock expire
 #export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
 # --------------- ---  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
 
