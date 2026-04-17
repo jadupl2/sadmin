@@ -41,19 +41,22 @@ trap 'sadm_stop 1; exit 1' 2
 
 
 
+# ------------------- S T A R T  O F   S A D M I N   C O D E    S E C T I O N  ---------------------
+# v1.56 - Setup Global Variables and load the SADMIN standard library $SADMIN/lib/sadmlib_std.sh.
+#       - To use SADMIN scripting tools, this section MUST be present near the top of your code.    
 
-# --------------------------  S A D M I N   C O D E    S E C T I O N  ------------------------------
-# v1.56 - Setup for Global variables and load the SADMIN standard library.
-#       - To use SADMIN tools, this section MUST be present near the top of your code.
 
 # Make sure environment variable 'SADMIN' is defined.
 if [ -r /etc/environment ] && [ -z "$SADMIN" ] ; then source /etc/environment ; fi 
 if [ -z "$SADMIN" ]                                        # Advise user, SADMIN Env. Var. is a MUST
    then printf "\nSet 'SADMIN' environment variable to the install directory." 
         printf "\nAdd a line similar to 'SADMIN=/opt/sadmin' in /etc/environment." 
-        exit 1 ; fi 
+        exit 1 
+fi 
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                   # If SADMIN shell library doesn't exist 
-   then printf "\nSADMIN library '$SADMIN/lib/sadmlib_std.sh' can't be found.\n" ; exit 1 ; fi 
+   then printf "\nSADMIN library '$SADMIN/lib/sadmlib_std.sh' can't be found.\n" ; exit 1 
+fi 
+
 
 # YOU CAN USE THE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
 export SADM_PN=${0##*/}                                    # Script name(with extension)

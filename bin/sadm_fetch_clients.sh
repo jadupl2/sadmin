@@ -122,8 +122,8 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 # ------------------- S T A R T  O F   S A D M I N   C O D E    S E C T I O N  ---------------------
-# v1.56 - Setup for Global Variables and load the SADMIN standard library.
-#       - To use SADMIN tools, this section MUST be present near the top of your code.    
+# v1.56 - Setup Global Variables and load the SADMIN standard library $SADMIN/lib/sadmlib_std.sh.
+#       - To use SADMIN scripting tools, this section MUST be present near the top of your code.    
 
 # Make Sure Environment Variable 'SADMIN' Is Defined.
 if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADMIN defined? Libr.exist
