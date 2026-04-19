@@ -260,9 +260,11 @@
 #@2026_02_22 lib v4.82 Add code name for MacOS, sadm_get_osversion() return minor number for debian.
 #@2026_03_03 lib v4.83 New constants: 'SADM_VM_EXPORT_SCRIPT', 'SADM_REAR_BACKUP_SCRIPT'
 #@2026_03_03 lib v4.83 New constants: 'SADM_OSUPDATE_SCRIPT'
-#@2026_03_30 lib v4.84 Add O/S update options: SADM_OSUPDATE_REBOOT_NEEDED SADM_OSUPDATE_REBOOT_TIME SADM_OSUPDATE_LOCK.
-#@2026_03_30 lib v4.84 Add O/S update options: SADM_OSUPDATE_LOCK.
+#@2026_03_30 lib v4.84 Add O/S update options: SADM_OSUPDATE_REBOOT_NEEDED SADM_OSUPDATE_REBOOT_TIME 
+#@2026_03_30 lib v4.84 Add O/S update options: SADM_OSUPDATE_LOCK
 #@2026_03_31 lib v4.85 Return value on Ubuntu was not ok on raspberry pi.
+#@2026_04_18 lib v4.86 If value of  global variable 'SADM_LOG_TYPE' is invalid, set to default 'B'.
+#@2026_04_19 lib v4.87 Function 'sadm_write_log' rewrote and now support '\n' in log message.
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -273,7 +275,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.85"                                              # This Library Version
+export SADM_LIB_VER="4.87"                                              # his Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -648,17 +650,14 @@ sadm_ask() {
 
 
 
-
+# For compatibility with previous version
 # Write String received to Log (L), Screen (S) or Both (B) depending on $SADM_LOG_TYPE variable.
 # Use sadm_write (No LF at EOL) instead of sadm_write_log (With LF at EOL).
-# Replace '[ OK ]' By a Green '[ OK ]', add color to ERROR WARNING, FAILED, SUCCESS, and INFO.
 sadm_write() {
     SADM_SMSG="$@"                                                      # Screen Msg = Msg Received
-    sadm_write_log "$SADM_SMSG"  "NOLF"  
+    sadm_write_log "$SADM_SMSG" "NOLF"  
     return 0
 }
-
-
 
 
 # Write String received to Log (L), Screen (S) or Both (B) depending on $SADM_LOG_TYPE variable.
@@ -666,49 +665,39 @@ sadm_write() {
 sadm_writelog() {
     SADM_SMSG="$@"                                                      # Screen Msg = Msg Received
     sadm_write_log "$SADM_SMSG"    
-    return 0
+    return $?
 }
 
 
 #---------------------------------------------------------------------------------------------------
-# sadm_write_log()
+# sadm_write_log(String, [Option])
 #
-# Desc: Write a message to the log file ($SADM_LOG) and/or to the screen.
-#
+# Description: 
+#   Write a message to the log file ($SADM_LOG) and/or to the screen.
+#   Write String received to Log (L), Screen (S) or Both (B) depending on $SADM_LOG_TYPE variable.
 #
 # Arguments: 
-#   $1  = Message to write to log.
-#   $2  = Optional, control line feed befora and after recording the 'message'.
+#   $1  = Message to write to log and/or screen. 
+#   $2  = Optional, if 'NOLF' NO LineFeed will be issued after the message is recorded.
 #
-# Example of optional second parameter will work in a short futur : 
-#   - ""       LineFeed issue at the end of the line.   
+# Example of optional second parameter: 
 #   - "NOLF"   Issue no line feed at the end of the line.
-#   - "LFBL"   Issue LineFeed Before the Line. 
-#   - "LFBA"   Issue LineFeed Before and After the Line.
+#       'sadm_write_log "No Line Feed Test" "NOLF"'
 #
 sadm_write_log()
 {
     init_msg="$1"                                                       # Initial msg received
-    EOL_LF='Y'                                                          # Default EndOfLine LineFeed
+    LINEFEED='Y'                                                        # Add Linefeed at end of msg
     dated_msg="$(date "+%C%y.%m.%d %H:%M:%S") $init_msg"                # Insert Date & Time in msg
 
-    # When invalid Log Type, then default to 'B' go both (Screen and Log file).
-    if [ "$SADM_LOG_TYPE" = "" ] ; then SADM_LOG_TYPE="B" ; fi          
+    # If a second parameter 'NOLF' is specified means no LineFeed at the end of the line.
+    if [ "$#" -eq 2 ]                                                   # Extra parameter received ?
+        then OPTION=$(sadm_toupper "$2")                                # Convert it to UpperCase
+             if [ "$OPTION" = "NOLF" ] ;then LINEFEED='N' ;fi           # No LineFeed at EOL
+        else OPTION=""                                                  # Use default, With LineFeed 
+    fi  
 
-    # If a second parameter is specified ('nolf'), means no LineFeed at the end of the line)
-    if [ $# -eq 2 ]                                                     # Extra parameter receive ?
-       then WFCT=$(sadm_toupper "$2")                                   # Extra parameter to UpCase
-            case "$WFCT" in
-                "NOLF" )    EOL_LF='N'                                  # No LineFeed Activated
-                            ;;
-                *)          printf "Invalid second parameter '$2' in ${FUNCNAME[0]} line ${LINENO}.\n"
-                            printf "Valid second parameter is : 'NOLF'\n"
-                            return 1                                    # Return Error to Caller
-                            ;;
-            esac
-    fi    
-
-    # Replace special status and put them in color.
+    # Put Color for those special messages.
     SC_MSG="$init_msg"                                                  # Screen msg is init msg 
     SC_MSG="${SC_MSG/"$SADM_OK"/$SADM_SOK}"          
     SC_MSG="${SC_MSG/"$SADM_INFO"/$SADM_SINFO}"      
@@ -718,40 +707,36 @@ sadm_write_log()
     SC_MSG="${SC_MSG/"$SADM_SUCCESS"/$SADM_SSUCCESS}"
 
     case "$SADM_LOG_TYPE" in                                            # [S]creen [L]og or [B]oth 
-        S)      if [ "$EOL_LF" = 'N' ]                                  # If No LineFeed at EOL
-                    then printf -- "%s" "$SC_MSG"                       # Screen Msg without LF
-                    else printf -- "%s\n" "$SC_MSG"                     # Screen Msg with LineFeed
-                fi
+        S)      if [ "$LINEFEED" = "N" ] ; then echo -en "$SC_MSG" ; else echo -e  "$SC_MSG" ; fi
                 ;;
-        L)      printf -- "%s\n" "$dated_msg" >> $SADM_LOG              # Write Msg to Log File
+        L)      echo "$dated_msg" >> $SADM_LOG                          # Write dated Msg to LogFile
                 ;;
-        B)      if [ "$EOL_LF" = 'N' ]                                  # If No LineFeed at EOL
-                    then printf -- "%s" "${SC_MSG}"                     # Screen Msg without LF
-                    else printf -- "%s\n" "${SC_MSG}"                   # Screen Msg with LineFeed
-                fi
-                printf -- "%s\n" "$dated_msg" >> $SADM_LOG              # Write Msg to Log
+        B)      if [ "$LINEFEED" = "N" ] ; then echo -en "$SC_MSG" ; else echo -e  "$SC_MSG" ; fi
+                echo "$dated_msg" >> $SADM_LOG                          # Write Msg to Log File
                 ;;
-        *)      printf "Invalid '$SADM_LOG_TYPE' ($SADM_LOG_TYPE) on line ${LINENO}.\n" 
+        *)      echo -e "Invalid '$SADM_LOG_TYPE' ($SADM_LOG_TYPE) on line ${LINENO}." 
+                echo -e "Valid values are 'S' for Screen, 'L' for Log and 'B' for Both."
+                echo "Invalid '$SADM_LOG_TYPE' ($SADM_LOG_TYPE) on line ${LINENO}."   >> $SADM_LOG
+                echo "Valid values are 'S' for Screen, 'L' for Log and 'B' for Both." >> $SADM_LOG
+                return 1                                                # Return Error to Caller       
                 ;;
     esac
 }
 
 
 
-# Write String received to script log ($SADM_LOG) & script error log ($SADM_ELOG)
+# Write String received to log ($SADM_LOG) & Error log ($SADM_ELOG)
+# String received is written to Log(L), Screen(S) or Both(B) depending on $SADM_LOG_TYPE variable.
 sadm_write_err() {
     SADM_SMSG="$1"                                                      # Screen Mess no Date/Time
-    sadm_write_log "$SADM_SMSG"                                         # Go write in normal Scr/log
-    #
-    SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $SADM_SMSG"               # Log Message with Date/Time
-    if [ -w "$SADM_ELOG" ] 
-        then case "$SADM_LOG_TYPE" in                                   # Depending of LOG_TYPE
-                l|L|b|B) printf "$SADM_LMSG\n" >> $SADM_ELOG            # Write Msg to Error Log 
+    sadm_write_log "$SADM_SMSG"                                         # Go write normal Scr/log
+    ERRMSG="$(date "+%C%y.%m.%d %H:%M:%S") $SADM_SMSG"                  # Prefix Msg by Date & Time
+    case "$SADM_LOG_TYPE" in                                            # Depending of LOG_TYPE
+                l|L|b|B) echo "$ERRMSG" >> $SADM_ELOG                   # Write Msg to Error Log 
                          ;;
-             esac
-        else sadm_write_log "[ ERROR ] Insufficient permission to write to error log '$SADM_ELOG'."
-    fi 
+    esac
 }
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -2492,6 +2477,19 @@ sadm_freshen_directories_structure() {
 sadm_start() {
 
     sadm_freshen_directories_structure                                  # Chk Dir. Structure & Perm.
+
+    # Validate Log Type '$SADM_LOG_TYPE' & make sure it's in upper case for later use.
+    case "$SADM_LOG_TYPE" in                                            # Test for valid Log Type
+            l|L|b|B|s|S)                                                # Various logtype validation
+                SADM_LOG_TYPE=$(sadm_toupper "$SADM_LOG_TYPE")          # Make sure in Uppercase 
+                ;;
+            *)  SADM_LOG_TYPE="B"                                       # Default Both Screen & Log
+                printf "\n[ WARNING ] Invalid log type '$SADM_LOG_TYPE' specified in script."              
+                printf "\n            Valid log type are: [S]screen, [L]og and [B]oth."
+                printf "\n            Default log type set to [B]oth."
+                ;;
+    esac
+
 
     # If user don't want to append to existing log, removed them. 
     if [ "$SADM_LOG_APPEND" = "N" ]                                     # Want [N]ew log each time
