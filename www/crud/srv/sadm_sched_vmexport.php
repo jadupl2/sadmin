@@ -479,7 +479,7 @@ function display_vmschedule($con, $wrow, $mode) {
 
     # DISPLAY PAGE HEADING
     $wserver = $row['srv_name'] . "." . $row['srv_domain'];
-    $title1  = "Export schedule for '" .$wserver. "'";                   # Heading 1 Line
+    $title1  = "Export Schedule for '" .$wserver. "'";                   # Heading 1 Line
     
     
     # Take O/S Update Server Data and return next update to a one line text and date of next update.
