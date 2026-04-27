@@ -31,6 +31,7 @@
 #@2025_07_27 web v1.8 Change Legend at the bottom of the page & enhance layout.
 #@2025_09_19 web v1.9 Show only active systems and virtual machines.
 #@2026_03_03 web v2.0 Add average execution time statistics..
+#@2026_04_27 web v2.1 Add the total space occupy on disk for the export of all VMs.
 # ==================================================================================================
 
 
@@ -114,7 +115,7 @@ ini_set('display_errors', 1);
 #                                       Local Variables
 #===================================================================================================
 $DEBUG              = False ;                                           # Debug Activated True/False
-$WVER               = "2.0" ;                                           # Current version number
+$WVER               = "2.1" ;                                           # Current version number
 $URL_HOME           = '/index.php';                                     # Site Main Page
 
 # Server Static Data Maintenance
@@ -220,7 +221,9 @@ function display_data($con) {
     $total_count   = 0 ;                                                # Nb execution finished 
     $lowest_time   = 0 ;                                                # Lowest execution time 
     $highest_time  = 0 ;                                                # Highest execution time   
-         
+    $total_previous_size = 0 ;                                          # Total previous export size
+    $total_export_size = 0 ;                                            # Total current export size     
+
     while ($row = mysqli_fetch_assoc($result)) {                        # Gather Result from Query
         
         # Set the Logs, ErrorLog and rch full path name
@@ -423,22 +426,21 @@ function display_data($con) {
         }
 
 
-        # Get current export size. 
-        $export_size = 0 ; $num_export_size = 0 ;
-        if (file_exists($log_name)) {
-            $pattern = "/Current export size/i"; 
-            if (preg_grep($pattern, file($log_name))) {
-                $bstring     = implode (" ", preg_grep($pattern, file($log_name)));
-                $barray      = explode (" ", $bstring) ;
-                $export_size = $barray[count($barray)-1];
-                # Remove any alphanumeric character from string $previous_size
-                $num_export_size =  preg_replace('/[a-zA-Z]/','',$export_size);
+        # Get current export size ig GB from the log file. 
+        $export_size = 0 ; $num_export_size = 0 ;                       # Set default value to zero
+        if (file_exists($log_name)) {                                   # If log file exist
+            $pattern = "/Current export size/i";                        # Search pattern in log file
+            if (preg_grep($pattern, file($log_name))) {                 # If pattern found in log 
+                $bstring     = implode (" ", preg_grep($pattern, file($log_name))); # Get log line
+                $barray      = explode (" ", $bstring) ;                # Split log line in array
+                $export_size = $barray[count($barray)-1];               # Get last column if line
+                $num_export_size =  preg_replace('/[a-zA-Z]/','',$export_size); # Del alpha char from string
+                $total_export_size += $num_export_size ;                # Add export size to total export size
             }
         }
-        #echo "num_current size: " . $num_export_size . "\n" ; 
 
         # Get previous export size.
-        $previous_size = 0 ; $num_previous_size = 0 ;
+        $previous_size = 0 ; $num_previous_size = 0 ;                   # Set default value to zero
         if (file_exists($log_name)) {
             $pattern = "/Previous export size/i";
             if (preg_grep($pattern, file($log_name))) {
@@ -447,7 +449,8 @@ function display_data($con) {
                 $previous_size = $barray[count($barray)-1];
                 # Remove any alphanumeric character from string $previous_size
                 $num_previous_size = preg_replace('/[a-zA-Z]/','', $previous_size);
-            }
+                $total_previous_size += $num_previous_size ;           # Add previous size to total
+                }
         }
         #echo "num_previous size: " . $num_previous_size .  "\n"; 
 
@@ -502,6 +505,7 @@ function display_data($con) {
         $highestduration= substr($highestduration,3, strlen($highestduration));
     }       
     echo "(lowest : $lowestduration - highest : $highestduration)";
+    echo "<br>\nTotal export size is " . number_format($total_export_size,1) . " GB - Total previous export size is " . number_format($total_previous_size,1) . " GB";
     echo "</center></b>\n";
 
     echo "\n</tbody>\n</table>\n";    
