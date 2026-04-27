@@ -50,6 +50,7 @@
 #@2025_04_09 virtualbox v3.0 Minor changes.
 #@2025_07_09 virtualbox v3.1 Minor adjustment in heading & Change total calculation
 #@2026_02_06 virtualbox v3.2 New way to get VBox guest version.
+#@2026_04_27 virtualbox v3.3 Optimize VM export function. 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -60,7 +61,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 
 # Global Variables
 # --------------------------------------------------------------------------------------------------
-export VMLIBVER="3.2"                                                   # This Library version
+export VMLIBVER="3.3"                                                   # This Library version
 export VMLIB_DEBUG="N"                                                  # Activate Debug output Y/N
 export VMLIST="$(mktemp "$SADMIN/tmp/${SADM_INST}vm_list1_XXX")"        # List of all VM in VBox
 export VMRUNLIST="$(mktemp "$SADMIN/tmp/${SADM_INST}vm_runlist_XXX")"   # Tmp File to list RunningVM 
@@ -625,50 +626,8 @@ sadm_backup_vm()
 
 #===================================================================================================
 #"""
-# Synopsys:
-#   sadm_ping "hostname"
-#
-# Description:
-#   Do a ping to hostname received as a paraneter.
-#   
-# Args: 
-#   String:     The hostname to ping.
-#
-# Return: 
-#   Integer: #  1 = Ping failed.
-#               0 = Ping Succeeded.
-#
-# Example: 
-#    sadm_ping "$SADM_VM_EXPORT_NFS_SERVER" 
-#    if [ $? -ne 0 ]                                                     
-#       then sadm_write_err "Ping failed."
-#       else sadm_write_log "Ping succeeded."
-#    fi    
-#
-#"""
-# --------------------------------------------------------------------------------------------------
-# Ping Backup server received as $1 - If it failed Return (1) error to caller
-# --------------------------------------------------------------------------------------------------
-sadm_ping()
-{
-    WSERVER=$1
-    ping -c 2 -W 2 $WSERVER >/dev/null 2>/dev/null                      # Ping the Server
-    RC=$?  
-    if [ $RC -ne 0 ] 
-        then sadm_write_err "[ ERROR ] Ping to system '$WSERVER' failed."
-             sadm_write_err "  - Can't proceed, aborting script."
-             RC=1                                                       # Make sure RC is 1 or 0 
-        else sadm_write_log "[ OK ] System '$WSERVER' is alive."
-             RC=0
-    fi
-    return $RC
-}
-
-
-#===================================================================================================
-#"""
 ### Synopsys:
-#   sadm_export_vm()
+#   sadm_export_vm "$VMNAME"
 #
 ### Description:
 #   Do an export of the specified VM on the NFS server mentionned in $SADMIN/cfg/sadmin.cfg
@@ -691,10 +650,10 @@ sadm_ping()
 #===================================================================================================
 sadm_export_vm()
 {
-    VM="$1"                                                             # Save VM Name
+    VM="$1"                                                             # Save VM Name to export 
     export MOUNT_POINT="/tmp/${SADM_INST}.tmp"                          # Create Temp Dir in /tmp
-    if [ ! -d "$MOUNT_POINT" ]                                          # Today export Dir. Exist?
-        then sudo mkdir -p "$MOUNT_POINT" 
+    if [ ! -d "$MOUNT_POINT" ]                                          # VM Export Dir. Exist?
+        then sudo mkdir -p "$MOUNT_POINT"                               # If not create it
     fi 
 
     EXPORT_DIR="${MOUNT_POINT}/${VM}"                                   # Actual Export Directory
@@ -705,105 +664,88 @@ sadm_export_vm()
     # Check if the VM exist
     sadm_vm_exist "$VM"                                                 # Does the VM exist ?                                 
     if [ $? -ne 0 ]                                                     
-       then sadm_write_err "${SADM_ERROR} '$VM' is not a valid registered virtual machine on host." 
+       then sadm_write_err "[ ERROR ] The VM '$VM' doesn't exist in Virtual Box on '$SADM_HOSTNAME'."
             return 1                                                    # Return Error to Caller
     fi    
 
     # Check if System is Locked.
-    sadm_lock_status "$VM"                                        # Check lock file status
+    sadm_lock_status "$VM"                                              # Check lock file status
     if [ $? -ne 0 ]                                                     # The system is lock
-        then sadm_write_err "[ ERROR ] System is lock, VM export is not allowed."
+        then sadm_write_err "[ ERROR ] System is lock, VM export is not currently allowed."
              return 1                                                   # Return Error to caller
     fi 
 
-    # Create lock file while VM export is running 
-    # This prevent the SADMIN server from starting a script on the remote system.
-    # A system Lock also turn off monitoring of remote system.
-    #sadm_lock_status "$VM"                                              # Lock system while export
-    #if [ $? -ne 0 ]                                                     # If lock system failed
-    #   then sadm_write_err "[ ERROR ] Couldn't create the lock file for '$VM'." 
-    #        return 1 
-    #fi
 
-    # NFS Server is available ?
+    # NFS Server is alive ?
     sadm_ping "$SADM_VM_EXPORT_NFS_SERVER"                              # NFS Server Alive ?
     if [ $? -ne 0 ] ; then return 1 ; fi                                # Return Error to caller
+
 
      # Save current VM State (Running or Power Off), if it's running then shutdown the VM.
     sadm_vm_running "$VM"                                               # Check if it is running
     if [ $? -eq 0 ]                                                     # If it's still running
         then sadm_write_log " "
-             sadm_write_log "The Virtual machine '$VM' is currently running."
+             sadm_write_log "[ INFO ] The Virtual machine '$VM' is currently running."
              INITIAL_STATE="RUNNING"                                    # Save VM Init State Running
              sadm_vm_stop "$VM"                                         # Then Stop it
              if [ $? -ne 0 ] ; then return 1 ; fi                       # Error if can't stop it 
-        else sadm_write_log "The Virtual machine '$VM' is currently power off."
+        else sadm_write_log "[ INFO ' The Virtual machine '$VM' is currently power off."
              INITIAL_STATE="POWEROFF"                                   # Save VM InitState PowerOFF
     fi 
-    
+
+
     # Get the name of the directory where the VM exist
     sadm_write_log " "
     VM_DIR=$($VBOXMANAGE showvminfo $VM |grep -i snapshot |awk -F: '{print $2}'|tr -d ' '|xargs dirname |head -1)
-    sadm_write_log "The VM '$VM' is located in '${VM_DIR}' on '${SADM_HOSTNAME}'."
-
-    # Show User Mount command
-    SHORT_NFS="${SADM_VM_EXPORT_NFS_SERVER}:${SADM_VM_EXPORT_MOUNT_POINT}"
-    sadm_write_log "sudo mount $SHORT_NFS $MOUNT_POINT"
-    sudo mount $SHORT_NFS ${MOUNT_POINT} >>$SADM_LOG 2>&1
-    if [ "$?" -ne 0 ]                                                   # If Error during mount 
-        then sadm_write_err "[ ERROR ] mount $SHORT_NFS ${MOUNT_POINT}"      
-             sudo umount ${MOUNT_POINT} > /dev/null 2>&1                # Ensure Dest. Dir Unmounted
-             sadm_unlock_system "$VM"                                   # Go remove the lock file
-             return 1                                                   # Set RC to One (Standard)
-        else sadm_write_log "[ OK ] NFS mount succeeded."
-    fi
+    sadm_write_log "[ INFO ] The VM '$VM' is located in '${VM_DIR}' on '${SADM_HOSTNAME}'."
 
 
-    # Make sure the System Export directory exist on the NFS server.
-    if [ ! -d "${MOUNT_POINT}/${VM}" ] 
-        then sudo mkdir -p "${MOUNT_POINT}/${VM}"  
+    # Mount NFS Directory.
+    # Example: sadm_nfs_mount "batnas.maison.ca" "/volume1/software" "$MountPoint" 
+    #    NFS_SERVER="$1"                              # NFS Server name or IP
+    #    NFS_DIR="$2"                                 # NFS Directory to mount
+    #    NFS_MOUNT_POINT="$3"                         # Local dir. to mount nfs
+    #    NFS_MOUNT_OPTIONS=$4                         # Optional NFS Mount option (-o)
+    SHORT_NFS="${SADM_VM_EXPORT_NFS_SERVER}:${SADM_VM_EXPORT_MOUNT_POINT}" "" 
+    OPT="vers=$SADM_VM_EXPORT_NFS_SERVER_VER"                           # NFS Ver. from sadmin.cfg
+    sadm_nfs_mount "$SADM_VM_EXPORT_NFS_SERVER" "$SADM_VM_EXPORT_MOUNT_POINT" "$MOUNT_POINT" "$OPT" 
+    if [ "$?" -ne 0 ] ; then return 1 ; fi                               # If Error during mount 
+
+
+    # Make sure the export VM sub-directory with todayś date exist on the NFS server.
+    if [ ! -d "${MOUNT_POINT}/${VM}" ]                                  # If export Dir. don't exist
+        then sudo mkdir -p "${MOUNT_POINT}/${VM}"                       # Create VM export Dir.
              if [ "$?" -ne 0 ]                                          # If Error creating Dir.
-                then sadm_write_err "[ ERROR ] Wasn't able to create nfs mount point directory '${MOUNT_POINT}/${VM}'."
+                then sadm_write_err "[ ERROR ] Creating mount point directory '${MOUNT_POINT}/${VM}'"
                      sudo umount ${MOUNT_POINT} >>$SADM_LOG 2>&1  
                      sadm_unlock_system "$VM"                           # Go remove the lock file
                      return 1
-                else sadm_write_log "[ OK ] Today export directory created '${MOUNT_POINT}/${VM}'."
+                else sadm_write_log "[ OK ] Export directory created '${MOUNT_POINT}/${VM}'."
              fi 
     fi
-    sudo chmod 777 "${MOUNT_POINT}/${VM}" > /dev/null 2>&1
+    sudo chmod 777 "${MOUNT_POINT}/${VM}" > /dev/null 2>&1              # Make sure no perm. problem
 
 
-    # Make sure export directory for today exist
+    # Make sure export today sub-directory for today exist
     if [ ! -d "$EXPDIR" ]                                               # Today export Dir. Exist?
-        then sudo mkdir -p "$EXPDIR" >/dev/null 2>&1
+        then sudo mkdir -p "$EXPDIR" >/dev/null 2>&1                    # Create date directory
              if [ "$?" -ne 0 ]                                          # If Error creating Dir.
                 then sadm_write_err "[ ERROR ] Wasn't able to create directory '$EXPDIR'."
-                     sudo umount ${MOUNT_POINT} >>$SADM_LOG 2>&1  
+                     sudo umount ${MOUNT_POINT} >>$SADM_LOG 2>&1        # Mkae sure unlock
                      sadm_unlock_system "$VM"                           # Go remove the lock file
-                     return 1
+                     return 1                                           Return error to caller
                 else sadm_write_log "[ OK ] New export directory is created '$EXPDIR'."
              fi 
     fi       
-    sudo chmod 6777 "$EXPDIR" > /dev/null 2>&1
+    sudo chmod 6777 "$EXPDIR" > /dev/null 2>&1                          # Make sure permission OK
     if [ "$?" -ne 0 ]                                                   # If Error during mount 
         then if [ "$VMLIB_DEBUG" = "Y" ] 
                 then sadm_write_err "[ ERROR ] 'sudo chmod 6777 $EXPDIR' didn't work."
-                else sadm_write_log "[ OK ] 'sudo chmod 6777 $EXPDIR'." 
+                else sadm_write_log "[ OK ] sudo chmod 6777 $EXPDIR." 
              fi
     fi    
     
-    # Make sure export directory exist, if not create it.
-    if [ ! -d "$EXPDIR" ]                                               # Today export Dir. Exist?
-        then sudo mkdir -p "$EXPDIR" 
-             sadm_write_log "Output directory ${EXPDIR} created."
-    fi       
-    sudo chmod 6777 "$EXPDIR" > /dev/null 2>&1
-    if [ "$?" -ne 0 ]                                                   # If Error during mount 
-        then if [ "$VMLIB_DEBUG" = "Y" ] 
-                then sadm_write_err "[ ERROR ] The 'sudo chmod 6777 $EXPDIR' didn't work."
-                else sadm_write_log "[ OK ] The 'sudo chmod 6777 $EXPDIR' did work." 
-             fi
-    fi
+
     sadm_write_log " "
     sadm_write_log "Starting the export of virtual machine '$VM' to '${SADM_VM_EXPORT_NFS_SERVER}'."
     #sadm_write_log "Export directory is: '$EXPDIR'." 
@@ -811,7 +753,6 @@ sadm_export_vm()
     #find "${EXPDIR}" -type d | tee -a $SADM_LOG 
 
     # Export the selected VM
-    #sadm_write_log " "
     sadm_write_log "VBoxManage export '$VM' -o '${EXPOVA}'."
     VBoxManage export $VM -o ${EXPOVA} >>  $SADM_LOG 2>&1 
     if [ $? -ne 0 ]                                                     # If Error Occurred 
