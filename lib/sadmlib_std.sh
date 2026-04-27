@@ -264,7 +264,8 @@
 #@2026_03_30 lib v4.84 Add O/S update options: SADM_OSUPDATE_LOCK
 #@2026_03_31 lib v4.85 Return value on Ubuntu was not ok on raspberry pi.
 #@2026_04_18 lib v4.86 If value of  global variable 'SADM_LOG_TYPE' is invalid, set to default 'B'.
-#@2026_04_19 lib v4.87 Function 'sadm_write_log' rewrote and now support '\n' in log message.
+#@2026_04_19 lib v4.87 Function 'sadm_write_log' rewrote and now support '\n' in message.
+#@2026_04_26 lib v4.88 Add Function 'sadm_ping hostname' Return 0=OK 1=Error.
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -275,7 +276,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.87"                                              # his Library Version
+export SADM_LIB_VER="4.88"                                              # his Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -765,9 +766,9 @@ sadm_nfs_mount()
 {
     # Validate number of parameter.
     if [ $# -lt 3 ] 
-        then sadm_write_err "$FUNCNAME - Number of parameter expected is '3' or '4', received '$#'."
-             sadm_write_err "Parameters received are '$@'."
-             sadm_write_err "Help :  sadm_nfs_mount 'nfs_server' 'nfs_dir' 'local dir. mount' '-o 4'"
+        then sadm_write_err "[ ERROR ] $FUNCNAME - Nb. of parameter should be '3' or '4', mot '$#'."
+             sadm_write_err "          - Parameters received are '$@'."
+             sadm_write_err "          - 'nfs_server' 'nfs_dir' 'local dir. mount' '-o 4'"
              return 1                                                   # Error back to caller 
     fi 
 
@@ -878,6 +879,47 @@ sadm_nfs_unmount()
 
 
 
+#===================================================================================================
+#"""
+# Synopsys:
+#   sadm_ping "hostname"
+#
+# Description:
+#   Do a ping to hostname received as a paraneter.
+#   
+# Args: 
+#   String:     The hostname to ping.
+#
+# Return: 
+#   Integer: #  1 = Ping failed.
+#               0 = Ping Succeeded.
+#
+# Example: 
+#    sadm_ping "$SADM_VM_EXPORT_NFS_SERVER" 
+#    if [ $? -ne 0 ]                                                     
+#       then sadm_write_err "Ping failed."
+#       else sadm_write_log "Ping succeeded."
+#    fi    
+#
+#"""
+# --------------------------------------------------------------------------------------------------
+# Ping Backup server received as $1 - If it failed Return (1) error to caller
+# --------------------------------------------------------------------------------------------------
+sadm_ping()
+{
+    WSERVER=$1                                                          # Server Name to ping
+    ping -c 2 -W 2 $WSERVER >/dev/null 2>/dev/null                      # Ping the Server
+    RC=$?  
+    if [ $RC -ne 0 ] 
+        then sadm_write_err "[ ERROR ] #$RC Ping to system '$WSERVER' failed."
+             RC=1                                                       # Make sure RC is 1 or 0 
+        else sadm_write_log "[ OK ] System '$WSERVER' is alive."
+             RC=0
+    fi
+    return $RC
+}
+
+
 
 
 
@@ -978,7 +1020,7 @@ sadm_trimfile() {
 #---------------------------------------------------------------------------------------------------
 sadm_get_command_path() {
     SADM_CMD=$1                                                         # Save Parameter received
-    if [ "$(command -v ${SADM_CMD})" = "" ]                             # If command not found
+    if [ "$?" -ne 0 ]                                                   # Command not found
         then echo ""                                                    # echo blank for Cmd Path 
              return 1                                                   # Return error to caller
         else CMD_PATH=$(command -v ${SADM_CMD})                         # Store Path in Cmd path
@@ -996,19 +1038,28 @@ sadm_get_command_path() {
 #   1) None
 #
 # Return Value : 
-#   0) If package type was determine and echo rpm (Redhat,CentOS,Suse,...), 
-#      deb(Ubuntu,Debian,Raspbian,...), lslpp(Aix), launchctl(MacOS)
-#   1) If couldn't determine package type and echo empty strinng
+#   0= If package type was determine and echo : 
+#       - rpm       (Redhat,CentOS,Suse,...), 
+#       - deb       (Ubuntu,Debian,Raspbian,...)
+#       - aix       (Aix)
+#       - launchctl (MacOS)
+#
+#   1= If couldn't determine package type and echo and empty string
+#
 sadm_get_packagetype() {
     packtype=""                                                     # Initial Package None
     found=$(sadm_get_command_path 'rpm')                            # Is command rpm available ?
-    if [ "$found" != "" ] ; then packtype="rpm"  ; echo "$packtype" ; return 0 ; fi 
+    if [ "$?" -eq 0 ] ; then packtype="rpm" ; echo "$packtype" ; return 0 ; fi 
+
     found=$(sadm_get_command_path 'dpkg')                           # Is command dpkg available ?
-    if [ "$found" != "" ] ; then packtype="deb"  ; echo "$packtype" ; return 0 ; fi 
+    if [ "$?" -eq 0 ] ; then packtype="deb" ; echo "$packtype" ; return 0 ; fi 
+
     found=$(sadm_get_command_path 'lslpp')                          # Is command lslpp available ?
-    if [ "$found" != "" ] ; then packtype="aix"  ; echo "$packtype" ; return 0 ; fi 
+    if [ "$?" -eq 0 ] ; then packtype="aix" ; echo "$packtype" ; return 0 ; fi 
+
     found=$(sadm_get_command_path 'launchctl')                      # Is command launchctl available 
-    if [ "$found" != "" ] ; then packtype="dmg"  ; echo "$packtype" ; return 0 ; fi 
+    if [ "$?" -eq 0 ] ; then packtype="dmg" ; echo "$packtype" ; return 0 ; fi 
+
     echo "$packtype"                                                # Return Package Type
     return 1                                                        # Error - Return code 1
 }
