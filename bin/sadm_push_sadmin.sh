@@ -69,6 +69,7 @@
 #@2026_03_04 server v2.51 Only dotfile ".??*" in $SADMIN/cfg are rsync to clients,
 #@2026_03_04 server v2.51 the files ".dbpass" and ".gmpw" are excluded from the rsync process.
 #@2026_04_13 server v2.52 Minor comments change
+#@2026_04_27 server v2.53 Fix problem with CentOS 6 getting /etc/environment.
 # --------------------------------------------------------------------------------------------------
 
 # Trap Ctrl-C (SIGINT) and call sadm_stop function to cleanup before exit.
@@ -99,7 +100,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.52'                                     # Script version number
+export SADM_VER='2.53'                                     # Script version number
 export SADM_PDESC="Copy SADMIN version from $SADM_HOSTNAME to all active clients (without overwriting config files)." 
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -153,7 +154,7 @@ export SYNC_CFG=""                                                      # -c sad
 export ERROR_COUNT=0                                                    # Script Error Count
 export WARNING_COUNT=0                                                  # Script Warning count
 export SADM_TEN_DASH=$(printf %10s |tr " " "-")                         # 10 dashes line
-
+export ETCENV="/etc/environment"                                
 
 
 # --------------------------------------------------------------------------------------------------
@@ -312,12 +313,16 @@ process_servers()
         sadm_writelog "[ OK ] SSH to $server_fqdn"                      # Good SSH Work
 
 
-        # Get remote /etc/environment file to determine where SADMIN is install on remote system
+        # Copy remote /etc/environment file to $SADMIN/www/dat to determine where SADMIN is install
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}"                       # Global System Dir. 
+        ETCENV="/etc/environment"                                       # File to copy on SADMIN srv
         if [ ! -d $WDIR ] ; then mkdir $WDIR ; chmod 775 $WDIR ; fi     # Global Dir. if don't exist 
         if [ "$server_name" != "$(hostname -s)" ]                       # Local or Remote ?
-            then CMD="scp -CqP ${server_ssh_port} ${server_name}:/etc/environment ${WDIR}" 
-                 scp -CqP ${server_ssh_port} ${server_name}:/etc/environment ${WDIR} >/dev/null 2>&1  
+            then CMD="rsync -a -e 'ssh -p $server_ssh_port' ${server_name}:${ETCENV} ${WDIR}"
+                 #sadm_write_log "$CMD"
+                 rsync -a -e "ssh -p $server_ssh_port" "${server_name}:${ETCENV}" "$WDIR" >/dev/null 2>&1
+                 #MD="scp -CqP ${server_ssh_port} ${server_name}:/etc/environment ${WDIR}" 
+                 #scp -CqP ${server_ssh_port} ${server_name}:/etc/environment ${WDIR} >/dev/null 2>&1  
                  RC=$?                                                  # Save Return Code Number     
             else CMD="cp /etc/environment ${WDIR}"                      # Command to execute
                  cp /etc/environment ${WDIR} >/dev/null 2>&1            # copy local in www/dat
@@ -328,7 +333,7 @@ process_servers()
         # If couldn't get remote /etc/environment file, signal error and proceed with next server.
         if [ "$RC" -ne 0 ]                                              # If file transfer failed
             then sadm_write_err "[ ERROR ] $CMD"
-                 sadm_write_err "[ ERROR ] Couldn't get /etc/environment on ${server_name}."
+                 sadm_write_err "[ ERROR ] Couldn't get $ETCENV on ${server_name}."
                  ((ERROR_COUNT++))                                      # Consider Error -Incr Cntr
                  sadm_write_err "Continue with next server."
                  continue                                               # Go process next server
@@ -339,7 +344,7 @@ process_servers()
         server_dir=$(grep "SADMIN=" $WDIR/environment |awk -F= '{print $2}') # Remote Dir.
         if [ "$server_dir" != "" ]                                      # No Remote Dir. Set
            then sadm_write_log "[ OK ] On ${server_name} SADMIN is install in ${server_dir}."
-           else sadm_write_err "[ ERROR ] Couldn't get /etc/environment on ${server_name}."
+           else sadm_write_err "[ ERROR ] Couldn't get $ETCENV on ${server_name}."
                 ((ERROR_COUNT++))
                 sadm_write_err "Continue with next server."
                 continue
@@ -472,8 +477,10 @@ process_servers()
         if [ "$SYNC_CFG" = "Y" ]
             then sadmin_source="${SADM_CFG_DIR}/sadmin_client.cfg"
                  sadmin_destination="${server_fqdn}:${server_dir}/cfg/sadmin.cfg"
-                 CMD="scp -CqP $server_ssh_port ${sadmin_source} ${sadmin_destination}"
-                 scp -CqP $server_ssh_port ${sadmin_source} ${sadmin_destination} >> $SADM_LOG 2>&1
+                 #CMD="scp -CqP $server_ssh_port ${sadmin_source} ${sadmin_destination}"
+                 #scp -CqP $server_ssh_port ${sadmin_source} ${sadmin_destination} >> $SADM_LOG 2>&1
+                 CMD="rsync -ar -e 'ssh -p $server_ssh_port' ${sadmin_source} ${sadmin_destination}"
+                 rsync -ar -e "ssh -p $server_ssh_port" ${sadmin_source} ${sadmin_destination}
                  RC=$? 
                  if [ $RC -ne 0 ]
                     then sadm_write_err "[ ERROR ] $CMD"
