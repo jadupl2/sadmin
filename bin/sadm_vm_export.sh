@@ -33,6 +33,7 @@
 #@2024_03_19 vmtools v2.0 Export the 'VMName' received to NFS server define in 'sadmin.cfg'.
 #@2024_10_31 vmtools v2.3 Fix some minor issues and command line option.
 #@2024_11_26 vmtools v2.4 If system is lock, then export of the VM is not allowed.
+#@2026_04_27 vmtools v2.5 Minor code change.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -62,14 +63,18 @@ export SADM_HOSTNAME=$(hostname -s)                        # Host name without D
 export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
-# ---**********************
+
+# **********************
 # SPECIAL DEROGATION HERE TO INSERT THE EXPORTED VM NAME IN THE FILENAME OF THE LOG AND RCH FILE.
-# Script accept only one parameter, it's the name of the VM you want to export.
+# SCRIPT ACCEPT ONLY ONE PARAMETER, IT'S THE NAME OF THE VM YOU WANT TO EXPORT.
 if [ $# -eq 1 ]                                            # Only Parameter is VMName
     then export VMNAME="$1"                                # Save VM Name to export
     else printf "[ ERROR ] You need to specify the name of the VM to export.\n\n"
          exit 1                                            # Exit with an error 1
 fi
+
+
+
 export SADM_INST="${SADM_INST}_${VMNAME}"                  # Insert VMName to export in rch & log
 export SADM_EXT=$(echo "$SADM_PN" | cut -d'.' -f2)         # Save Script extension (sh, py, php,.)
 export SADM_PN="${SADM_INST}.${SADM_EXT}"                  # Script name(with extension)
@@ -143,9 +148,9 @@ main_process()
 {
     sadm_write_log "Starting the export of virtual system '$VMNAME'."   # Show Backup Chosen
     sadm_write_log " "
-    sadm_export_vm "$VMNAME"                                            # Libr. VM Export Function
-    if [ $? -eq 0 ] ; then SADM_EXIT_CODE=0 ; else SADM_EXIT_CODE=1 ; fi 
-    sadm_list_vm_status                                                 # List Status of ALL VMs
+    sadm_export_vm "$VMNAME"                                            # Export function in Library
+    if [ $? -eq 0 ] ; then SADM_EXIT_CODE=0 ; else SADM_EXIT_CODE=1 ;fi # Check Status of export
+    sadm_list_vm_status                                                 # List Status of ALL VM Libr
     return $SADM_EXIT_CODE                                              # Return ErrorCode to Caller
 }
 
@@ -197,13 +202,16 @@ function cmd_options()
 # MAIN CODE START HERE
 #===================================================================================================
     cmd_options "$@"                                                    # Check command-line Options
-    sadm_vm_exist "$VMNAME"                                             # Does the VM exist ? 
+    
+    # Validate if the VM name is present in Virtual Box Manager
+    sadm_vm_exist "$VMNAME"                                             # Does the VM exist $1 ? 
     if [ $? -ne 0 ]                                                     # If VM does not exist                  
-       then printf "\n${SADM_ERROR} '$VMNAME' is not a valid registered virtual machine.\n"
+       then printf "\n[ ERROR ] The virtual machine '$VMNAME' is not registered in VirtualBox.\n"
             exit 1                                                      # Exit script
-    fi    
+    fi 
+
+
     sadm_start                                                          # Create Dir.,PID,log,rch
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
     main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
