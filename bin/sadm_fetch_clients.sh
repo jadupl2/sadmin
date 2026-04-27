@@ -114,6 +114,8 @@
 #@2025_11_30 server v3.60 Fix system Connectivity test to client.
 #@2025_11_30 server v3.61 Added -X to delete PID file, then run script.
 #@2026_04_13 server v3.62 Change PID Time out to 600 seconds (10 Min) to prevent false lock.
+#@2026_04_27 server v3.63 Fix "sadm_vm" crontab, chamge the way it call the export script.
+#
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT the ^C
 #set -x
@@ -143,7 +145,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAN USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.62'                                     # Script version number
+export SADM_VER='3.63'                                     # Script version number
 export SADM_PDESC="Collect scripts results & SysMon status from all systems and send alert if needed." 
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -595,7 +597,8 @@ update_backup_crontab ()
 #   (8)           SSH port to communicate with the system
 #
 # Example of line generated
-# 00 13 05,27 * * sadmin sudo /usr/bin/ssh -qnp 32 jacques@anemone '$SADMIN/bin/sadm_vm_export.sh ubuntu2204'
+# 50 13 * * 02 sadmin sudo /opt/sadmin/bin/sadm_rmcmd_lock.sh -u jacques -n anemone -l rhel9 \
+#              -s /opt/sadmin/bin/sadm_vm_export.sh -a rhel9
 #
 # ==================================================================================================
 update_vmexport_crontab () 
@@ -701,8 +704,9 @@ update_vmexport_crontab ()
              cline="$cline $fdow"                                       # Add DOW in Crontab Line
     fi
 
-    cline="$cline $SADM_USER sudo \$RMCMD_LOCK -u ${SADM_VM_USER} -n $chost -l $cserver -s $cscript -a $cserver" 
-    if [ $SADM_DEBUG -gt 2 ] ; then sadm_write_log "cline='$cline'" ;fi 
+#   cline="$cline $SADM_USER sudo \$RMCMD_LOCK -u ${SADM_VM_USER} -n $chost -l $cserver -s $cscript -a $cserver" 
+    cline="$cline $SADM_USER sudo ${SADMIN}/bin/sadm_rmcmd_lock.sh -u ${SADM_VM_USER} -n $chost -l $cserver -s $cscript -a $cserver" 
+
     echo "$cline" >> $SADM_VMEXPORT_NEWCRON                             # Output Line to VM Crontab 
     return
 }
@@ -714,8 +718,8 @@ update_vmexport_crontab ()
 # create_vm_list()
 #
 # Run for two objectgives : 
-# 1- Create file "$SADM_VMLIST" that contain a list of all vms and their respective host.
-# 2- Create file "SADMM_VMHOSTS" that contain a list of all vms host.
+#   1- Create file "$SADM_VMLIST" that contain a list of all vms and their respective host.
+#   2- Create file "SADMM_VMHOSTS" that contain a list of all vms host.
 # 
 # Example on content : 
 #   lestrade,centos9,/opt/sadmin
@@ -728,25 +732,25 @@ update_vmexport_crontab ()
 #===================================================================================================
 create_vm_list()
 {
-    # Delete old files
+    # Delete old files VMhost & VMlist, then create new empty files with right permission/ownership 
     if [ -f "$SADM_VMLIST_ALL" ]  ; then rm -f "$SADM_VMLIST_ALL" >/dev/null ; fi  # Global VM List
     if [ -f "$SADM_VMHOST_ALL" ]  ; then rm -f "$SADM_VMHOST_ALL" >/dev/null ; fi  # VM host List
     touch "$SADM_VMLIST_ALL" "$SADM_VMHOST_ALL"                         # Create empty files
     chmod 664 "$SADM_VMLIST_ALL" "$SADM_VMHOST_ALL" >/dev/null 2>&1     # With right permission
     chown "$SADM_WWW_USER:$SADM_WWW_GROUP" "$SADM_VMLIST_ALL" "$SADM_VMHOST_ALL" >/dev/null 2>&1
 
-    # Creating VM list file
+
+    # Create VM list file "$SADM_VMLIST_ALL" with all VMs from all systems.
     sadm_write_log " "                                                  # Separation Blank Line
     sadm_write_log "${SADM_TEN_DASH}"                                   # Print 10 Dash line
     sadm_write_log "${BOLD}${YELLOW}Creating list of all VMs in '$SADM_VMLIST_ALL'.${RESET}"
     find "$SADM_WWW_DAT_DIR" -name "vm_list.txt" -exec cat {} \; | sort > $SADM_VMLIST_ALL
-    #chmod 664 "$SADM_VMLIST_ALL" >/dev/null 2>&1
-    #chown "$SADM_WWW_USER:$SADM_WWW_GROUP" "$SADM_VMLIST_ALL" >/dev/null 2>&1
     if [ -s "$SADM_VMLIST_ALL" ]                                        # Exist ? & contain data ? 
         then nl "$SADM_VMLIST_ALL"                                      # List Global VM List
-        else sadm_write_log "No VM on all systems."                     # Advice nothing to report
+        else sadm_write_log "[ WARNING ] No VM on all systems."         # Advice nothing to report
              return 0                                                   # No VM then no VM host
     fi 
+
 
     # Create VM Hosts, if the list of vm is not empty, create the vm host file from it.
     if [ -s "$SADM_VMLIST_ALL" ]                                        # Exist & contain data     
@@ -951,7 +955,7 @@ create_crontab_files_header()
     echo "# Day = 0or7=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat"     >> "$SADM_VMEXPORT_NEWCRON"
     echo "# "                                                       >> "$SADM_VMEXPORT_NEWCRON"
     echo "SADMIN=$SADM_BASE_DIR"                                    >> "$SADM_VMEXPORT_NEWCRON"
-    echo "RMCMD_LOCK=\$SADMIN/bin/sadm_rmcmd_lock.sh"               >> "$SADM_VMEXPORT_NEWCRON"
+    echo "RMCMD_LOCK=\"\$SADMIN/bin/sadm_rmcmd_lock.sh\""           >> "$SADM_VMEXPORT_NEWCRON"
     echo "# "                                                       >> "$SADM_VMEXPORT_NEWCRON"
     echo "# "                                                       >> "$SADM_VMEXPORT_NEWCRON"
 
@@ -1215,18 +1219,21 @@ build_server_list()
     # Execute sql to get a list of active servers of the received o/s type into $sadm_tmp_file1
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/;/' >$SADM_TMP_FILE1
     
-    if [ $SADM_DEBUG -gt 7 ] 
-        then sadm_write_log " "
-             sadm_write_log "----------" 
-             sadm_write_log "Content a the file created by the SQL:"
-             cat $SADM_TMP_FILE1 | tee -a $SADM_LOG 
-    fi 
     # If result file don't exist or have a size of zero.
     if [ ! -s "$SADM_TMP_FILE1" ]                                       # File don't exist or size=0
        then sadm_write_err "[ ERROR ] List of server '${SADM_TMP_FILE1}' is empty or don't exist ? "
             sadm_write_log "  - No Active system in SADMIN database"    # Not one active system msg.
             return 1 
     fi   
+
+    if [ $SADM_DEBUG -gt 7 ] 
+        then sadm_write_log " "
+             sadm_write_log "----------" 
+             sadm_write_log "Content a the file created by the SQL:"
+             cat $SADM_TMP_FILE1 | tee -a $SADM_LOG 
+    fi 
+    return 0 
+    
 }
 
 
@@ -1262,7 +1269,7 @@ process_servers()
         server_domain=$(  echo $wline|awk -F\; '{ print $3 }')          # Extract Domain of Server
         server_monitor=$( echo $wline|awk -F\; '{ print $4 }')          # Monitor t=True f=False
         server_sporadic=$(echo $wline|awk -F\; '{ print $5 }')          # Sporadic t=True f=False
-        server_dir=$(     echo $wline|awk -F\; '{ print $6 }')          # SADMIN Dir on Client 
+        server_dir=$(     echo $wline|awk -F\; '{ print $6 }')          # SADMIN Dir. on Client 
         fqdn_server="${server_name}.${server_domain}"                   # Create FQN Server Name
 
         # O/S Update Info used to produce crontab (/etc/cron.d/sadm_update)
@@ -1351,9 +1358,10 @@ process_servers()
         # Check if system is lock 
         sadm_lock_status "$server_name"                                 # Check if system is locked 
         if [ $? -eq 1 ]                                                 #If system is lock
-            then sadm_write_log "[ WARNING ] System '$server_name' is locked, skipping it."
+            then sadm_write_err WARNING ] System '$server_name' is locked, skipping it."
                  LOCK_FILE="${SADMIN}/${server_name}.lock"
-                 sadm_write_log "  - Content of actual lock file : $(cat $LOCK_FILE)"
+                 sadm_write_err - Content of actual lock file : $(cat $LOCK_FILE)"
+                 WARNING_COUNT++
                  continue                        
         fi  
 
@@ -1417,6 +1425,7 @@ process_servers()
                     then sadm_write_err "[ WARNING ] System '$server_name' is registered as a VM in database."
                          sadm_write_err "[ WARNING ] But it's not in any 'vm_list' files under $SADM_WWW_DAT_DIR ?"
                          sadm_write_err "[ WARNING ] No export of this VM will be include in crontab."
+                         ((WARNING_COUNT++))
                  fi 
                  update_vmexport_crontab "$server_name" "${server_dir}/bin/$EXPORT_SCRIPT" "$export_min" "$export_hrs" "$export_mth" "$export_dom" "$export_dow" "$ssh_port" "$export_host"
         fi
