@@ -71,6 +71,8 @@
 #@2025_02_04 client v3.41 Now using 'VBoxClient' to get current VirtualBox Guest version.
 #@2025_08_25 client v3.42 Location change of 'vmlist.txt' file and review process of creating it.
 #@2025_08_25 client v3.43 Solve problem when "$SADM_USER" display stuff when login (.bash_profile)
+#@2026_04_27 client v3.44 Fix problem with creating VM list, under VBox 7.2.6, is ok in 7.2.8
+#@2026_04_27 client v3.45 Adjustment for Virtual Box 7.2.8, VBoxManage list vms output format change
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 0' 2                                            # Intercept the ^C
 #set -x
@@ -100,7 +102,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.44'                                     # Script version number
+export SADM_VER='3.45'                                     # Script version number
 export SADM_PDESC="Collect hardware & software info of system" # Script Description
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -332,8 +334,6 @@ pre_validation()
     command_available "uname"       ; UNAME=$SADM_CPATH                 # Cmd Path or Blank !found
     command_available "uptime"      ; UPTIME=$SADM_CPATH                # Cmd Path or Blank !found
     command_available "last"        ; LAST=$SADM_CPATH                  # Cmd Path or Blank !found
-    sadm_write_log " " 
-    sadm_write_log " " 
     return 0
 }
 
@@ -405,7 +405,7 @@ set_last_osupdate_date()
     fi
 
     # Get Last Update Date from Return History File
-    sadm_write_log "Getting last O/S Update date from $RCHFILE ..."
+    sadm_write_log "\nGetting last O/S Update date from $RCHFILE ..."
     OSUPDATE_DATE=$(tail -1 ${RCHFILE} |awk '{printf "%s %s", $4,$5}')
     if [ $? -ne 0 ]
         then sadm_write_log "Can't determine last O/S Update Date ..."
@@ -889,7 +889,6 @@ create_aix_config_files()
 # ==================================================================================================
 create_summary_file()
 {
-
     sadm_write_log "Creating $HWD_FILE ..."
     echo "# $SADM_CIE_NAME - SysInfo Summary Report File v${SADM_VER} - $(date)"          >  $HWD_FILE
     echo "# This file is use by 'sadm_database_update.py' to update the SADMIN database." >> $HWD_FILE
@@ -933,6 +932,7 @@ create_summary_file()
     if [ "$REAR" != "" ] ;then REAR_VER=$($REAR -V | awk '{print $2}') ; else REAR_VER="N/A" ; fi
     echo "SADM_REAR_VERSION                     = $REAR_VER"                         >> $HWD_FILE
 
+
     # Get VM Guest Version
     command -v VBoxClient >/dev/null
     if [ $? -eq 0 ] 
@@ -945,11 +945,25 @@ create_summary_file()
     fi 
     echo "SADM_VMGUEST_VERSION                  = $SADM_VMGUEST_VERSION"             >> $HWD_FILE
 
-
+    # If any VM create a List of all VM on this system in "$SADM_VMLIST" file.
+    # for later use by 'sadm_database_update.py' script to update SADMIN database with VM info.
+    create_vmlist                                                    
+  
     chmod 644 $HWD_FILE 
     chown "$SADM_USER:$SADM_GROUP" "$HWD_FILE"
+    return 0
+}
 
 
+
+
+
+
+# --------------------------------------------------------------------------------------------------
+# Create a list of all VM oon this system if any in "$SADM_VMLIST"
+# --------------------------------------------------------------------------------------------------
+function create_vmlist()
+{
     # If we are on a VirtualBox System, create a sorted list of vm on the system to file $VMLIST.
     # SADM_VMLIST="$SADM_DAT_DIR/dr/vm_list.txt"                        # List all VMs & Hosts 
     # Application 'vboxmanage' MUST be run by '$SADM_VM_USER' user defined in $SADMIN/cfg/sadmin.cfg
@@ -959,7 +973,8 @@ create_summary_file()
     command -v vboxmanage > /dev/null 2>&1                              # VirtualBox Manager exist ?
     if [ $? -eq 0 ]                                                     # Yes it's present on system
         then VBMGR=$(command -v vboxmanage)                             # Get PATH of vboxmanag
-             sadm_write_log "VirtualBox Manager on this system '$VBMGR'"
+             sadm_write_log " "
+             sadm_write_log "We have a VirtualBox Manager '$VBMGR' on $SADM_HOSTNAME "
              if [ $SADM_DEBUG -gt 4 ] 
                 then sadm_write_log "su - $SADM_VM_USER '-c $VBMGR list vms'" 
              fi 
@@ -968,27 +983,20 @@ create_summary_file()
              sort $SADM_TMP_FILE3 | awk '{print $1}' |tr -d '"' | sort > $SADM_TMP_FILE2
              chmod 777 $SADM_TMP_FILE2 ; chown "$SADM_USER:$SADM_GROUP" "$SADM_TMP_FILE2" 
 
-             sadm_write_log "Created $SADM_TMP_FILE2 ..."             
-             cat  "$SADM_TMP_FILE2"
-
-             sadm_write_log "Creating $SADM_VMLIST ..."             
+             #sadm_write_log "Creating $SADM_VMLIST ..."             
              # Example of line in VMLIST: anemone,ubuntu2204,/opt/sadmin
-             sadm_write_log " "
-             sadm_write_log "List of VMs on this system in '$SADM_VMLIST' : "
-             for line in $(cat "$SADM_TMP_FILE2")
+             sadm_write_log "List of VMs on $SADM_HOSTNAME in '$SADM_VMLIST' : "
+             for vmname in $(cat "$SADM_TMP_FILE2")
                 do
-#                last_char="${line: -1}"                                 # Get last char of line
-#                if [ "$last_char" = '}' ]                               # Accept line ending with '}'
-                    echo "${SADM_HOSTNAME},${line},${SADMIN}"  >> "$SADM_VMLIST"   
-                         sadm_write_log "${SADM_HOSTNAME},${line},${SADMIN}"
-#                fi 
+                echo "${SADM_HOSTNAME},${vmname},${SADMIN}"  >> "$SADM_VMLIST"   
+                sadm_write_log "${SADM_HOSTNAME},${vmname},${SADMIN}"
                 done 
              chmod 644 "$SADM_VMLIST"
              chown "$SADM_USER:$SADM_GROUP" "$SADM_VMLIST" 
     fi
-
-    return $SADM_EXIT_CODE
+    return 0 
 }
+
 
 
 
