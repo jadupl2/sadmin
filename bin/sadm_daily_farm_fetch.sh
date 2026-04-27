@@ -65,6 +65,7 @@
 #@2025_01_29 server v4.16 Remove Escape character from logs 
 #@2025_04_13 server v4.17 Remove some uneeded lines from the error log.
 #@2025_04_22 server v4.18 Remove some messages that was not suppose to be written to the rror log.
+#@2025_04_23 server v4.19 Fix problem with CentOS 6 getting /etc/environment.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -96,7 +97,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='4.18'                                     # Script version number
+export SADM_VER='4.19'                                     # Script version number
 export SADM_PDESC="Collect hardware,software,performance info data from all active systems."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -264,8 +265,10 @@ process_servers()
         # Get the remote /etc/environment file to determine where SADMIN is install on remote
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}"
         if [ "$fqdn_server" != "$SADM_SERVER" ] && [ "$server_name" != "$SADM_HOSTNAME" ] # Use ssh or not
-        #if [ "$SADM_HOST_TYPE" != "S" ]
-            then scp -CqP "$server_ssh_port" "${server_name}:${ETCENV}" "${WDIR}" >/dev/null 2>&1
+            then #scp -CqP "$server_ssh_port" "${server_name}:${ETCENV}" "${WDIR}" >/dev/null 2>&1
+                 #CMD="rsync -a -e 'ssh -p $server_ssh_port' ${server_name}:${ETCENV} ${WDIR}"
+                 #sadm_write_log "$CMD"
+                 rsync -a -e "ssh -p $server_ssh_port" "${server_name}:${ETCENV}" "$WDIR" >/dev/null 2>&1
             else cp "$ETCENV" "${WDIR}" >/dev/null 2>&1
         fi
         if [ $? -eq 0 ]                                                 # If file was transferred
@@ -341,7 +344,7 @@ process_servers()
                  ((ERROR_COUNT++))
             else sadm_write_log "[ OK ] ${rcmd}" 
         fi
-        if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_write_err "Error Count is now at $ERROR_COUNT" ;fi
+        if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_write_log "Error Count is now at $ERROR_COUNT" ;fi
 
         done < $SADM_TMP_FILE1
 
