@@ -146,8 +146,8 @@ show_usage()
 #===================================================================================================
 main_process()
 {
-    sadm_write_log "Starting the export of virtual system '$VMNAME'."   # Show Backup Chosen
-    sadm_write_log " "
+    sadm_write_log "Starting the export process of virtual system '$VMNAME'."  
+    #sadm_write_log " "
     sadm_export_vm "$VMNAME"                                            # Export function in Library
     if [ $? -eq 0 ] ; then SADM_EXIT_CODE=0 ; else SADM_EXIT_CODE=1 ;fi # Check Status of export
     sadm_list_vm_status                                                 # List Status of ALL VM Libr
