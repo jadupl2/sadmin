@@ -738,12 +738,12 @@ create_vm_list()
     touch "$SADM_VMLIST_ALL" "$SADM_VMHOST_ALL"                         # Create empty files
     chmod 664 "$SADM_VMLIST_ALL" "$SADM_VMHOST_ALL" >/dev/null 2>&1     # With right permission
     chown "$SADM_WWW_USER:$SADM_WWW_GROUP" "$SADM_VMLIST_ALL" "$SADM_VMHOST_ALL" >/dev/null 2>&1
+    #sadm_write_log " "                                                  # Separation Blank Line
+    sadm_write_log "${SADM_TEN_DASH}"                                   # Print 10 Dash line
 
 
     # Create VM list file "$SADM_VMLIST_ALL" with all VMs from all systems.
-    sadm_write_log " "                                                  # Separation Blank Line
-    sadm_write_log "${SADM_TEN_DASH}"                                   # Print 10 Dash line
-    sadm_write_log "${BOLD}${YELLOW}Creating list of all VMs in '$SADM_VMLIST_ALL'.${RESET}"
+    sadm_write_log "${BOLD}${YELLOW}List of all VMs in '$SADM_VMLIST_ALL'.${RESET}"
     find "$SADM_WWW_DAT_DIR" -name "vm_list.txt" -exec cat {} \; | sort > $SADM_VMLIST_ALL
     if [ -s "$SADM_VMLIST_ALL" ]                                        # Exist ? & contain data ? 
         then nl "$SADM_VMLIST_ALL"                                      # List Global VM List
@@ -752,10 +752,10 @@ create_vm_list()
     fi 
 
 
-    # Create VM Hosts, if the list of vm is not empty, create the vm host file from it.
+    # Create a list of all VM Hosts "$SADM_VMHOST_ALL" from "$SADM_VMLIST_ALL".
     if [ -s "$SADM_VMLIST_ALL" ]                                        # Exist & contain data     
         then sadm_write_log " "                                         # Separation Blank Line
-             sadm_write_log "${BOLD}${YELLOW}Creating list of all VM Hosts '$SADM_VMHOST_ALL'${RESET}"
+             sadm_write_log "${BOLD}${YELLOW}List of all VM Hosts '$SADM_VMHOST_ALL'${RESET}"
              awk -F, '{print $1}' "$SADM_VMLIST_ALL" | sort | uniq > $SADM_VMHOST_ALL
              if [ -s "$SADM_VMHOST_ALL" ]                               # Exist ? & Any VM Hosts ? 
                 then nl "$SADM_VMHOST_ALL"                              # List All VM Hosts
@@ -1400,34 +1400,41 @@ process_servers()
         if [ "$connectivity_rc" -eq 2 ] ; then continue ; fi            # Sporadic Sys,return back
         
 
-        # Generate Crontab entry for O/S Update, if autoUpdate is ON, 
+        # O/S UPDATE
+        #Generate Crontab entry for O/S Update, if autoUpdate is ON, 
         if [ "$db_updauto" -eq 1 ] && [ "$SYSTEM_ONLINE" = "Y" ]        # If O/S Update Requested
             then update_osupdate_crontab "$server_name" "${server_dir}/bin/$OS_SCRIPT" "$db_updmin" "$db_updhrs" "$db_updmth" "$db_upddom" "$db_upddow" "$ssh_port"
         fi
 
+        # DAILY BACKUP 
         # Generate Crontab Entry for this server in Backup crontab work file, if online
         if [ "$backup_auto" -eq 1 ] && [ "$SYSTEM_ONLINE" = "Y" ]       # If Backup set to Yes 
             then update_backup_crontab "$server_name" "${server_dir}/bin/$BA_SCRIPT" "$backup_min" "$backup_hrs" "$backup_mth" "$backup_dom" "$backup_dow" "$ssh_port" "$compress"
         fi
 
+        # REAR BACKUP 
         # Generate Crontab Entry for this server in ReaR crontab work file
         if [ $rear_auto -eq 1 ] && [ "$SYSTEM_ONLINE" = "Y" ]           # If Rear Backup set to Yes 
             then update_rear_crontab "$server_name" "${server_dir}/bin/$REAR_SCRIPT" "$rear_min" "$rear_hrs" "$rear_mth" "$rear_dom" "$rear_dow" "$ssh_port"
         fi
                 
-        # Generate Crontab Entry for this system in VirtualBox export 
-        # System Don't need to be alive to do an export of the VM.
-        # anemone,holmes,/opt/sadmin
+        # EXPORT OF VIRTUAL BOX VM
+        # Generate Crontab Entry for this VirtualBox VM export, if it's a VM & schedule is active.
+        # System Don't need to be UP to do an export of the VM, will stay down after export.
+        # The SADMIN dir. on VM Host = $(grep anemone ./vm_list.txt |tail -1 |awk -F, '{print $3}' 
         if [ "$server_vm" -eq 1 ]                                       # 1-Virtual System, 0=Hardw
             then find $SADM_WWW_DAT_DIR -name "vm_list.txt" -exec cat {} \; > $SADM_TMP_FILE2
-                 grep -q "$server_name" $SADM_TMP_FILE2  
+                 sadm_write_log "VMHOST_SADMIN_DIR=grep '$export_host' $SADM_TMP_FILE2 |tail -1 |awk -F, '{print $3}"
+                 VMHOST_SADMIN_DIR=$(grep "$export_host" $SADM_TMP_FILE2 |tail -1 |awk -F, '{print $3}')
+                 #grep -q "$server_name" $SADM_TMP_FILE2  
                  if [ $? -ne 0 ] 
                     then sadm_write_err "[ WARNING ] System '$server_name' is registered as a VM in database."
                          sadm_write_err "[ WARNING ] But it's not in any 'vm_list' files under $SADM_WWW_DAT_DIR ?"
                          sadm_write_err "[ WARNING ] No export of this VM will be include in crontab."
                          ((WARNING_COUNT++))
                  fi 
-                 update_vmexport_crontab "$server_name" "${server_dir}/bin/$EXPORT_SCRIPT" "$export_min" "$export_hrs" "$export_mth" "$export_dom" "$export_dow" "$ssh_port" "$export_host"
+#                 update_vmexport_crontab "$server_name" "${server_dir}/bin/$EXPORT_SCRIPT" "$export_min" "$export_hrs" "$export_mth" "$export_dom" "$export_dow" "$ssh_port" "$export_host"
+                 update_vmexport_crontab "$server_name" "${VMHOST_SADMIN_DIR}/bin/$EXPORT_SCRIPT" "$export_min" "$export_hrs" "$export_mth" "$export_dom" "$export_dow" "$ssh_port" "$export_host"
         fi
                 
         # Set remote $SADMIN/cfg Dir. and local www/dat/${server_name}/cfg directory.
@@ -2411,7 +2418,7 @@ main_process()
     PROCESS_ERROR=$?                                                    # Save Nb. Errors in process
 
     # Print Total Scripts Errors
-    sadm_write_log " "                                                  # Separation Blank Line
+    #sadm_write_log " "                                                  # Separation Blank Line
     sadm_write_log "${SADM_TEN_DASH}"                                   # Print 10 Dash lineHistory
     sadm_write_log "${BOLD}${YELLOW}Systems Rsync Summary${NORMAL}"     # Rsync Summary 
     sadm_write_log " - Total error(s)  : ${PROCESS_ERROR}"              # Display Total Linux Errors
