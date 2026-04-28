@@ -51,6 +51,7 @@
 #@2025_07_09 virtualbox v3.1 Minor adjustment in heading & Change total calculation
 #@2026_02_06 virtualbox v3.2 New way to get VBox guest version.
 #@2026_04_27 virtualbox v3.3 Optimize VM export function. 
+#@2026_04_28 virtualbox v3.4 Change vmexport to use the Std Library for better code reuse and better maintenance.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -650,15 +651,12 @@ sadm_backup_vm()
 #===================================================================================================
 sadm_export_vm()
 {
-    VM="$1"                                                             # Save VM Name to export 
-    export MOUNT_POINT="/tmp/${SADM_INST}.tmp"                          # Create Temp Dir in /tmp
-    if [ ! -d "$MOUNT_POINT" ]                                          # VM Export Dir. Exist?
-        then sudo mkdir -p "$MOUNT_POINT"                               # If not create it
-    fi 
+    VM="$1"                                                             # Name of VM to export 
+    export MOUNT_POINT="/mnt/export_${VM}.$$"                           # Name of NFS mount point
 
-    EXPORT_DIR="${MOUNT_POINT}/${VM}"                                   # Actual Export Directory
+    EXPORT_DIR="${MOUNT_POINT}/${VM}"                                   # VM Export Directory
     EXP_CUR_PWD=$(pwd)                                                  # Save Current Working Dir.
-    EXPDIR="${MOUNT_POINT}/${VM}/$(date "+%C%y_%m_%d")"                 # Export Today Export Dir.
+    EXPDIR="${MOUNT_POINT}/${VM}/$(date "+%C%y_%m_%d")"                 # Today Export Directory
     EXPOVA="${EXPDIR}/${VM}_$(date +%Y_%m_%d_%H_%M_%S).ova"             # Export OVA File Name
 
     # Check if the VM exist
@@ -671,17 +669,12 @@ sadm_export_vm()
     # Check if System is Locked.
     sadm_lock_status "$VM"                                              # Check lock file status
     if [ $? -ne 0 ]                                                     # The system is lock
-        then sadm_write_err "[ ERROR ] System is lock, VM export is not currently allowed."
+        then sadm_write_err "[ ERROR ] System '$VM' is lock, VM export is not currently allowed."
              return 1                                                   # Return Error to caller
     fi 
 
 
-    # NFS Server is alive ?
-    sadm_ping "$SADM_VM_EXPORT_NFS_SERVER"                              # NFS Server Alive ?
-    if [ $? -ne 0 ] ; then return 1 ; fi                                # Return Error to caller
-
-
-     # Save current VM State (Running or Power Off), if it's running then shutdown the VM.
+    # If VM is running then shutdown the VM and save the current state (Running or Power Off)
     sadm_vm_running "$VM"                                               # Check if it is running
     if [ $? -eq 0 ]                                                     # If it's still running
         then sadm_write_log " "
@@ -689,13 +682,12 @@ sadm_export_vm()
              INITIAL_STATE="RUNNING"                                    # Save VM Init State Running
              sadm_vm_stop "$VM"                                         # Then Stop it
              if [ $? -ne 0 ] ; then return 1 ; fi                       # Error if can't stop it 
-        else sadm_write_log "[ INFO ' The Virtual machine '$VM' is currently power off."
+        else sadm_write_log "[ INFO ] The Virtual machine '$VM' is currently power off."
              INITIAL_STATE="POWEROFF"                                   # Save VM InitState PowerOFF
     fi 
 
 
-    # Get the name of the directory where the VM exist
-    sadm_write_log " "
+    # Get the location on disk of the VM 
     VM_DIR=$($VBOXMANAGE showvminfo $VM |grep -i snapshot |awk -F: '{print $2}'|tr -d ' '|xargs dirname |head -1)
     sadm_write_log "[ INFO ] The VM '$VM' is located in '${VM_DIR}' on '${SADM_HOSTNAME}'."
 
@@ -705,8 +697,8 @@ sadm_export_vm()
     #    NFS_SERVER="$1"                              # NFS Server name or IP
     #    NFS_DIR="$2"                                 # NFS Directory to mount
     #    NFS_MOUNT_POINT="$3"                         # Local dir. to mount nfs
-    #    NFS_MOUNT_OPTIONS=$4                         # Optional NFS Mount option (-o)
-    SHORT_NFS="${SADM_VM_EXPORT_NFS_SERVER}:${SADM_VM_EXPORT_MOUNT_POINT}" "" 
+    #    NFS_MOUNT_OPTIONS="$4"                       # Optional NFS Mount option 
+    SHORT_NFS="${SADM_VM_EXPORT_NFS_SERVER}:${SADM_VM_EXPORT_MOUNT_POINT}"  
     OPT="vers=$SADM_VM_EXPORT_NFS_SERVER_VER"                           # NFS Ver. from sadmin.cfg
     sadm_nfs_mount "$SADM_VM_EXPORT_NFS_SERVER" "$SADM_VM_EXPORT_MOUNT_POINT" "$MOUNT_POINT" "$OPT" 
     if [ "$?" -ne 0 ] ; then return 1 ; fi                               # If Error during mount 
@@ -720,7 +712,7 @@ sadm_export_vm()
                      sudo umount ${MOUNT_POINT} >>$SADM_LOG 2>&1  
                      sadm_unlock_system "$VM"                           # Go remove the lock file
                      return 1
-                else sadm_write_log "[ OK ] Export directory created '${MOUNT_POINT}/${VM}'."
+                else sadm_write_log "[ OK ] VM Export OVA directory created '${MOUNT_POINT}/${VM}'."
              fi 
     fi
     sudo chmod 777 "${MOUNT_POINT}/${VM}" > /dev/null 2>&1              # Make sure no perm. problem
@@ -747,13 +739,13 @@ sadm_export_vm()
     
 
     sadm_write_log " "
-    sadm_write_log "Starting the export of virtual machine '$VM' to '${SADM_VM_EXPORT_NFS_SERVER}'."
+    sadm_write_log "[ INFO ] Starting the export of virtual machine '$VM' to '${SADM_VM_EXPORT_NFS_SERVER}'."
     #sadm_write_log "Export directory is: '$EXPDIR'." 
-    sadm_write_log "Export OVA file is : '$EXPOVA'."
+    sadm_write_log "[ INFO ] Export OVA file is : '$EXPOVA'."
     #find "${EXPDIR}" -type d | tee -a $SADM_LOG 
 
     # Export the selected VM
-    sadm_write_log "VBoxManage export '$VM' -o '${EXPOVA}'."
+    sadm_write_log "[ INFO ] VBoxManage export '$VM' -o '${EXPOVA}'."
     VBoxManage export $VM -o ${EXPOVA} >>  $SADM_LOG 2>&1 
     if [ $? -ne 0 ]                                                     # If Error Occurred 
        then sadm_write_err "[ ERROR ] doing export of '${VM}' in '$EXPDIR'" 
@@ -769,7 +761,6 @@ sadm_export_vm()
 
 
     # Delete old exports, according to the number of export to keep.
-    sadm_write_log " "
     sadm_vm_export_housekeeping "$VM" "${MOUNT_POINT}/${VM}"                # VMName & Dir. to Purge
     if [ "$?" -ne 0 ]                                                   # If Error during mount 
         then sadm_write_log " "
