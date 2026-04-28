@@ -266,6 +266,7 @@
 #@2026_04_18 lib v4.86 If value of  global variable 'SADM_LOG_TYPE' is invalid, set to default 'B'.
 #@2026_04_19 lib v4.87 Function 'sadm_write_log' rewrote and now support '\n' in message.
 #@2026_04_26 lib v4.88 Add Function 'sadm_ping hostname' Return 0=OK 1=Error.
+#@2026_04_28 lib v4.89 Using sudo to avoid problem with NFS mount when script is run by non root user
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -276,7 +277,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.88"                                              # his Library Version
+export SADM_LIB_VER="4.89"                                              # his Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -759,7 +760,7 @@ sadm_write_dbg() {
 # Example: sadm_nfs_mount "batnas.maison.ca" "/volume1/software" "$MountPoint" 
 #    NFS_SERVER="$1"                              # NFS Server name or IP
 #    NFS_DIR="$2"                                 # NFS Directory to mount
-#    NFS_MOUNT_POINT="$3"                         # Local dir. to mount nfs
+#    NFS_MOUNT_POINT="$3"                         # Local dir. to create & use to mount nfs
 #    NFS_MOUNT_OPTIONS=$4                         # Optional NFS Mount option (-o)
 # --------------------------------------------------------------------------------------------------
 sadm_nfs_mount()
@@ -767,8 +768,8 @@ sadm_nfs_mount()
     # Validate number of parameter.
     if [ $# -lt 3 ] 
         then sadm_write_err "[ ERROR ] $FUNCNAME - Nb. of parameter should be '3' or '4', mot '$#'."
-             sadm_write_err "          - Parameters received are '$@'."
-             sadm_write_err "          - 'nfs_server' 'nfs_dir' 'local dir. mount' '-o 4'"
+             sadm_write_err "  - Parameters received are '$@'."
+             sadm_write_err "  - 'nfs_server' 'nfs_dir' 'local mount point'  'vers=3' (optional)"
              return 1                                                   # Error back to caller 
     fi 
 
@@ -794,7 +795,7 @@ sadm_nfs_mount()
     # Verify existence of directory mount point
     umount  "$NFS_MOUNT_POINT" > /dev/null 2>&1                         # Make sure it's unmounted 
     if [ -d "$NFS_MOUNT_POINT" ] ; then rm -fr "$NFS_MOUNT_POINT" ; fi  # If old mount point exist
-    mkdir -m 775 -p "$NFS_MOUNT_POINT" > /dev/null 2>&1                 # Create Dir mount point
+    sudo mkdir -p "$NFS_MOUNT_POINT" >> $SADM_LOG 2>&1                 # Create Dir mount point
     if [ $? -ne 0 ]                                                     # Problem creating dir
         then sadm_write_err "[ ERROR ] Can't create NFS mount point '$NFS_MOUNT_POINT'." 
              return 1 
@@ -803,8 +804,8 @@ sadm_nfs_mount()
 
     # Mount the NFS Directory (With and Without options)
     if [ "$NFS_MOUNT_OPTIONS" = "" ] 
-        then CMD="mount ${NFS_SERVER}:${NFS_DIR} $NFS_MOUNT_POINT "
-        else CMD="mount -o ${NFS_MOUNT_OPTIONS} ${NFS_SERVER}:${NFS_DIR} $NFS_MOUNT_POINT "
+        then CMD="sudo mount -t nfs ${NFS_SERVER}:${NFS_DIR} $NFS_MOUNT_POINT "
+        else CMD="sudo mount -t nfs -o ${NFS_MOUNT_OPTIONS} ${NFS_SERVER}:${NFS_DIR} $NFS_MOUNT_POINT "
     fi 
     eval "$CMD" >>$SADM_LOG 2>&1
 
