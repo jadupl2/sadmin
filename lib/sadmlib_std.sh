@@ -266,7 +266,7 @@
 #@2026_04_18 lib v4.86 If value of  global variable 'SADM_LOG_TYPE' is invalid, set to default 'B'.
 #@2026_04_19 lib v4.87 Function 'sadm_write_log' rewrote and now support '\n' in message.
 #@2026_04_26 lib v4.88 Add Function 'sadm_ping hostname' Return 0=OK 1=Error.
-#@2026_04_28 lib v4.89 Using sudo to avoid problem with NFS mount when script is run by non root user
+#@2026_04_28 lib v4.89 NFS Mount use sudo to avoid problem with NFS mount is run by non root user.
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -637,10 +637,12 @@ sadm_ask() {
         printf "%s" "$wmess"                                            # Print "Question [Y/N/C] ?"
         read answer                                                     # Read User answer
         case "$answer" in                                               # Test Answer
-           Y|y ) wreturn=1                                              # Yes = Return Value of 1
+           y | Y | yes | Yes | YES) 
+                 wreturn=1                                              # Yes = Return Value of 1
                  break                                                  # Break of the loop
                  ;;
-           n|N ) wreturn=0                                              # No = Return Value of 0
+           n | N | no | No | NO)    
+                 wreturn=0                                              # No = Return Value of 0
                  break                                                  # Break of the loop
                  ;;
              * ) echo "Invalid input '$answer', please enter y or n." 
