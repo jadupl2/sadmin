@@ -21,7 +21,7 @@
 # 2018_06_04 sysmon  V2.5 Adapt to new Libr.
 # 2018_09_19 sysmon  V2.6 Added Alert Group
 # 2021_06_12 nolog: V2.7 Update SADMIN Section, add std command line option 
-#@2026_03_30 sysmon V2.8 Used when python3 is not available on the server, but nmon is. 
+#@2026_03_30 sysmon V2.8 Used when python3 is not available on the server, but 'nmon' is 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
