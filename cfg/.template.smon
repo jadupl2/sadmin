@@ -202,7 +202,7 @@
 #---------------------------------------------------------------------------------------------------
 #
 # Run specific custom script, check return code and issue a warning or error based on threshold
-#script:stemplate.sh       1  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180911 1520 default default -
+#script:stemplate.sh       1  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
 
 # System Load Average (use uptime)
 load_average                     0  >  20  35 120 0700 2100 Y Y Y Y Y Y Y Y 00000000 0000 default default -
@@ -216,14 +216,16 @@ swap_space                      14  >  85  90 000 0000 0000 Y Y Y Y Y Y Y Y 2018
 # cups.service 
 # systemd-journald.service 
 
+
 # ----- Linux Common Service Monitoring
+# 
 service_crond,cron               1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
-#service_chronyd                  0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
+service_chrony,chronyd           0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 service_ssh,sshd                 1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
-#service_at,atd                   1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
+service_at,atd                   1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 #
 #service_systemd-resolved         1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
-#service_postfix                  1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
+service_postfix                  1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 #service_sendmail                 1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 #service_ntp,ntpd                 0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 #service_syslog,syslogd           0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
@@ -237,7 +239,7 @@ service_ssh,sshd                 1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 2018
 #service_dhcpd                    0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 #
 # ----- Monitor a Daemon or a process that should be running
-#daemon_mydaemon                 1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default -
+daemon_nmon                       1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default -
 #
 # ----- Check Linux Multipath Status (0=Error 1=All path(s) are Online/Ready)
 check_multipath                  1 !=  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
