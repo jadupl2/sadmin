@@ -135,7 +135,6 @@ my $SYSMON_STD_FILE     = "$SADM_CFG_DIR/.template.smon";               # SYSMON
 my $SYSMON_RPT_FILE     = "$SADM_RPT_DIR/$HOSTNAME.rpt";                # SYSMON Report File
 my $SYSMON_RPT_FILE_TMP = "$SADM_RPT_DIR/$HOSTNAME.tmp";                # SYSMON TMP Report File
 my $SYSMON_LOCK_FILE    = "$SADM_BASE_DIR/sysmon.lock";                 # SYSMON Lock file
-my $ETC_ENVIRONMENT     = "/etc/environment";                           # O/S Environment file
 
 # SADMIN FILES DEFINITIONS
 my $SADMIN_CFG_FILE     = "$SADM_CFG_DIR/sadmin.cfg";                   # SADMIN Configuration file
@@ -1028,21 +1027,21 @@ sub check_service {
 
 
     # Show Status of the service 
-    if ( $service_count !=0 ) {                                         # If At least 1 srv running
-        printf "\n[ OK ] Service '", $srv, "' is running."; 
-    }else{                                                              # No Service are running
+    if ( $service_count == 0 ) {                                         # If At least 1 srv running
         printf "\n[ ERROR ] Service '", $srv, "' isn't running."; 
+    }else{                                                              # No Service are running
+        printf "\n[ OK ] Service '", $srv, "' is running."; 
     }
 
     # ----- Put current value in sadm array
-    $SADM_RECORD->{SADM_CURVAL} = $service_count ;                      # Put cur.val. in sadm_array
+    $SADM_RECORD->{SADM_CURVAL} = $service_count ;                      # 0=error else running
     $CVAL = $SADM_RECORD->{SADM_CURVAL} ;                               # Current Value
     $WVAL = $SADM_RECORD->{SADM_WARVAL} ;                               # Warning Threshold Value
     $EVAL = $SADM_RECORD->{SADM_ERRVAL} ;                               # Error Threshold Value
     $TEST = $SADM_RECORD->{SADM_TEST}   ;                               # Test Operator (=,<=,!=,..)
     $MOD  = "SERVICE"                   ;                               # Module Category
     $SMOD = "DAEMON"                    ;                               # Sub-Module Category
-    $STAT = $srv                        ;                               # Running/Not Running Service
+    $STAT = "$srv"                      ;                               # Running/Not Running Service
     check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);          # Go Evaluate Error/Alert
     return;                                                             # Return to Caller
 }
