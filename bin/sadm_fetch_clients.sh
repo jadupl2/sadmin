@@ -1424,7 +1424,7 @@ process_servers()
         # The SADMIN dir. on VM Host = $(grep anemone ./vm_list.txt |tail -1 |awk -F, '{print $3}' 
         if [ "$server_vm" -eq 1 ]                                       # 1-Virtual System, 0=Hardw
             then find $SADM_WWW_DAT_DIR -name "vm_list.txt" -exec cat {} \; > $SADM_TMP_FILE2
-                 sadm_write_log "VMHOST_SADMIN_DIR=grep '$export_host' $SADM_TMP_FILE2 |tail -1 |awk -F, '{print $3}"
+                 #sadm_write_log "VMHOST_SADMIN_DIR=grep '$export_host' $SADM_TMP_FILE2 |tail -1 |awk -F, '{print $3}"
                  VMHOST_SADMIN_DIR=$(grep "$export_host" $SADM_TMP_FILE2 |tail -1 |awk -F, '{print $3}')
                  #grep -q "$server_name" $SADM_TMP_FILE2  
                  if [ $? -ne 0 ] 
