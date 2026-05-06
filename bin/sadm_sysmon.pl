@@ -1028,9 +1028,9 @@ sub check_service {
 
     # Show Status of the service 
     if ( $service_count == 0 ) {                                         # If At least 1 srv running
-        printf "\n[ ERROR ] Service '", $srv, "' isn't running."; 
+        printf "\n[ ERROR ] Service '$srv' is not running."; 
     }else{                                                              # No Service are running
-        printf "\n[ OK ] Service '", $srv, "' is running."; 
+        printf "\n[ OK ] Service '$srv' is running."; 
     }
 
     # ----- Put current value in sadm array
