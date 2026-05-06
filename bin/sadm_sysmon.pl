@@ -56,6 +56,7 @@
 #@2025_06_20 mon v2.52 Ping test, added continious error minute count before triggering an error.
 #@2025_06_24 mon v2.53 Solve 'hotsname.smon' intermittently get re-created using '.template.smon'.
 #@2025_07_09 mon v2.54 Add more info in email sent when the hostname.smon file is gone & replace.
+#@2026_05_05 mon v2.55 Enhance the check service function 'check_service()'.
 #===================================================================================================
 #
 use English;
@@ -70,7 +71,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.54";                                       # Version Number
+my $VERSION_NUMBER      = "2.55";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -966,44 +967,74 @@ sub check_https {
 #   - If it's not running try to start to a maximum of 2 times per day (reset when date change).
 #   - If it can't be started then an alert is trigger.
 #
+# for 'service_' it return 1 if the service is active and 0 if it's not.
+#
 # On MacOS (eventually will add it):
 # $ launchctl list | grep ssh
 #  603	0	com.openssh.ssh-agent
+
 #---------------------------------------------------------------------------------------------------
 sub check_service {
     if ( $OSNAME eq "darwin" ) { return ; }                             # Not Yet Supported on MacOS
-    @dummy = split /_/, $SADM_RECORD->{SADM_ID} ;                       # Split service Line
-    my $SERVICE = $dummy[1];                                            # Get Service Name(s) Part
-    print "\n\nChecking service $SERVICE";                              # Show Service Name(s)
+
+    @dummy = split /_/, $SADM_RECORD->{SADM_ID} ;                       # Replace underscrore by ','
+    my $SERVICE = $dummy[1];                                            # Get Service Name(s)
+    print "\n\n--------------------"; 
+    print "\nChecking for service(s): $SERVICE";  # Show Service Name(s);
 
     #----- From the sysmon_array extract the service name
     my $service_count = 0 ;                                             # Service Running counter
     my @service = split (',', $SERVICE );                               # Put Service name in array
+
+    $service_ok=0 ;                                                     # 0= No Service Running
     foreach my $srv (@service) {                                        # For each service in array
-        if ($SYSMON_DEBUG >= 6) { print "\nChecking the service $srv"; }
-        $srv_name = $srv ;                                              # Save Current Service name
-        my $CMD = "systemctl status ${srv}.service" ;                   # Cmd to get service status
-        if ( length($CMD_SYSTEMCTL) == 0 ) {                            # If host not using systemd
-            $CMD = "service ${srv} status" ;                            # Get SysV Service Status
-        }
-        if ( system("$CMD >/dev/null 2>&1") == 0 ) {                    # If Service is running
-            $service_ok = 1 ;                                           # Set Service Increment
-            $srv_name = $srv ;                                          # Save name of running serv.
-            print "\n  - $CMD ... [RUNNING]";                           # Show Service is running
-        }else{                                                          # If service not running
-            $service_ok = 0 ;                                           # Set Service Increment
-        }
-        $service_count = $service_count + $service_ok ;                 # Upd. Running Service total
+        print "\nChecking service : '$srv'" ;
+
+        # If we are running using 'systemd'.
+        if (-e '/run/systemd/system') {                                 # Running under systemd ?
+            $CMD="systemctl status $srv.service >/dev/null 2>&1" ;      # Command to get Srv status
+            my $status = system("$CMD  >/dev/null 2>&1") ;              # 0 = Not Running, >= 1 OK
+            if ( $status != 0 ) {
+                print "\nService '$srv' not a valid service on this system.";     
+                $service_ok=0 ;                                         # 0 = Service not running
+                next ;                                                  # Continue with next service
+            }else{
+                print "\n[ OK ] Service '$srv' running." ;               
+                $service_ok=1 ;                                         # 1>= Service UP, Nb.running
+            }       
+        }else{
+            # If we running SystemV System, Check if service exist in /etc/init.d before restart it. 
+            if ( ! -e '/etc/init.d/$srv' ) {                            # If Service don't exist
+               print "\nService file for '$srv', was not found in '/etc/init.d' directory." ;
+               print "\nPlease check the service name specified in ${SYSMON_CFG_FILE} file." ;
+               $service_ok=0 ;                                          # 0 = Service not running
+               next ;                                                   # Skip to next service
+            }else{ 
+               $CMD = "service $srv status" ;                           # Set Command to restart srv
+               my $status = system("$CMD") ;                            # 0 = Running, >= 1 Error(s)
+               if ( $status != 0 ) {
+                   print "\nService '$srv' not a valid service on this system.";  
+                   print "\nError getting status for '$srv' service.";     
+                   print "\nError No.$status, running '$CMD'.";
+                   $service_ok=0 ;                                      # 0 = No running service
+               }else{
+                   print "\n[ OK ] Service '$srv' running." ;               
+                   $service_ok+=1                                       # +1= Nb srv UP, Nb.running
+               }  
+            } 
+        }        
+        return $service_ok ;                                            # Service Status returned 
     }
 
-    # Show Service Check Result
-    if ($service_count >= 1) {                                          # At least 1 service running
-        printf "\n[OK] Service is running - Total returned (%d)",$service_count;
+
+    # Show Status of the service 
+    if ( $service_count !=0 ) {                                         # If At least 1 srv running
+        printf "\n[ OK ] Service '", $srv, "' is running."; 
     }else{                                                              # No Service are running
-        printf "\n[ERROR] Service isn't running - Total returned (%d)",$service_count;
+        printf "\n[ ERROR ] Service '", $srv, "' isn't running."; 
     }
 
-    #----- Put current value in sadm array and check for error.
+    # ----- Put current value in sadm array
     $SADM_RECORD->{SADM_CURVAL} = $service_count ;                      # Put cur.val. in sadm_array
     $CVAL = $SADM_RECORD->{SADM_CURVAL} ;                               # Current Value
     $WVAL = $SADM_RECORD->{SADM_WARVAL} ;                               # Warning Threshold Value
@@ -1011,7 +1042,7 @@ sub check_service {
     $TEST = $SADM_RECORD->{SADM_TEST}   ;                               # Test Operator (=,<=,!=,..)
     $MOD  = "SERVICE"                   ;                               # Module Category
     $SMOD = "DAEMON"                    ;                               # Sub-Module Category
-    $STAT = $srv_name                   ;                               # Running/Not Running Service
+    $STAT = $srv                        ;                               # Running/Not Running Service
     check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);          # Go Evaluate Error/Alert
     return;                                                             # Return to Caller
 }
