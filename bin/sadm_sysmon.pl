@@ -57,6 +57,7 @@
 #@2025_06_24 mon v2.53 Solve 'hotsname.smon' intermittently get re-created using '.template.smon'.
 #@2025_07_09 mon v2.54 Add more info in email sent when the hostname.smon file is gone & replace.
 #@2026_05_05 mon v2.55 Enhance the check service function 'check_service()'.
+#@2026_05_07 mon v2.56 Add debug info in log and fix bug.
 #===================================================================================================
 #
 use English;
@@ -71,7 +72,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.55";                                       # Version Number
+my $VERSION_NUMBER      = "2.56";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -82,8 +83,9 @@ my $SYSMON_DEBUG        = "$ENV{'SYSMON_DEBUG'}" || "5";                # debugg
 my $start_time = $end_time = 0;                                         # Use to Calc execution Time
 my $WORK                = 0;                                            # For temp usage
 my $VM                  = "N" ;                                         # Are we a VM (No Default)
+my $username = $ENV{LOGNAME} || $ENV{USER} || getpwuid($<);             # Get the current username
 my $SCRIPT_MAX_RUN_PER_DAY=2;                                           # Restart Script Max run/day
-system "export TERM=xterm";                                             # TERM Var. xterm-256color
+system "export TERM=xterm-256color";                                    # TERM Var. xterm-256color
 
 # Check if /etc/environment file exist and is readable
 my $ETC_ENVIRONMENT     = "/etc/environment";                           # O/S Environment file
@@ -263,20 +265,23 @@ sub load_sadmin_cfg {
         }
         $sname  =~ s/^\s+|\s+$//g;                                      # Remove Leading/Trailing Ch
         $svalue =~ s/^\s+|\s+$//g;                                      # Remove Leading/Trailing Ch
-        if ($sname eq "SADM_HOST_TYPE")   { $SADM_HOST_TYPE   = $svalue; } # HostType [S]erver [C]lient
-        if ($sname eq "SADM_CIE_NAME")    { $SADM_CIE_NAME    = $svalue; } # Cie name
-        if ($sname eq "SADM_ALERT_TYPE")  { $SADM_ALERT_TYPE  = $svalue; } # MailType 1=MailOnError
-        if ($sname eq "SADM_SERVER")      { $SADM_SERVER      = $svalue; } # SADM FQDN Name
-        if ($sname eq "SADM_SSH_PORT")    { $SADM_SSH_PORT    = $svalue; } # SSH Port Used
-        if ($sname eq "SADM_USER")        { $SADM_USER        = $svalue; } # sadmin user name
-        if ($sname eq "SADM_GROUP")       { $SADM_GROUP       = $svalue; } # sadmin user group
-        if ($sname eq "SADM_ALERT_GROUP") { $SADM_ALERT_GROUP = $svalue; } # Default Alert Group
-        if ($sname eq "SADM_MAIL_ADDR")   {                               # sadmin Email Adresse
-            $SADM_MAIL_ADDR = $svalue ;                                 # Save Email Addr.
+        if ($sname eq "SADM_HOST_TYPE")     { $SADM_HOST_TYPE     = $svalue; } # HostType [S]erver [C]lient
+        if ($sname eq "SADM_CIE_NAME")      { $SADM_CIE_NAME      = $svalue; } # Cie name
+        if ($sname eq "SADM_ALERT_TYPE")    { $SADM_ALERT_TYPE    = $svalue; } # MailType 1=MailOnError
+        if ($sname eq "SADM_SERVER")        { $SADM_SERVER        = $svalue; } # SADM FQDN Name
+        if ($sname eq "SADM_SSH_PORT")      { $SADM_SSH_PORT      = $svalue; } # SSH Port Used
+        if ($sname eq "SADM_USER")          { $SADM_USER          = $svalue; } # sadmin user name
+        if ($sname eq "SADM_GROUP")         { $SADM_GROUP         = $svalue; } # sadmin user group
+        if ($sname eq "SADM_ALERT_GROUP")   { $SADM_ALERT_GROUP   = $svalue; } # Default Alert Group
+        if ($sname eq "SADM_WARNING_GROUP") { $SADM_WARNING_GROUP = $svalue; } # Warning Alert Group
+        if ($sname eq "SADM_INFO_GROUP")    { $SADM_INFO_GROUP    = $svalue; } # Info Alert Group
+        if ($sname eq "SADM_MAIL_ADDR")     { 
+            $SADM_MAIL_ADDR     = $svalue ;  # Save Email Addr.
             $SADM_MAIL_ADDR =~ s/@/\\@/ig;                              # Precede the @ with a \
         }
     }
     close SADMFILE;                                                     # Close Sadmin Config file
+
 
     # For debug purpose - Display SADMIN Variable Gather from sadmin.cfg
     if ($SYSMON_DEBUG >= 6) {
@@ -286,11 +291,14 @@ sub load_sadmin_cfg {
         print "SADM_HOST_TYPE           = ${SADM_HOST_TYPE}\n" ;
         print "SADM_MAIL_ADDR           = ${SADM_MAIL_ADDR}\n" ;
         print "SADM_CIE_NAME            = ${SADM_CIE_NAME}\n"  ;
-        print "SADM_ALERT_TYPE           = ${SADM_ALERT_TYPE}\n"  ;
         print "SADM_SERVER              = ${SADM_SERVER}\n"  ;
         print "SADM_SSH_PORT            = ${SADM_SSH_PORT}\n"  ;
         print "SADM_USER                = ${SADM_USER}\n"  ;
-        print "SADM_GROUP               = ${SADM_GROUP}\n"  ;
+        print "SADM_GROUP               = ${SADM_GROUP}\n"  ;        
+        print "SADM_ALERT_TYPE          = ${SADM_ALERT_TYPE}\n"  ;
+        print "SADM_INFO_GROUP          = ${SADM_INFO_GROUP}\n"  ;
+        print "SADM_ALERT_GROUP         = ${SADM_ALERT_GROUP}\n"  ;
+        print "SADM_WARNING_GROUP       = ${SADM_WARNING_GROUP}\n"  ;
         print "------------------------------------------------------------------------------\n";
     }
 }
@@ -327,10 +335,10 @@ sub load_smon_file {
         my $msg2 = "SysMon configuration file $SYSMON_CFG_FILE for ${HOSTNAME} wasn't found.\n";
         my $msg3 = "A new one was created based on the template file ${SYSMON_STD_FILE}.\n";
         my $msg4 = "\n\nList of '.smon' file: \n"; 
-        my $msg5 = `ls -la $SADMIN/cfg | grep smon`; chomp $mail_mess4;  
-        my $msg4 = "\n\nSADMIN process running : \n"; 
-        my $msg6 = "\nps -aux | grep 'sadm_' : \n"; 
-        my $msg7 = `ps -aux | grep '_sadm'`  ; chomp $mail_mess7;  
+        my $msg5 = `ls -la $SADM_BASE_DIR/smon`; chomp $msg5;
+        my $msg6 = "\n\nSADMIN process running : \n"; 
+        my $msg7= "\nps -aux | grep 'sadm_' : \n"; 
+        my $msg8= `ps -aux | grep '_sadm'`  ; chomp $msg8;  
         my $mail_subject = "SADM INFO: $SYSMON_CFG_FILE not found on $HOSTNAME";
         my $mail_message = "${msg0}${msg1}${msg2}${msg3}${msg4}${msg5}${msg6}${msg7}\n";
 
@@ -369,7 +377,7 @@ sub load_smon_file {
         next if $line =~ /^FS\/media\// ;                               # Don't load non-permanent
         next if $line =~ /^FS\/snap\// ;                                # No snap always 100%
         $sysmon_array[$widx++] = $line ;                                # Load Line in Array
-        if ($SYSMON_DEBUG >= 6) { print "Line loaded from cfg : $line" ; }
+        if ($SYSMON_DEBUG >= 7) { print "Line loaded from cfg : $line" ; }
     }
     close SMONFILE;                                                     # Close SysMon Config file
 
@@ -378,7 +386,7 @@ sub load_smon_file {
         $nbline = @sysmon_array;                                        # Get Nb. of element loaded
         print "Configuration file loaded in sysmon_array ($nbline lines loaded)\n";
     }
-    if ($SYSMON_DEBUG >= 6)  { show_sysmon_array ; }                 # If Debug >=6 Display Array
+    if ($SYSMON_DEBUG >= 7)  { show_sysmon_array ; }                    # If Debug >=7 Display Array
 }
 
 
@@ -548,13 +556,13 @@ sub check_for_error {
     my ($ACTVAL,$WARVAL,$ERRVAL,$TEST,$MODULE,$SUBMODULE,$WID)=@_;      # Split Array Received
     if ($SYSMON_DEBUG >= 6) {
         print "\nCheck_for_error Function";
-        print "\nActual Value  = $ACTVAL";
-        print "\nWarning Value = $WARVAL";
-        print "\nError Value   = $ERRVAL";
-        print "\nTest Operator = $TEST";
-        print "\nModule        = $MODULE";
-        print "\nSub-Module    = $SUBMODULE";
-        print "\nWID           = $WID";
+        print "\nActual Value       = $ACTVAL";
+        print "\nWarning Threshold  = $WARVAL";
+        print "\nError Threshold    = $ERRVAL";
+        print "\nTest Operator      = $TEST";
+        print "\nModule Name        = $MODULE";
+        print "\nSub-Module Name    = $SUBMODULE";
+        print "\nWID Identifier     = $WID";
     }
     $alert_type="N";                                                    # No Error by default
 
@@ -879,7 +887,7 @@ sub check_for_error {
    #---------- Error detected - A service was suppose to be running and it is not
    if ($MODULE eq "SERVICE") {                                          # If Service not Running
       if ($SUBMODULE eq "DAEMON") {                                     # And Daemon as a Sub-Module
-         $ERR_MESS = "Service $WID isn't running !";                    # Prepare Mess. to rpt file
+         $ERR_MESS = "Service $WID is not running !";                    # Prepare Mess. to rpt file
          write_rpt_file($alert_type,"SERVICE","DAEMON",$ERR_MESS );     # Go write ALert to rpt file
       }
    } # End of Service Module
@@ -961,77 +969,79 @@ sub check_https {
 
 #---------------------------------------------------------------------------------------------------
 # CHECK IF THE SPECIFIED SERVICE IS RUNNING
-#   - Service can have different name depending of the version of linux your using.
-#       - So you can specify multiple name 'service_syslog,rsyslog,syslogd' for same service
+#
+#   - Service can have different name depending of the version of Linux your using.
+#      Example: cron service is name 'cron' on Debian Family and "crond' on Redhat family.
+#               Same thing for service 'at' on Debian Family and "atd' on Redhat family.
+#   - So you can specify multiple name in '$(hostname -s).smon' file, like 'crond,cron' or 'at,atd'.
+#
+#   - This function will check if at least one of the name specified is running.
+#   - If at least one of the name specified is running then it's OK and no alert is trigger.
+#
 #   - If it's not running try to start to a maximum of 2 times per day (reset when date change).
 #   - If it can't be started then an alert is trigger.
 #
-# for 'service_' it return 1 if the service is active and 0 if it's not.
+# This function will send '0' to 'check_for_errorfor()' if service is not running.
+# This function will send '1' (or higher) to 'check_for_errorfor()' if service is running.
 #
-# On MacOS (eventually will add it):
-# $ launchctl list | grep ssh
-#  603	0	com.openssh.ssh-agent
-
+# On MacOS (Not supported)
+#   - $ launchctl list | grep ssh
+#       603	0	com.openssh.ssh-agent
 #---------------------------------------------------------------------------------------------------
 sub check_service {
     if ( $OSNAME eq "darwin" ) { return ; }                             # Not Yet Supported on MacOS
 
     @dummy = split /_/, $SADM_RECORD->{SADM_ID} ;                       # Replace underscrore by ','
     my $SERVICE = $dummy[1];                                            # Get Service Name(s)
-    print "\n\n--------------------"; 
-    print "\nChecking for service(s): $SERVICE";  # Show Service Name(s);
 
     #----- From the sysmon_array extract the service name
-    my $service_count = 0 ;                                             # Service Running counter
+    print "\n\n--------------------";                                   # Log Separator
+    print "\nChecking for service(s): $SERVICE";                        # Show Service Name(s);
     my @service = split (',', $SERVICE );                               # Put Service name in array
+    my $service_running_name = "" ;                                     # Service name default empty
+    my $service_count = 0 ;                                             # Service Running counter
 
-    $service_ok=0 ;                                                     # 0= No Service Running
+
     foreach my $srv (@service) {                                        # For each service in array
         print "\nChecking service : '$srv'" ;
 
         # If we are running using 'systemd'.
-        if (-e '/run/systemd/system') {                                 # Running under systemd ?
-            $CMD="systemctl status $srv.service >/dev/null 2>&1" ;      # Command to get Srv status
-            my $status = system("$CMD  >/dev/null 2>&1") ;              # 0 = Not Running, >= 1 OK
-            if ( $status != 0 ) {
-                print "\nService '$srv' not a valid service on this system.";     
-                $service_ok=0 ;                                         # 0 = Service not running
+        if ((-e '/run/systemd/system') && ($service_count == 0)) {      # Running under systemd ?
+            $CMD="systemctl --no-pager status $srv.service >/dev/null 2>&1"; # Cmd to get Srv status
+            my $status = system("$CMD") ;                               # 0 = Running, >= 1 Not Good
+            if ( $status != 0 ) {                                       # Err getting service status
+                print "\nError $status - Systemd service '$srv' is not valid on this system.";     
                 next ;                                                  # Continue with next service
             }else{
-                print "\n[ OK ] Service '$srv' running." ;               
-                $service_ok=1 ;                                         # 1>= Service UP, Nb.running
+                $service_count+=1 ;                                     # +1= Nb srv UP, Nb.running
+                $service_running_name = $srv ;                          # Save name of serv. running
+                printf "\n[ OK ] Service '$service_running_name' is running.";
+                last;                                                   # Stop to check other name  
             }       
         }else{
             # If we running SystemV System, Check if service exist in /etc/init.d before restart it. 
             if ( ! -e '/etc/init.d/$srv' ) {                            # If Service don't exist
                print "\nService file for '$srv', was not found in '/etc/init.d' directory." ;
                print "\nPlease check the service name specified in ${SYSMON_CFG_FILE} file." ;
-               $service_ok=0 ;                                          # 0 = Service not running
                next ;                                                   # Skip to next service
             }else{ 
                $CMD = "service $srv status" ;                           # Set Command to restart srv
                my $status = system("$CMD") ;                            # 0 = Running, >= 1 Error(s)
-               if ( $status != 0 ) {
-                   print "\nService '$srv' not a valid service on this system.";  
-                   print "\nError getting status for '$srv' service.";     
-                   print "\nError No.$status, running '$CMD'.";
-                   $service_ok=0 ;                                      # 0 = No running service
+               if ( $status != 0 ) {                                    # Error getting srv. status
+                   print "\n[ ERROR ] SysV service '$srv' is not valid on this system.";  
+                   print "\n          Error getting status for '$srv' service.";     
+                   print "\n          Error No.$status, running '$CMD'.";
+                   next; 
                }else{
-                   print "\n[ OK ] Service '$srv' running." ;               
-                   $service_ok+=1                                       # +1= Nb srv UP, Nb.running
+                   $service_count+=1 ;                                  # +1= Nb srv UP, Nb.running
+                   $service_running_name = $srv ;                       # Save name of service running
+                   printf "\n[ OK ] SysV service '$service_running_name' running.";
+                   last;
                }  
             } 
         }        
-        return $service_ok ;                                            # Service Status returned 
     }
 
-
-    # Show Status of the service 
-    if ( $service_count == 0 ) {                                         # If At least 1 srv running
-        printf "\n[ ERROR ] Service '$srv' is not running."; 
-    }else{                                                              # No Service are running
-        printf "\n[ OK ] Service '$srv' is running."; 
-    }
 
     # ----- Put current value in sadm array
     $SADM_RECORD->{SADM_CURVAL} = $service_count ;                      # 0=error else running
@@ -1041,7 +1051,7 @@ sub check_service {
     $TEST = $SADM_RECORD->{SADM_TEST}   ;                               # Test Operator (=,<=,!=,..)
     $MOD  = "SERVICE"                   ;                               # Module Category
     $SMOD = "DAEMON"                    ;                               # Sub-Module Category
-    $STAT = "$srv"                      ;                               # Running/Not Running Service
+    $STAT = "$service_running_name"                      ;              # Running/Not Service Name
     check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);          # Go Evaluate Error/Alert
     return;                                                             # Return to Caller
 }
@@ -1881,9 +1891,11 @@ sub init_process {
         print "\nLockfile was created the $creation_date";              # Show Lock Creation Date
         my $actual_epoch_time = time();                                 # Get Current Epoch Time
         $actual_date = localtime($actual_epoch_time);                   # COnvert Epoch to HumanDate
-        if ($SYSMON_DEBUG >= 6) {                                       # If DEBUG Activated
+        if ($SYSMON_DEBUG >= 4) {                                       # If DEBUG Activated
             print "\nActual time in epoch time is $actual_epoch_time";  # Show Current Epoch Time
             print "\nActual time is $actual_date";                      # Show Current Human Date
+            print "\nActual user is $username";                         # Show Current User
+
         }
         my $elapse_time = ($actual_epoch_time - $ctime) ;               # Calc. Sec. Since Creation
         print "\nLock file $SYSMON_LOCK_FILE was create $elapse_time seconds ago";
@@ -1906,7 +1918,8 @@ sub init_process {
         print "\nCreating lock file $SYSMON_LOCK_FILE\n";               # Show user want we do
         @args = ("$CMD_TOUCH", "$SYSMON_LOCK_FILE");                    # Cmd to Create Lock File
 #        system(@args) == 0   or die "system @args failed: $?";         # Execute the Touch Command
-        system(@args) == 0   ;                                          # Execute the Touch Command
+        #system(@args) == 0   ;                                          # Execute the Touch Command
+        system(@args)  ;                                          # Execute the Touch Command
     }
 
     # Execute the 'ps' command twice and save result to files
@@ -2072,6 +2085,12 @@ sub end_of_sysmon {
         exit 1 ;                                    # Exit with Error
     }    
     #
+    #print "\n---------------- Environment variable in cron\n" ; 
+    #foreach my $key (sort keys %ENV) {
+    #    print "$key = $ENV{$key}\n";
+    #}
+
+
     #my $random_number = int(rand(20));             # Get a random number between 0 and 30
     #print "Execution will start in $random_number seconds.\n";
     #sleep($random_number);
