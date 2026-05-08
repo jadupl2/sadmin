@@ -44,6 +44,7 @@
 #@2026_01_27 web v3.0 Fix minor bug 
 #@2026_02_21 web v3.1 Add backup average execution time and lowest/highest. 
 #@2026_02_28 web v3.2 Re-Adjust page header and footer.
+#@2026_05_08 web v3.3 Fix problem when RCH file is empty or not exist, now show 'No data'.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -132,7 +133,7 @@ ini_set('display_errors', 1);
 #                                       Local Variables
 #===================================================================================================
 $DEBUG              = False ;                                           # Debug Activated True/False
-$WVER               = "3.2" ;                                           # Current version number
+$WVER               = "3.3" ;                                           # Current version number
 
 $URL_CREATE         = '/crud/srv/sadm_server_create.php';               # Create Page URL
 $URL_UPDATE         = '/crud/srv/sadm_server_update.php';               # Update Page URL
@@ -290,7 +291,7 @@ function display_rear_data() {
 
 
         # Last Rear Backup Date/Time & Check if overdue.
-        if (! file_exists($rch_name))  {                                    # No RCH Found,No backup yet
+        if (! file_exists($rch_name) || filesize($rch_name) == 0) {                                    # No RCH Found,No backup yet
             echo "<td align='center'>No data";  
         }else{
             $file = file("$rch_name");                                      # Load RCH File in Memory
@@ -319,15 +320,15 @@ function display_rear_data() {
     
         # Backup duration time
         echo "<td align='center'>";
-        if (! file_exists($rch_name))  {                                    # If RCH File Not Found
+        if (! file_exists($rch_name) || filesize($rch_name) == 0)  {   # If RCH File Not Found
             echo "No data</td>";
         }else{
             echo nl2br($celapse) . "</td>\n";  
         }
-        if ($celapse != '........') {                                       # Ignore job not finish
-            $duration_sec = sadm_timeToSeconds($celapse) ;                  # Convert time to second
-            $total_seconds += $duration_sec ;                               # Add Duration to Total
-            $total_count+=1;                                                # Terminated jobs count
+        if ($celapse != '........') {                                   # Ignore job not finish
+            $duration_sec = sadm_timeToSeconds($celapse) ;              # Convert time to second
+            $total_seconds += $duration_sec ;                           # Add Duration to Total
+            $total_count+=1;                                            # Terminated jobs count
             if ($lowest_time == 0 || $duration_sec <= $lowest_time) { 
                 $lowest_time    = $duration_sec ;
                 $lowestduration = $celapse ;
@@ -340,12 +341,12 @@ function display_rear_data() {
 
 
         # Status of Last Backup
-        if (file_exists($rch_name)) {
-            $file = file("$rch_name");                                      # Load RCH File in Memory
-            $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
+        if ( file_exists($rch_name) && filesize($rch_name) != 0 ) {
+            $file = file("$rch_name");                                  # Load RCH File in Memory
+            $lastline = $file[count($file) - 1];                        # Extract Last line of RCH
             list($cserver, $cdate1, $ctime1, $cdate2, $ctime2, $celapse, $cname, $calert, $ctype, $ccode) = explode(" ", $lastline);
         } else {
-            $ccode = 9;                                                     # No Log, Backup never ran
+            $ccode = 9;                                                 # No Log, Backup never ran
         }
         switch ($ccode) {
             case 0:
@@ -438,7 +439,7 @@ function display_rear_data() {
                 $row['srv_img_dow'], $row['srv_img_hour'], $row['srv_img_minute']);
             echo $UPD_DATE_TIME ;
         }else{
-            echo "Unknown";
+            echo "No data";
         }
         echo "</td>\n";  
 
@@ -450,7 +451,7 @@ function display_rear_data() {
                 $row['srv_img_dow'], $row['srv_img_hour'], $row['srv_img_minute']);
             echo $STR_SCHEDULE ;
         }else{
-            echo "Unknown";
+            echo "No data";
         }
         echo "</td>\n"; 
 
