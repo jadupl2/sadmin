@@ -219,7 +219,7 @@ main_process()
                          sadm_write_log "[ SUCCESS ] Restarting service '$service'." 
                     else sadm_write_log "[ ERROR ] Failed to restart service '$service'." 
                  fi 
-                 systemctl is-active $service >>$SADM_LOG 2>&1
+                 systemctl is-active $service >/dev/null 2>&1
                  if [ $? -eq 0 ]                                        # If service is active
                     then sadm_write_log "Service '$service' is active after restart."
                     else sadm_write_log "[ ERROR ] Service '$service' is NOT active after restart." 
