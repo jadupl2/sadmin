@@ -1010,7 +1010,7 @@ sub check_service {
             $CMD="systemctl --no-pager status $srv.service >/dev/null 2>&1"; # Cmd to get Srv status
             my $status = system("$CMD") ;                               # 0 = Running, >= 1 Not Good
             if ( $status != 0 ) {                                       # Err getting service status
-                print "\nError $status - Systemd service '$srv' is not valid on this system.";     
+                #print "\nError $status - Systemd service '$srv' is not valid on this system.";     
                 next ;                                                  # Continue with next service
             }else{
                 $service_count+=1 ;                                     # +1= Nb srv UP, Nb.running
