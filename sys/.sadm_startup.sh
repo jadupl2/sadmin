@@ -43,7 +43,6 @@
 #@2024_09_12 startup/shutdown v3.22 Change default script description 'SADM_PDESC'.
 #@2025_03_25 startup/shutdown v3.23 Change format of Power ON email to sysadmin.
 #@2026_03_06 startup/shutdown v3.24 Correct typo when an error occur.
-#@2026_03_10 startup/shutdown v3.25 Not appending the log 'SADM_LOG_APPEND="N"' (Create a new one).
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x 
@@ -75,11 +74,11 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.25'                                     # Script version number
+export SADM_VER='3.24'                                     # Script version number
 export SADM_PDESC="Run when the system is started (via sadmin.service)." 
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
-export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
+export SADM_LOG_APPEND="Y"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
 export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
@@ -145,60 +144,88 @@ poweron_mail()
 
 
 
+# System Standard Startup Procedure for every servers.
+# --------------------------------------------------------------------------------------------------
+normal_startup()
+{
+    ERROR_COUNT=0 
+
+    sadm_write_log " "
+    sadm_write_log "Running Standard Startup Procedure:"
+    
+    sadm_write_log "  - Remove SADMIN tools system lock file ("${SADMIN}/${SADM_HOSTNAME}.lock")."
+    rm -f "${SADMIN}/${SADM_HOSTNAME}.lock" >> $SADM_LOG 2>>$SADM_ELOG
+
+    sadm_write_log "  - Removing temporary files in '$SADMIN/tmp' directory."
+    rm -f ${SADMIN}/tmp/*  >> $SADM_LOG 2>&1
+
+    sadm_write_log "  - Removing SADMIN system monitor lock file ${SADMIN}/sysmon.lock."
+    rm -f ${SADMIN}/sysmon.lock  >> $SADM_LOG 2>&1
+
+
+    # Synchronize system clock with NTP Servers
+    command -v ntpdate >/dev/null                                       # Is ntpdate cmd on system ?
+    if [ $? -eq 0 ]                                                   # ntpdate command on system
+        then sadm_write_log "  - Synchronize clock with NTP server 'ntpdate -u $NTP_SERVER'."
+             ntpdate -u $NTP_SERVER >> $SADM_LOG 2>&1                   # Synchronize with NTP server
+             if [ $? -ne 0 ]                                            # If failed to synchronize
+                then sadm_write_err "  - [ ERROR ] ntpdate - time synchronization with $NTP_SERVER" 
+                     ((ERROR_COUNT++))
+                else sadm_write_log "  - [ SUCCESS ] Time synchronization done with $NTP_SERVER" 
+                     sadm_write_log "    - Current Date and Time: $(date)"
+
+             fi
+        else command -v chronyc >/dev/null                              # Is chrony cmd on system ?
+             if [ $? -eq 0 ]                                          # chrony cmd is on system!
+                then sadm_write_log "  - Synchronize clock with 'chronyc makestep' command."
+                     chronyc makestep >> $SADM_LOG 2>&1
+                     if [ $? -ne 0 ] 
+                        then sadm_write_err "  - [ ERROR ] Time synchronization 'chronyc makestep'."
+                            ((ERROR_COUNT++))
+                            sadm_write_err "System clock were not able to be synchronized with NTP Servers."
+                            sadm_write_err "Command 'ntpdate' or 'chronyc' commands not found on this system."  
+                            sadm_write_err "Is the current date and time are ok : $(date) ?" 
+                     fi 
+                else sadm_write_log "  - [ SUCCESS ] Time synchronization '$cmdpath makestep'." 
+                     sadm_write_log "    - Current Date and Time: $(date)"
+             fi
+    fi 
+
+
+    # Start performance monitor 'nmon'.
+    sadm_write_log "  - Start 'nmon' performance system monitor tool."
+    $SADMIN/usr/mon/swatch_nmon.sh >> $SADM_LOG 2>&1
+    RC=$?
+    if [ $RC -ne 0 ] 
+       then sadm_write_err "     - [ ERROR ] Starting 'nmon' System Monitor." 
+            ((ERROR_COUNT++))
+       else sadm_write_log "     - [ OK ] Performance system monitor 'nmon' is started." 
+    fi
+
+    return $ERROR_COUNT
+}
+
+
+
 # --------------------------------------------------------------------------------------------------
 #                                S c r i p t    M a i n     P r o c e s s
 # --------------------------------------------------------------------------------------------------
 main_process()
 {
+
     ERROR_COUNT=0                                           
     sadm_write_log "*** Running SADMIN system startup script on $(sadm_get_fqdn) ***"
-    sadm_write_log " "
-    sadm_write_log "Running system(s) common startup procedure : "
-    
-    sadm_write_log "  Remove system lock file ("${SADMIN}/${SADM_HOSTNAME}.lock")."
-    rm -f "${SADMIN}/${SADM_HOSTNAME}.lock" >> $SADM_LOG 2>>$SADM_ELOG
 
-    sadm_write_log "  Removing temporary files in '$SADMIN/tmp' directory."
-    rm -f ${SADMIN}/tmp/* >> $SADM_LOG 2>>$SADM_ELOG
 
-    sadm_write_log "  Removing SADMIN system monitor lock file ${SADMIN}/sysmon.lock."
-    rm -f ${SADMIN}/sysmon.lock >> "$SADM_LOG" 2>>$SADM_ELOG
+    # Perform the System Standard Startup Procedure for every servers.
+    normal_startup                                                      # Sync.Time,start nmon,...
+    if [ $? -ne 0 ]                                                     # If we had some error
+        then sadm_write_err "Some error(s) occurred during the standard startup procedure." 
+             ((ERROR_COUNT++))                                          # Increase Error Count 
+             sadm_stop $ERROR_COUNT                                     # Normal shutdown of SADMIN
+             exit 1                                                     # Exit with error code 1
+    fi
 
-    # Force Date/Time Synchronization at startup with NTP servers (if ntpdate is installed).
-    command -v ntpdate >/dev/null 2>&1
-    if (( $? == 0 ))
-        then sadm_write_log "  Force system clock synchronization with NTP server $NTP_SERVER"
-             ntpdate -u $NTP_SERVER >> "$SADM_LOG" 2>>"$SADM_ELOG"
-             if [ $? -ne 0 ] 
-                then sadm_write_err "   - [ ERROR ] Synchronizing date/time with NTP server : $NTP_SERVER" 
-                     ((ERROR_COUNT++))
-             fi
-    fi 
-
-    # Force Date/Time Synchronization at startup with 'chrony' servers (if chrony is installed).
-    command -v chronyc >/dev/null 2>&1
-    if (( $? == 0 ))
-        then sadm_write_log "  Force system clock synchronization with \"chronyc 'burst 4/4'\""
-             chronyc 'burst 4/4' >> $SADM_LOG 2>>$SADM_ELOG
-             if [ $? -ne 0 ] 
-                then sadm_write_err "   - [ ERROR ] Synchronizing Time with \"chronyc 'burst 4/4'\"" 
-                ((ERROR_COUNT++))
-             fi
-    fi 
-
-    # Start performance monitor 'nmon'.
-    sadm_write_log "  Start 'nmon' performance system monitor tool"
-    pgrep 'nmon' >/dev/null 2>&1                                        
-    if [[ $? -ne 0 ]]                                                   # If nmon not running
-        then sadm_write_log "   - [ INFO ] Performance monitor 'nmon' is not running." 
-             sadm_write_log "   - [ INFO ] Running nmon watcher to start it."
-             ${SADMIN}/bin/sadm_nmon_watcher.py > /dev/null 2>&1        # Start nmon script
-             if [ $? -ne 0 ] 
-                then sadm_write_err "   - [ ERROR ] Could not start 'nmon' performance collector." 
-                     ((ERROR_COUNT++))
-                else sadm_write_log "   - [ OK ] Performance collector 'nmon' is started." 
-             fi
-    fi 
 
     # Special startup operation for each particular system
     sadm_write_log " "
