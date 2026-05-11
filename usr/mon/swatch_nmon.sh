@@ -139,7 +139,7 @@ check_nmon()
         else WSEARCH=$NMON                                              # Linux search for nmon only
     fi
     
-    # Kill any nmon running without the option -s120 (Our switch) - Want only one nmon running
+    # We want only one nmon running, kill any nmon running without the option -s120 (Our switch)
     # This will eliminate the nmon running from the crontab with rpm installation
     nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s120 |wc -l |tr -d ' '`
     if [ $nmon_count -gt 1 ] 
