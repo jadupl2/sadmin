@@ -146,8 +146,8 @@ main_process()
 {
     sadm_write_log " "
 
-    #SADM_EXIT_CODE=0                                                    # 0= Success Exit code
-    SADM_EXIT_CODE=1                                                    # 1= Error Exit Code
+    SADM_EXIT_CODE=0                                                    # 0= Success Exit code
+    #SADM_EXIT_CODE=1                                                    # 1= Error Exit Code
 
     sadm_write_log "SADM_EXIT_CODE = $SADM_EXIT_CODE"                   # Debug Log
     return "$SADM_EXIT_CODE"                                            # Return ErrorCode to Caller
