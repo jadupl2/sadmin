@@ -147,10 +147,11 @@ main_process()
 
     # If script is run from command line, ask user if want to continue (To avoid causing damage).
     if [ -t 0 ]
-        then sadm_write_log "$SADM_PN V${SADM_VER} '$SADM_PDESC' executed by user '${SADM_USERNAME}'."
-             sadm_ask "Continue"                                        # Continue (y/n) ? 
+        then sadm_write_log "$SADM_PN v${SADM_VER}"                     # Script name & version
+             sadm_write_log "$SADM_PDESC"                               # Script description
+             sadm_ask "Continue"                                        # Ask Continue (y/n) ? 
              if [ $? -eq 0 ] ; then sadm_stop 0 ; exit 0 ; fi           # 0 = Don't want to continue
-        else sadm_write_log "Script not executed on the command line." 
+#        else sadm_write_log "Script not executed on the command line." 
     fi
     
 
