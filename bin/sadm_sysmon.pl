@@ -58,6 +58,8 @@
 #@2025_07_09 mon v2.54 Add more info in email sent when the hostname.smon file is gone & replace.
 #@2026_05_05 mon v2.55 Enhance the check service function 'check_service()'.
 #@2026_05_07 mon v2.56 Add debug info in log and fix bug.
+#@2026_05_09 mon v2.57 Add a check if 'nmon' is running, if not run $SADMIN/usr/mon/swatch_nmon.shto restart it.
+#@2026_05_12 mon v2.58 Enhance code, review and retest all functions.
 #===================================================================================================
 #
 use English;
@@ -72,7 +74,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.56";                                       # Version Number
+my $VERSION_NUMBER      = "2.58";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -85,6 +87,7 @@ my $WORK                = 0;                                            # For te
 my $VM                  = "N" ;                                         # Are we a VM (No Default)
 my $username = $ENV{LOGNAME} || $ENV{USER} || getpwuid($<);             # Get the current username
 my $SCRIPT_MAX_RUN_PER_DAY=2;                                           # Restart Script Max run/day
+my $first_call = 0;                                                     # used in filesystem check 
 system "export TERM=xterm-256color";                                    # TERM Var. xterm-256color
 
 # Check if /etc/environment file exist and is readable
@@ -106,14 +109,14 @@ if ( ! -r "${SADM_BASE_DIR}/lib/sadmlib_std.sh") {                      # SADMIN
 }
 
 
-# Maximum of second the SysMon Lock file can exist before it get recreated
-# Lock is normally created at the beginning of sysmon and deleted at the end.
+# Maximum of second the SysMon Lock file can exist before it get deleted.
+# Lock is created at the beginning of sysmon and deleted at the end.
 # It prevent to run multiple instance of SysMon.
 # Situation can happen, when the script never end (system reboot, bugs,...).
 # So when sysmon start it check if sysmon.lock exist and how many seconds pass since it creation.
-# If the lock file was created for more than the number indicate below, it is reset and SysMon
+# If the lock file was created for more than the number indicate below, it is deleted and SysMon
 # can now to run normally.
-my $LOCKFILE_MAX_SEC    = 1800 ;                                        # Max Nb Sec. Lockfile
+my $LOCKFILE_MAX_SEC    = 300 ;                                         # Max Nb Sec. Lockfile
 
 
 # SADMIN DIRECTORY STRUCTURE DEFINITION
@@ -235,7 +238,7 @@ my $SCRIPT_MIN_SEC_BETWEEN_EXEC=86400; # Restart script didn't run for more than
 # Load the content of ${SADMIN}/cfg/sadmin.cfg file into Global Variables
 #---------------------------------------------------------------------------------------------------
 sub load_sadmin_cfg {
-    print "Loading SADMIN configuration file ${SADMIN_CFG_FILE}\n";
+    print "\nLoading SADMIN configuration file : ${SADMIN_CFG_FILE}";
 
     # Check if ${SADMIN}/cfg/sadmin.cfg, if not copy ${SADMIN}/cfg/.sadmin.cfg to sadmin.cfg
     if ( ! -e "$SADMIN_CFG_FILE"  ) {                                   # If sadmin.cfg not exist
@@ -311,19 +314,7 @@ sub load_sadmin_cfg {
 sub load_smon_file {
     print "\nLoading SysMon configuration file : ${SYSMON_CFG_FILE}\n";
 
-    # For debug purpose - Display Important Data
-    if ($SYSMON_DEBUG > 4) {
-        print "------------------------------------------------------------------------------\n";
-        print BOLD, BLUE, "SADMIN SYStem MONitor Tools - Version ", BOLD, RED, "${VERSION_NUMBER}\n", RESET;
-        print "------------------------------------------------------------------------------\n";
-        print "O/S Name                 = ${OSNAME}\n" ;
-        print "Debugging Level          = ${SYSMON_DEBUG}\n" ;
-        print "SADM_BASE_DIR            = ${SADM_BASE_DIR}\n";
-        print "Hostname                 = ${HOSTNAME}\n" ;
-        print "Virtual Server           = ${VM}\n" ;
-        print "CMD_SSH                  = ${CMD_SSH}\n";
-        print "------------------------------------------------------------------------------\n";
-    }
+
 
     # Check if `hostname`.smon already exist, if not copy .template.smon to `hostname`.smon
     if ( ! -e "$SYSMON_CFG_FILE"  ) {                                   # If hostname.smon not exist
@@ -348,14 +339,12 @@ sub load_smon_file {
 
         @cmd = ("$CMD_CP $SYSMON_STD_FILE $SYSMON_CFG_FILE");           # cp template standard.smon
         $return_code = 0xffff & system @cmd ;                           # Perform Command cp
-#        @cmd = ("$CMD_CHMOD 664 $SYSMON_CFG_FILE");                     # Make hostname.smon 664
-#        $return_code = 0xffff & system @cmd ;                           # Perform Command chmod
 
-        # Since we will be starting with a new '.smon' configuration file, 
-        #   we need to customize it to our environment, 
-        # So we will replace the 'default' alert 'warning' and 'error' group by the one 
-        #   you have defined in $SADMIN/cfg/sadmin.cfg file.
-        open (IN, $SYSMON_STD_FILE) || die "Cannot open file ".$SYSMON_STD_FILE." for read";
+
+        # Since we will be starting with a new '.smon' configuration file, we need to customize it 
+        # to our environment. So we will replace the 'default' alert 'warning' and 'error' group 
+        # by the one you have defined in $SADMIN/cfg/sadmin.cfg file.
+        open (IN, $SYSMON_STD_FILE) || die "Cannot open file ".$SYSMON_STD_FILE." for readonly";
         @lines=<IN>;
         close IN;
         
@@ -381,10 +370,11 @@ sub load_smon_file {
     }
     close SMONFILE;                                                     # Close SysMon Config file
 
+
     # IF IN DEBUG MODE DISPLAY NUMBER OF ELEMENT LOADED
     if ($SYSMON_DEBUG >= 5) {                                           # If in debug mode
         $nbline = @sysmon_array;                                        # Get Nb. of element loaded
-        print "Configuration file loaded in sysmon_array ($nbline lines loaded)\n";
+        print "System Monitor configuration file loaded in sysmon_array ($nbline lines loaded)\n";
     }
     if ($SYSMON_DEBUG >= 7)  { show_sysmon_array ; }                    # If Debug >=7 Display Array
 }
@@ -396,7 +386,7 @@ sub load_smon_file {
 #---------------------------------------------------------------------------------------------------
 sub unload_smon_file {
     if ($SYSMON_DEBUG >= 5) {                                           # Debug Show what we do
-        print "\n\n-----\nUpdating System Monitor configuration file ($SYSMON_CFG_FILE)";
+        print "\n\n\n-----\nUnload results to System Monitor configuration file '$SYSMON_CFG_FILE'";
     }
 
     # OPEN (CREATE) AN EMPTY TEMPORARY FILE TO UNLOAD SYSMON CONFIG FILE
@@ -413,7 +403,8 @@ sub unload_smon_file {
     if ( $OSNAME eq "darwin" ) { 
         my $uptime = `uptime \| awk -F, '{ print \$1\$2 }' \| cut -d ' ' -f 3- \| sed 's/^ *//g'`;
     }else{
-        my $uptime = `uptime -s`;
+        #my $uptime = `uptime -s`;
+        my $uptime  = `uptime | awk -F, '{ print \$1 \$2 }' |  cut -d ' ' -f 3- | sed 's/^ *//g'`
     }    
     chomp $uptime; 
     $xline2 = sprintf ("Uptime: %s - " , $uptime);
@@ -904,17 +895,19 @@ sub check_http {
     @dummy = split /_/, $SADM_RECORD->{SADM_ID} ;                       # Split Current line ID
     $HTTP = $dummy[1];                                                  # Get URL from dummy array
     my $url="http://${HTTP}";                                           # Build URL to check
-    print "\nChecking response from $url ... ";                         # Show User what we check
+
+    print "\n\n-------------------";                                    # Log Separator
+    print "\nChecking response with 'curl' of '$url' ... ";             # Show User what we check
 
     $PCMD = "curl $url -I >/dev/null 2>&1" ;                            # Build curl command
     @args = ("$PCMD"); system(@args) ;                                  # Test connect with curl
     $src = $? >> 8;                                                     # Get curl Result code
     if ($src == 0) {                                                    # If no response for URL
-        print "\n[OK] Web site is responding\n";                        # Show URL responded
+        print "\n[OK] Web site is responding";                          # Show URL responded
         $SADM_RECORD->{SADM_CURVAL}=0;                                  # 0= Web Site is UP
     }else{                                                              # If URL Response
-        print "\n[ ERROR ] ($src) Web site not responding\n" ;          # Show error to user
-        if ($src == 6) { print "Error #6 : Could not resolve host name\n" } 
+        print "\n[ ERROR ] ($src) Web site not responding" ;            # Show error to user
+        if ($src == 6) { print "\nError #6 : Could not resolve host name" } 
         $SADM_RECORD->{SADM_CURVAL}=1;                                  # 1= Web Site is Down
     }
     $CVAL = $SADM_RECORD->{SADM_CURVAL} ;                               # Current Value
@@ -940,17 +933,18 @@ sub check_https {
     @dummy = split /_/, $SADM_RECORD->{SADM_ID} ;                       # Split Current line ID
     $HTTP = $dummy[1];                                                  # Get URL from dummy array
     my $url="https://${HTTP}";                                          # Build URL to check
-    print "\nChecking response from $url ... ";                         # Show User what we check
+    print "\n\n-------------------";                                    # Log Separator
+    print "\nChecking response with 'curl' of '$url' ... ";             # Show User what we check
 
     $PCMD = "curl $url -I >/dev/null 2>&1" ;                            # Build curl command
     @args = ("$PCMD"); system(@args) ;                                  # Test connect with curl
     $src = $? >> 8;                                                     # Get curl Result code
     if ($src == 0) {                                                    # If no response for URL
-        print "\n[OK] Web site is responding\n";                        # Show URL responded
+        print "\n[OK] Web site is responding";                        # Show URL responded
         $SADM_RECORD->{SADM_CURVAL}=0;                                  # 0= Web Site is UP
     }else{                                                              # If URL Response
-        print "\n[ ERROR ] ($src) Web site not responding\n" ;          # Show error to user
-        if ($src == 6) { print "Error #6 : Could not resolve host name\n" } 
+        print "\n[ ERROR ] ($src) Web site not responding" ;          # Show error to user
+        if ($src == 6) { print "\nError #6 : Could not resolve host name" } 
         $SADM_RECORD->{SADM_CURVAL}=1;                                  # 1= Web Site is Down
     }
     $CVAL = $SADM_RECORD->{SADM_CURVAL} ;                               # Current Value
@@ -995,7 +989,7 @@ sub check_service {
     my $SERVICE = $dummy[1];                                            # Get Service Name(s)
 
     #----- From the sysmon_array extract the service name
-    print "\n\n--------------------";                                   # Log Separator
+    print "\n\n-------------------";                                    # Log Separator
     print "\nChecking for service(s): $SERVICE";                        # Show Service Name(s);
     my @service = split (',', $SERVICE );                               # Put Service name in array
     my $service_running_name = "" ;                                     # Service name default empty
@@ -1020,12 +1014,12 @@ sub check_service {
             }       
         }else{
             # If we running SystemV System, Check if service exist in /etc/init.d before restart it. 
-            if ( ! -e '/etc/init.d/$srv' ) {                            # If Service don't exist
-               print "\nService file for '$srv', was not found in '/etc/init.d' directory." ;
-               print "\nPlease check the service name specified in ${SYSMON_CFG_FILE} file." ;
+            if ( ! -e "/etc/init.d/$srv" ) {                            # If Service don't exist
+               #print "\nService file '/etc/init.d/$srv' was not found."; 
+               #print "\nPlease check the service name specified in ${SYSMON_CFG_FILE} file." ;
                next ;                                                   # Skip to next service
             }else{ 
-               $CMD = "service $srv status" ;                           # Set Command to restart srv
+               $CMD = "service $srv status >/dev/null 2>&1" ;           # Set Command to restart srv
                my $status = system("$CMD") ;                            # 0 = Running, >= 1 Error(s)
                if ( $status != 0 ) {                                    # Error getting srv. status
                    print "\n[ ERROR ] SysV service '$srv' is not valid on this system.";  
@@ -1065,7 +1059,8 @@ sub check_daemon {
 
     @dummy = split /_/, $SADM_RECORD->{SADM_ID} ;                       # Split Line ID daemon_name
     $pname = $dummy[1];                                                 # Extract Daemon Name
-    print "\n\nDaemon/Process named \"$pname \" running ... ";          # Show starting to check
+    print "\n\n-------------------";                                    # Log Separator
+    print "\nChecking for a processs named \"$pname\" ... ";            # Show starting to check
 
     # Grep for daemon/process in the PSFILE1
     open (PFILE,"grep \"$pname\" $PSFILE1 |grep -v grep  |wc -l|");     # Grep Name in PS File1
@@ -1090,10 +1085,10 @@ sub check_daemon {
     $SMOD = "PROCESS"                   ;                               # Sub-Module Category
     $STAT = $pname                      ;                               # Name of daemon
     if ($CVAL > 0) {                                                    # At least 1 process running
-        printf "\n[OK] Number of %s running is %d",$pname, $CVAL;       # Show number of Process
+        printf "\n[ OK ] Number of '%s' processes running is %d",$pname, $CVAL;   # nb of Process
         #printf "\n%s%s[OK]%s Number of %s running is %d", BOLD, GREEN, RESET, $pname, $CVAL;
     }else{                                                              # No Process running
-        printf "\n[ERROR] No process named %s are running",$pname;      # Show No process are running
+        printf "\n[ERROR] No process named '%s' are running",$pname;    # Show No process are running
     }
     check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);          # Go Evaluate Error/Alert
     return;                                                             # Return to Caller
@@ -1142,7 +1137,9 @@ sub get_epoch {
 # Check CPU Load Average
 #---------------------------------------------------------------------------------------------------
 sub check_load_average {
-    print "\n\nChecking CPU Load Average ...";                          # Entering Load Average Test
+
+    print "\n\n-------------------";                                    # Log Separator
+    print "\nChecking CPU Load Average ...";                            # Entering Load Average Test
 
     # Get Load Average - Via the uptime command
     open (DB_FILE, "uptime \| awk '{print \$(NF-2)}' \|tr -d ',' |");                                    # 'uptime' output to stdout
@@ -1150,11 +1147,8 @@ sub check_load_average {
     $load_average = sprintf "%.0f", $load_line ;                        # Rounded to nearest Int.
     #$load_average = int $load_line;                                    # Save Load Average
     #$load_average = ceil($load_line);                                  # Save Load Average
-    if ($SYSMON_DEBUG >= 5) {                                           # Debug Level >= 5
-        $SYSUP = `uptime`;                                              # Print uptime output line
-        printf "\nUptime line : $SYSUP";                                # Print uptime output line
-        printf "Load average: $load_average";                           # Print uptime output line
-    }
+    $SYSUP = `uptime`;                                                  # Print uptime output line
+    printf "\nUptime line : $SYSUP";                                    # Print uptime output line
     close DB_FILE;                                                      # Close Output of command
     $SADM_RECORD->{SADM_CURVAL} = sprintf "%d" ,$load_average ;         # Put value in sysmon_array
 
@@ -1171,9 +1165,7 @@ sub check_load_average {
     $MOD  = "$OSNAME"                   ;                               # Module Category
     $SMOD = "LOAD"                      ;                               # Sub-Module Category
     $STAT = $load_average               ;                               # Current Status Returned
-    if ($SYSMON_DEBUG >= 5) {                                           # Debug Level at least 5
-        printf "\nLoad Average is at $load_average - W: $WVAL E: $EVAL";  # Actual/Warning/Error Value
-    }
+    printf "Load Average is at $load_average - Warning at $WVAL Error at $EVAL"; 
     check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);          # Go Evaluate Error/Alert
     return;                                                             # Return to Caller
 }
@@ -1191,7 +1183,9 @@ sub check_load_average {
 #
 #---------------------------------------------------------------------------------------------------
 sub check_cpu_usage {
-    if ($SYSMON_DEBUG >= 5) { print "\n\nChecking CPU Usage ..."; }     # Entering CPU USage Check
+
+    print "\n\n-------------------";                                    # Log Separator
+    print "\nChecking CPU Usage ...";                                   # Entering CPU USage Check
 
     # Get User and System CPU Usage
     if ( $OSNAME eq "darwin" ) {                                        # Under MacOS use 'iostat'
@@ -1242,7 +1236,7 @@ sub check_cpu_usage {
     $STAT = $CVAL                       ;                               # Current Value Returned
     if ($SYSMON_DEBUG >= 5) {                                           # Debug Level at least 5
         printf "CPU User: %3d - System: %3d  - Total: %3d\n" ,$cpu_user,$cpu_system,$cpu_total;
-        printf " - Warning Level:%3d - Error Level:%3d",$WVAL,$EVAL;
+        printf "Warning Level:%3d - Error Level:%3d",$WVAL,$EVAL;
     }
     check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);          # Go Evaluate Error/Alert
 }
@@ -1256,22 +1250,24 @@ sub check_cpu_usage {
 # vm.swapusage: total = 1024.00M  used = 146.75M  free = 877.25M  (encrypted)
 #---------------------------------------------------------------------------------------------------
 sub check_swap_space  {
-    if ($SYSMON_DEBUG >= 5) { print "\n\nChecking Swap Space ..." ;}    # Entering Swap Space Check
 
-    # MacOS
-    # Output Example: sysctl vm.swapusage -->
+    print "\n\n-------------------";                                    # Log Separator
+    print "\nChecking swap space usage ...\n";                          # Entering Swap Space Check
+    
+
+    # MacOS - Output Example: sysctl vm.swapusage -->
     # 'vm.swapusage: total = 1024.00M  used = 188.75M  free = 835.25M  (encrypted)'
-    if ( $OSNAME eq "darwin" ) {                                            # Under MacOS
-        open (DF_FILE,"sysctl vm.swapusage |");                             # Get Swap File Usage
-        while ($paging = <DF_FILE>) {                                       # Read Output of cmd.
-            @pline = split ' ', $paging;                                    # Split Line
-            $paging_size = $pline[3] ;                                      # Save Swap Size
-            $paging_size =~ tr/M/ /;                                        # Remove Trailing M
-            $paging_use  = $pline[6] ;                                      # Save Swap Usage
-            $paging_use  =~ tr/M/ /;                                        # Remove Trailing M
-            if ($SYSMON_DEBUG >= 5) {                                       # Debug Level 5 and up
-                print "\nSwap Info Line: $paging";                          # Output from sysctl
-                print "Swap size: $paging_size - Usage: $paging_use";       # Show swap size/usage
+    if ( $OSNAME eq "darwin" ) {                                        # Under MacOS
+        open (DF_FILE,"sysctl vm.swapusage |");                         # Get Swap File Usage
+        while ($paging = <DF_FILE>) {                                   # Read Output of cmd.
+            @pline = split ' ', $paging;                                # Split Line
+            $paging_size = $pline[3] ;                                  # Save Swap Size
+            $paging_size =~ tr/M/ /;                                    # Remove Trailing M
+            $paging_use  = $pline[6] ;                                  # Save Swap Usage
+            $paging_use  =~ tr/M/ /;                                    # Remove Trailing M
+            if ($SYSMON_DEBUG >= 5) {                                   # Debug Level 5 and up
+                print "\nSwap Info Line: $paging";                      # Output from sysctl
+                print "Swap size: $paging_size - Usage: $paging_use";   # Show swap size/usage
             }
         }
         close DF_FILE;                                                      # Close stdout
@@ -1285,13 +1281,14 @@ sub check_swap_space  {
     # Linux
     # Output Example: free | grep -i swap --> 'Swap:  3145724 0 3145724'
     if ( $OSNAME eq "linux" ) {                                             # Under Linux
+        print `free` ;
         open (DF_FILE,"free | grep -i swap |");                             # free command swap info
         while ($paging = <DF_FILE>) {                                       # Read Output of cmd.
             @pline = split ' ', $paging;                                    # Split Line
             $paging_size = $pline[1] ;                                      # Save Swap Size
             $paging_use  = $pline[2] ;                                      # Save Swap Usage
             if ($SYSMON_DEBUG >= 5) {                                       # Debug Level 5 and up
-                print "\nSwap Info Line: $paging";                          # Output from free
+                #print "\nSwap Info Line: $paging";                          # Output from free
                 print "Swap size: $paging_size - Usage: $paging_use";       # Show swap size/usage
             }
         }
@@ -1303,14 +1300,13 @@ sub check_swap_space  {
         }
     }
 
-    # AIX
+
     # AIX Will return a line similar to this "512MB  2%"
     if ( $OSNAME eq "aix" ) {                                           # Under Aix
         open (DF_FILE, "/usr/sbin/lsps -s | tail -1 |");                # Use lsps Command
-        $total_size = $total_use = 0;                                   # Clear Total Size/Use
         while ($paging = <DF_FILE>) {                                   # Read Output of cmd.
             @pline = split ' ', $paging;
-            if ($DEBUG >= 5) { print "Paging line used is @pline\n"; }
+            print "Paging line used is @pline\n"; 
             $paging_size = $pline[0] ;                                  # Get Size Of Paging Space
             $paging_size =~ s/MB//;                                     # Remove Unit Specification
             $paging_use  = $pline[1] ;                                  # Get % usage
@@ -1329,7 +1325,7 @@ sub check_swap_space  {
     $MOD  = "$OSNAME"                   ;                               # Module Category
     $SMOD = "PAGING"                    ;                               # Sub-Module Category
     $STAT = $CVAL                       ;                               # Current Value Returned
-    if ($SYSMON_DEBUG >= 5) {print " - Percentage use: $paging_pct %";} # Debug Level at least 5
+    print " - Percentage use: $paging_pct %";                          
     check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);          # Go Evaluate Error/Alert
 }
 
@@ -1340,11 +1336,17 @@ sub check_swap_space  {
 #---------------------------------------------------------------------------------------------------
 sub check_filesystems_usage  {
 
-    if (substr($SADM_RECORD->{SADM_ID},2,6) eq "\/snap\/") {
-        $MSG1  = sprintf "Filesystem %s disk usage aren't check",substr($SADM_RECORD->{SADM_ID},2); 
-        printf "\n[ OK ] $MSG1 (Snap package always at 100%)"; 
-        return;
+    if ( $first_call == 0 ) { 
+        print "\n\n-------------------";                                    # Log Separator
+        print "\nChecking Filesystem Usage ...";                            # Filesystem Usage Check
+        $first_call = 1;
     }
+
+    #if (substr($SADM_RECORD->{SADM_ID},2,6) eq "\/snap\/") {
+    #    $MSG1  = sprintf "Filesystem %s disk usage aren't check",substr($SADM_RECORD->{SADM_ID},2); 
+    #    printf "\n[ OK ] $MSG1 (Snap package always at 100%)"; 
+    #    return;
+    #}
   
     foreach $key (keys %df_array) {                                     # Process each FS in Array
         if ($key eq $SADM_RECORD->{SADM_ID}) {                          # Current FS = Array FS Key
@@ -1382,7 +1384,9 @@ sub check_filesystems_usage  {
 sub ping_ip  {
     @dummy = split /_/, $SADM_RECORD->{SADM_ID} ;                       # Extract Name or IP from ID
     $ipname = $dummy[1];                                                # Extract Name/IP to ping
-    print "\nNetwork ping to $ipname ... ";                             # Show User Name/IP to ping
+
+    print "\n\n-------------------";                                    # Log Separator
+    print "\nPing $ipname' ... ";                                       # Show User Name/IP to ping
 
     $PCMD = "ping -c2 -W2 $ipname >/dev/null 2>&1" ;                    # Build ping command
     @args = ("$PCMD"); system(@args) ;                                  # Perform the ping operation
@@ -1398,9 +1402,9 @@ sub ping_ip  {
     $SMOD = "PING"                      ;                               # Sub-Module Category
     $STAT = $ipname                     ;                               # Current Value Returned
     if ($CVAL == 0) {
-        print " OK ($CVAL)\n" ;
+        print " OK ($CVAL)" ;
     }else{ 
-        print " ERROR ($CVAL)\n";
+        print " ERROR ($CVAL)";
         # If it is the first occurence of the Error - Save Current Date and Time in RECORD
         if ( $SADM_RECORD->{SADM_DATE} == 0 ) {                         # No Prev.Date/Time
             $SADM_RECORD->{SADM_DATE}=sprintf ("%04d%02d%02d",$year,$month,$day); # Save Excess Date
@@ -1434,12 +1438,15 @@ sub run_script {
     (my $sfile_name, my $dirName, my $sfile_extension) = fileparse($sname, ('\.sh') );
     #(my $sfile_name, my $sfile_extension) = split /./, $sname ;        # Split name & extension
     $sname = "${SADM_SCR_DIR}/${sname}";                                # Full Path to Script
-    print "\n\nExecution of script $sname is requested";                # Show User Script Name
+
+    print "\n\n-------------------";                                    # Log Separator
+    print "\nExecution of script $sname is requested";                  # Show User Script Name
     if ($SYSMON_DEBUG >= 6) {                                           # Debug Level 6 Information
         print "\nFilename: $sfile_name - Extension: $sfile_extension";  # Show Splitted Name/Ext.
     }
 
-    # If no script specified - Return to caller
+
+    # Verification, if no script specified - Return to caller
     if ((length $sname == 0 ) || ($sname eq "-")) {                     # If No script specified
         $SADM_RECORD->{SADM_CURVAL}=1       ;                           # Set Return value to 1=Err
         $CVAL = $SADM_RECORD->{SADM_CURVAL} ;                           # Current Value
@@ -1450,13 +1457,14 @@ sub run_script {
         $MOD  = "SCRIPT"                    ;                           # Module Category
         $SMOD = "SCRIPT"                    ;                           # Sub-Module Category
         $STAT = $sfile_name                 ;                           # Current Value Returned
-        print "Script $sname is not valid ..." ;                        # Show Usr not script specify
+        print "\nScript $sname is not valid ..." ;                        # Show Usr not script specify
         check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);      # Go Evaluate Error/Alert
         return;                                                         # return to caller
     }
 
-    # Make sure script Exist and is executable - If not return to caller
-    if (( -e "$sname" ) && ( ! -x "$sname")) {                          # Script !exist or !executable
+
+    # Verification, make sure script exist and is executable - If not return to caller
+    if (( -e "$sname" ) && ( ! -x "$sname")) {                          # Script exist but not exec.
         $SADM_RECORD->{SADM_CURVAL}=1       ;                           # Set Return value to 1=Err
         $CVAL = $SADM_RECORD->{SADM_CURVAL} ;                           # Current Value
         $WVAL = $SADM_RECORD->{SADM_WARVAL} ;                           # Warning Threshold Value
@@ -1470,14 +1478,19 @@ sub run_script {
         return;                                                         # return to caller
     }
 
+
     # Execute the script
     printf "\nRunning script $sname ... ";                              # Print Script Name
-    @args = ("$sname > ${SADM_SCR_DIR}/${sfile_name}.log 2>&1");        # Command to execute
-    system(@args) ;                                                     # Execute the Script
-    $src = $? >> 8;                                                     # Return code from script
-    printf "\nReturn code is $src";                                     # Print Return Code
-    $SADM_RECORD->{SADM_CURVAL}=$src;                                   # Actual Value=Return Code
+    $args = ("$sname > ${SADM_LOG_DIR}/${sfile_name}.log 2>&1");        # Format script execution
+    if (system($args) == 0)  {                                          # Execute the script
+        $src=0;                                                         # Exit 0 success from script
+        print "\n[ OK ] Script was run successfully";                   # Advise user of success
+    }else{
+        $src = 1;                                                       # Exit 1 error from script
+        print "\n[ ERROR ] Look in the log file ${SADM_LOG_DIR}/${sfile_name}.log for more details";
+    }
 
+    $SADM_RECORD->{SADM_CURVAL}=$src;                                   # Actual Value=Return Code
     $CVAL = $SADM_RECORD->{SADM_CURVAL} ;                               # Current Value
     $WVAL = $SADM_RECORD->{SADM_WARVAL} ;                               # Warning Threshold Value
     $EVAL = $SADM_RECORD->{SADM_ERRVAL} ;                               # Error Threshold Value
@@ -1496,7 +1509,9 @@ sub run_script {
 # Check if there is any new filesystem were created since last run (Not in @sysmon_array)
 #---------------------------------------------------------------------------------------------------
 sub check_for_new_filesystems  {
-    if ($SYSMON_DEBUG >= 5) { print "\nChecking for new filesystems ..." };
+
+    print "\n-------------------";                                      # Log Separator
+    print "\nChecking for new filesystems ..." ;
 
     # First Get Actual Filesystem Info - Don't check cdrom (/dev/cd0) and NFS Filesystem (:)
     open (DF_FILE, "/bin/df -hP | grep \"^\/\" | grep -Ev \"cdrom|:|\/mnt\/|\/media\/|\/snap\/\" |");
@@ -1568,7 +1583,7 @@ sub check_for_new_filesystems  {
 #---------------------------------------------------------------------------------------------------
 sub load_df_in_array {
 
-    if ($SYSMON_DEBUG >= 6) { print "\Collecting result of \"df\" in memory.\n" };
+    if ($SYSMON_DEBUG >= 6) { print "\nCollecting result of \"df\" in memory.\n" };
 
     # Execute the 'df -hP' command (Remove heading, cdrom and NFS mount) and pipe the output
     open (DF_FILE, "/bin/df -hP | grep \"^\/\" | grep -Ev \"cdrom|:|\/mnt\/|\/media\/|\/snap\/\" |");
@@ -1603,11 +1618,16 @@ sub load_df_in_array {
 #   1:0:0:1 sdd 8:48  1   [active][ready] XXXX...... 8/20
 #---------------------------------------------------------------------------------------------------
 sub check_multipath {
-    if ( $OSNAME eq "aix" )  {return ;}                                 # Multipath Oonly on Linux
-    if ( $SYSMON_DEBUG >= 5) {print "\n\nChecking Multipath ...";}      # Show User what were doing
-    if ( $CMD_MPATHD eq "" ) {                                          # If multipathd is not host
-        print "Status of Multipath skipped - Command multipathd not present on system";
+    if ( $OSNAME eq "aix" )  {return ;}                                 # Multipath Only on Linux
+    print "\n\n-------------------";                                    # Log Separator
+    print "\nChecking Multipath ..." ;
+
+    if ( $CMD_MPATHD eq "" ) {                                          # multipathd is not on host
+        print "\nStatus of Multipath skipped.";
+        print "\nCommand 'multipathd' not present on system.";
+        return ;
     }
+
 
     # Get output of multipathd and analyse it
     open(FPATH, "echo 'show paths' | $CMD_MPATHD -k 2>/dev/null| grep -vEi 'cciss|multipath' | ")
@@ -1796,11 +1816,11 @@ sub write_rpt_file {
             }
             print SADMRPT $SADM_LINE;                                   # Write SysMon Report Line 
         }else{                                                          # If Script Execution worked
-            printf "\Script succeeded - Return code %d", $RC ;          # Command Succeeded SHow RC
+            printf "\nScript succeeded - Return code %d", $RC ;          # Command Succeeded SHow RC
         }
     }else{
         if (($SADM_RECORD->{SADM_MINUTES} + 1) > $SCRIPT_MAX_RUN_PER_DAY){ # Ran more than twice today
-            print "\nScript ran ";                                      # This script already ran
+            print "\nScript $script_name ran ";                         # This script already ran
             print "$SADM_RECORD->{SADM_MINUTES} times in last 24 Hrs."; # twice in the last 24hrs.
             print "\nWill therefore not be executed.";                  # Inform user will not run
             $ERR_MESS = "Failed to restart daemon $daemon_name " ;      # Set up Error Message
@@ -1824,11 +1844,11 @@ sub write_rpt_file {
             print "\nScript $SADM_RECORD->{SADM_SCRIPT} ran ";          # This script already ran
             print "$SADM_RECORD->{SADM_MINUTES} time(s) in last 24hrs.";# X times in the last 24hrs.
             $COMMAND = "$script_name $daemon_name >>${script_log} 2>&1";
-            print "\nCommand sent ${COMMAND}";                          # Show User command executed
+            print "\n[ INFO ] Running ${COMMAND}";                      # Show User command executed
             @args = ("$COMMAND");                                       # Prepare to Execute
             system(@args) ;                                             # Execute Restart Script
             my $RC  =$? >> 8;                                           # Get REal Return Code
-            if ( $? =! 0 ) {                                            # Error Executing the script
+            if ( $? != 0 ) {                                            # Error Executing the script
                 print "\nScript failed - Return code $RC";              # Show User Error Message
                 if ( -e "${script_err}" ) {                             # If Script Error File Exist
                     print "\nUsing message in $script_err for rpt file";
@@ -1844,7 +1864,7 @@ sub write_rpt_file {
                 }
                 print SADMRPT $SADM_LINE;                               # Write SysMon Report Line
             }else{                                                      # If Script Execution worked
-            printf "\nScript succeeded - Return code :%d", $RC ;        # Command Succeeded SHow RC
+                printf "\nScript succeeded - Return code :%d", $RC ;    # Command Succeeded SHow RC
             }
         }
     }
@@ -1871,6 +1891,22 @@ sub write_rpt_file {
 #---------------------------------------------------------------------------------------------------
 sub init_process {
 
+    # For debug purpose - Display Important Data
+    if ($SYSMON_DEBUG > 4) {
+        print "------------------------------------------------------------------------------\n";
+        print BOLD, BLUE, "SADMIN SYStem MONitor Tools - Version ", BOLD, RED, "${VERSION_NUMBER}\n", RESET;
+        print "------------------------------------------------------------------------------\n";
+    }
+    if ($SYSMON_DEBUG > 5) {
+        print "O/S Name                 = ${OSNAME}\n" ;
+        print "Debugging Level          = ${SYSMON_DEBUG}\n" ;
+        print "SADM_BASE_DIR            = ${SADM_BASE_DIR}\n";
+        print "Hostname                 = ${HOSTNAME}\n" ;
+        print "Virtual Server           = ${VM}\n" ;
+        print "CMD_SSH                  = ${CMD_SSH}\n";
+        print "------------------------------------------------------------------------------\n";
+    }
+
     # If you don't want to run the SYStem MONitor for a long period of time,
     # example for system maintenance or application update, Then create this file /tmp/sadmlock.txt. 
     # But don't forget to remove it after you maintenance is done, so monitoring restart.
@@ -1888,38 +1924,39 @@ sub init_process {
         ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,$blksize,$blocks) = stat ($SYSMON_LOCK_FILE);
         if ($SYSMON_DEBUG >= 6) { print "\nLockfile creation time in epoch time is : $ctime"; } 
         $creation_date = localtime($ctime);                             # Convert Epoch to HumanDate
-        print "\nLockfile was created the $creation_date";              # Show Lock Creation Date
+        print "\nLockfile exist and was created '$creation_date'.";     # Show Lock Creation Date
+        print "\nThe system monitor may be running, try it again in a couple of seconds."; 
         my $actual_epoch_time = time();                                 # Get Current Epoch Time
         $actual_date = localtime($actual_epoch_time);                   # COnvert Epoch to HumanDate
-        if ($SYSMON_DEBUG >= 4) {                                       # If DEBUG Activated
+        if ($SYSMON_DEBUG >= 6) {                                       # If DEBUG Activated
             print "\nActual time in epoch time is $actual_epoch_time";  # Show Current Epoch Time
             print "\nActual time is $actual_date";                      # Show Current Human Date
             print "\nActual user is $username";                         # Show Current User
 
         }
         my $elapse_time = ($actual_epoch_time - $ctime) ;               # Calc. Sec. Since Creation
-        print "\nLock file $SYSMON_LOCK_FILE was create $elapse_time seconds ago";
+        print "\nLock file '$SYSMON_LOCK_FILE' was create $elapse_time seconds ago.";
 
-        # If lock file exist for more than (Default 30 Minutes) 1800 seconds, creation time is reset
+        # If lock file exist for more than (Default 5 Minutes) 300 seconds, creation time is reset
         if ( $elapse_time >= $LOCKFILE_MAX_SEC ) {                      # Lockfile created > 30Min.
-            if ($SYSMON_DEBUG >= 5) {                                   # In Debug Mode Level >=5
-                print "\nUpdating TimeStamp of Lock File $SYSMON_LOCK_FILE" ; } # Show User Message
-            #unlink "$SYSMON_LOCK_FILE" ;
-            #print "\nCreating lock file $SYSMON_LOCK_FILE\n";
+            print "\nLock file expired, the Time to Live is at '$LOCKFILE_MAX_SEC' sec. at we are at '$elapse_time' sec.";
+            unlink "$SYSMON_LOCK_FILE" ;
+            print "\nCreating a new lock file $SYSMON_LOCK_FILE.\n";
             @args = ("$CMD_TOUCH", "$SYSMON_LOCK_FILE");                # Touch Lockfile Reset date
             system(@args) == 0   or die "command @args failed: $?";     # Execute touch on lockfile
         }else{                                                          # Waiting LockFile to Expire
             my $wait_time = ($LOCKFILE_MAX_SEC - $elapse_time) ;        # Calc. Sec. Remaining
-            printf("\nLock file TTL - %04d seconds.",$LOCKFILE_MAX_SEC);# Show Current Time to Live
-            printf"\n%4d seconds remaining before reset.\n", $wait_time;# Seconds before rm lockfile
+            printf("\nLock file Time To Live is at %4d seconds.",$LOCKFILE_MAX_SEC);# Show Time to Live
+            printf"\nSo the lock file will be deleted in%4d seconds.",$wait_time;# Seconds before rm
+            printf"\nUnless you delete it manually.\n\n";             
             exit 1;                                                     # Exit with error
         }
     }else{
         print "\nCreating lock file $SYSMON_LOCK_FILE\n";               # Show user want we do
         @args = ("$CMD_TOUCH", "$SYSMON_LOCK_FILE");                    # Cmd to Create Lock File
-#        system(@args) == 0   or die "system @args failed: $?";         # Execute the Touch Command
+#        system(@args) == 0   or die "system @args failed: $?";          # Execute the Touch Command
         #system(@args) == 0   ;                                          # Execute the Touch Command
-        system(@args)  ;                                          # Execute the Touch Command
+        system(@args)  ;                                                # Execute the Touch Command
     }
 
     # Execute the 'ps' command twice and save result to files
@@ -2016,11 +2053,10 @@ sub loop_through_array {
 
         # Check filesystem usage
 #        if (($SADM_RECORD->{SADM_ID} =~ /^FS/ ) && (substr($SADM_RECORD->{SADM_ID},3,6) != "/snap/"))
-        if ($SADM_RECORD->{SADM_ID} =~ /^FS/ ) 
-            {check_filesystems_usage ; }
+        if ($SADM_RECORD->{SADM_ID} =~ /^FS/ ) { check_filesystems_usage ;  }
 
         # Check Ping an IP
-        if ($SADM_RECORD->{SADM_ID} =~ /^ping_/ ) {ping_ip; }
+        if ($SADM_RECORD->{SADM_ID} =~ /^ping_/ ) { ping_ip; }
 
         # Check if specified service is running
         if ($SADM_RECORD->{SADM_ID} =~ /^service_/ ) {check_service; }
@@ -2059,15 +2095,18 @@ sub end_of_sysmon {
     unlink "$SYSMON_LOCK_FILE" or die "Cannnot delete $SYSMON_LOCK_FILE: $!\n" ;
 
     # Print Execution time
+    print "\n------------------------------------------------------------------------------";
     $end_time = time;                                                   # Get current time
     $xline1 = sprintf ("#SYSMON $VERSION_NUMBER $HOSTNAME - ");         # Version & Hostname
     if ( $OSNAME eq "darwin" ) { 
         $uptime = `uptime \| awk -F, '{ print \$1\$2 }' \| cut -d ' ' -f 3- \| sed 's/^ *//g'`;
     }else{
-        $uptime = `uptime -s`;
+        #$uptime = `uptime -s`;
+        $uptime  = `uptime | awk -F, '{ print \$1 \$2 }' |  cut -d ' ' -f 3- | sed 's/^ *//g'`
+
     }                             
     chomp $uptime; 
-    $xline2 = sprintf ("Last Boot: %s - " , $uptime);
+    $xline2 = sprintf ("Uptime: %s - " , $uptime);
     $xline3 = sprintf ("%s" , scalar localtime(time));                  # Print Current Time
     $xline4 = sprintf (" - Execution Time %2.2f seconds", ($end_time - $start_time));
     printf ("\n${xline1}${xline2}${xline3}${xline4}\n\n");              # SADM Stat Line
@@ -2079,42 +2118,30 @@ sub end_of_sysmon {
 # Main Program Start HERE
 #---------------------------------------------------------------------------------------------------
 
-    # Initializing SysMon
+    # Only root can run this script, if not exit with error code 1.
     if ($SADM_UID != 0) {                           # Script MUST be run by root
         print "\n\nThe SADMIN monitor need to be run by 'root' user.\n\n" ;
         exit 1 ;                                    # Exit with Error
     }    
-    #
-    #print "\n---------------- Environment variable in cron\n" ; 
-    #foreach my $key (sort keys %ENV) {
-    #    print "$key = $ENV{$key}\n";
-    #}
-
-
-    #my $random_number = int(rand(20));             # Get a random number between 0 and 30
-    #print "Execution will start in $random_number seconds.\n";
-    #sleep($random_number);
 
     $start_time = time;                             # Store Starting time - To calculate elapse time
     init_process;                                   # Create lock file & do 'ps' commands > to files
     load_sadmin_cfg;                                # Load SADMIN Config file sadmin.cfg in Glob.Var
     load_smon_file;                                 # Load SysMon Config file hostname.smon in Array
     load_df_in_array;                               # Execute "df" command & store result in a array
+
+    # Create temp rpt file, that will rename to the current rpt file at the end of the script.
     open (SADMRPT," >$SYSMON_RPT_FILE_TMP")  or die "Can't open $SYSMON_RPT_FILE_TMP: $!\n";
 
-    # Main Process
     check_for_new_filesystems;                      # Check for new filesystem first
-    loop_through_array;                             # Loop through Sadm Array line by line
+    loop_through_array;                             # Loop through smon Array line by line
 
-    # Ending SysMon
-    close SADMRPT;                                  # Close SysMon tmp report file
-    @cmd = ("$CMD_CP $SYSMON_RPT_FILE_TMP $SYSMON_RPT_FILE"); # Temp file become main smon file
-    $return_code = 0xffff & system @cmd ;           # Perform Command cp
+    # Close temp .rpt file and copy the temp .rpt to actual updated .rpt file
+    close SADMRPT;                                  # Close SysMon .rpt tmp report file
+    @cmd = ("$CMD_CP $SYSMON_RPT_FILE_TMP $SYSMON_RPT_FILE"); # Temp file become main rpt file
+    $return_code = 0xffff & system @cmd ;           # Perform Command cp to update .rpt file    
     unlink $SYSMON_RPT_FILE_TMP ;                   # Remove Temp file                
     system ("chmod 664 $SYSMON_RPT_FILE");          # File readable by group
 
-    # Unload the updated SysMon Array to hostname.smon file
     unload_smon_file;                               # Unload Update Array to hostname.smon file
-
     end_of_sysmon;                                  # Delete lock file - Print Elapse time
-
