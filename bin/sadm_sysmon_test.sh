@@ -74,8 +74,8 @@ export SADM_SERVER_ONLY="N"                                # Run only on SADMIN 
 export SADM_QUIET="N"                                      # N=Show Err.Msg Y=ReturnErrorCode No Msg
 export SADM_LOG_TYPE="B"                                   # Write log to [S]creen, [L]og, [B]oth
 export SADM_LOG_APPEND="Y"                                 # Y=AppendLog, N=CreateNewLog
-export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoLogHeader
-export SADM_LOG_FOOTER="Y"                                 # Y=IncludeLogFooter N=NoLogFooter
+export SADM_LOG_HEADER="N"                                 # Y=ProduceLogHeader N=NoLogHeader
+export SADM_LOG_FOOTER="N"                                 # Y=IncludeLogFooter N=NoLogFooter
 export SADM_MULTIPLE_EXEC="Y"                              # Run Simultaneous copy of script
 export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
