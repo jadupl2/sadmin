@@ -201,11 +201,18 @@
 # IDENTIFIER - COLUMN 1          2  3  4   5  6    7    8   9 A B C D E F G     H     I   J    K   L
 #---------------------------------------------------------------------------------------------------
 #
-# Run specific custom script located in "$SADMIN/usr/mon", 
-# - It return 1 if it terminated with an error or 0 if it was successfully executed. 
+# In this example, we run specific custom script located in "$SADMIN/usr/mon" directory.
+# - To use this option, your script(s) MUST be located in the user monitoring "$SADMIN/usr/mon" dir.
+#
+#    - As in this example, we want run a script and to know if it terminated successfully or not.
+#    # - Value is returned in Column no.2.
+# VALUE RETURNED  A It return 1 in the second column : If your script terminated with an error ($? = 1).
+#   In the example below, Column #2 to #5 contains '1  =  00  01'.
+it's equal to the 01 in the error column #5 , so user will be notified.
+# - If return 0 : When your script was successfully executed ($? = 0)
 # - If value return is 1, then it's equal to the 01 in the error column #5 , so user will be notified.
 # - Warning (col #4) is not considered when it's equal to 00.
-script:sadm_sysmon_test.sh       1  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
+script:sysmon_script_test.sh     1  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
 
 
 # - Check for the number of a process running, it could  be more than one.
