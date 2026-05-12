@@ -54,7 +54,7 @@ main_process()
     echo "${DASH}" 
     echo "Starting script $PN on ${HOSTNAME} `date`"                    # Print Script Header
 
-    # Check if file exist
+    # As a place holder, for this template, check if file exist
     echo -e "\nTest if file $FILENAME exist ..."
     if [ -r $FILENAME ] 
         then echo "File $FILENAME exist"
