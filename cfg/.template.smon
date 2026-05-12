@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------------------------
-# SADMIN SYStem MONitor configuration file (3.2)
+# SADMIN SYStem MONitor configuration file (3.8)
 #  - This file MUST reside in ${SADMIN}/cfg (filename = $(hostname -s).smon).
 #  - It is loaded in memory when the SADMIN System Monitor start (sadm_sysmon.pl).
 #  - Before exiting SysMon write the updated version of this file.
@@ -198,84 +198,116 @@
 #                       For automatic filesystem increase, the name of the script MUST be 
 #                       'sadm_fs_incr.sh'.
 #---------------------------------------------------------------------------------------------------
-# IDENTIFIER - COLUMN 1    2  3  4   5  6    7    8   9 A B C D E F G     H     I   J    K   L
+# IDENTIFIER - COLUMN 1          2  3  4   5  6    7    8   9 A B C D E F G     H     I   J    K   L
 #---------------------------------------------------------------------------------------------------
 #
-# Run specific custom script, check return code and issue a warning or error based on threshold
-#script:stemplate.sh       1  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
+# Run specific custom script located in "$SADMIN/usr/mon", 
+# - It return 1 if it terminated with an error or 0 if it was successfully executed. 
+# - If value return is 1, then it's equal to the 01 in the error column #5 , so user will be notified.
+# - Warning (col #4) is not considered when it's equal to 00.
+script:sadm_sysmon_test.sh       1  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
 
-# System Load Average (use uptime)
-load_average                     0  >  20  35 120 0700 2100 Y Y Y Y Y Y Y Y 00000000 0000 default default -
+
+# - Check for the number of a process running, it could  be more than one.
+# - If number of process (col #2) is less than the error value (col #5), then error is issue.
+# - If it isn't running (col#2=0) and if a script name is specify at the last column it's executed.
+#   The name of the script to execute when an error  MUST be located in "$SADMIN/usr/mon" 
+#   and be executable. In this example "swatch_nmon.sh" will be executed to start the "nmon" process.
+# - Warning (col #4) is not considered when it's equal to 00.
+daemon_nmon                      1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default swatch_nmon.sh
+
+
+# System Load Average represented is column #2 (we use uptime command to get it)
+# - If current load average (col #2) is greater than 35 (col #5) for more than 60 continuous Minutes
+#   (col#6), an error notification is issue.
+# - If load average (col #2) is greater than 20 for more than 60 contanious Min. (col#6),
+#   a warning notification is issue.
+# - Monitoring done only between 7am (col #7) and 21:00 (col #8) all week (col #9 to col #'F' at 'Y'
+load_average                     0  >  20  35 60 0700 2100 Y Y Y Y Y Y Y Y 00000000 0000 default default -
+
 
 # CPU usage, it use vmstat to get % used.
-cpu_level                       29 >=  85  95 240 0700 2100 Y Y Y Y Y Y Y Y 00000000 0000 default default -
+# - If current cpu usage (col #2) is greater than 90 (col.#5) for more than 60 continuous Minutes
+#   (col#6), an error notification is issue.
+# - If current cpu usage (col #2) is greater than 85 for more than 60 contanious Minutes (col#6),
+#   a warning notification is issue.
+# - Monitoring done only between 7am (col #7) and 21:00 (col #8) all week (col #9 to col #'F' at 'Y'
+cpu_level                       29 >=  85  90 060 0700 2100 Y Y Y Y Y Y Y Y 00000000 0000 default default -
+
 
 # Swap Space usage monitoring (in %).
-swap_space                      14  >  85  90 000 0000 0000 Y Y Y Y Y Y Y Y 20180911 1520 default default -
-#
+# - If current swap page usage in percentage (col #2) is greater than 90% (col.#5) for more than 60 
+#   continuous minutes (col#6), an error notification is issue.
+# - If current swap page usage in percentage (col #2) is greater than 85% for more than 60 
+#   contanious minutes (col#6), a warning notification is issue.
+# - Monitoring done all week (col #9=Sunday to col #F=Saturday) since they are at 'Y'.
+swap_space                      14  >  80  90 000 0000 0000 Y Y Y Y Y Y Y Y 20180911 1520 default default -
+
+
 # cups.service 
 # systemd-journald.service 
 
 
 # ----- Linux Common Service Monitoring
-# 
+ 
+# Service ON
 service_crond,cron               1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 service_chrony,chronyd           0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 service_ssh,sshd                 1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 service_at,atd                   1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
-#
+service_gnome-remote-desktop     1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
+service-httpd                    1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh       
+smartd                           1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh       
+mariadb                          1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh       
+NetworkManager                   1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh        
+postfix                          1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
+
+# Service OFF
+#service-apache                   1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh       
 #service_systemd-resolved         1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
-service_postfix                  1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 #service_sendmail                 1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 #service_ntp,ntpd                 0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
+#service_cups                     1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 #service_syslog,syslogd           0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 #service_rsyslog                  0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
-#
-# DNS Service
 #service_named                    0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 #service_named-chroot             0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
-#
-# DHCP Service
 #service_dhcpd                    0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
-#
-# ----- Monitor a Daemon or a process that should be running
-daemon_nmon                       1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default -
-#
+
+
 # ----- Check Linux Multipath Status (0=Error 1=All path(s) are Online/Ready)
 check_multipath                  1 !=  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
-#
+
+
 # Ping server (Return 0=Ok 1=Error) Line below raise a Warning if site doesn't respond to ping.
-#ping_www.google.com              0  =  01  00 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
+ping_fedoraproject.org           0  =  01  00 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
 
 # Ping server (Return 0=Ok 1=Error) Line below raise an Error if site doesn't respond to ping.
-#ping_www.ibm.com                 0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
-#
+ping_debian.org                 0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
+
 # Always ping the SADMIN server every day of the week.
 #   - Ping server (Return 0=Ok 1=Error).
 # Except on Sunday the ping does not report error between 22:00 and 23:15.
 #   - Because system is down, performing an export of the SADMIN server.
 #
-
 # Ping every time the SADMIN monitor is run, except the Sunday ('N' in column #9, Sunday).
 #   - Ping server - Second column return '0' if it worked and ´1' if it failed.
 # Column #1 (Identifier)         2  3  4   5   6   7    8   9 A B C D E F G     H     I      J       K    L
-ping_sadmin                      0  =  00  01 000 0000 0000 N Y Y Y Y Y Y Y 00000000 0000 default default -
+#ping_sadmin                      0  =  00  01 000 0000 0000 N Y Y Y Y Y Y Y 00000000 0000 default default -
 
 # Ping only on Sunday ('Y' in column 9 and 'N' in column 10 to F).
 # Column #1 (Identifier)         2  3  4   5   6   7    8   9 A B C D E F G     H     I      J       K    L
-ping_sadmin                      0 !=  00  01 000 0001 2200 Y N N N N N N Y 00000000 0000 default default -
-ping_sadmin                      1  =  01  00 000 2201 2315 Y N N N N N N Y 00000000 0000 default default -
-#
+#ping_sadmin                      0 !=  00  01 000 0001 2200 Y N N N N N N Y 00000000 0000 default default -
+#ping_sadmin                      1  =  01  00 000 2201 2315 Y N N N N N N Y 00000000 0000 default default -
 
 
-#
-Test web site responsiveness (0=Up 1=NoResponse)
-#http_linux.com                   0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
-#https_sadmin.ca                  0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
-#https_linternux.com              0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
-#
-#
-#
+
+# Test web site responsiveness (0=Up 1=NoResponse)
+http_ibm.com                     0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
+https_google.com                 0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
+#https_linternux.com             0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
+
+
 # ----- Filesystem Monitoring
 # Can increase it by 10%, two times within 24hours maximum, if script "sadm_fs_incr.sh" in Column L.
 # FS/example                    23 >=  25  90 001 0000 0000 Y Y Y Y Y Y Y Y 20180615 0824 default default sadm_fs_incr.sh
