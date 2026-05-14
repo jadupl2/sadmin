@@ -202,15 +202,14 @@
 #---------------------------------------------------------------------------------------------------
 #
 # In this example, we run specific custom script located in "$SADMIN/usr/mon" directory.
-# - To use this option, your script(s) MUST be located in the user monitoring "$SADMIN/usr/mon" dir.
+# - To use this option, your script(s) MUST be located in the user monitoring dir. "$SADMIN/usr/mon"
+# - The line must begin with 'script:', followed by the name of the script with the extension.
 #
-#    - As in this example, we want run a script and to know if it terminated successfully or not.
-#    # - Value is returned in Column no.2.
-# VALUE RETURNED  A It return 1 in the second column : If your script terminated with an error ($? = 1).
-#   In the example below, Column #2 to #5 contains '1  =  00  01'.
-it's equal to the 01 in the error column #5 , so user will be notified.
-# - If return 0 : When your script was successfully executed ($? = 0)
-# - If value return is 1, then it's equal to the 01 in the error column #5 , so user will be notified.
+# - As an example, if we want run a script and we want to know if it ran successfully or not.
+#    The exit status (0 or 1) will be returned in column no.2.
+# - If return 0 : When your script was successfully executed, the column no.2 is set to 0.
+# - If return 1 : This indicate an error, because the '1' in col.2 is equal to the '1' in col.5.
+#   So user will be notified and the error will appears pn the monitopr web page.
 # - Warning (col #4) is not considered when it's equal to 00.
 script:sysmon_script_test.sh     1  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
 
