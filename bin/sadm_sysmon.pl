@@ -60,6 +60,7 @@
 #@2026_05_07 mon v2.56 Add debug info in log and fix bug.
 #@2026_05_09 mon v2.57 Add a check if 'nmon' is running, if not run $SADMIN/usr/mon/swatch_nmon.shto restart it.
 #@2026_05_12 mon v2.58 Enhance code, review and retest all functions.
+#@2026_05_14 mon v2.59 Clearer output layout and remove filesystem increase function, not much used.
 #===================================================================================================
 #
 use English;
@@ -74,7 +75,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.58";                                       # Version Number
+my $VERSION_NUMBER      = "2.59";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -326,7 +327,7 @@ sub load_smon_file {
         my $msg2 = "SysMon configuration file $SYSMON_CFG_FILE for ${HOSTNAME} wasn't found.\n";
         my $msg3 = "A new one was created based on the template file ${SYSMON_STD_FILE}.\n";
         my $msg4 = "\n\nList of '.smon' file: \n"; 
-        my $msg5 = `ls -la $SADM_BASE_DIR/smon`; chomp $msg5;
+        my $msg5 = `ls -la $SADM_BASE_DIR/cfg/*.smon`; chomp $msg5;
         my $msg6 = "\n\nSADMIN process running : \n"; 
         my $msg7= "\nps -aux | grep 'sadm_' : \n"; 
         my $msg8= `ps -aux | grep '_sadm'`  ; chomp $msg8;  
@@ -498,7 +499,7 @@ sub combine_fields {
 
 
 #---------------------------------------------------------------------------------------------------
-# Filesystem Increase Function
+# Filesystem Increase Function 
 #---------------------------------------------------------------------------------------------------
 sub filesystem_increase {
     my ($FILESYSTEM) = @_;                                              # Filesystem name to enlarge
@@ -508,8 +509,8 @@ sub filesystem_increase {
 
     # If no script specified - Return to caller
     if ((length $SADM_RECORD->{SADM_SCRIPT} == 0 ) || ($SADM_RECORD->{SADM_SCRIPT} eq "-") || ($SADM_RECORD->{SADM_SCRIPT} eq " ")) {
-        print "\nAutomatic filesystem increase script 'sadm_fs_incr.sh' not specified in ${SYSMON_CFG_FILE}.";
-        print "\nTherefore filesystem increase will not be performed.";
+        #print "\nAutomatic filesystem increase script 'sadm_fs_incr.sh' not specified in ${SYSMON_CFG_FILE}.";
+        #print "\nTherefore filesystem increase will not be performed.";
         return 0 ;
     }
 
@@ -727,64 +728,65 @@ sub check_for_error {
     if ($SUBMODULE eq "FILESYSTEM") {                                   # If Filesystem SIze Alert
        $ERR_MESS = "Filesystem $WID at $ACTVAL% $TEST $value_exceeded%";# Set up Error Message
        write_rpt_file($alert_type,"$OSNAME","FILESYSTEM",$ERR_MESS);    # Go Report Alert
-       if ($MODULE eq "darwin") { return 0 ; }                          # On MacOS no file increase
+       #if ($MODULE eq "darwin") { return 0 ; }                          # On MacOS no file increase
+       return 0;
 
        # If no script specified - Return to caller
-       if ((length $SADM_RECORD->{SADM_SCRIPT} == 0 ) || ($SADM_RECORD->{SADM_SCRIPT} eq "-") || ($SADM_RECORD->{SADM_SCRIPT} eq " ")) {
-          print "\nAutomatic filesystem increase script 'sadm_fs_incr.sh' not specified in ${SYSMON_CFG_FILE}.";
-          print "\nTherefore filesystem increase will not be performed.";
-          return 0 ;
-       }
-       ($year,$month,$day,$hour,$min,$sec,$epoch) = Today_and_Now();  # Get current epoch time
-       if ($SYSMON_DEBUG >= 5) {                                      # If Debug is ON
-          print "\n\nFilesystem Increase: $WID at $ACTVAL%";          # FileSystem Incr. Entered
-          print "\nActual Date and Time   : $year $month $day $hour $min $sec - $epoch";
-       }
-       # If it is the first occurence of the Error - Save Current Date and Time in RECORD
-       if ( $SADM_RECORD->{SADM_DATE} == 0 ) {                                 # No Prev.Date/Time
-          $SADM_RECORD->{SADM_DATE}=sprintf ("%04d%02d%02d",$year,$month,$day);# Save Excess Date
-          $SADM_RECORD->{SADM_TIME}=sprintf ("%02d%02d",$hour,$min,$sec);      # Save Excess Time
-       }
-       # Split Date and Time when the last file increase Happened
-       $wyear  =sprintf "%04d",substr($SADM_RECORD->{SADM_DATE},0,4); # Extract Year Error started
-       $wmonth =sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},4,2); # Extract Mth Error started
-       $wday   =sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},6,2); # Extract Day Error Started
-       $whrs   =sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},0,2); # Extract Hrs Error Started
-       $wmin   =sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},2,2); # Extract Min Error Started
-       $last_epoch = get_epoch("$wyear","$wmonth","$wday","$whrs","$wmin","0");
-       if ($SYSMON_DEBUG >= 5) {                                      # If DEBUG if ON
-          print "\nLast increase attempt  : $wyear $wmonth $wday $whrs $wmin 00 - $last_epoch";
-       }
-       # Calculate the number of seconds since the last execution
-       $elapse_second = $epoch - $last_epoch;                          # Subs Act.epoch-Last epoch
-       if ($SYSMON_DEBUG >= 5) {                                       # If DEBUG Activated
-          print "\nSo $elapse_second seconds since last increase";     # Print Elapsed seconds
-       }
-       # If nb. of Seconds since last increase is greater than 1 Day (86400 Sec) = OK RUN
-       if ( $elapse_second >= $MINIMUM_SEC ) {                         # Elapsed Sec >= 86400 Sec.
-          ($year,$month,$day,$hour,$min,$sec,$epoch) =Today_and_Now(); # Get current epoch time
-          $SADM_RECORD->{SADM_DATE} = sprintf("%04d%02d%02d", $year,$month,$day);
-          $SADM_RECORD->{SADM_TIME} = sprintf("%02d%02d",$hour,$min,$sec);
-          $SADM_RECORD->{SADM_MINUTES} = "001";                        # First FS Increase Today
-          if ($SYSMON_DEBUG >= 5) { print "\nFirst filesystem increase in last 24 Hours"; }
-              filesystem_increase($WID);                               # Go Increase Filesystem
-       }else{
-          if (($SADM_RECORD->{SADM_MINUTES} + 1) > $MAX_FS_INCR){      # If FS Incr Counter > 2
-             if ($SYSMON_DEBUG >= 5) {                                 # If DEBUG Activated
-                print "\nDone more than $MAX_FS_INCR Filesystem increase of $WID in last 24 Hrs";
-                print "\nFilesystem increase will not be done.";       # Inform user not done
-             }
-             #$ERR_MESS = "FS $WID at $ACTVAL% > $value_exceeded%" ;    # Set up Error Message
-             #write_rpt_file($alert_type,"$OSNAME","FILESYSTEM",$ERR_MESS); # Go Process Alert
-          }else{
-             $WORK = $SADM_RECORD->{SADM_MINUTES} + 1;                 # Incr. FS Counter
-             $SADM_RECORD->{SADM_MINUTES} = sprintf("%03d",$WORK);     # Insert Cnt in Array
-             if ($SYSMON_DEBUG >= 5) {                                 # If DEBUG Activated
-                print "\nFilesystem increase counter: $SADM_RECORD->{SADM_MINUTES} ";
-             }
-             filesystem_increase($WID);                                # Go Increase Filesystem
-          }
-       }
+       #if ((length $SADM_RECORD->{SADM_SCRIPT} == 0 ) || ($SADM_RECORD->{SADM_SCRIPT} eq "-") || ($SADM_RECORD->{SADM_SCRIPT} eq " ")) {
+       #   #print "\nAutomatic filesystem increase script 'sadm_fs_incr.sh' not specified in ${SYSMON_CFG_FILE}.";
+       #   #print "\nTherefore filesystem increase will not be performed.";
+       #   return 0 ;
+       #}
+       #($year,$month,$day,$hour,$min,$sec,$epoch) = Today_and_Now();  # Get current epoch time
+       #if ($SYSMON_DEBUG >= 5) {                                      # If Debug is ON
+       #   print "\n\nFilesystem Increase: $WID at $ACTVAL%";          # FileSystem Incr. Entered
+       #   print "\nActual Date and Time   : $year $month $day $hour $min $sec - $epoch";
+       #}
+       ## If it is the first occurence of the Error - Save Current Date and Time in RECORD
+       #if ( $SADM_RECORD->{SADM_DATE} == 0 ) {                                 # No Prev.Date/Time
+       #   $SADM_RECORD->{SADM_DATE}=sprintf ("%04d%02d%02d",$year,$month,$day);# Save Excess Date
+       #   $SADM_RECORD->{SADM_TIME}=sprintf ("%02d%02d",$hour,$min,$sec);      # Save Excess Time
+       #}
+       ## Split Date and Time when the last file increase Happened
+       #$wyear  =sprintf "%04d",substr($SADM_RECORD->{SADM_DATE},0,4); # Extract Year Error started
+       #$wmonth =sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},4,2); # Extract Mth Error started
+       #$wday   =sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},6,2); # Extract Day Error Started
+       #$whrs   =sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},0,2); # Extract Hrs Error Started
+       #$wmin   =sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},2,2); # Extract Min Error Started
+       #$last_epoch = get_epoch("$wyear","$wmonth","$wday","$whrs","$wmin","0");
+       #if ($SYSMON_DEBUG >= 5) {                                      # If DEBUG if ON
+       #   print "\nLast increase attempt  : $wyear $wmonth $wday $whrs $wmin 00 - $last_epoch";
+       #}
+       ## Calculate the number of seconds since the last execution
+       #$elapse_second = $epoch - $last_epoch;                          # Subs Act.epoch-Last epoch
+       #if ($SYSMON_DEBUG >= 5) {                                       # If DEBUG Activated
+       #   print "\nSo $elapse_second seconds since last increase";     # Print Elapsed seconds
+       #}
+       ## If nb. of Seconds since last increase is greater than 1 Day (86400 Sec) = OK RUN
+       #if ( $elapse_second >= $MINIMUM_SEC ) {                         # Elapsed Sec >= 86400 Sec.
+       #   ($year,$month,$day,$hour,$min,$sec,$epoch) =Today_and_Now(); # Get current epoch time
+       #   $SADM_RECORD->{SADM_DATE} = sprintf("%04d%02d%02d", $year,$month,$day);
+       #   $SADM_RECORD->{SADM_TIME} = sprintf("%02d%02d",$hour,$min,$sec);
+       #   $SADM_RECORD->{SADM_MINUTES} = "001";                        # First FS Increase Today
+       #   if ($SYSMON_DEBUG >= 5) { print "\nFirst filesystem increase in last 24 Hours"; }
+       #       filesystem_increase($WID);                               # Go Increase Filesystem
+       #}else{
+       #   if (($SADM_RECORD->{SADM_MINUTES} + 1) > $MAX_FS_INCR){      # If FS Incr Counter > 2
+       #      if ($SYSMON_DEBUG >= 5) {                                 # If DEBUG Activated
+       #         print "\nDone more than $MAX_FS_INCR Filesystem increase of $WID in last 24 Hrs";
+       #         print "\nFilesystem increase will not be done.";       # Inform user not done
+       #      }
+       #      #$ERR_MESS = "FS $WID at $ACTVAL% > $value_exceeded%" ;    # Set up Error Message
+       #      #write_rpt_file($alert_type,"$OSNAME","FILESYSTEM",$ERR_MESS); # Go Process Alert
+       #   }else{
+       #      $WORK = $SADM_RECORD->{SADM_MINUTES} + 1;                 # Incr. FS Counter
+       #      $SADM_RECORD->{SADM_MINUTES} = sprintf("%03d",$WORK);     # Insert Cnt in Array
+       #      if ($SYSMON_DEBUG >= 5) {                                 # If DEBUG Activated
+       #         print "\nFilesystem increase counter: $SADM_RECORD->{SADM_MINUTES} ";
+       #      }
+       #      filesystem_increase($WID);                                # Go Increase Filesystem
+       #   }
+       #}
     }
 
 
@@ -897,13 +899,13 @@ sub check_http {
     my $url="http://${HTTP}";                                           # Build URL to check
 
     print "\n\n-------------------";                                    # Log Separator
-    print "\nChecking response with 'curl' of '$url' ... ";             # Show User what we check
+    print "\nChecking if '$url' web site is responsive ... ";              # Show User what we check
 
     $PCMD = "curl $url -I >/dev/null 2>&1" ;                            # Build curl command
     @args = ("$PCMD"); system(@args) ;                                  # Test connect with curl
     $src = $? >> 8;                                                     # Get curl Result code
     if ($src == 0) {                                                    # If no response for URL
-        print "\n[OK] Web site is responding";                          # Show URL responded
+        print "\n[ OK ] Web site is alive";                             # Show URL responded
         $SADM_RECORD->{SADM_CURVAL}=0;                                  # 0= Web Site is UP
     }else{                                                              # If URL Response
         print "\n[ ERROR ] ($src) Web site not responding" ;            # Show error to user
@@ -934,13 +936,13 @@ sub check_https {
     $HTTP = $dummy[1];                                                  # Get URL from dummy array
     my $url="https://${HTTP}";                                          # Build URL to check
     print "\n\n-------------------";                                    # Log Separator
-    print "\nChecking response with 'curl' of '$url' ... ";             # Show User what we check
+    print "\nChecking if '$url' web site is responsive ... ";           # Show User what we check
 
     $PCMD = "curl $url -I >/dev/null 2>&1" ;                            # Build curl command
     @args = ("$PCMD"); system(@args) ;                                  # Test connect with curl
     $src = $? >> 8;                                                     # Get curl Result code
     if ($src == 0) {                                                    # If no response for URL
-        print "\n[OK] Web site is responding";                        # Show URL responded
+        print "\n[ OK ] Web site is alive";                             # Show URL responded
         $SADM_RECORD->{SADM_CURVAL}=0;                                  # 0= Web Site is UP
     }else{                                                              # If URL Response
         print "\n[ ERROR ] ($src) Web site not responding" ;          # Show error to user
@@ -990,8 +992,8 @@ sub check_service {
 
     #----- From the sysmon_array extract the service name
     print "\n\n-------------------";                                    # Log Separator
-    print "\nChecking for service(s): $SERVICE";                        # Show Service Name(s);
-    my @service = split (',', $SERVICE );                               # Put Service name in array
+    printf "\n\n%s%sChecking for service(s): %s%s",BLUE,BOLD,$SERVICE,RESET; # Show Service Name(s);
+    my @service = split (',', $SERVICE );                                # Put Service name in array
     my $service_running_name = "" ;                                     # Service name default empty
     my $service_count = 0 ;                                             # Service Running counter
 
@@ -1060,7 +1062,7 @@ sub check_daemon {
     @dummy = split /_/, $SADM_RECORD->{SADM_ID} ;                       # Split Line ID daemon_name
     $pname = $dummy[1];                                                 # Extract Daemon Name
     print "\n\n-------------------";                                    # Log Separator
-    print "\nChecking for a processs named \"$pname\" ... ";            # Show starting to check
+    printf "\n%s%sChecking for a process name '$pname' ...%s",BLUE,BOLD,RESET; 
 
     # Grep for daemon/process in the PSFILE1
     open (PFILE,"grep \"$pname\" $PSFILE1 |grep -v grep  |wc -l|");     # Grep Name in PS File1
@@ -1139,7 +1141,7 @@ sub get_epoch {
 sub check_load_average {
 
     print "\n\n-------------------";                                    # Log Separator
-    print "\nChecking CPU Load Average ...";                            # Entering Load Average Test
+    printf "\n%s%sChecking CPU load average ...%s",BLUE,BOLD,RESET;     # Filesystem Usage Check
 
     # Get Load Average - Via the uptime command
     open (DB_FILE, "uptime \| awk '{print \$(NF-2)}' \|tr -d ',' |");                                    # 'uptime' output to stdout
@@ -1185,7 +1187,7 @@ sub check_load_average {
 sub check_cpu_usage {
 
     print "\n\n-------------------";                                    # Log Separator
-    print "\nChecking CPU Usage ...";                                   # Entering CPU USage Check
+    printf "\n%s%sChecking CPU usage ...%s",BLUE,BOLD,RESET; 
 
     # Get User and System CPU Usage
     if ( $OSNAME eq "darwin" ) {                                        # Under MacOS use 'iostat'
@@ -1252,7 +1254,7 @@ sub check_cpu_usage {
 sub check_swap_space  {
 
     print "\n\n-------------------";                                    # Log Separator
-    print "\nChecking swap space usage ...\n";                          # Entering Swap Space Check
+    printf "\n%s%sChecking swap space usage ...%s",BLUE,BOLD,RESET; 
     
 
     # MacOS - Output Example: sysctl vm.swapusage -->
@@ -1337,8 +1339,8 @@ sub check_swap_space  {
 sub check_filesystems_usage  {
 
     if ( $first_call == 0 ) { 
-        print "\n\n-------------------";                                    # Log Separator
-        print "\nChecking Filesystem Usage ...";                            # Filesystem Usage Check
+        print "\n\n-------------------";                                # Log Separator
+        printf "\n%s%sChecking Filesystem Usage ...%s",BLUE,BOLD,RESET; # Filesystem Usage Check
         $first_call = 1;
     }
 
@@ -1364,12 +1366,11 @@ sub check_filesystems_usage  {
             $SMOD = "FILESYSTEM"                ;                       # Sub-Module Category
             $STAT = $fname                      ;                       # Current Value Returned
 
-            # Set Status according to filesystem % usage and Print Filesystem status line
-            #$FSTAT = sprintf "%s%s[OK]%s", BOLD, GREEN, RESET;          # Default Status
-            if ($CVAL >= $WVAL) { $FSTAT = sprintf "%s%s[WARNING]%s", BOLD, YELLOW, RESET; ;} 
-            if ($CVAL >= $EVAL) { $FSTAT = sprintf "%s%s[ERROR]%s", BOLD, RED, RESET;   ;} 
-            print "\n[ OK ] Filesystem $fname at ${CVAL}% ... Warning: $WVAL - Error: $EVAL";
-
+            # Set Status message according to filesystem % usage vs Warning/Error thresholds.
+            if ($CVAL >= $WVAL) { $FSTAT = sprintf "%s%s[ WARNING ]%s", BOLD, YELLOW, RESET; ;} 
+            if ($CVAL >= $EVAL) { $FSTAT = sprintf "%s%s[ ERROR ]%s", BOLD, RED, RESET;   ;} 
+            if ($CVAL <  $WVAL) { $FSTAT = sprintf "%s%s[ OK ]%s", BOLD, GREEN, RESET; ;} 
+            print "\n$FSTAT Filesystem $fname at ${CVAL}% ... Warning: $WVAL - Error: $EVAL";
             check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);  # Go Evaluate Error/Alert
             last;
         }
@@ -1386,8 +1387,7 @@ sub ping_ip  {
     $ipname = $dummy[1];                                                # Extract Name/IP to ping
 
     print "\n\n-------------------";                                    # Log Separator
-    print "\nPing $ipname' ... ";                                       # Show User Name/IP to ping
-
+    printf "\n%s%sPing $ipname ...%s",BLUE,BOLD,RESET;
     $PCMD = "ping -c2 -W2 $ipname >/dev/null 2>&1" ;                    # Build ping command
     @args = ("$PCMD"); system(@args) ;                                  # Perform the ping operation
     $src = $? >> 8;                                                     # Get Ping Result
@@ -1402,9 +1402,9 @@ sub ping_ip  {
     $SMOD = "PING"                      ;                               # Sub-Module Category
     $STAT = $ipname                     ;                               # Current Value Returned
     if ($CVAL == 0) {
-        print " OK ($CVAL)" ;
+        print " [ OK ] ($CVAL)" ;
     }else{ 
-        print " ERROR ($CVAL)";
+        print " [ ERROR ] ($CVAL)";
         # If it is the first occurence of the Error - Save Current Date and Time in RECORD
         if ( $SADM_RECORD->{SADM_DATE} == 0 ) {                         # No Prev.Date/Time
             $SADM_RECORD->{SADM_DATE}=sprintf ("%04d%02d%02d",$year,$month,$day); # Save Excess Date
@@ -1440,7 +1440,7 @@ sub run_script {
     $sname = "${SADM_SCR_DIR}/${sname}";                                # Full Path to Script
 
     print "\n\n-------------------";                                    # Log Separator
-    print "\nExecution of script $sname is requested";                  # Show User Script Name
+    printf "\n%s%sExecution of script $sname is requested ...%s",BLUE,BOLD,RESET; 
     if ($SYSMON_DEBUG >= 6) {                                           # Debug Level 6 Information
         print "\nFilename: $sfile_name - Extension: $sfile_extension";  # Show Splitted Name/Ext.
     }
@@ -1511,7 +1511,8 @@ sub run_script {
 sub check_for_new_filesystems  {
 
     print "\n-------------------";                                      # Log Separator
-    print "\nChecking for new filesystems ..." ;
+    printf "\n%s%sChecking for new filesystems ...%s",BLUE,BOLD,RESET; 
+
 
     # First Get Actual Filesystem Info - Don't check cdrom (/dev/cd0) and NFS Filesystem (:)
     open (DF_FILE, "/bin/df -hP | grep \"^\/\" | grep -Ev \"cdrom|:|\/mnt\/|\/media\/|\/snap\/\" |");
@@ -1538,7 +1539,7 @@ sub check_for_new_filesystems  {
             }
         }
 
-        # If filesystem was not found in sysmon_array, Insert new filesystem in @sysmon.array
+        # If filesystem was not found in sysmon_array, Insert new filesystem in sysmon.array
         if ($found eq "N" ) {
             $newcount = $newcount + 1 ;                     # Increment new filesystem counter
             $SADM_RECORD->{SADM_ID}      = "FS" . "$fname"; # FileSystem Name ID
@@ -1620,7 +1621,7 @@ sub load_df_in_array {
 sub check_multipath {
     if ( $OSNAME eq "aix" )  {return ;}                                 # Multipath Only on Linux
     print "\n\n-------------------";                                    # Log Separator
-    print "\nChecking Multipath ..." ;
+    printf "\n%s%sChecking Multipath Status ...%s",BLUE,BOLD,RESET;     
 
     if ( $CMD_MPATHD eq "" ) {                                          # multipathd is not on host
         print "\nStatus of Multipath skipped.";
@@ -1952,7 +1953,7 @@ sub init_process {
             exit 1;                                                     # Exit with error
         }
     }else{
-        print "\nCreating lock file $SYSMON_LOCK_FILE\n";               # Show user want we do
+        print "\nCreating lock file $SYSMON_LOCK_FILE";               # Show user want we do
         @args = ("$CMD_TOUCH", "$SYSMON_LOCK_FILE");                    # Cmd to Create Lock File
 #        system(@args) == 0   or die "system @args failed: $?";          # Execute the Touch Command
         #system(@args) == 0   ;                                          # Execute the Touch Command
