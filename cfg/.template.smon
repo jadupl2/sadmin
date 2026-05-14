@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------------------------
-# SADMIN SYStem MONitor configuration file (3.8)
+# SADMIN SYStem MONitor configuration file (3.9)
 #  - This file MUST reside in ${SADMIN}/cfg (filename = $(hostname -s).smon).
 #  - It is loaded in memory when the SADMIN System Monitor start (sadm_sysmon.pl).
 #  - Before exiting SysMon write the updated version of this file.
