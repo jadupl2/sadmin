@@ -532,7 +532,6 @@ process_servers()
                     else sadm_write_log "[ OK ] $CMD"
                  fi
         fi
-        if [ -f "$CFG_EXCL" ] ; then rm -f "$CFG_EXCL" ; fi             # Remove Exclude file
 
 
         # Show Cumulative Warning and Error
@@ -543,6 +542,7 @@ process_servers()
         done < $SADM_TMP_FILE1
 
 # Show Total Error Count After Processing Each Server
+    if [ -f "$CFG_EXCL" ] ; then rm -f "$CFG_EXCL" ; fi             # Remove Exclude file
     sadm_write_log " "
     sadm_write_log "${SADM_TEN_DASH}"
     sadm_write_log "Total Error(s) count   : ${ERROR_COUNT}"
