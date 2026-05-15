@@ -236,6 +236,22 @@ process_servers()
              return 1                                                   # Return to caller RC=1
     fi
 
+    # $SADMIN/cfg directory is the only one that we don't want to delete files on remote side because 
+    # it may contain client specific configuration files that we don't want to delete. 
+    # So we will use rsync with --exclude option to exclude files we don't want to copy and 
+    # NOT use --delete option for this directory.
+    
+    # rsync all dot files (configuration & templates) in "$SADMIN/cfg" to all actives clients.
+    # Except the files '.dbpass' (Database Password) and '.gmpw' (Gmail account info). 
+    # Create and show exclude list content.
+    CFG_EXCL="/tmp/cfg_exclude_$$.txt" 
+    echo ".gmpw"                 > $CFG_EXCL
+    echo ".dbpass"              >> $CFG_EXCL
+    sadm_write_log " "
+    sadm_write_log "Content of exclude file(s), including socket file(s):" 
+    cat $CFG_EXCL | while read ln ;do sadm_write_log "${ln}" ;done 
+    sadm_write_log " "
+
 
     # Process each actives servers
     xcount=0; ERROR_COUNT=0;                                            # Set Server & Error Counter
@@ -497,22 +513,7 @@ process_servers()
         fi
 
 
-        # CFG directory is the only one that we don't want to delete files on remote side because 
-        # it may contain client specific configuration files that we don't want to delete. 
-        # So we will use rsync with --exclude option to exclude files we don't want to copy and 
-        # NOT use --delete option for this directory.
-        
-        # rsync all dot files (configuration & templates) in "$SADMIN/cfg" to all actives clients.
-        # Except the files '.dbpass' (Database Password) and '.gmpw' (Gmail account info). 
-        # Create and show exclude list content.
-        CFG_EXCL="/tmp/cfg_exclude_$$.txt" 
-        echo ".gmpw"                 > $CFG_EXCL
-        echo ".dbpass"              >> $CFG_EXCL
-        sadm_write_log " "
-        sadm_write_log "Content of exclude file(s), including socket file(s):" 
-        cat $CFG_EXCL | while read ln ;do sadm_write_log "${ln}" ;done 
-        sadm_write_log " "
-
+ 
         # rsync all dot files (configuration & templates) in "$SADMIN/cfg" to all actives clients.
         CFG_SRC="$SADM_CFG_DIR/.??*"                                    # rsync $SADMIN/sys dot file
         CFG_DST="${server_fqdn}:${server_dir}/cfg/"                     # Destination Dir on CLient
