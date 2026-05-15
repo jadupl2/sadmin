@@ -80,29 +80,29 @@ sys/*
 !sys/.sadm_startup.sh
 
 # Exclude $SADMIN/usr, except $SADMIN/usr/bin, $SADMIN/usr/lib, $SADMIN/usr/doc, 
-#         $SADMIN/mon (Only some scripts in it).
+#         $SADMIN/mon (Only some scripts in it for sysmon).
 usr/bin/*
 !usr/bin/.gitkeep
+
 usr/doc/*
 !usr/doc/.gitkeep
+
 usr/lib/*
 !usr/lib/.gitkeep
-usr/mon/*
-!usr/mon/.gitkeep
-!usr/mon/srestart.sh
-usr/mon/srestart.log
-!usr/mon/stemplate.txt
-!usr/mon/stemplate.sh
-usr/mon/stemplate.log
-!usr/mon/swatch_nmon.sh
-!usr/mon/swatch_nmon.txt
-usr/mon/swatch_nmon.log
-doc/odt/*
+
+#usr/mon/*
+##!/usr/mon/sysmon_script_test.sh
+#!usr/mon/.gitkeep
+#!usr/mon/srestart.sh
+#usr/mon/srestart.log
+#!usr/mon/stemplate.txt
+#!usr/mon/stemplate.sh
+#usr/mon/stemplate.log
+#!usr/mon/swatch_nmon.sh
+#!usr/mon/swatch_nmon.txt
+#usr/mon/swatch_nmon.log
 usr/cfg/*
-usr/pkg/*
-usr/img/*
 usr/dat/*
-usr/wip/*
 
 # HTML Report Generated Daily
 www/view/daily_backup_report.html
