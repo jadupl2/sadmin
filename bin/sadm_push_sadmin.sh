@@ -71,6 +71,7 @@
 #@2026_04_13 server v2.52 Minor comments change
 #@2026_04_27 server v2.53 Fix problem with CentOS 6 getting /etc/environment.
 #@2026_05_15 server v2.54 Automate the creation of "sadm_client.cfg" from "sadmin.cfg".
+#@2026_05_15 server v2.55 Show name of rsync exclude file.
 # --------------------------------------------------------------------------------------------------
 
 # Trap Ctrl-C (SIGINT) and call sadm_stop function to cleanup before exit.
@@ -101,7 +102,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.54'                                     # Script version number
+export SADM_VER='2.55'                                     # Script version number
 export SADM_PDESC="Copy SADMIN version from $SADM_HOSTNAME to all active clients (without overwriting config files)." 
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -244,11 +245,11 @@ process_servers()
     # rsync all dot files (configuration & templates) in "$SADMIN/cfg" to all actives clients.
     # Except the files '.dbpass' (Database Password) and '.gmpw' (Gmail account info). 
     # Create and show exclude list content.
-    CFG_EXCL="/tmp/cfg_exclude_$$.txt" 
+    export CFG_EXCL="/tmp/cfg_exclude_$$.txt" 
     echo ".gmpw"                 > $CFG_EXCL
     echo ".dbpass"              >> $CFG_EXCL
     sadm_write_log " "
-    sadm_write_log "Content of exclude file(s), including socket file(s):" 
+    sadm_write_log "Content of exclude file '$CFG_EXCL' :" 
     cat $CFG_EXCL | while read ln ;do sadm_write_log "${ln}" ;done 
     sadm_write_log " "
 
@@ -360,7 +361,7 @@ process_servers()
         # If no "SADMIN" variable in /etc/environment file, signal error & proceed with next server.
         server_dir=$(grep "SADMIN=" $WDIR/environment |awk -F= '{print $2}') # Remote Dir.
         if [ "$server_dir" != "" ]                                      # No Remote Dir. Set
-           then sadm_write_log "[ OK ] On ${server_name} SADMIN is install in ${server_dir}."
+           then sadm_write_log "[ OK ] On ${server_name}, SADMIN is install in ${server_dir}."
            else sadm_write_err "[ ERROR ] Couldn't get $ETCENV on ${server_name}."
                 ((ERROR_COUNT++))
                 sadm_write_err "Continue with next server."
@@ -542,13 +543,13 @@ process_servers()
         done < $SADM_TMP_FILE1
 
 # Show Total Error Count After Processing Each Server
-    if [ -f "$CFG_EXCL" ] ; then rm -f "$CFG_EXCL" ; fi             # Remove Exclude file
     sadm_write_log " "
     sadm_write_log "${SADM_TEN_DASH}"
     sadm_write_log "Total Error(s) count   : ${ERROR_COUNT}"
     sadm_write_log "Total Warning(s) count : ${WARNING_COUNT}"
     sadm_write_log "${SADM_TEN_DASH}"
     sadm_write_log " "
+    if [ -f "$CFG_EXCL" ] ; then rm -f "$CFG_EXCL" ; fi             # Remove Exclude file
     return $ERROR_COUNT
 }
 
