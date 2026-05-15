@@ -70,6 +70,7 @@
 #@2026_03_04 server v2.51 the files ".dbpass" and ".gmpw" are excluded from the rsync process.
 #@2026_04_13 server v2.52 Minor comments change
 #@2026_04_27 server v2.53 Fix problem with CentOS 6 getting /etc/environment.
+#@2026_05_15 server v2.54 Automate the creation of "sadm_client.cfg" from "sadmin.cfg".
 # --------------------------------------------------------------------------------------------------
 
 # Trap Ctrl-C (SIGINT) and call sadm_stop function to cleanup before exit.
@@ -100,7 +101,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.53'                                     # Script version number
+export SADM_VER='2.54'                                     # Script version number
 export SADM_PDESC="Copy SADMIN version from $SADM_HOSTNAME to all active clients (without overwriting config files)." 
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -357,8 +358,6 @@ process_servers()
         for WDIR in "${rem_std_dir_to_rsync[@]}"                        # Loop through Array
           do
           CMD="rsync -ar -e 'ssh -p $server_ssh_port' --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/"
-          #sadm_write_log "$CMD"
-          #=$(mktemp) ; { eval "$CMD" ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; RC=$(cat $f) 
           rsync -ar -e "ssh -p $server_ssh_port" --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/
           if [ $RC -eq 23 ]                                             # File change during rsync 
              then sadm_write_err "[ WARNING ] Error 23 denotes a file change during transfer."
@@ -377,8 +376,6 @@ process_servers()
         # If user choose to rsync the complete user directories $SADMIN/usr [-u] to actives clients.
         if [ "$SYNC_USR" = "Y" ] 
             then CMD="rsync -ar -e 'ssh -p $server_ssh_port' --delete ${SADM_BASE_DIR}/usr/ ${server_fqdn}:${server_dir}/usr/"
-                 #sadm_write_log "$CMD"
-                 #=$(mktemp) ; { eval "$CMD" ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; RC=$(cat $f) 
                  rsync -ar -e "ssh -p $server_ssh_port" --delete ${SADM_BASE_DIR}/usr/ ${server_fqdn}:${server_dir}/usr/
                  if [ $RC -eq 23 ]                                      # File change during rsync 
                     then sadm_write_err "[ WARNING ] Error 23 denotes a file change during transfer."
@@ -391,23 +388,23 @@ process_servers()
                             else sadm_write_log "[ OK ] $CMD"
                          fi
                  fi
-        else 
-            # Used by System Monitor : Template Script, Service Restart Script
-            rem_files_to_rsync=( usr/mon/stemplate.sh usr/mon/srestart.sh ) 
-            for WFILE in "${rem_files_to_rsync[@]}"                      # Loop to sync template file
-              do
-                CFG_SRC="${SADM_BASE_DIR}/${WFILE}"
-                CFG_DST="${server_fqdn}:${server_dir}/${WFILE}"
-                CMD="rsync -ar -e 'ssh -p $server_ssh_port' ${CFG_SRC} ${CFG_DST}"
-                #=$(mktemp) ; { eval "$CMD" ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; RC=$(cat $f)
-                rsync -ar -e "ssh -p $server_ssh_port" "${CFG_SRC}" "${CFG_DST}" 
-                RC=$?
-                if [ $RC -ne 0 ]
-                    then sadm_write_err "[ ERROR ] ($RC) doing $CMD"
-                         ((ERROR_COUNT++))
-                    else sadm_write_log "[ OK ] $CMD"  
-                fi
-              done             
+        #else 
+        #    # Used by System Monitor : Template Script, Service Restart Script
+        #    rem_files_to_rsync=( usr/mon/stemplate.sh usr/mon/srestart.sh ) 
+        #    for WFILE in "${rem_files_to_rsync[@]}"                      # Loop to sync template file
+        #      do
+        #        CFG_SRC="${SADM_BASE_DIR}/${WFILE}"
+        #        CFG_DST="${server_fqdn}:${server_dir}/${WFILE}"
+        #        CMD="rsync -ar -e 'ssh -p $server_ssh_port' ${CFG_SRC} ${CFG_DST}"
+        #        #=$(mktemp) ; { eval "$CMD" ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; RC=$(cat $f)
+        #        rsync -ar -e "ssh -p $server_ssh_port" "${CFG_SRC}" "${CFG_DST}" 
+        #        RC=$?
+        #        if [ $RC -ne 0 ]
+        #            then sadm_write_err "[ ERROR ] ($RC) doing $CMD"
+        #                 ((ERROR_COUNT++))
+        #            else sadm_write_log "[ OK ] $CMD"  
+        #        fi
+        #      done             
         fi 
           
 
@@ -470,15 +467,25 @@ process_servers()
 
 
         # If [-c] was specified on cmdline 
-        # Option [-c] copy $SADMIN/cfg/sadmin_client.cfg to $SADMIN/cfg/sadmin.cfg on all clients.
-        # Used to have the same sadmin.cfg on all clients, you need to create a sadmin_client.cfg.
-        # Copy $SADMIN/cfg/sadmin.cfg to $SADMIN/cfg/sadmin_client.cfg and change the line
-        # 'SADM_HOST_TYPE = S' to 'SADM_HOST_TYPE = C'. 
-        if [ "$SYNC_CFG" = "Y" ]
+        # The idea here is to share the same sadmin configuration the same on all clients,  so if 
+        # you need to change a parameter in sadmin.cfg, you just need to change it once.
+        # Let's say you want to change the backups server name 'SADM_BACSADM_BACKUP_NFS_SERVER'
+        # you only have to change it sadmin.cfg.  
+        # 
+        # if [-c] is specify on the command line, the 'sadmin.cfg' file is copied to sadmin_client.cfg.
+        # after that the line 'SADM_HOST_TYPE = S' is changed to 'SADM_HOST_TYPE = C' in sadmin_client.cfg.
+        # the it copy $SADMIN/cfg/sadmin_client.cfg to $SADMIN/cfg/sadmin.cfg to all actives clients.
+
+        if [ "$SYNC_CFG" = "Y" ]                                        # If [-c] specified on cmdline
             then sadmin_source="${SADM_CFG_DIR}/sadmin_client.cfg"
                  sadmin_destination="${server_fqdn}:${server_dir}/cfg/sadmin.cfg"
-                 #CMD="scp -CqP $server_ssh_port ${sadmin_source} ${sadmin_destination}"
-                 #scp -CqP $server_ssh_port ${sadmin_source} ${sadmin_destination} >> $SADM_LOG 2>&1
+                 
+                 sadm_write_log "Copying $SADMIN/cfg/sadmin.cfg to $SADMIN/cfg/sadmin_client.cfg ..."
+                 cp $SADMIN/cfg/sadmin.cfg $SADMIN/cfg/sadmin_client.cfg
+
+                 sadm_write_log "Changing 'SADM_HOST_TYPE = S' to 'SADM_HOST_TYPE = C' in $SADMIN/cfg/sadmin_client.cfg ..."
+                 sed -i 's/SADM_HOST_TYPE = S/SADM_HOST_TYPE = C/' $SADMIN/cfg/sadmin_client.cfg
+
                  CMD="rsync -ar -e 'ssh -p $server_ssh_port' ${sadmin_source} ${sadmin_destination}"
                  rsync -ar -e "ssh -p $server_ssh_port" ${sadmin_source} ${sadmin_destination}
                  RC=$? 
@@ -494,30 +501,37 @@ process_servers()
         # it may contain client specific configuration files that we don't want to delete. 
         # So we will use rsync with --exclude option to exclude files we don't want to copy and 
         # NOT use --delete option for this directory.
-        #
+        
         # rsync all dot files (configuration & templates) in "$SADMIN/cfg" to all actives clients.
         # Except the files '.dbpass' (Database Password) and '.gmpw' (Gmail account info). 
+        # Create and show exclude list content.
         CFG_EXCL="/tmp/cfg_exclude_$$.txt" 
         echo ".gmpw"                 > $CFG_EXCL
         echo ".dbpass"              >> $CFG_EXCL
+        sadm_write_log " "
+        sadm_write_log "Content of exclude file(s), including socket file(s):" 
+        cat $CFG_EXCL | while read ln ;do sadm_write_log "${ln}" ;done 
+        sadm_write_log " "
+
+        # rsync all dot files (configuration & templates) in "$SADMIN/cfg" to all actives clients.
         CFG_SRC="$SADM_CFG_DIR/.??*"                                    # rsync $SADMIN/sys dot file
         CFG_DST="${server_fqdn}:${server_dir}/cfg/"                     # Destination Dir on CLient
+        
         CMD="rsync -ar -e 'ssh -p $server_ssh_port' --exclude-from '$CFG_EXCL' $CFG_SRC $CFG_DST"
         rsync -ar -e "ssh -p $server_ssh_port" --exclude-from "$CFG_EXCL" $CFG_SRC $CFG_DST >>$SADM_LOG 2>&1
         RC=$? 
-        if [ $RC -eq 23 ]                                      # File change during rsync 
+        if [ $RC -eq 23 ]                                               # File change during rsync 
             then sadm_write_err "[ WARNING ] Error 23 denotes a file change during transfer."
                  sadm_write_err "This can be normal if a file was updated during the rsync process."
                  sadm_write_err "It can also indicate a problem if it happens on the same file repeatedly." 
-                 ((WARNING_COUNT++))                            # Increase Warning Counter
-            else if [ $RC -ne 0 ]                               # If Rsync returned errror
+                 ((WARNING_COUNT++))                                    # Increase Warning Counter
+            else if [ $RC -ne 0 ]                                       # If Rsync returned errror
                     then sadm_write_err "[ ERROR ] ($RC) $CMD"
-                         ((ERROR_COUNT++))                      # Increase Error Counter
+                         ((ERROR_COUNT++))                              # Increase Error Counter
                     else sadm_write_log "[ OK ] $CMD"
                  fi
         fi
         if [ -f "$CFG_EXCL" ] ; then rm -f "$CFG_EXCL" ; fi             # Remove Exclude file
-
 
 
         # Show Cumulative Warning and Error
@@ -536,6 +550,14 @@ process_servers()
     sadm_write_log " "
     return $ERROR_COUNT
 }
+
+
+
+
+
+
+
+
 
 
 # --------------------------------------------------------------------------------------------------
