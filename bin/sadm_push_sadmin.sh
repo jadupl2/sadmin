@@ -480,10 +480,10 @@ process_servers()
             then sadmin_source="${SADM_CFG_DIR}/sadmin_client.cfg"
                  sadmin_destination="${server_fqdn}:${server_dir}/cfg/sadmin.cfg"
                  
-                 sadm_write_log "Copying $SADMIN/cfg/sadmin.cfg to $SADMIN/cfg/sadmin_client.cfg ..."
                  cp $SADMIN/cfg/sadmin.cfg $SADMIN/cfg/sadmin_client.cfg
+                 sadm_write_log "[ OK ] Copied $SADMIN/cfg/sadmin.cfg to $SADMIN/cfg/sadmin_client.cfg ..."
 
-                 sadm_write_log "Changing 'SADM_HOST_TYPE = S' to 'SADM_HOST_TYPE = C' in $SADMIN/cfg/sadmin_client.cfg ..."
+                 sadm_write_log "[ OK ] Changing 'SADM_HOST_TYPE = S' to 'SADM_HOST_TYPE = C' in $SADMIN/cfg/sadmin_client.cfg ..."
                  sed -i 's/SADM_HOST_TYPE = S/SADM_HOST_TYPE = C/' $SADMIN/cfg/sadmin_client.cfg
 
                  CMD="rsync -ar -e 'ssh -p $server_ssh_port' ${sadmin_source} ${sadmin_destination}"
