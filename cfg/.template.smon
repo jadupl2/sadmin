@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------------------------
-# SADMIN SYStem MONitor configuration file (3.9)
+# SADMIN SYStem MONitor configuration file (3.9.1)
 #  - This file MUST reside in ${SADMIN}/cfg (filename = $(hostname -s).smon).
 #  - It is loaded in memory when the SADMIN System Monitor start (sadm_sysmon.pl).
 #  - Before exiting SysMon write the updated version of this file.
@@ -258,7 +258,7 @@ swap_space                      14  >  80  90 000 0000 0000 Y Y Y Y Y Y Y Y 2018
  
 # Service ON
 service_crond,cron               1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
-service_chrony,chronyd           0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
+service_chrony,chronyd,ntp,ntpd  0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 service_ssh,sshd                 1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 service_at,atd                   1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 service-httpd                    1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh       
