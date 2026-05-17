@@ -61,6 +61,7 @@
 #@2026_05_09 mon v2.57 Add a check if 'nmon' is running, if not run $SADMIN/usr/mon/swatch_nmon.shto restart it.
 #@2026_05_12 mon v2.58 Enhance code, review and retest all functions.
 #@2026_05_14 mon v2.59 Clearer output layout and remove filesystem increase function, not much used.
+#@2026_05_16 mon v2.60 Add some small change to output and log.
 #===================================================================================================
 #
 use English;
@@ -75,7 +76,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.59";                                       # Version Number
+my $VERSION_NUMBER      = "2.60";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -899,17 +900,17 @@ sub check_http {
     my $url="http://${HTTP}";                                           # Build URL to check
 
     print "\n\n-------------------";                                    # Log Separator
-    print "\nChecking if '$url' web site is responsive ... ";              # Show User what we check
+    printf "\n%s%sChecking if '$url' website is responsive ...%s",YELLOW,BOLD,RESET;
 
     $PCMD = "curl $url -I >/dev/null 2>&1" ;                            # Build curl command
     @args = ("$PCMD"); system(@args) ;                                  # Test connect with curl
     $src = $? >> 8;                                                     # Get curl Result code
     if ($src == 0) {                                                    # If no response for URL
-        print "\n[ OK ] Web site is alive";                             # Show URL responded
+        printf "\n%s[ OK ]%s Web site is alive",GREEN,RESET;             # Show URL responded
         $SADM_RECORD->{SADM_CURVAL}=0;                                  # 0= Web Site is UP
     }else{                                                              # If URL Response
-        print "\n[ ERROR ] ($src) Web site not responding" ;            # Show error to user
-        if ($src == 6) { print "\nError #6 : Could not resolve host name" } 
+        printf "\n%s[ ERROR ]%s ($src) Web site not responding",RED,RESET ;            # Show error to user
+        if ($src == 6) { printf "\n%sError #6 : Could not resolve host name%s",RED,RESET } 
         $SADM_RECORD->{SADM_CURVAL}=1;                                  # 1= Web Site is Down
     }
     $CVAL = $SADM_RECORD->{SADM_CURVAL} ;                               # Current Value
@@ -936,17 +937,18 @@ sub check_https {
     $HTTP = $dummy[1];                                                  # Get URL from dummy array
     my $url="https://${HTTP}";                                          # Build URL to check
     print "\n\n-------------------";                                    # Log Separator
-    print "\nChecking if '$url' web site is responsive ... ";           # Show User what we check
+    printf "\n%s%sChecking if '$url' website is responsive ...%s",YELLOW,BOLD,RESET;
+
 
     $PCMD = "curl $url -I >/dev/null 2>&1" ;                            # Build curl command
     @args = ("$PCMD"); system(@args) ;                                  # Test connect with curl
     $src = $? >> 8;                                                     # Get curl Result code
     if ($src == 0) {                                                    # If no response for URL
-        print "\n[ OK ] Web site is alive";                             # Show URL responded
+        printf "\n%s[ OK ]%s Web site is alive",GREEN,RESET;             # Show URL responded
         $SADM_RECORD->{SADM_CURVAL}=0;                                  # 0= Web Site is UP
     }else{                                                              # If URL Response
-        print "\n[ ERROR ] ($src) Web site not responding" ;          # Show error to user
-        if ($src == 6) { print "\nError #6 : Could not resolve host name" } 
+        printf "\n%s[ ERROR ]%s ($src) Web site not responding",RED,RESET ;          # Show error to user
+        if ($src == 6) { printf "\n%sError #6 : Could not resolve host name%s",RED,RESET } 
         $SADM_RECORD->{SADM_CURVAL}=1;                                  # 1= Web Site is Down
     }
     $CVAL = $SADM_RECORD->{SADM_CURVAL} ;                               # Current Value
@@ -992,7 +994,7 @@ sub check_service {
 
     #----- From the sysmon_array extract the service name
     print "\n\n-------------------";                                    # Log Separator
-    printf "\n\n%s%sChecking for service(s): %s%s",BLUE,BOLD,$SERVICE,RESET; # Show Service Name(s);
+    printf "\n\n%s%sChecking for service(s): %s%s",YELLOW,BOLD,$SERVICE,RESET; # Show Service Name
     my @service = split (',', $SERVICE );                                # Put Service name in array
     my $service_running_name = "" ;                                     # Service name default empty
     my $service_count = 0 ;                                             # Service Running counter
@@ -1011,7 +1013,7 @@ sub check_service {
             }else{
                 $service_count+=1 ;                                     # +1= Nb srv UP, Nb.running
                 $service_running_name = $srv ;                          # Save name of serv. running
-                printf "\n[ OK ] Service '$service_running_name' is running.";
+                printf "\n%s[ OK ]%s Service '$service_running_name' is running.",GREEN,RESET;
                 last;                                                   # Stop to check other name  
             }       
         }else{
@@ -1031,7 +1033,7 @@ sub check_service {
                }else{
                    $service_count+=1 ;                                  # +1= Nb srv UP, Nb.running
                    $service_running_name = $srv ;                       # Save name of service running
-                   printf "\n[ OK ] SysV service '$service_running_name' running.";
+                   printf "\n%s[ OK ]%s SysV service '$service_running_name' running.",GREEN,RESET;
                    last;
                }  
             } 
@@ -1062,7 +1064,7 @@ sub check_daemon {
     @dummy = split /_/, $SADM_RECORD->{SADM_ID} ;                       # Split Line ID daemon_name
     $pname = $dummy[1];                                                 # Extract Daemon Name
     print "\n\n-------------------";                                    # Log Separator
-    printf "\n%s%sChecking for a process name '$pname' ...%s",BLUE,BOLD,RESET; 
+    printf "\n%s%sChecking for a process name '$pname' ...%s",YELLOW,BOLD,RESET; 
 
     # Grep for daemon/process in the PSFILE1
     open (PFILE,"grep \"$pname\" $PSFILE1 |grep -v grep  |wc -l|");     # Grep Name in PS File1
@@ -1087,10 +1089,10 @@ sub check_daemon {
     $SMOD = "PROCESS"                   ;                               # Sub-Module Category
     $STAT = $pname                      ;                               # Name of daemon
     if ($CVAL > 0) {                                                    # At least 1 process running
-        printf "\n[ OK ] Number of '%s' processes running is %d",$pname, $CVAL;   # nb of Process
+        printf "\n%s[ OK ]%s Number of   '%s' processes running is %d",GREEN,RESET,$pname, $CVAL;   # nb of Process
         #printf "\n%s%s[OK]%s Number of %s running is %d", BOLD, GREEN, RESET, $pname, $CVAL;
     }else{                                                              # No Process running
-        printf "\n[ERROR] No process named '%s' are running",$pname;    # Show No process are running
+        printf "\n%s[ERROR]%s No process named '%s' are running",RED,RESET,$pname;    # Show No process are running
     }
     check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);          # Go Evaluate Error/Alert
     return;                                                             # Return to Caller
@@ -1141,7 +1143,7 @@ sub get_epoch {
 sub check_load_average {
 
     print "\n\n-------------------";                                    # Log Separator
-    printf "\n%s%sChecking CPU load average ...%s",BLUE,BOLD,RESET;     # Filesystem Usage Check
+    printf "\n%s%sChecking CPU load average ...%s",YELLOW,BOLD,RESET;     # Filesystem Usage Check
 
     # Get Load Average - Via the uptime command
     open (DB_FILE, "uptime \| awk '{print \$(NF-2)}' \|tr -d ',' |");                                    # 'uptime' output to stdout
@@ -1187,7 +1189,7 @@ sub check_load_average {
 sub check_cpu_usage {
 
     print "\n\n-------------------";                                    # Log Separator
-    printf "\n%s%sChecking CPU usage ...%s",BLUE,BOLD,RESET; 
+    printf "\n%s%sChecking CPU usage ...%s",YELLOW,BOLD,RESET; 
 
     # Get User and System CPU Usage
     if ( $OSNAME eq "darwin" ) {                                        # Under MacOS use 'iostat'
@@ -1254,7 +1256,7 @@ sub check_cpu_usage {
 sub check_swap_space  {
 
     print "\n\n-------------------";                                    # Log Separator
-    printf "\n%s%sChecking swap space usage ...%s",BLUE,BOLD,RESET; 
+    printf "\n%s%sChecking swap space usage ...%s",YELLOW,BOLD,RESET; 
     
 
     # MacOS - Output Example: sysctl vm.swapusage -->
@@ -1340,7 +1342,7 @@ sub check_filesystems_usage  {
 
     if ( $first_call == 0 ) { 
         print "\n\n-------------------";                                # Log Separator
-        printf "\n%s%sChecking Filesystem Usage ...%s",BLUE,BOLD,RESET; # Filesystem Usage Check
+        printf "\n%s%sChecking Filesystem Usage ...%s",YELLOW,BOLD,RESET; # Filesystem Usage Check
         $first_call = 1;
     }
 
@@ -1387,7 +1389,7 @@ sub ping_ip  {
     $ipname = $dummy[1];                                                # Extract Name/IP to ping
 
     print "\n\n-------------------";                                    # Log Separator
-    printf "\n%s%sPing $ipname ...%s",BLUE,BOLD,RESET;
+    printf "\n%s%sPing $ipname ...%s",YELLOW,BOLD,RESET;
     $PCMD = "ping -c2 -W2 $ipname >/dev/null 2>&1" ;                    # Build ping command
     @args = ("$PCMD"); system(@args) ;                                  # Perform the ping operation
     $src = $? >> 8;                                                     # Get Ping Result
@@ -1402,9 +1404,9 @@ sub ping_ip  {
     $SMOD = "PING"                      ;                               # Sub-Module Category
     $STAT = $ipname                     ;                               # Current Value Returned
     if ($CVAL == 0) {
-        print " [ OK ] ($CVAL)" ;
+        printf "\n%s[ OK ]%s Ping worked ($CVAL)",GREEN,RESET; 
     }else{ 
-        print " [ ERROR ] ($CVAL)";
+        printf "\n%s[ ERROR ]%s ($CVAL)",RED,RESET;
         # If it is the first occurence of the Error - Save Current Date and Time in RECORD
         if ( $SADM_RECORD->{SADM_DATE} == 0 ) {                         # No Prev.Date/Time
             $SADM_RECORD->{SADM_DATE}=sprintf ("%04d%02d%02d",$year,$month,$day); # Save Excess Date
@@ -1440,7 +1442,7 @@ sub run_script {
     $sname = "${SADM_SCR_DIR}/${sname}";                                # Full Path to Script
 
     print "\n\n-------------------";                                    # Log Separator
-    printf "\n%s%sExecution of script $sname is requested ...%s",BLUE,BOLD,RESET; 
+    printf "\n%s%sExecution of script $sname is requested ...%s",YELLOW,BOLD,RESET; 
     if ($SYSMON_DEBUG >= 6) {                                           # Debug Level 6 Information
         print "\nFilename: $sfile_name - Extension: $sfile_extension";  # Show Splitted Name/Ext.
     }
@@ -1484,10 +1486,10 @@ sub run_script {
     $args = ("$sname > ${SADM_LOG_DIR}/${sfile_name}.log 2>&1");        # Format script execution
     if (system($args) == 0)  {                                          # Execute the script
         $src=0;                                                         # Exit 0 success from script
-        print "\n[ OK ] Script was run successfully";                   # Advise user of success
+        printf "\n%s[ OK ]%s Script was run successfully",GREEN,RESET;  # Advise user of success
     }else{
         $src = 1;                                                       # Exit 1 error from script
-        print "\n[ ERROR ] Look in the log file ${SADM_LOG_DIR}/${sfile_name}.log for more details";
+        printf "\n%s[ ERROR ]%s Look in the log file ${SADM_LOG_DIR}/${sfile_name}.log for more details",RED,RESET;
     }
 
     $SADM_RECORD->{SADM_CURVAL}=$src;                                   # Actual Value=Return Code
@@ -1511,7 +1513,7 @@ sub run_script {
 sub check_for_new_filesystems  {
 
     print "\n-------------------";                                      # Log Separator
-    printf "\n%s%sChecking for new filesystems ...%s",BLUE,BOLD,RESET; 
+    printf "\n%s%sChecking for new filesystems ...%s",YELLOW,BOLD,RESET; 
 
 
     # First Get Actual Filesystem Info - Don't check cdrom (/dev/cd0) and NFS Filesystem (:)
@@ -1621,7 +1623,7 @@ sub load_df_in_array {
 sub check_multipath {
     if ( $OSNAME eq "aix" )  {return ;}                                 # Multipath Only on Linux
     print "\n\n-------------------";                                    # Log Separator
-    printf "\n%s%sChecking Multipath Status ...%s",BLUE,BOLD,RESET;     
+    printf "\n%s%sChecking Multipath Status ...%s",YELLOW,BOLD,RESET;     
 
     if ( $CMD_MPATHD eq "" ) {                                          # multipathd is not on host
         print "\nStatus of Multipath skipped.";
@@ -1895,7 +1897,7 @@ sub init_process {
     # For debug purpose - Display Important Data
     if ($SYSMON_DEBUG > 4) {
         print "------------------------------------------------------------------------------\n";
-        print BOLD, BLUE, "SADMIN SYStem MONitor Tools - Version ", BOLD, RED, "${VERSION_NUMBER}\n", RESET;
+        print BOLD, YELLOW, "SADMIN SYStem MONitor Tools - Version ", BOLD, RED, "${VERSION_NUMBER}\n", RESET;
         print "------------------------------------------------------------------------------\n";
     }
     if ($SYSMON_DEBUG > 5) {
