@@ -1192,7 +1192,7 @@ def show_version(pver):
     """
 
     print ("Script Name %s - Version %s" % (os.path.basename(sys.argv[0]),pver))
-    print ("SADMIN Shell Library Version %s" % (lib_ver))
+    print ("SADMIN Python Library Version %s" % (lib_ver))
     print ("O/S is %s - Version %s"% (get_osname(),get_osversion()))
     print ("Kernel Version %s \n" % (get_kernel_version()))
     return()
