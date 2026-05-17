@@ -30,14 +30,15 @@
 # --------------------------------------------------------------------------------------------------
 #
 
+
 # Modules needed by this script and they all come with Standard Python 3.
 try:
     import os, sys, argparse, time, datetime, socket, platform, re  # Import Std Python3 Modules
 #   import pdb                                                      # Python Debugger (If needed)
+#   pdb.set_trace()                                                 # Activate Python Debugging
 except ImportError as e:                                            # Trap Import Error
     print("Import Error : %s " % e)                                 # Print Import Error Message
     sys.exit(1)                                                     # Back to O/S With Error Code 1
-#pdb.set_trace()                                                    # Activate Python Debugging
 
  
 
@@ -62,7 +63,7 @@ except ImportError as e:                                             # If Error 
     sys.exit(1)                                                      # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver        = "0.01"              # Program version no.
+pver        = "0.01"              # Script/Program version no.
 pdesc       = "Put here a description of your script."
 phostname   = sa.get_hostname()   # Get current `hostname -s`
 pdebug      = 0                   # Debug level from 0 to 9
