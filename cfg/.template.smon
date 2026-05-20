@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------------------------
-# SADMIN SYStem MONitor configuration file (3.9.1)
+# SADMIN SYStem MONitor configuration file (3.9.2)
 #  - This file MUST reside in ${SADMIN}/cfg (filename = $(hostname -s).smon).
 #  - It is loaded in memory when the SADMIN System Monitor start (sadm_sysmon.pl).
 #  - Before exiting SysMon write the updated version of this file.
@@ -110,22 +110,16 @@
 #                       column 3. If it's True then an error is raise.
 #                       When you leave this value at 0, then the Error threshold is not evaluated.
 #---------------------------------------------------------------------------------------------------
-#  6    Duration Min/   This field have a double usage :
-#       RunCounter          - For 'load_average', 'cpu_level, 'swap_space' and 'ping_' it's the 
-#                             number of minutes that the value returned must exceed the Warning or 
-#                             Error before a Warning or an Error is raised.
-#                             Example : You set the warning threshold of the 'cpu_level' line at 80%
-#                                       but you don't want to trigger an error if the CPU Level 
-#                                       exceed 80% for only 2 minutes. So you may want to set this
-#                                       column to 120 so an error would be trigger only when the cpu
-#                                       level exceed 80% for at least 120 continuous minutes. If you
-#                                       leave it 0, is sysmon is run at the cpu_level exceed 80% an
-#                                       error will be trigger immediately.
-#                           - For Service (service_) and Filesystem (FS) lines it represented the
-#                             number of time (counter) the service was restarted or the filesystem 
-#                             increased in the last 24 Hours. You don't need to change this field,
-#                             it's taken care of automatically (Unless you want to reset it to 0 and
-#                             provoke a service restart or a filesystem increase within the 24 hrs).
+#  6    Duration Min    For 'load_average', 'cpu_level, 'swap_space' and 'ping_' it's the number
+#                       of continuous minutes that the value returned must exceed the Warning or 
+#                       Error before a Warning or an Error is sent. 
+#                       Example : For example, If you set the error threshold of the 'cpu_level' 
+#                                 line at 80%. You don't want to receive a warning/error if the                         
+#                                 cpu usage reach 85% for 2 minutes and the it went back to 50%.
+#                                 To prevent that, you can to set this column to the number of
+#                                 continuous minutes, you want to wait before sending an alert.
+#                       If you leave this column at 0, if sysmon is run and the cpu_level exceed 80%
+#                       an error will be trigger immediately.
 #---------------------------------------------------------------------------------------------------
 #  7    Monitor         Hour of the day you want to enable evaluation of the line (In 24:00 format)
 #       Start Time      Let's say you only want to evaluate a line between 7am and 9pm, you would
