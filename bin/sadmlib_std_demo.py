@@ -59,7 +59,8 @@
 #@2024_05_10 lib v3.23 Add VM export parameters and alert history/archive purge days limit.
 #@2024_12_17 lib v3.24 Add new global variable 'sadm_pwd_random' to auto-generate 'sadmin user' pwd.
 #@2026_03_06 lib v3.25 Show Database info only on the SADMIN server.
-#==================================================================================================
+#@2026_05_20 lib v3.26.1 New Variables and functions available.
+# ==================================================================================================
 #
 try :
     import os, time, sys, pdb, socket, pdb, datetime, glob, argparse, pymysql, platform
@@ -74,12 +75,12 @@ except ImportError as e:
 
 
 # --------------------------------------------------------------------------------------------------
-# SADMIN CODE SECTION v2.3
+# SADMIN CODE SECTION 1.56
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your Python code.    
 # --------------------------------------------------------------------------------------------------
 try:
-    SADM = os.environ['SADMIN']                                      # Get SADMIN Env. Var. Dir.
+    SADM = os.environ['SADMIN']                                      # Get SADMIN Env. Variable
 except KeyError as e:                                                # If SADMIN is not define
     print("Environment variable 'SADMIN' is not defined.\n%s\nScript aborted.\n" % e) 
     sys.exit(1)                                                      # Go Back to O/S with Error
@@ -93,39 +94,41 @@ except ImportError as e:                                             # If Error 
     sys.exit(1)                                                      # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver        = "3.25"                                                  # Program version no.
+pver        = "3.26.1"                                               # Program version no.
 pdesc       = "Demonstrate functions & variables available to developers using SADMIN Tools"
-phostname   = sa.get_hostname()                                      # Get current `hostname -s`
-pdebug      = 0                                                      # Debug level from 0 to 9
-pexit_code  = 0                                                      # Script default exit code
+phostname   = sa.get_hostname()   # Get current `hostname -s`
+pdebug      = 0                   # Debug level from 0 to 9
+pexit_code  = 0                   # Script default exit code
+pquiet      = False               # True=ReturnErrorNo & No ErrMsg, False=ReturnErrorNo & ShowErrMsg
+db_conn     = None                # Database Connector (if used)
+db_cur      = None                # Database Cursor (if used)
 
 # Fields used by sa.start(),sa.stop() & DB functions that influence execution of SADMIN library
-sa.db_used           = True       # Open/Use DB(True), No DB needed (False), sa.start() auto connect
-sa.db_silent         = False      # When DB Error Return(Error), True = NoErrMsg, False = ShowErrMsg
-sa.db_conn           = None       # Use this Database Connector when using DB,  set by sa.start()
-sa.db_cur            = None       # Use this Database cursor if you use the DB, set by sa.start()
-sa.db_name           = ""         # Database Name default to name define in $SADMIN/cfg/sadmin.cfg
+sa.db_used           = False      # Open/Use DB(True), No DB needed (False), sa.start() auto connect
+sa.db_silent         = False      # True=ReturnErrorNo & No ErrMsg, False=ReturnErrorNo & ShowErrMsg
+sa.db_name           = "sadmin"   # Database Name default to name define in $SADMIN/cfg/sadmin.cfg
 sa.db_errno          = 0          # Database Error Number
 sa.db_errmsg         = ""         # Database Error Message
 #
-sa.use_rch           = False      # Generate entry in Result Code History (.rch)
-sa.log_type          = 'B'        # Output goes to [S]creen to [L]ogFile or [B]oth
-sa.log_append        = False      # Append Existing Log(True) or Create New One(False)
+sa.use_rch           = False       # Generate entry in Result Code History file (.rch)
+sa.log_type          = 'B'        # Output goes to [S]creen, [L]ogFile or [B]oth
+sa.log_append        = False      # Append Existing Log (True) or Create New Log (False)
 sa.log_header        = True       # Show/Generate Header in script log (.log)
 sa.log_footer        = True       # Show/Generate Footer in script log (.log)
-sa.multiple_exec     = "Y"        # Allow running multiple copy at same time ?
-sa.proot_only        = True       # Pgm run by root only ?
-sa.psadm_server_only = False      # Run only on SADMIN server ?
+sa.multiple_exec     = "N"        # Allow multiple copy to run at same time 'Y' else 'N'.
+sa.proot_only        = True      # True = Script can only be run by 'root' user only else 'N'.
+sa.psadm_server_only = False      # True = Script can only be run on SADMIN server else 'N'.
 sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (sa.cmd_ssh,sa.sadm_ssh_port)
 
 # The values of fields below, are loaded from sadmin.cfg when you import the SADMIN library.
 # Change them to fit your need, they are use by start() & stop() functions of SADMIN Python Libr.
-# sa.sadm_alert_type  = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
+#
+#sa.sadm_alert_type  = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
 #sa.sadm_alert_group = "default"  # Valid Alert Group defined in $SADMIN/cfg/alert_group.cfg
 #sa.max_logline      = 500        # Max. lines to keep in log (0=No trim) after execution.
 #sa.max_rchline      = 40         # Max. lines to keep in rch (0=No trim) after execution.
 #sa.sadm_mail_addr   = ""         # All mail goes to this email (Default is in sadmin.cfg)
-#sa.pid_timeout      = 7200       # PID File Default Time to Live in seconds.
+#sa.pid_timeout      = 7200       # Default Time to Live in seconds for the PID File
 #sa.lock_timeout     = 3600       # A host can be lock for this number of seconds, auto unlock after
 # ==================================================================================================
 
@@ -139,14 +142,15 @@ show_password       = False                                             # Show D
 
 
 
-#===================================================================================================
+
 # Standardize Print Line Function 
 #===================================================================================================
 def printline(col1="",col2="",col3=""):
     global lcount                                                       # Global line counter
+
     lcount += 1                                                         # Increase line counter
     print ("[%03d] " % lcount, end='')                                  # Print line counter
-    if col1 != "" : print ("%-33s" % (col1), end='')                    # If col1 not empty print it
+    if col1 != "" : print ("%-36s" % (col1), end='')                    # If col1 not empty print it
     if col2 != "" : print ("%-36s" % (col2), end='')                    # If col2 not empty print it
     if col1 != "" and col2 != "" and col3 != "" :
         print ("%-s%-s%-s" % (": ",col3," "))
@@ -155,7 +159,7 @@ def printline(col1="",col2="",col3=""):
 
 
 
-#===================================================================================================
+
 # Standardize Print Header Function 
 #===================================================================================================
 def printheader(col1,col2,col3=" "):
@@ -170,202 +174,78 @@ def printheader(col1,col2,col3=" "):
 
 
 
+# Standardize Section name 
 #===================================================================================================
+def print_section_name(section_name: str):
+    print ("\n%s\n" % section_name )
+
+
+
+
 # Print SADMIN Function available to Users
 #===================================================================================================
 def print_functions():
     printheader ("Calling Functions","Description","  This System Result")
 
-    pexample="sa.get_release()"                                         # Variable Name
-    pdesc="SADMIN Release Number (XX.XX)"                               # Function Description
-    presult=sa.get_release()                                            # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
+    printline ("sa.get_release()","SADMIN Release Number (XX.XX)",sa.get_release())
+    printline ("sa.get_ostype()","OS Type (Uppercase,LINUX,AIX,DARWIN)",sa.get_ostype()) 
+    printline ("sa.get_osversion()","Return O/S Version (Ex: 7.2, 6.5)",sa.get_osversion())  
+    printline ("sa.get_osmajorversion()","Return O/S Major Version (Ex 7, 6)",sa.get_osmajorversion())
+    printline ("sa.get_osminorversion()","Return O/S Minor Version (Ex 2, 3)",sa.get_osminorversion())
+    printline ("sa.get_osname()","O/S Name (REDHAT,CENTOS,UBUNTU,...)",sa.get_osname())
+    printline ("sa.get_oscodename()","O/S Project Code Name",sa.get_oscodename())
+    printline ("sa.get_kernel_version()","O/S Running Kernel Version",sa.get_kernel_version())
+    printline ("sa.get_kernel_bitmode()","O/S Kernel Bit Mode (32 or 64)",sa.get_kernel_bitmode()) 
+    printline ("sa.phostname","Current Host Name",sa.phostname)
+    printline ("sa.get_host_ip()","Current Host IP Address",sa.get_host_ip())
+    printline ("sa.get_domainname()","Current Host Domain Name",sa.get_domainname()) 
+    printline ("sa.get_fqdn()","Fully Qualified Domain Host Name",sa.get_fqdn())
+    printline ("sa.get_serial()","Get System serial Number",sa.get_serial())
+    printline ("sa.get_epoch_time()","Get Current Epoch Time",sa.get_epoch_time())
+    printline ("sa.epoch_to_date(%d)" % (sa.get_epoch_time()),"Convert epoch time to date",sa.epoch_to_date(sa.get_epoch_time()))
+    printline ("sa.date_to_epoch(2018.06.30 10:00:44)","Convert Date to epoch time",sa.date_to_epoch("2018.06.30 10:00:44"))
 
-    pexample="sa.get_ostype()"                                          # Variable Name
-    pdesc="OS Type (Uppercase,LINUX,AIX,DARWIN)"                        # Function Description
-    presult=sa.get_ostype()                                             # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.get_osversion()"                                       # Variable Name
-    pdesc="Return O/S Version (Ex: 7.2, 6.5)"                           # Function Description
-    presult=sa.get_osversion()                                          # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.get_osmajorversion()"                                  # Variable Name
-    pdesc="Return O/S Major Version (Ex 7, 6)"                          # Function Description
-    presult=sa.get_osmajorversion()                                     # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.get_osminorversion()"                                  # Variable Name
-    pdesc="Return O/S Minor Version (Ex 2, 3)"                          # Function Description
-    presult=sa.get_osminorversion()                                     # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.get_osname()"                                          # Variable Name
-    pdesc="O/S Name (REDHAT,CENTOS,UBUNTU,...)"                         # Function Description
-    presult=sa.get_osname()                                             # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.get_oscodename()"                                      # Variable Name
-    pdesc="O/S Project Code Name"                                       # Function Description
-    presult=sa.get_oscodename()                                         # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.get_kernel_version()"                                  # Example Calling Function
-    pdesc="O/S Running Kernel Version"                                  # Function Description
-    presult=sa.get_kernel_version()                                     # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.get_kernel_bitmode()"                                  # Example Calling Function
-    pdesc="O/S Kernel Bit Mode (32 or 64)"                              # Function Description
-    presult=sa.get_kernel_bitmode()                                     # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.phostname"                                             # Variable Name
-    pdesc="Current Host Name"                                           # Function Description
-    presult=sa.phostname                                                # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.get_host_ip()"                                         # Example Calling Function
-    pdesc="Current Host IP Address"                                     # Function Description
-    presult=sa.get_host_ip()                                            # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.get_domainname()"                                      # Example Calling Function
-    pdesc="Current Host Domain Name"                                    # Function Description
-    presult=sa.get_domainname()                                         # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.get_fqdn()"                                            # Example Calling Function
-    pdesc="Fully Qualified Domain Host Name"                            # Function Description
-    presult=sa.get_fqdn()                                               # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.get_serial()"                                          # Example Calling Function
-    pdesc="Get System serial Number"                                    # Function Description
-    presult=sa.get_serial()                                             # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.get_epoch_time()"                                      # Example Calling Function
-    pdesc="Get Current Epoch Time"                                      # Function Description
-    presult=sa.get_epoch_time()                                         # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    wepoch= sa.get_epoch_time()
-    pexample="sa.epoch_to_date(%d)" % (wepoch)                          # Example Calling Function
-    pdesc="Convert epoch time to date"                                  # Function Description
-    presult=sa.epoch_to_date(wepoch)                                    # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-    #print(" ")
-
-    WDATE=sa.epoch_to_date(wepoch)                                      # Set Test Date
-    print ("      WDATE=%s" % (WDATE))                                  # Print Test Date    
-    pexample="sa.date_to_epoch(WDATE)"                                  # Example Calling Function
-    pdesc="Convert Date to epoch time"                                  # Function Description
-    presult=sa.date_to_epoch(WDATE)                                     # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    #print(" ")
     DATE1="2018.06.30 10:00:44" ; DATE2="2018.06.30 10:00:03"           # Set Date to Calc Elapse
     print ("      DATE1 is End date/time   : %s" % (DATE1))             # Print Date1 Used for Ex.
     print ("      DATE2 is Start date/time : %s" % (DATE2))             # Print Date2 Used for Ex.
     pexample="sa.elapse_time(DATE1,DATE2)"                              # Example Calling Function
     pdesc="Elapse Time between two timestamps"                          # Function Description
     presult=sa.elapse_time(DATE1,DATE2)                                 # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
+    printline ("sa.elapse_time(DATE1,DATE2)","Elapse Time between two timestamps",presult) 
 
-    pexample="sa.get_packagetype()"                                     # Example Calling Function
-    pdesc="Get package type (rpm,deb,aix,dmg)"                          # Function Description
-    presult=sa.get_packagetype()                                        # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
+    printline ("sa.get_packagetype()","Get package type (rpm,deb,aix,dmg)",sa.get_packagetype())
+    printline ("sa.get_arch()","Get system architecture",sa.get_arch())
+    printline ("sa.lock_system(hostname)","Lock the specified hostname (Not FQDN)",sa.lock_system(sa.sadm_server,errmsg=False)) 
+    printline ("sa.lock_status(hostname)","Check if host specified is lock",sa.lock_status(sa.sadm_server,errmsg=False)) 
+    printline ("sa.unlock_system(hostname)","Unlock host specified, monitoring on",sa.unlock_system(sa.sadm_server))
+    printline ("sa.write_log('message'[,lf=true])","Write msg to Screen,Log or Both","message")
+    printline ("sa.write_err('message'[,lf=true])","Write message to Log & Error log","message")
+    printline ("sa.sendmail(mail,sub,body,att)","sadm_sendmail(email,\"subject\",\"body\",\"file1,file2\")","")
+    printline ("sa.show_version(pver)","Used -v cmdline to show script info","Ver.+Desc.+LibrVer")
+    printline ("sa.sleep(60,15)","Sleep 60 sec & update every 15 sec.","60...45...30...15...0") 
+    printline ("sa.trimfile(filename,nlines=500)","Keep last 500 lines of filename.","0=Success  1=Error")                                  # Print Example Line
+    return 0 
 
-    pexample="sa.get_arch()"                                            # Example Calling Function
-    pdesc="Get system architecture"                                     # Function Description
-    presult=sa.get_arch()                                               # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
 
-    pexample="sa.lock_system(hostname)"                                 # If Exist=No Error Msg
-    pdesc="Lock the specified hostname (Not FQDN)"                      # Function Description
-    presult=sa.lock_system(sa.sadm_server,errmsg=False)                 # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
 
-    pexample="sa.lock_status(hostname)"                                 # Example Calling Function
-    pdesc="Check if host specified is lock"                             # Function Description
-    presult=sa.lock_status(sa.sadm_server,errmsg=False)                 # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.unlock_system(hostname)"                               # Example Calling Function
-    pdesc="Unlock host specified, monitoring on"                        # Function Description
-    presult=sa.unlock_system(sa.sadm_server)                            # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.write_log('message'[,lf=true])"                        # Example Calling Function
-    pdesc="Write msg to Screen,Log or Both"                             # Function Description
-    presult="message"                                                   # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.write_err('message'[,lf=true])"                        # Example Calling Function
-    pdesc="Write message to Log & Error log"                            # Function Description
-    presult="message"                                                   # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sendmail(mail,sub,body,att)"
-    pdesc="sadm_sendmail(email,\"subject\",\"body\",\"file1,file2\")" 
-    presult=""                                                          # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.show_version(pver)"
-    pdesc="Used -v cmdline to show script info"
-    presult="Ver.+Desc.+LibrVer"                                        # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sleep(60,15)"
-    pdesc="Sleep 60 sec & update every 15 sec."
-    presult="60...45...30...15...0"                                     # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.trimfile(filename,nlines=500)"
-    pdesc="Keep last 500 lines of filename."
-    presult="0=Success  1=Error"                                        # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
 
 #===================================================================================================
 # Print SADMIN Function available to Users
 #===================================================================================================
 def print_python_function():
-#    pdb.set_trace()                                                    # Activate Python Debugging
 
+    #pdb.set_trace()                                                    # Activate Python Debugging
     #(db_conn,db_cur,db_errno,db_errmsg) = sa.db_connect('sadmin')
     #print ("\ndb_conn=%d, db_cur=%d, db_errno=%d, db_errmsg%s\n") % (db_conn,db_cur,db_errno,db_errmsg)
-    pexample="sa.db_connect('sadmin')"                                  
-    pdesc="Open connection to database"                                 # Function Description
-    presult="1=Success 1=Error"                                         # Return 3 Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-                 
-    pexample="sa.db_close():"           
-    pdesc="Close connection to database"                                # Function Description
-    presult="0=Success, 1=Error"                                        # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-                 
-    pexample="sa.db_silent"                             
-    pdesc="If DBerror, No ErrMsg(Return Error#)"
-    presult=sa.db_silent                                                # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-                 
-    pexample="sa.db_used"                                               # Variable Name
-    pdesc="Need to access SADMIN Database ?"                            # Function Description
-    presult=sa.db_used                                                  # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
 
-    pexample="sa.silentremove('file')"                                  # Example Calling Function
-    pdesc="Silent file delete (no msg, no err)"                         # Function Description
-    presult=sa.silentremove('file')                                     # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
+    printline ("sa.db_connect('sadmin')","Open connection to database","1=Success 1=Error") 
+    printline ("sa.db_close()","Close connection to database","0=Success, 1=Error")
+    printline ("sa.db_silent","If DBerror, No ErrMsg(Return Error#)",sa.db_silent) 
+    printline ("sa.db_used","Need to access SADMIN Database ?",sa.db_used)
+    printline ("sa.silentremove('file')","Silent file delete (no msg, no err)",sa.silentremove('file'))
+    printline ("sa.touch_file('filename')","Create an empty file","0=File created 1=Error")
+    return 0 
 
-    pexample="sa.touch_file('filename')"                                # Example Calling Function
-    pdesc="Create an empty file"                                        # Function Description
-    presult="0=File created 1=Error"                                    # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
 
 
 
@@ -376,76 +256,20 @@ def print_python_function():
 def print_user_variables():
     printheader ("User var. that affect SADMIN behavior","Description","  This system result")
 
-    pexample="pver"                                                     # Variable Name
-    pdesc="Program version number"                                      # Function Description
-    presult=pver                                                        # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.pn"                                                    # Variable Name
-    pdesc="Program name"                                                # Function Description
-    presult=sa.pn                                                       # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.pinst"                                                 # Variable Name
-    pdesc="Programe name without extension"                             # Function Description
-    presult=sa.pinst                                                    # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.pusername"                                             # Variable Name
-    pdesc="Current user name"                                           # Function Description
-    presult=sa.pusername                                                # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.ppid"                                                  # Variable Name
-    pdesc="Current Process ID"                                          # Function Description
-    presult=sa.ppid                                                     # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.multiple_exec"                                         # Variable Name
-    pdesc="Allow running multiple copy"                                 # Function Description
-    presult=sa.multiple_exec                                            # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.use_rch"                                               # Variable Name
-    pdesc="Generate entry in .rch file"                                 # Function Description
-    presult=sa.use_rch                                                  # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-                 
-    pexample="sa.log_type"                                              # Variable Name
-    pdesc="Set Output to [S]creen [L]og [B]oth"                         # Write_log & write_err out
-    presult=sa.log_type                                                 # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-    
-    pexample="sa.log_append"                                            # Variable Name
-    pdesc="Append to log(True), New log=(False)"                        # Function Description
-    presult=sa.log_append                                               # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-                 
-    pexample="sa.log_header"                                            # Variable Name
-    pdesc="Generate header in log"                                      # Function Description
-    presult=sa.log_header                                               # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-                 
-    pexample="sa.log_footer"                                            # Variable Name
-    pdesc="Generate footer in log"                                      # Function Description
-    presult=sa.log_footer                                               # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-                       
-    pexample="sa.pexit_code"                                            # Variable Name
-    pdesc="Script Exit Return Code"                                     # Function Description
-    presult=sa.pexit_code                                               # Current Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-        
-    pexample="sa.proot_only "                                           # Variable Name
-    pdesc="Script can only be run by root"                              # Function Description
-    presult=sa.proot_only                                               # Current Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-                                              
-    pexample="sa.psadm_server_only"                                     # Variable Name
-    pdesc="Script can only run on SADMIN server"                        # Function Description
-    presult=sa.psadm_server_only                                        # Current Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-                       
+    printline ("pver","Program version number",pver)                    # Print Example Line
+    printline ("sa.pn","Program name",sa.pn)  
+    printline ("sa.pinst","Programe name without extension",sa.pinst)
+    printline ("sa.pusername","Current user name",sa.pusername)
+    printline ("sa.ppid","Current Process ID",sa.ppid)
+    printline ("sa.multiple_exec","Allow running multiple copy",sa.multiple_exec)
+    printline ("sa.use_rch","Generate entry in .rch file",sa.use_rch) 
+    printline ("sa.log_type","Set Output to [S]creen [L]og [B]oth",sa.log_type)
+    printline ("sa.log_append","Append to log(True), New log=(False)",sa.log_append)
+    printline ("sa.log_header","Generate header in log",sa.log_header)
+    printline ("sa.log_footer","Generate footer in log",sa.log_footer)
+    printline ("sa.pexit_code","Script Exit Return Code",sa.pexit_code)
+    printline ("sa.proot_only","Script can only be run by root",sa.proot_only)
+    printline ("sa.psadm_server_only","Script can only run on SADMIN server",sa.psadm_server_only)
     return(0)
 
 
@@ -455,616 +279,214 @@ def print_user_variables():
 def print_directories():
     printheader ("Directories Var. Avail.","Description","  This System Result")
 
-    pexample="sa.dir_base"                                              # Variable Name
-    pdesc="SADMIN Root Directory"                                       # Function Description
-    presult=sa.dir_base                                                 # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-    
-    pexample="sa.dir_bin"                                               # Variable Name
-    pdesc="SADMIN Scripts Directory"                                    # Function Description
-    presult=sa.dir_bin                                                  # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-    
-    pexample="sa.dir_tmp"                                               # Variable Name
-    pdesc="SADMIN Temporary file(s) Directory"                          # Function Description
-    presult=sa.dir_tmp                                                  # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-    
-    pexample="sa.dir_lib"                                               # Variable Name
-    pdesc="SADMIN Shell & Python Library Dir."                          # Function Description
-    presult=sa.dir_lib                                                  # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
+    # Sadmin Directories Aliases Variables.
+    printline ("sa.dir_base","SADMIN Root Directory",sa.dir_base)
+    printline ("sa.dir_bin","SADMIN Scripts Directory",sa.dir_bin)
+    printline ("sa.dir_tmp","SADMIN Temporary file(s) Directory",sa.dir_tmp) 
+    printline ("sa.dir_lib","SADMIN Shell & Python Library Dir.",sa.dir_lib)
+    printline ("sa.dir_log","SADMIN Script Log Directory",sa.dir_log)       
+    printline ("sa.dir_cfg","SADMIN Configuration Directory",sa.dir_cfg)                                  # Print Example Line
+    printline ("sa.dir_sys","Server Startup/Shutdown Script Dir.",sa.dir_sys)                                  # Print Example Line
+    printline ("sa.dir_doc","SADMIN Documentation Directory",sa.dir_doc)                                  # Print Example Line
+    printline ("sa.dir_pkg","SADMIN Packages Directory",sa.dir_pkg)                                  # Print Example Line
+    printline ("sa.dir_dat","Server Data Directory",sa.dir_dat)                                  # Print Example Line
+    printline ("sa.dir_nmon","Server NMON - Data Collected Dir.",sa.dir_nmon)                                  # Print Example Line
+    printline ("sa.dir_dr","Server Disaster Recovery Info Dir.",sa.dir_dr)                                  # Print Example Line
+    printline ("sa.dir_rch","Server Return Code History Dir.",sa.dir_rch)                                  # Print Example Line
+    printline ("sa.dir_net","Server Network Information Dir.",sa.dir_net)                                  # Print Example Line
+    printline ("sa.dir_rpt","SYStem MONitor Report Directory",sa.dir_rpt)                                  # Print Example Line
+    printline ("sa.dir_dbb","Database Backup Directory",sa.dir_dbb)                                  # Print Example Line
+    printline ("sa.dir_setup","SADMIN Setup Directory.",sa.dir_setup)                                  # Print Example Line
+    printline ("sa.dir_usr","User/System specific directory",sa.dir_usr)                                  # Print Example Line
+    printline ("sa.dir_usr_bin","User/System specific bin/script Dir.",sa.dir_usr_bin)                                  # Print Example Line
+    printline ("sa.dir_usr_lib","User/System specific library Dir.",sa.dir_usr_lib)                                  # Print Example Line
+    printline ("sa.dir_usr_doc","User/System specific documentation",sa.dir_usr_doc)                                  # Print Example Line
+    printline ("sa.dir_usr_mon","User/System specific SysMon Scripts",sa.dir_usr_mon)                                  # Print Example Line
+    printline ("sa.dir_www","SADMIN Web Site Root Directory",sa.dir_www)                                  # Print Example Line
+    printline ("sa.dir_www_doc","SADMIN Web Site Root Directory",sa.dir_www_doc)                                  # Print Example Line
+    printline ("sa.dir_www_dat","SADMIN Web Site Systems Data Dir.",sa.dir_www_dat)                                  # Print Example Line
+    printline ("sa.dir_www_lib","SADMIN Web Site PHP Library Dir.",sa.dir_www_lib)                                  # Print Example Line
+    printline ("sa.dir_www_tmp","SADMIN Web Temp Working Directory",sa.dir_www_tmp)                                  # Print Example Line
+    printline ("sa.dir_www_perf","Web system performance Graph Dir.",sa.dir_www_perf)                                  # Print Example Line
+       
 
-    pexample="sa.dir_log"                                               # Variable Name
-    pdesc="SADMIN Script Log Directory"                                 # Function Description
-    presult=sa.dir_log                                                  # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-    
-    pexample="sa.dir_cfg"                                               # Variable Name
-    pdesc="SADMIN Configuration Directory"                              # Function Description
-    presult=sa.dir_cfg                                                  # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.dir_sys"                                               # Variable Name
-    pdesc="Server Startup/Shutdown Script Dir."                         # Function Description
-    presult=sa.dir_sys                                                  # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-    
-    pexample="sa.dir_doc"                                               # Variable Name
-    pdesc="SADMIN Documentation Directory"                              # Function Description
-    presult=sa.dir_doc                                                  # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-    
-    pexample="sa.dir_pkg"                                               # Variable Name
-    pdesc="SADMIN Packages Directory"                                   # Function Description
-    presult=sa.dir_pkg                                                  # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-        
-    pexample="sa.dir_dat"                                               # Variable Name
-    pdesc="Server Data Directory"                                       # Function Description
-    presult=sa.dir_dat                                                  # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.dir_nmon"                                              # Variable Name
-    pdesc="Server NMON - Data Collected Dir."                           # Function Description
-    presult=sa.dir_nmon                                                 # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-        
-    pexample="sa.dir_dr"                                                # Variable Name
-    pdesc="Server Disaster Recovery Info Dir."                          # Function Description
-    presult=sa.dir_dr                                                   # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-        
-    pexample="sa.dir_rch"                                               # Variable Name
-    pdesc="Server Return Code History Dir."                             # Function Description
-    presult=sa.dir_rch                                                  # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-        
-    pexample="sa.dir_net"                                               # Variable Name
-    pdesc="Server Network Information Dir."                             # Function Description
-    presult=sa.dir_net                                                  # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-        
-    pexample="sa.dir_rpt"                                               # Variable Name
-    pdesc="SYStem MONitor Report Directory"                             # Function Description
-    presult=sa.dir_rpt                                                  # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-        
-    pexample="sa.dir_dbb"                                               # Variable Name
-    pdesc="Database Backup Directory"                                   # Function Description
-    presult=sa.dir_dbb                                                  # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-        
-    pexample="sa.dir_setup"                                             # Variable Name
-    pdesc="SADMIN Setup Directory."                                     # Function Description
-    presult=sa.dir_setup                                                # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-        
-    pexample="sa.dir_usr"                                               # Variable Name
-    pdesc="User/System specific directory"                              # Function Description
-    presult=sa.dir_usr                                                  # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-        
-    pexample="sa.dir_usr_bin"                                           # Variable Name
-    pdesc="User/System specific bin/script Dir."                        # Function Description
-    presult=sa.dir_usr_bin                                              # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-        
-    pexample="sa.dir_usr_lib"                                           # Variable Name
-    pdesc="User/System specific library Dir."                           # Function Description
-    presult=sa.dir_usr_lib                                              # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-        
-    pexample="sa.dir_usr_doc"                                           # Variable Name
-    pdesc="User/System specific documentation"                          # Function Description
-    presult=sa.dir_usr_doc                                              # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-        
-    pexample="sa.dir_usr_mon"                                           # Variable Name
-    pdesc="User/System specific SysMon Scripts"                         # Function Description
-    presult=sa.dir_usr_mon                                              # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.dir_www"                                               # Variable Name
-    pdesc="SADMIN Web Site Root Directory"                              # Function Description
-    presult=sa.dir_www                                                  # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-       
-    pexample="sa.dir_www_doc"                                           # Variable Name
-    pdesc="SADMIN Web Site Root Directory"                              # Function Description
-    presult=sa.dir_www_doc                                              # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-       
-    pexample="sa.dir_www_dat"                                           # Variable Name
-    pdesc="SADMIN Web Site Systems Data Dir."                           # Function Description
-    presult=sa.dir_www_dat                                              # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-       
-    pexample="sa.dir_www_lib"                                           # Variable Name
-    pdesc="SADMIN Web Site PHP Library Dir."                            # Function Description
-    presult=sa.dir_www_lib                                              # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-           
-    pexample="sa.dir_www_tmp"                                           # Variable Name
-    pdesc="SADMIN Web Temp Working Directory"                           # Function Description
-    presult=sa.dir_www_tmp                                              # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-       
-    pexample="sa.dir_www_perf"                                          # Variable Name
-    pdesc="Web system performance Graph Dir."                           # Function Description
-    presult=sa.dir_www_perf                                             # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-       
 
 
 #===================================================================================================
 # Print Files Variables Available to Users
 #===================================================================================================
 def print_file_variable():
+
     printheader ("SADMIN FILES VARIABLES AVAIL.","Description","  This System Result")
-
-    pexample="sa.pid_file"                                              # Variable Name
-    pdesc="Current script PID file"                                     # Function Description
-    presult=sa.pid_file                                                 # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.cfg_file"                                              # Variable Name
-    pdesc="SADMIN configuration file"                                   # Function Description
-    presult=sa.cfg_file                                                 # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.cfg_hidden"                                            # Name of Variable
-    pdesc="SADMIN configuration template"                               # Variable Description
-    presult=sa.cfg_hidden                                               # Actual Content of Variable
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.alert_file"                                            # Name of Variable
-    pdesc="Alert group definition file"                                 # Variable Description
-    presult=sa.alert_file                                               # Actual Content of Variable
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.alert_init"                                            # Name of Variable
-    pdesc="Alert group template file"                                   # Variable Description
-    presult=sa.alert_init                                               # Actual Content of Variable
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.alert_hist"                                            # Name of Variable
-    pdesc="Alert History file"                                          # Variable Description
-    presult=sa.alert_hist                                               # Actual Content of Variable
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.alert_hini"                                            # Name of Variable
-    pdesc="Alert History template file"                                 # Variable Description
-    presult=sa.alert_hini                                               # Actual Content of Variable
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.tmp_file1"                                             # Variable Name
-    pdesc="User usable Temp Work File 1"                                # Function Description
-    presult=sa.tmp_file1                                                # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-    
-    pexample="sa.tmp_file2"                                             # Variable Name
-    pdesc="User usable Temp Work File 2"                                # Function Description
-    presult=sa.tmp_file2                                                # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-    
-    pexample="sa.tmp_file3"                                             # Name of Variable
-    pdesc="User usable Temp Work File 3"                                # Function Description
-    presult=sa.tmp_file3                                                # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-    
-    pexample="sa.log_file"                                              # Name of Variable
-    pdesc="Script Log File"                                             # Function Description
-    presult=sa.log_file                                                 # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-    
-    pexample="sa.rch_file"                                              # Variable Name
-    pdesc="Script Return Code History File"                             # Function Description
-    presult=sa.rch_file                                                 # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-    
-    pexample="sa.dbpass_file"                                           # Variable Name
-    pdesc="SADMIN Database User Password File"                          # Function Description
-    presult=sa.dbpass_file                                              # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-    
-    pexample="sa.rpt_file"                                              # Variable Name
-    pdesc="[SYS]tem [MON]itor report file"                              # Function Description
-    presult=sa.rpt_file                                                 # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-    
-    pexample="sa.backup_list"                                           # Name Of variable
-    pdesc="Backup list file name"                                       # Variable Description
-    presult=sa.backup_list                                              # Variable Content
-    printline (pexample,pdesc,presult)                                  # Print Variable Line
-    
-    pexample="sa.backup_list_init"                                      # Name Of variable
-    pdesc="Backup list template file"                                   # Variable Description
-    presult=sa.backup_list_init                                         # Variable Content
-    printline (pexample,pdesc,presult)                                  # Print Variable Line
-    
-    pexample="sa.backup_exclude"                                        # Name Of variable
-    pdesc="Backup exclude list file name"                               # Variable Description
-    presult=sa.backup_exclude                                           # Variable Content
-    printline (pexample,pdesc,presult)                                  # Print Variable Line
-    
-    pexample="sa.backup_exclude_init"                                   # Name Of variable
-    pdesc="Backup exclude template file"                                # Variable Description
-    presult=sa.backup_exclude_init                                      # Variable Content
-    printline (pexample,pdesc,presult)                                  # Print Variable Line
+    print_section_name ("SADMIN File Name Aliases Variables")
+    printline ("sa.pid_file","Current script PID file",sa.pid_file)  
+    printline ("sa.cfg_file","SADMIN configuration file",sa.cfg_file)  
+    printline ("sa.cfg_hidden","SADMIN configuration template",sa.cfg_hidden)
+    printline ("sa.alert_file","Alert group definition file",sa.alert_file)
+    printline ("sa.alert_init","Alert group template file",sa.alert_init)
+    printline ("sa.alert_hist","Alert History file",sa.alert_hist) 
+    printline ("sa.alert_hini","Alert History template file",sa.alert_hini)
+    printline ("sa.tmp_file1","User usable Temp Work File 1",sa.tmp_file1)
+    printline ("sa.tmp_file2","User usable Temp Work File 2",sa.tmp_file2)
+    printline ("sa.tmp_file3","User usable Temp Work File 3",sa.tmp_file3)
+    printline ("sa.log_file","Script Log File",sa.log_file)
+    printline ("sa.rch_file","Script Return Code History File",sa.rch_file) 
+    printline ("sa.dbpass_file","SADMIN Database User Password File",sa.dbpass_file) 
+    printline ("sa.rpt_file","[SYS]tem [MON]itor report file",sa.rpt_file)
+    printline ("sa.backup_list","Backup list file name",sa.backup_list)
+    printline ("sa.backup_list_init","Backup list template file",sa.backup_list_init)
+    printline ("sa.backup_exclude","Backup exclude list file name",sa.backup_exclude)                                  # Print Variable Line
+    printline ("sa.backup_exclude_init","Backup exclude template file",sa.backup_exclude_init)                                  # Print Variable Line
 
 
 
+
+
+
+
+# Print SADMIN main configuration file (SADMIN/cfg/sadmin.cfg) variables available to users
 #===================================================================================================
-# Print sadmin.cfg Variables available to users
-#===================================================================================================
-def print_sadmin_cfg():
-    global show_password                                                # Command line options
+def print_sadmin_cfg(show_password=False):
 
     printheader ("SADMIN CONFIG FILE VARIABLES","Description","  This System Result")
 
-    pexample="sa.sadm_server"                                           # Variable Name
-    pdesc="SADMIN server name (FQDN)"                                   # Function Description
-    presult=sa.sadm_server                                              # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
+    print_section_name ("SADMIN General Section")
+    printline ("sa.sadm_server","SADMIN server name (FQDN)",sa.sadm_server) 
+    printline ("sa.sadm_host_type","SADMIN [C]lient or [S]erver",sa.sadm_host_type)   
+    printline ("sa.sadm_mail_addr","SADMIN Administrator Email(s)",sa.sadm_mail_addr)
+    printline ("sa.sadm_cie_name","Your Company name",sa.sadm_cie_name) 
+    printline ("sa.sadm_domain","Server creation default domain",sa.sadm_domain)
+    printline ("sa.sadm_user","SADMIN User Name",sa.sadm_user) 
+    printline ("sa.sadm_group","SADMIN Group Name",sa.sadm_group)
+    printline ("sa.sadm_pwd_random","Auto generation of '$SADM_USER' pwd",sa.sadm_pwd_random) 
+    printline ("sa.sadm_pid_timeout","PID file default TimeToLive (Sec)",sa.sadm_pid_timeout)
+    printline ("sa.sadm_lock_timeout","Maximun nb. sec. a host can be lock",sa.sadm_lock_timeout)
 
-    pexample="sa.sadm_host_type"                                        # Variable Name
-    pdesc="SADMIN [C]lient or [S]erver"                                 # Function Description
-    presult=sa.sadm_host_type                                           # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
+    print_section_name ("Alerting/Notification Section")
+    printline ("sa.sadm_alert_type","0=NoMail 1=OnError 3=OnSuccess 4=All",sa.sadm_alert_type) 
+    printline ("sa.sadm_alert_group","Default Alert Group",sa.sadm_alert_group) 
+    printline ("sa.sadm_alert_repeat","Seconds to wait before repeat alert",sa.sadm_alert_repeat)
+    presult="*Hidden*"                                                  # Don't show TextBelt Key
+    if show_password : presult=sa.sadm_textbelt_key                     # Unless requested (-p)
+    printline ("sa.sadm_textbelt_key","TextBelt.com API Key",presult)   
+    printline ("sa.sadm_textbelt_url","TextBelt.com API URL",sa.sadm_textbelt_url) 
 
-    pexample="sa.sadm_mail_addr"                                        # Variable Name
-    pdesc="SADMIN Administrator Default Email"                          # Function Description
-    presult=sa.sadm_mail_addr                                           # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
 
-    pexample="sa.sadm_alert_type"                                       # Variable Name
-    pdesc="0=NoMail 1=OnError 3=OnSuccess 4=All"                        # Function Description
-    presult=sa.sadm_alert_type                                          # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
+    print_section_name ("Database Section")
+    printline ("sa.sadm_dbname","SADMIN Database Name",sa.sadm_dbname)  
+    printline ("sa.sadm_dbhost","SADMIN Database Host",sa.sadm_dbhost)  
+    printline ("sa.sadm_dbport","SADMIN Database Host TCP Port",sa.sadm_dbport)
+    printline ("sa.sadm_rw_dbuser","SADMIN Database Read/Write User",sa.sadm_rw_dbuser) 
+    presult="*Hidden*"                                                  # Default don't show passwd
+    if show_password : presult=sa.sadm_rw_dbpwd                         # Selected to Show DB Passwd
+    printline ("sa.sadm_rw_dbpwd","SADMIN Database Read/Write User Pwd",presult)
+    printline ("sa.sadm_ro_dbuser","SADMIN Database Read Only User",sa.sadm_ro_dbuser) 
+    presult="*Hidden*"                                                  # Default don't show passwd
+    if show_password : presult=sa.sadm_ro_dbpwd                         # Selected to Show DB Passwd
+    printline ("sa.sadm_ro_dbpwd","SADMIN Database Read Only User Pwd",presult) 
 
-    pexample="sa.sadm_alert_group"                                      # Variable Name
-    pdesc="Default Alert Group"                                         # Function Description
-    presult=sa.sadm_alert_group                                         # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
+    print_section_name ("Web Interface Section")
+    printline ("sa.sadm_www_user","User that Run Apache Web Server",sa.sadm_www_user)   
+    printline ("sa.sadm_www_group","Group that Run Apache Web Server",sa.sadm_www_group)
+    printline ("sa.sadm_monitor_update_interval","SYSMON web page refresh rate (Sec)",sa.sadm_monitor_update_interval)
+    printline ("sa.sadm_monitor_recent_count","SYSMON web page nb. recent scripts",sa.sadm_monitor_recent_count)
+    printline ("sa.sadm_monitor_recent_exclude","SYSMON recent scripts excluded",sa.sadm_monitor_recent_exclude)
 
-    pexample="sa.sadm_alert_repeat"                                     # Variable Name
-    pdesc="Seconds to wait before repeat alert"                         # Function Description
-    presult=sa.sadm_alert_repeat                                        # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_days_history"                                     # Variable Name
-    pdesc="Days to keep alert in History file"                          # Function Description
-    presult=sa.sadm_days_history                                        # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_max_arc_line"                                     # Variable Name
-    pdesc="Max lines to keep in alert archive file"                     # Function Description
-    presult=sa.sadm_max_arc_line                                        # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_textbelt_key"                                     # Variable Name
-    pdesc="TextBelt.com API Key"                                        # Function Description
-    presult=""                                                          # Default Don't show Key
-    if show_password : 
-        presult=sa.sadm_textbelt_key                                    # Selected show TextBelt Key
-    else: 
-        presult="*Hidden*"                                              # Selected show TextBelt Key
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_textbelt_url"                                     # Variable Name
-    pdesc="TextBelt.com API URL"                                        # Function Description
-    presult=sa.sadm_textbelt_url                                        # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_cie_name"                                         # Variable Name
-    pdesc="Your Company name"                                           # Function Description
-    presult=sa.sadm_cie_name                                            # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_domain"                                           # Variable Name
-    pdesc="Server creation default domain"                              # Function Description
-    presult=sa.sadm_domain                                              # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_user"                                             # Variable Name
-    pdesc="SADMIN User Name"                                            # Function Description
-    presult=sa.sadm_user                                                # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_group"                                            # Variable Name
-    pdesc="SADMIN Group Name"                                           # Function Description
-    presult=sa.sadm_group                                               # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_pwd_random"                                       # Variable Name
-    pdesc="Auto generation of '$SADM_USER' pwd"                         # Description
-    presult=sa.sadm_pwd_random                                          # Actual value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_www_user"                                         # Variable Name
-    pdesc="User that Run Apache Web Server"                             # Function Description
-    presult=sa.sadm_www_user                                            # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_www_group"                                        # Variable Name
-    pdesc="Group that Run Apache Web Server"                            # Function Description
-    presult=sa.sadm_www_group                                           # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_dbname"                                           # Variable Name
-    pdesc="SADMIN Database Name"                                        # Function Description
-    presult=sa.sadm_dbname                                              # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_dbhost"                                           # Variable Name
-    pdesc="SADMIN Database Host"                                        # Function Description
-    presult=sa.sadm_dbhost                                              # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_dbport"                                           # Variable Name
-    pdesc="SADMIN Database Host TCP Port"                               # Function Description
-    presult=sa.sadm_dbport                                              # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-    
-    pexample="sa.sadm_rw_dbuser"                                        # Variable Name
-    pdesc="SADMIN Database Read/Write User"                             # Function Description
-    presult=sa.sadm_rw_dbuser                                           # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_rw_dbpwd"                                         # Variable Name
-    pdesc="SADMIN Database Read/Write User Pwd"                         # Function Description
-    presult=""                                                          # Default don't show passwd
-    if show_password : 
-        presult=sa.sadm_rw_dbpwd                                        # Selected to Show DB Passwd
-    else: 
-        presult="*Hidden*"                                              # Selected to Show DB Passwd
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_ro_dbuser"                                        # Variable Name
-    pdesc="SADMIN Database Read Only User"                              # Function Description
-    presult=sa.sadm_ro_dbuser                                           # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_ro_dbpwd"                                         # Variable Name
-    pdesc="SADMIN Database Read Only User Pwd"                          # Function Description
-    presult=""                                                          # Default don't show passwd
-    if show_password : 
-        presult=sa.sadm_ro_dbpwd                                        # Selected to Show DB Passwd
-    else: 
-        presult="*Hidden*"                                              # Selected to Show DB Passwd
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_smtp_server"                                      # Variable Name
-    pdesc="Your internet smtp server"                                   # Function Description
-    presult=sa.sadm_smtp_server                                         # Default don't show passwd
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_smtp_port"                                        # Variable Name
-    pdesc="Your internet smtp server port"                              # Function Description
-    presult=sa.sadm_smtp_port                                           # Default don't show passwd
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_smtp_sender"                                      # Variable Name
-    pdesc="Your internet smtp email address"                            # Function Description
-    presult=sa.sadm_smtp_sender                                         # Email sender name
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_gmpw"                                             # Variable Name
-    pdesc="Your internet smtp email password"                           # Function Description
+    print_section_name ("Email Section")
+    printline ("sa.sadm_mail_addr","SADMIN Administrator Email(s)",sa.sadm_mail_addr)
+    printline ("sa.sadm_smtp_server","Your internet smtp server",sa.sadm_smtp_server)  
+    printline ("sa.sadm_smtp_port","Your internet smtp server port",sa.sadm_smtp_port) 
+    printline ("sa.sadm_smtp_sender","Your internet smtp email address",sa.sadm_smtp_sender)
     presult="*Hidden*"                                                  # Default don't show passwd
     if show_password : presult=sa.sadm_gmpw                             # Selected to Show smtp pwd
-    printline (pexample,pdesc,presult)                                  # Print Example Line
+    printline ("sa.sadm_gmpw","Your internet smtp email password",presult)  
+    printline ("sa.sadm_email_startup","Send email on startup",sa.sadm_email_startup)  
+    printline ("sa.sadm_email_shutdown","Send email on shutdown",sa.sadm_email_shutdown)  
 
-    pexample="sa.sadm_ssh_port"                                         # Variable Name
-    pdesc="SSH Port to communicate with client"                         # Function Description
-    presult=sa.sadm_ssh_port                                            # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
+    print_section_name ("Monitoring Section")
+    printline ("sa.sadm_ssh_port","SSH Port to communicate with client",sa.sadm_ssh_port)
 
-    pexample="sa.sadm_monitor_update_interval"                          # Variable Name
-    pdesc="SYSMON web page refresh rate (Sec)"                          # Refresh rate in seconds
-    presult=sa.sadm_monitor_update_interval                             # Variable Name
-    printline (pexample,pdesc,presult)                                  # Print Example Line
+    print_section_name ("Files/Logs pruning Section")
+    printline ("sa.sadm_nmon_keepdays","Nb. of days to keep nmon perf. file",sa.sadm_nmon_keepdays) 
+    printline ("sa.sadm_rch_keepdays","Nb. days to keep unmodified rch file",sa.sadm_rch_keepdays)
+    printline ("sa.sadm_log_keepdays","Nb. days to keep unmodified log file",sa.sadm_log_keepdays) 
+    printline ("sa.sadm_max_rchline","Trim rch file to this max. of lines",sa.sadm_max_rchline)
+    printline ("sa.sadm_max_logline","Trim log to this maximum of lines",sa.sadm_max_logline)
+    printline ("sa.sadm_days_history","Days to keep alert in History file",sa.sadm_days_history)
+    printline ("sa.sadm_max_arc_line","Max lines to keep in alert archive",sa.sadm_max_arc_line) 
 
-    pexample="sa.sadm_monitor_recent_count"                             # Variable Name
-    pdesc="SYSMON web page nb. recent scripts"                          # 0=no recent else nb 2 show
-    presult=sa.sadm_monitor_recent_count                                # Variable Name
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_monitor_recent_exclude"                           # Variable Name
-    pdesc="SYSMON recent scripts excluded"                              # Script exclude from recent
-    presult=sa.sadm_monitor_recent_exclude                              # Variable Name
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_nmon_keepdays"                                    # Variable Name
-    pdesc="Nb. of days to keep nmon perf. file"                         # Function Description
-    presult=sa.sadm_nmon_keepdays                                       # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_rch_keepdays"                                     # Variable Name
-    pdesc="Nb. days to keep unmodified rch file"                        # Function Description
-    presult=sa.sadm_rch_keepdays                                        # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_log_keepdays"                                     # Variable Name
-    pdesc="Nb. days to keep unmodified log file"                        # Function Description
-    presult=sa.sadm_log_keepdays                                        # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_max_rchline"                                      # Variable Name
-    pdesc="Trim rch file to this max. of lines"                         # Function Description
-    presult=sa.sadm_max_rchline                                         # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_max_logline"                                      # Variable Name
-    pdesc="Trim log to this maximum of lines"                           # Function Description
-    presult=sa.sadm_max_logline                                         # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_network1"                                         # Variable Name
-    pdesc="Network/Netmask 1 inv. IP/Name/Mac"                          # Function Description
-    presult=sa.sadm_network1                                            # Return Value(s)
+    print_section_name ("Subnet Network Scanner Section")
+    presult=sa.sadm_network1    
     if presult == "" : presult="None"
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_network2"                                         # Variable Name
-    pdesc="Network/Netmask 2 inv. IP/Name/Mac"                          # Function Description
-    presult=sa.sadm_network2                                            # Return Value(s)
+    printline ("sa.sadm_network1","Network/Netmask 1 inv. IP/Name/Mac",presult) 
+    presult=sa.sadm_network2
     if presult == "" : presult="None"
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_network3"                                         # Variable Name
-    pdesc="Network/Netmask 3 inv. IP/Name/Mac"                          # Function Description
-    presult=sa.sadm_network3                                            # Return Value(s)
+    printline ("sa.sadm_network2","Network/Netmask 2 inv. IP/Name/Mac",presult) 
+    presult=sa.sadm_network3    
     if presult == "" : presult="None"
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_network4"                                         
-    pdesc="Network/Netmask 4 inv. IP/Name/Mac"                          
-    presult=sa.sadm_network4                                            
+    printline ("sa.sadm_network3","Network/Netmask 3 inv. IP/Name/Mac",presult) 
+    presult=sa.sadm_network4    
     if presult == "" : presult="None"
-    printline (pexample,pdesc,presult)                                  
-
-    pexample="sa.sadm_network5"                                         # Variable Name
-    pdesc="Network/Netmask 5 inv. IP/Name/Mac"                          # Function Description
-    presult=sa.sadm_network5                                            # Return Value(s)
+    printline ("sa.sadm_network4","Network/Netmask 4 inv. IP/Name/Mac",presult) 
+    presult=sa.sadm_network5
     if presult == "" : presult="None"
-    printline (pexample,pdesc,presult)                                  # Print Example Line
+    printline ("sa.sadm_network5","Network/Netmask 5 inv. IP/Name/Mac",presult) 
 
-    pexample="sa.sadm_rear_nfs_server"                                  # Variable Name
-    pdesc="ReaR NFS Server IP or Name"                                  # Function Description
-    presult=sa.sadm_rear_nfs_server                                     # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
+    print_section_name ("ReaR Backup Section")
+    printline ("sa.sadm_rear_nfs_server","ReaR NFS Server IP or Name",sa.sadm_rear_nfs_server)
+    printline ("sa.sadm_rear_nfs_server_ver","ReaR NFS Server Version",sa.sadm_rear_nfs_server_ver)
+    printline ("sa.sadm_rear_nfs_mount_point","ReaR NFS Mount Point",sa.sadm_rear_nfs_mount_point) 
+    printline ("sa.sadm_rear_backup_to_keep","ReaR NFS Backup - Nb. to keep",sa.sadm_rear_backup_to_keep)
+    printline ("sa.sadm_rear_backup_dif","ReaR alert cur vs prev size differ",sa.sadm_rear_backup_dif)
+    printline ("sa.sadm_rear_backup_interval","ReaR alert if no backup for X days",sa.sadm_rear_backup_interval)
+    printline ("sa.sadm_rear_backup_script","ReaR backup script name",sa.sadm_rear_backup_script)
+    printline ("sa.sadm_rear_del_failed_backup","Delete failed backup",sa.sadm_rear_del_failed_backup)
+    printline ("sa.sadm_rear_batch_mode","Run backup in batch mode",sa.sadm_rear_batch_mode)
+    printline ("sa.sadm_rear_batch_startup_time","Batch startup time",sa.sadm_rear_batch_startup_time)  
+    printline ("sa.sadm_rear_backup_concurrent","Concurrent rear backup process",sa.sadm_rear_backup_concurrent)
 
-    pexample="sa.sadm_rear_nfs_mount_point"                             # Variable Name
-    pdesc="ReaR NFS Mount Point"                                        # Function Description
-    presult=sa.sadm_rear_nfs_mount_point                                # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
+    print_section_name ("Backup Section")
+    printline ("sa.sadm_backup_nfs_server","NFS Backup IP or Server Name",sa.sadm_backup_nfs_server)
+    printline ("sa.sadm_backup_nfs_mount_point","NFS Backup Mount Point",sa.sadm_backup_nfs_mount_point) 
+    printline ("sa.sadm_backup_dif","Backup alert cur vs prev size differ","%s %%" % (sa.sadm_backup_dif))
+    printline ("sa.sadm_backup_interval","Backup alert if older than X days","%s days" % (sa.sadm_backup_interval))
+    printline ("sa.sadm_daily_backup_to_keep","Daily Backup to Keep",sa.sadm_daily_backup_to_keep)
+    printline ("sa.sadm_weekly_backup_to_keep","Weekly Backup to Keep",sa.sadm_weekly_backup_to_keep)
+    printline ("sa.sadm_monthly_backup_to_keep","Monthly Backup to Keep",sa.sadm_monthly_backup_to_keep)
+    printline ("sa.sadm_yearly_backup_to_keep","Yearly Backup to keep",sa.sadm_yearly_backup_to_keep)
+    printline ("sa.sadm_weekly_backup_day","Weekly Backup Day (1=Mon,7=Sun)",sa.sadm_weekly_backup_day)
+    printline ("sa.sadm_monthly_backup_date","Monthly Backup Date (1-28)",sa.sadm_monthly_backup_date)
+    printline ("sa.sadm_yearly_backup_month","Yearly Backup Month (1-12)",sa.sadm_yearly_backup_month) 
+    printline ("sa.sadm_yearly_backup_date","Yearly Backup Date (1-31)",sa.sadm_yearly_backup_date)
+    printline ("sa.sadm_backup_concurrent","Concurrent Backup Processes",sa.sadm_backup_concurrent)
 
-    pexample="sa.sadm_rear_backup_to_keep"                              # Variable Name
-    pdesc="ReaR NFS Backup - Nb. to keep"                               # Function Description
-    presult=sa.sadm_rear_backup_to_keep                                 # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
+    print_section_name ("Virtual Machines Export Section")
+    printline ("sa.sadm_vm_export_nfs_server","NFS Export Server",sa.sadm_vm_export_nfs_server)
+    printline ("sa.sadm_vm_export_nfs_server_ver","NFS Export Server Version",sa.sadm_vm_export_nfs_server_ver)
+    printline ("sa.sadm_vm_export_mount_point","NFS Export Mount Point",sa.sadm_vm_export_mount_point)
+    printline ("sa.sadm_vm_export_to_keep","Nb. of export to keep",sa.sadm_vm_export_to_keep)
+    printline ("sa.sadm_vm_export_interval","Days without export before alert",sa.sadm_vm_export_interval)
+    printline ("sa.sadm_vm_export_alert","Issue an alert if interval reached",sa.sadm_vm_export_alert)
+    printline ("sa.sadm_vm_user","User part of 'vboxusers' user group",sa.sadm_vm_user)
+    printline ("sa.sadm_vm_stop_timeout","Max. seconds given for acpi shutdown",sa.sadm_vm_stop_timeout)
+    printline ("sa.sadm_vm_start_interval","Sec. to sleep between each VM start",sa.sadm_vm_start_interval)
+    printline ("sa.sadm_vm_export_batch_mode","Run start script in batch mode (Y/N)",sa.sadm_vm_export_batch_mode)
+    printline ("sa.sadm_vm_export_batch_start_time","Start time for launch batch export",sa.sadm_vm_export_batch_start_time)
+    printline ("sa.sadm_vm_export_concurrent","Concurrent export process",sa.sadm_vm_export_concurrent)
 
-    pexample="sa.sadm_rear_backup_dif"                                  # Variable Name
-    pdesc="ReaR alert cur vs prev size differ"                          # Function Description
-    presult=sa.sadm_rear_backup_dif                                     # Return Value(s)
-    printline (pexample,pdesc,"%s %%" % (presult))                      # Print Example Line
+    print_section_name ("System Update Section")
+    printline ("sa.sadm_osupdate_interval","System Update Interval",sa.sadm_osupdate_interval)
+    printline ("sa.sadm_osupdate_script","System Update Script",sa.sadm_osupdate_script)
+    printline ("sa.sadm_osupdate_autoremove","Auto Remove Updates",sa.sadm_osupdate_autoremove)
+    printline ("sa.sadm_osupdate_flatpak","Flatpak Updates",sa.sadm_osupdate_flatpak)
+    printline ("sa.sadm_osupdate_snap","Snap Updates",sa.sadm_osupdate_snap)
+    printline ("sa.sadm_osupdate_reboot_needed","Reboot Needed",sa.sadm_osupdate_reboot_needed)
+    printline ("sa.sadm_osupdate_reboot_time","Reboot Time",sa.sadm_osupdate_reboot_time)
+    printline ("sa.sadm_osupdate_lock","Lock Updates",sa.sadm_osupdate_lock)
+    printline ("sa.sadm_osupdate_batch_mode","Batch Mode",sa.sadm_osupdate_batch_mode)
+    printline ("sa.sadm_osupdate_batch_start_time","Batch Start Time",sa.sadm_osupdate_batch_start_time)
+    printline ("sa.sadm_osupdate_concurrent","Concurrent Update Process",sa.sadm_osupdate_concurrent)
 
-    pexample="sa.sadm_rear_backup_interval"                             # Variable Name
-    pdesc="ReaR alert if Backup older than"                             # Function Description
-    presult=sa.sadm_rear_backup_interval                                # Return Value(s)
-    printline (pexample,pdesc,"%s days" % (presult))                    # Print Example Line
-
-    pexample="sa.sadm_backup_nfs_server"                                # Variable Name
-    pdesc="NFS Backup IP or Server Name"                                # Function Description
-    presult=sa.sadm_backup_nfs_server                                   # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_backup_nfs_mount_point"                           # Variable Name
-    pdesc="NFS Backup Mount Point"                                      # Function Description
-    presult=sa.sadm_backup_nfs_mount_point                              # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_backup_dif"                                       # Variable Name
-    pdesc="Backup alert cur vs prev size differ"                        # Function Description
-    presult=sa.sadm_backup_dif                                          # Return Value(s)
-    printline (pexample,pdesc,"%s %%" % (presult))                      # Print Example Line
-
-    pexample="sa.sadm_backup_interval"                                  # Variable Name
-    pdesc="Backup alert if older than X days"                           # Function Description
-    presult=sa.sadm_backup_interval                                     # Return Value(s)
-    printline (pexample,pdesc,"%s days" % (presult))                    # Print Example Line
-
-    pexample="sa.sadm_daily_backup_to_keep"                             # Variable Name
-    pdesc="Daily Backup to Keep"                                        # Function Description
-    presult=sa.sadm_daily_backup_to_keep                                # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_weekly_backup_to_keep"                             # Variable Name
-    pdesc="Weekly Backup to Keep"                                       # Function Description
-    presult=sa.sadm_weekly_backup_to_keep                                # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
-
-    pexample="sa.sadm_monthly_backup_to_keep"                            # Variable Name
-    pdesc="Monthly Backup to Keep"                                      # Function Description
-    presult=sa.sadm_monthly_backup_to_keep                               # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
-
-    pexample="sa.sadm_yearly_backup_to_keep"                             # Variable Name
-    pdesc="Yearly Backup to keep"                                       # Function Description
-    presult=sa.sadm_yearly_backup_to_keep                                # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
-
-    pexample="sa.sadm_weekly_backup_day"                                 # Variable Name
-    pdesc="Weekly Backup Day (1=Mon,7=Sun)"                             # Function Description
-    presult=sa.sadm_weekly_backup_day                                    # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
-
-    pexample="sa.sadm_monthly_backup_date"                               # Variable Name
-    pdesc="Monthly Backup Date (1-28)"                                  # Function Description
-    presult=sa.sadm_monthly_backup_date                                  # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
-
-    pexample="sa.sadm_yearly_backup_month"                              # Variable Name
-    pdesc="Yearly Backup Month (1-12)"                                  # Function Description
-    presult=sa.sadm_yearly_backup_month                                 # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_yearly_backup_date"                               # Variable Name
-    pdesc="Yearly Backup Date (1-31)"                                   # Function Description
-    presult=sa.sadm_yearly_backup_date                                  # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_pid_timeout"                                      # Variable Name
-    pdesc="PID file default TimeToLive (Sec)"                           # Function Description
-    presult=sa.sadm_pid_timeout                                         # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_lock_timeout"                                     # Variable Name
-    pdesc="Maximun nb. sec. a host can be lock"                         # Function Description
-    presult=sa.sadm_lock_timeout                                        # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_vm_export_nfs_server"                             # Variable Name
-    pdesc="NFS Export Server"                                           # Function Description
-    presult=sa.sadm_vm_export_nfs_server                                # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_vm_export_mount_point"                            # Variable Name
-    pdesc="NFS Export Mount Point"                                      # Function Description
-    presult=sa.sadm_vm_export_mount_point                               # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_vm_export_to_keep"                                # Variable Name
-    pdesc="Nb. of export to keep"                                       # Function Description
-    presult=sa.sadm_vm_export_to_keep                                   # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_vm_export_interval"                               # Variable Name
-    pdesc="Days without export before alert"                            # Function Description
-    presult=sa.sadm_vm_export_interval                                  # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_vm_export_alert"                                  # Variable Name (Y/N)
-    pdesc="Issue an alert if interval reached"                          # Function Description
-    presult=sa.sadm_vm_export_alert                                     # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_vm_user"                                          # Variable Name
-    pdesc="User part of 'vboxusers' user group"                         # Function Description
-    presult=sa.sadm_vm_user                                             # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_vm_stop_timeout"                                  # Variable Name
-    pdesc="Max. seconds given for acpi shutdown"                        # Function Description
-    presult=sa.sadm_vm_stop_timeout                                     # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.sadm_vm_start_interval"                                # Variable Name
-    pdesc="Sec. to sleep between each VM start"                         # Function Description
-    presult=sa.sadm_vm_start_interval                                   # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
 
 
 
@@ -1073,92 +495,24 @@ def print_sadmin_cfg():
 #===================================================================================================
 def print_command_path():
     
-    printheader ("COMMAND PATH USE BY SADMIN STD. LIBR.","Description","  This System Result")
-
-    pexample="sa.cmd_dmidecode"                                         # Variable Name
-    pdesc="Cmd. 'dmidecode', Get model & type"                          # Variable Description
-    presult=sa.cmd_dmidecode                                            # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-    
-    pexample="sa.cmd_bc"                                                # Variable Name
-    pdesc="Cmd. 'bc', Do some Math."                                    # Variable Description
-    presult=sa.cmd_bc                                                   # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.cmd_fdisk"                                             # Variable Name
-    pdesc="Cmd. 'fdisk', Get Partition Info"                            # Variable Description
-    presult=sa.cmd_fdisk                                                # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-    
-    pexample="sa.cmd_which"                                             # Variable Name
-    pdesc="Cmd. 'which', Get Command location"                          # Variable Description
-    presult=sa.cmd_which                                                # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-    
-    pexample="sa.cmd_locate"                                            # Variable Name
-    pdesc="Cmd. 'locate', Get Command location"                         # Variable Description
-    presult=sa.cmd_locate                                               # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-    
-    pexample="sa.cmd_perl"                                              # Variable Name
-    pdesc="Cmd. 'perl', epoch time Calc."                               # Variable Description
-    presult=sa.cmd_perl                                                 # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.cmd_mutt"                                              # Variable Name
-    pdesc="Cmd. 'mutt', Used to Send Email"                             # Variable Description
-    presult=sa.cmd_mutt                                                 # Variable Content
-    printline (pexample,pdesc,presult)                                  # Print Variable Line
-    
-    pexample="sa.cmd_curl"                                              # Variable Name
-    pdesc="Cmd. 'curl', To send alert to Slack"                         # Variable Description
-    presult=sa.cmd_curl                                                 # Variable Content
-    printline (pexample,pdesc,presult)                                  # Print Variable Line
-
-    pexample="sa.cmd_lscpu"                                             # Variable Name
-    pdesc="Cmd. 'lscpu', Socket & thread info"                          # Variable Description
-    presult=sa.cmd_lscpu                                                # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-    
-    pexample="sa.cmd_nmon"                                              # Variable Name
-    pdesc="Cmd. 'nmon', Collect Perf Statistic"                         # Variable Description
-    presult=sa.cmd_nmon                                                 # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-    
-    pexample="sa.cmd_parted"                                            # Variable Name
-    pdesc="Cmd. 'parted', Get Disk Real Size"                           # Variable Description
-    presult=sa.cmd_parted                                               # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-    
-    pexample="sa.cmd_ethtool"                                           # Variable Name
-    pdesc="Cmd. 'ethtool', Get System IP Info"                          # Variable Description
-    presult=sa.cmd_ethtool                                              # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-    
-    pexample="sa.cmd_ssh"                                               # Variable Name
-    pdesc="Cmd. 'ssh', SSH to SADMIN client"                            # Variable Description
-    presult=sa.cmd_ssh                                                  # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.cmd_ssh_full"                                          # Variable Name
-    pdesc="Cmd. 'ssh', SSH to connect to client"                        # Variable Description
-    presult=sa.cmd_ssh_full                                             # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-    
-    pexample="sa.cmd_rrdtool"                                           # Variable Name
-    pdesc="Cmd. 'rrdtool' to produce graph"                             # Variable Description
-    presult=sa.cmd_rrdtool                                              # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.cmd_lsb_release"                                       # Variable Name
-    pdesc="Cmd. 'lsb_release' to get dist. info"                        # Command Description
-    presult=sa.cmd_lsb_release                                          # Actual Content of Variable
-    printline (pexample,pdesc,presult)                                  # Print Example Line
-
-    pexample="sa.cmd_inxi"                                              # Variable Name
-    pdesc="Cmd. 'inxi' binary location"                                 # Description
-    presult=sa.cmd_inxi                                                 # Actual Content of Variable
-    printline (pexample,pdesc,presult)                                  # Print Example Line
+    printheader ("Command Path Use By SADMIN Library for more security.","Description","  ")
+    printline ("sa.cmd_dmidecode","Cmd. 'dmidecode', Get model & type",sa.cmd_dmidecode) 
+    printline ("sa.cmd_bc","Cmd. 'bc', Do some Math.",sa.cmd_bc) 
+    printline ("sa.cmd_fdisk","Cmd. 'fdisk', Get Partition Info",sa.cmd_fdisk) 
+    printline ("sa.cmd_which","Cmd. 'which', Get Command location",sa.cmd_which) 
+    printline ("sa.cmd_locate","Cmd. 'locate', Get Command location",sa.cmd_locate)
+    printline ("sa.cmd_perl","Cmd. 'perl', epoch time Calc.",sa.cmd_perl)
+    printline ("sa.cmd_mutt","Cmd. 'mutt', Used to Send Email",sa.cmd_mutt)
+    printline ("sa.cmd_curl","Cmd. 'curl', To send alert to Slack",sa.cmd_curl)
+    printline ("sa.cmd_lscpu","Cmd. 'lscpu', Socket & thread info",sa.cmd_lscpu)
+    printline ("sa.cmd_nmon","Cmd. 'nmon', Collect Perf Statistic",sa.cmd_nmon)
+    printline ("sa.cmd_parted","Cmd. 'parted', Get Disk Real Size",sa.cmd_parted)
+    printline ("sa.cmd_ethtool","Cmd. 'ethtool', Get System IP Info",sa.cmd_ethtool)
+    printline ("sa.cmd_rrdtool","Cmd. 'rrdtool' to produce graph",sa.cmd_rrdtool)
+    printline ("sa.cmd_lsb_release","Cmd. 'lsb_release' to get dist. info",sa.cmd_lsb_release)
+    printline ("sa.cmd_inxi","Cmd. 'inxi' binary location",sa.cmd_inxi)
+    printline ("sa.cmd_ssh","Cmd. 'ssh', SSH to SADMIN client",sa.cmd_ssh)
+    printline ("sa.cmd_ssh_full","Cmd. 'ssh', SSH to connect to client",sa.cmd_ssh_full)
 
         
 #===================================================================================================
@@ -1390,7 +744,7 @@ def main(argv):
     print_functions()                                                   # Display Env. Variables
     print_python_function()                                             # Show Python Specific func.
     print_start_stop()                                                  # Show Stop/Start Function
-    print_sadmin_cfg()                                                  # Show sadmin.cfg Variables
+    print_sadmin_cfg(show_password)                                                  # Show sadmin.cfg Variables
     print_directories()                                                 # Show Client Dir. Variables
     print_file_variable()                                               # Show Files Variables
     print_command_path()                                                # Show Command Path
