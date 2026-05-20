@@ -81,6 +81,9 @@
 #@2026_13_03 lib v4.66 Fix caching problem of script log.
 #@2026_03_03 lib v4.67 New variables: 'SADM_VM_EXPORT_SCRIPT', 'SADM_REAR_BACKUP_SCRIPT'
 #@2026_03_03 lib v4.67 New variables: 'SADM_OSUPDATE_SCRIPT'# 
+#@2025_05_18 lib v4.68 NFS Export Server Name was not loaded properly.
+#@2025_05_20 lib v4.68.1 Load new configuratio fields for using with batch mode.
+# 
 # --------------------------------------------------------------------------------------------------
 
 try :
@@ -130,7 +133,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.67"                                # This Library Version
+lib_ver             = "4.68.1"                              # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -206,6 +209,8 @@ sadm_rw_dbpwd                 = ""                          # MySQL Read Write P
 sadm_ro_dbuser                = ""                          # MySQL Read Only User
 sadm_ro_dbpwd                 = ""                          # MySQL Read Only Pwd
 sadm_ssh_port                 = 22                          # SSH Port used in Farm
+
+# Backup Information
 sadm_backup_nfs_server        = ""                          # Backup NFS Server
 sadm_backup_nfs_server_ver    = 3                           # Nfs version to use on mount point
 sadm_backup_nfs_mount_point   = ""                          # Backup Mount Point
@@ -219,6 +224,9 @@ sadm_yearly_backup_month      = 12                          # Yearly Backup Mont
 sadm_yearly_backup_date       = 31                          # Yearly Backup Date(1-31)
 sadm_backup_dif               = 40                          # % Backup Size Diff. Alert
 sadm_backup_interval          = 7                           # Days before yellow alert
+sadm_backup_concurrent        = 1                           # Concurrent backup processes
+
+# Rear Parameters
 sadm_rear_nfs_server          = ""                          # Rear NFS Server
 sadm_rear_nfs_mount_point     = ""                          # Rear NFS Mount Point
 sadm_rear_backup_to_keep      = 3                           # Nb of Rear Backup to keep
@@ -226,11 +234,18 @@ sadm_rear_backup_dif          = 25                          # % size diff cur. v
 sadm_rear_backup_interval     = 7                           # Alert when 7 days without
 sadm_rear_backup_script       = "sadm_rear_backup.sh"       # Name of rear backup script
 sadm_rear_del_failed_backup   = "N"                         # Del backup if it failed
+sadm_rear_batch_mode          = "N"                         # Run rear backup script in batch mode (Y/N)
+sadm_rear_batch_startup_time  = "00:01"                     # Startup time for batch mode
+sadm_rear_backup_concurrent   = 1                           # Concurrent rear backup processes
+
+
+# Network to Scan   
 sadm_network1                 = ""                          # Network Subnet 1 to report
 sadm_network2                 = ""                          # Network Subnet 2 to report
 sadm_network3                 = ""                          # Network Subnet 3 to report
 sadm_network4                 = ""                          # Network Subnet 4 to report
 sadm_network5                 = ""                          # Network Subnet 5 to report
+
 sadm_monitor_update_interval  = 60                          # Sysmon refresh rate
 sadm_monitor_recent_count     = 10                          # SysMon Nb Recent Script
 sadm_monitor_recent_exclude   = "sadm_nmon_watcher"         # SysMon Recent list Exclude 
@@ -242,6 +257,7 @@ sadm_smtp_server              = "smtp.gmail.com"            # smtp host relay na
 sadm_smtp_port                = 587                         # smtp relay host port
 sadm_smtp_sender              = "sender@gmail.com"          # smtp sender account
 sadm_gmpw                     = ""                          # smtp sender password
+#
 sadm_vm_export_nfs_server     = ""                          # Default Export NFS server name
 sadm_vm_export_nfs_server_ver = 3                           # Nfs version to use on mount point
 sadm_vm_export_mount_point    = ""                          # VM Export NFS Mount Point
@@ -253,15 +269,27 @@ sadm_vm_stop_timeout          = 120                         # Time given to stop
 sadm_vm_start_interval        = 30                          # Time given to start a virtual machine
 sadm_vm_export_dif            = 25                          # Current export size vs previous=warning
 sadm_vm_export_script         = "sadm_vm_export.sh"         # Default name of the VM export script
+sadm_vm_export_batch_mode     = "N"                         # Run export script in batch mode (Y/N)
+sadm_vm_export_batch_start_time = "00:01"                   # Start time for launch batch export
+sadm_vm_export_concurrent     = 1                           # Concurrent export processes
 sadm_days_history             = 14                          # Days before moving alerts to Archive
 sadm_max_arc_line             = 1000                        # Maximum Nb. of Lines in Alert Archive
 sadm_email_startup            = "N"                         # Send email on startup to sysadmin ?
 sadm_email_shutdown           = "N"                         # Send email on shutdown to sysadmin ?
+
+# O/S Package Update Parameters
 sadm_osupdate_interval        = 15                          # If backup is 15 days old warning page
 sadm_osupdate_script          = "sadm_osupdate.sh"          # Name of O/S update Script
 sadm_osupdate_autoremove      = "N"                         # Remove non used package
 sadm_osupdate_flatpak         = "N"                         # Update flatpak , if used
 sadm_osupdate_snap            = "N"                         # Update snap , if used
+sadm_osupdate_reboot_needed   = "N"                         # Reboot needed after update
+sadm_osupdate_reboot_time     = "00:00"                     # Time to reboot after update 2 Start App
+sadm_osupdate_lock            = "N"                         # Lock updates
+sadm_osupdate_batch_mode      = "N"                         # Run update script in batch mode (Y/N)
+sadm_osupdate_batch_start_time = "00:00"                    # Start time for launch batch update
+sadm_osupdate_concurrent       = 1                          # Concurrent execution of osupdate 
+
 
 # Logic to get O/S Distribution Information into Dictionary os_dict
 if platform.system().upper() != "DARWIN":                   # If not on MAc
@@ -330,7 +358,7 @@ dir_usr_mon        = os.path.join(dir_usr,'mon')            # SADM Usr SysMon Sc
 dir_www_dat        = os.path.join(dir_www,'dat')            # SADM Web Site Data Dir
 dir_www_arc        = os.path.join(dir_www_dat,'archive')    # SADM WebSite ArchiveDir
 dir_www_doc        = os.path.join(dir_www,'doc')            # SADM Web Site Doc Dir
-dir_www_lib        = os.path.join(dir_www,'lib')            # SADM dbpass_file
+dir_www_lib        = os.path.join(dir_www,'lib')            # SADM Web PHP Library
 dir_www_tmp        = os.path.join(dir_www,'tmp')            # SADM Web Site Tmp Dir
 dir_www_perf       = os.path.join(dir_www_tmp,'perf')       # SADM Web Perf. Graph Dir
 dir_www_host       = dir_www_dat + '/' + phostname          # Web Data Per Host .Dir
@@ -616,7 +644,10 @@ def load_config_file(cfg_file):
     sadm_email_shutdown          ,sadm_vm_export_dif            ,sadm_pwd_random               ,\
     sadm_backup_nfs_server_ver   ,sadm_rear_nfs_server_ver      ,sadm_vm_export_nfs_server_ver ,\
     sadm_osupdate_interval       ,sadm_osupdate_script          ,sadm_osupdate_autoremove      ,\
-    sadm_osupdate_flatpak        ,sadm_osupdate_snap            ,sadm_vm_export_script ;
+    sadm_osupdate_flatpak        ,sadm_osupdate_snap            ,sadm_vm_export_script         ,\
+    sadm_vm_export_batch_mode    ,sadm_vm_export_batch_start_time ,sadm_osupdate_concurrent ,\
+    sadm_osupdate_batch_mode     ,sadm_osupdate_batch_start_time, sadm_vm_export_batch_start_time   
+    # Global variables to load with sadmin.cfg content;
       
     
     if lib_debug > 4 :
@@ -696,8 +727,8 @@ def load_config_file(cfg_file):
         if "SADM_RW_DBUSER"                in CFG_NAME: sadm_rw_dbuser               = CFG_VALUE
         if "SADM_RO_DBUSER"                in CFG_NAME: sadm_ro_dbuser               = CFG_VALUE
 #
-        if "SADM_BACKUP_NFS_SERVER"        in CFG_NAME: sadm_backup_nfs_server       = CFG_VALUE
-        if "SADM_BACKUP_NFS_SERVER_VER"    in CFG_NAME: sadm_backup_nfs_server_ver   = int(CFG_VALUE)
+        if "SADM_BACKUP_NFS_SERVER"        == CFG_NAME: sadm_backup_nfs_server       = CFG_VALUE
+        if "SADM_BACKUP_NFS_SERVER_VER"    == CFG_NAME: sadm_backup_nfs_server_ver   = int(CFG_VALUE)
         if "SADM_BACKUP_NFS_MOUNT_POINT"   in CFG_NAME: sadm_backup_nfs_mount_point  = CFG_VALUE
         if "SADM_BACKUP_DIF"               in CFG_NAME: sadm_backup_dif              = int(CFG_VALUE)
         if "SADM_BACKUP_INTERVAL"          in CFG_NAME: sadm_backup_interval         = int(CFG_VALUE)
@@ -710,14 +741,17 @@ def load_config_file(cfg_file):
         if "SADM_YEARLY_BACKUP_MONTH"      in CFG_NAME: sadm_yearly_backup_month     = int(CFG_VALUE)
         if "SADM_YEARLY_BACKUP_DATE"       in CFG_NAME: sadm_yearly_backup_date      = int(CFG_VALUE)
 #
-        if "SADM_REAR_NFS_SERVER"          in CFG_NAME: sadm_rear_nfs_server         = CFG_VALUE
-        if "SADM_REAR_NFS_SERVER_VER"      in CFG_NAME: sadm_rear_nfs_server_ver     = int(CFG_VALUE)
+        if "SADM_REAR_NFS_SERVER"          == CFG_NAME: sadm_rear_nfs_server         = CFG_VALUE
+        if "SADM_REAR_NFS_SERVER_VER"      == CFG_NAME: sadm_rear_nfs_server_ver     = int(CFG_VALUE)
         if "SADM_REAR_NFS_MOUNT_POINT"     in CFG_NAME: sadm_rear_nfs_mount_point    = CFG_VALUE
         if "SADM_REAR_BACKUP_TO_KEEP"      in CFG_NAME: sadm_rear_backup_to_keep     = int(CFG_VALUE)
         if "SADM_REAR_BACKUP_DIFF"         in CFG_NAME: sadm_rear_backup_dif         = int(CFG_VALUE)
         if "SADM_REAR_BACKUP_INTERVAL"     in CFG_NAME: sadm_rear_backup_interval    = int(CFG_VALUE)
         if "SADM_REAR_BACKUP_SCRIPT"       in CFG_NAME: sadm_rear_backup_script      = CFG_VALUE
         if "SADM_REAR_DEL_FAILED_BACKUP"   in CFG_NAME: sadm_rear_del_failed_backup  = CFG_VALUE.upper()
+        if "SADM_REAR_BATCH_MODE"          in CFG_NAME: sadm_rear_batch_mode         = CFG_VALUE.upper()
+        if "SADM_REAR_BATCH_STARTUP_TIME"  in CFG_NAME: sadm_rear_batch_startup_time = CFG_VALUE
+        if "SADM_REAR_BACKUP_CONCURRENT"   in CFG_NAME: sadm_rear_backup_concurrent  = int(CFG_VALUE)
 # 
         if "SADM_NETWORK1"                 in CFG_NAME: sadm_network1                = CFG_VALUE
         if "SADM_NETWORK2"                 in CFG_NAME: sadm_network2                = CFG_VALUE
@@ -733,8 +767,9 @@ def load_config_file(cfg_file):
         if "SADM_SMTP_PORT"                in CFG_NAME: sadm_smtp_port               = int(CFG_VALUE)
         if "SADM_SMTP_SENDER"              in CFG_NAME: sadm_smtp_sender             = CFG_VALUE
 
-        if "SADM_VM_EXPORT_NFS_SERVER"     in CFG_NAME: sadm_vm_export_nfs_server    = CFG_VALUE
-        if "SADM_VM_EXPORT_NFS_SERVER_VER" in CFG_NAME: sadm_vm_export_nfs_server_ver = int(CFG_VALUE)
+    # Virtual machines information
+        if "SADM_VM_EXPORT_NFS_SERVER"     == CFG_NAME: sadm_vm_export_nfs_server    = CFG_VALUE
+        if "SADM_VM_EXPORT_NFS_SERVER_VER" == CFG_NAME: sadm_vm_export_nfs_server_ver = int(CFG_VALUE)
         if "SADM_VM_EXPORT_MOUNT_POINT"    in CFG_NAME: sadm_vm_export_mount_point   = CFG_VALUE
         if "SADM_VM_EXPORT_TO_KEEP"        in CFG_NAME: sadm_vm_export_to_keep       = int(CFG_VALUE)
         if "SADM_VM_EXPORT_INTERVAL"       in CFG_NAME: sadm_vm_export_interval      = int(CFG_VALUE)
@@ -744,17 +779,29 @@ def load_config_file(cfg_file):
         if "SADM_VM_START_INTERVAL"        in CFG_NAME: sadm_vm_start_interval       = int(CFG_VALUE)
         if "SADM_VM_EXPORT_DIF"            in CFG_NAME: sadm_vm_export_dif           = int(CFG_VALUE)
         if "SADM_VM_EXPORT_SCRIPT"         in CFG_NAME: sadm_vm_export_script        = CFG_VALUE
-# 
+        if "SADM_VM_EXPORT_SCRIPT"         in CFG_NAME: sadm_vm_export_script        = CFG_VALUE
+        if "SADM_VM_EXPORT_BATCH_MODE"     in CFG_NAME: sadm_vm_export_batch_mode    = CFG_VALUE
+        if "SADM_VM_EXPORT_BATCH_START_TIME" in CFG_NAME: sadm_vm_export_batch_start_time = CFG_VALUE
+        if "SADM_VM_EXPORT_BATCH_CONCURRENT" in CFG_NAME: sadm_vm_export_batch_concurrent = int(CFG_VALUE)
+        if "SADM_VM_EXPORT_CONCURRENT"     in CFG_NAME: sadm_vm_export_concurrent    = int(CFG_VALUE)  
+    #
         if "SADM_DAYS_HISTORY"             in CFG_NAME: sadm_days_history            = int(CFG_VALUE)
         if "SADM_MAX_ARC_LINE"             in CFG_NAME: sadm_max_arc_line            = int(CFG_VALUE)
         if "SADM_EMAIL_STARTUP"            in CFG_NAME: sadm_email_startup           = CFG_VALUE
         if "SADM_EMAIL_SHUTDOWN"           in CFG_NAME: sadm_email_shutdown          = CFG_VALUE
 
+    # O/S Update
         if "SADM_OSUPDATE_INTERVAL"        in CFG_NAME: sadm_osupdate_interval       = int(CFG_VALUE)
         if "SADM_OSUPDATE_SCRIPT"          in CFG_NAME: sadm_osupdate_script         = CFG_VALUE
         if "SADM_OSUPDATE_AUTOREMOVE"      in CFG_NAME: sadm_osupdate_autoremove     = CFG_VALUE.upper()
         if "SADM_OSUPDATE_FLATPAK"         in CFG_NAME: sadm_osupdate_flatpak        = CFG_VALUE.upper()
         if "SADM_OSUPDATE_SNAP"            in CFG_NAME: sadm_osupdate_snap           = CFG_VALUE.upper()
+        if "SADM_OSUPDATE_REBOOT_NEEDED"   in CFG_NAME: sadm_osupdate_reboot_needed  = CFG_VALUE.upper()
+        if "SADM_OSUPDATE_REBOOT_TIME"     in CFG_NAME: sadm_osupdate_reboot_time    = CFG_VALUE.upper()
+        if "SADM_OSUPDATE_LOCK"            in CFG_NAME: sadm_osupdate_lock           = CFG_VALUE.upper()
+        if "SADM_OSUPDATE_BATCH_MODE"      in CFG_NAME: sadm_osupdate_batch_mode     = CFG_VALUE.upper()
+        if "SADM_OSUPDATE_BATCH_START_TIME" in CFG_NAME: sadm_osupdate_batch_start_time = CFG_VALUE.upper()
+        if "SADM_OSUPDATE_CONCURRENT"      in CFG_NAME: sadm_osupdate_concurrent     = int(CFG_VALUE)
 
     cfg_file_fh.close()
 
@@ -768,6 +815,7 @@ def load_config_file(cfg_file):
             print("Function Name  : %s" % (sys._getframe().f_code.co_name)) # Get cur function Name
             print("Error Number   : %d" % (e.errno))                    # write_log Error Number
             print("Error Text     : %s" % (e.strerror))                 # write_log Error Message
+            print("Are you really on a SADMIN server ? - Host Type is 'S' ? - Script aborted.")
             sys.exit(1)                                                 # Exit to O/S with Error
         except Exception as e:                                          # If Can't open cfg file
             print(e)                                                    # Print Error Message
