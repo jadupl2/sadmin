@@ -2453,7 +2453,7 @@ sadm_load_config_file() {
 
 
 # --------------------------------------------------------------------------------------------------
-# Setup basic SADMIN directories structure and permissions
+# Setup SADMIN directories structure and permissions
 # --------------------------------------------------------------------------------------------------
 sadm_freshen_directories_structure() {
 
@@ -2702,7 +2702,7 @@ sadm_start() {
                     DELETE_PID="Y"                                      # Del PID Since running
             fi
        else echo "$SADM_TPID" > $SADM_PID_FILE                          # Create the PID File
-            DELETE_PID="Y"                                              # Del PID at end, by stop()
+            DELETE_PID="Y"                                              # Del PID at end, by stop
     fi 
 
 
