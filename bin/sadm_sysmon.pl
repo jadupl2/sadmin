@@ -1059,7 +1059,6 @@ sub check_service {
         }        
     }
 
-    printf "\n%s[ OK2 ]%s Service '$service_running_name' is running.",GREEN,RESET;
 
     # ----- Put current value in sadm array
     $SADM_RECORD->{SADM_CURVAL} = $service_count ;                      # 0=error else running
