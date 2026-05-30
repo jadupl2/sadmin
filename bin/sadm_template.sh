@@ -78,6 +78,7 @@ export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader 
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeLogFooter N=NoLogFooter
 export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
 export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
+export SADM_USE_DB="N"                                     # Use SADMIN Database (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_TMP_FILE1=$(mktemp -q "$SADMIN/tmp/${SADM_INST}1_XXX") # WorkFile, remove by sadm_stop()
@@ -109,16 +110,15 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 
 
 
-#===================================================================================================
-# Script global variables definitions
-#===================================================================================================
+# Script Global Variables Definitions
+# --------------------------------------------------------------------------------------------------
 
 
 
 
 
 
-# Show script command line options
+# Show Script Command Line Options
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
@@ -138,31 +138,177 @@ show_usage()
 
 
 
-
-#===================================================================================================
-# Main Processing Function
-#===================================================================================================
-main_process()
+# Produce a list of active systems and process systems one at a time.
+# --------------------------------------------------------------------------------------------------
+process_systems()
 {
 
-    # If script is run from command line, ask user if want to continue (To avoid causing damage).
-    if [ -t 0 ]
+    # If script is run from command line, ask user if want to continue (To avoid causing problem).
+    if [ -t 0 ]                                                         # Running from cmdline
         then sadm_write_log "$SADM_PN v${SADM_VER}"                     # Script name & version
              sadm_write_log "$SADM_PDESC"                               # Script description
              sadm_ask "Continue"                                        # Ask Continue (y/n) ? 
              if [ $? -eq 0 ] ; then sadm_stop 0 ; exit 0 ; fi           # 0 = Don't want to continue
 #        else sadm_write_log "Script not executed on the command line." 
     fi
+    sadm_write_log "Starting Process Systems ..."                       # Starting processing Mess.
+
+
+    # Build SQL to Select Actives Servers (Except SADMIN Server) & output result in $SADM_TMP_FILE.
+    SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_sadmin_dir,srv_ssh_port"
+    SQL="${SQL} from server"
+    if [ "$SYNC_CLIENT" != "" ]                                         # Only one client specified 
+        then SQL="${SQL} where srv_active = True and srv_name = '$SYNC_CLIENT' "
+        else SQL="${SQL} where srv_active = True and srv_name <> '$SADM_HOSTNAME' "
+    fi 
+    SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write_log " " ; sadm_write_log "SQL = ${SQL}" ; fi
     
 
-    sadm_write_log "Starting Main Process ..."                          # Starting processing Mess.
+    # Setup Database Authentication
+    WAUTH="-u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "                       # Set Authentication String 
+    CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
+    CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' | tr '/\t/' '/;/'" # Build CmdLine
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write_log "${CMDLINE}" ; fi    # Debug = Write command Line
+
+
+    # Execute Sql To Select Active Servers Data
+    $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/;/' >$SADM_TMP_FILE1
+    if [ $SADM_DEBUG -gt 5 ]                                            # Debug at greater than 5
+        then sadm_write_log " "                             
+             sadm_write_log "List of actives servers to process."       # List content of Tmp file
+             cat $SADM_TMP_FILE1 | while read wline ; do sadm_write_log "${wline}"; done
+             sadm_write_log " "
+    fi      
+
+
+    # If Sql Result File Has A Zero Length, Return To Caller, Nothing To Process
+        if [ ! -s "$SADM_TMP_FILE1" ]                                   # File has a zero length?
+        then sadm_write_err "[ WARNING] No server to process ..."       # Nothing to process
+             sadm_write_err "${SADM_TEN_DASH}"                          # Terminate dash line
+             sadm_write_err " " 
+             return 1                                                   # Return to caller RC=1
+    fi
+
+    # Process Each Active System
+    xcount=0; ERROR_COUNT=0;                                            # Set Server & Error Counter
+    while read wline                                                    # Read Tmp file Line by Line
+        do
+        ((xcount++))                                                    # Increase Server Counter                      
+        server_name=$(      echo "$wline"|awk -F\; '{print $1}')        # Extract Server Name
+        server_os=$(        echo "$wline"|awk -F\; '{print $2}')        # O/S (linux/aix/darwin)
+        server_domain=$(    echo "$wline"|awk -F\; '{print $3}')        # Extract Domain of Server
+        server_monitor=$(   echo "$wline"|awk -F\; '{print $4}')        # Monitor  1=True 0=False
+        server_sporadic=$(  echo "$wline"|awk -F\; '{print $5}')        # Sporadic 1=True 0=False
+        server_dir=$(       echo "$wline"|awk -F\; '{ print $6 }')      # Client SADMIN Install Dir.
+        server_ssh_port=$(  echo "$wline"|awk -F\; '{ print $7 }')      # Client SSH port to use
+        server_fqdn="$server_name.$server_domain"                       # Create FQN Server Name
+        sadm_write_log " "                                              # Blank Line
+        sadm_write_log "${SADM_TEN_DASH} "
+        sadm_write_log "Processing ($xcount) $server_fqdn "             # Show ServerName Processing
+
+
+        # If Can't Resolve System Name (Get Ip Of Server), Signal Error And Proceed With Next Server
+        if ! host $server_fqdn >/dev/null 2>&1                          # Can't Resolve server name
+           then SMSG="[ ERROR ] Can't process '$server_fqdn', hostname can't be resolved."
+                sadm_write_err "${SMSG}"                                # Advise user
+                ((ERROR_COUNT++))                                       # Consider Error -Incr Cntr
+                sadm_write_err "Total Error(s) now at ${ERROR_COUNT}"   # Show Error count
+                sadm_write_err " " 
+                continue                                                # Go Process next system
+        fi
+
+        # Check If System Is Locked.
+        sadm_lock_status "$server_name"                                 # System is lock ?
+        if [ $? -ne 0 ]                                                 # Yes system is lock
+            then sadm_write_err "[ WARNING ] System ${server_fqdn} is currently lock."
+                 ((WARNING_COUNT++))                                    # Increase Warning Counter
+                 sadm_write_err "[ WARNING ] at ${WARNING_COUNT} - [ ERROR ] at ${ERROR_COUNT} - $server_name"
+                 sadm_write_err " " 
+                 continue                                               # Go process next server
+        fi
+
+
+        # Test Ssh To System, If It's A Sporadic System = Warning & Next Server To System
+        ${SADM_SSH} -qnp $server_ssh_port $server_fqdn date >/dev/null 2>&1 # SSH test to system
+        RC=$?                                                           # Save Error Number
+        if [ $RC -ne 0 ] &&  [ "$server_sporadic" == "1" ]              # SSH don't work & Sporadic
+            then sadm_write_err "[ WARNING ] Can't SSH to sporadic system '$server_fqdn'."
+                 ((WARNING_COUNT++))                                     # Increase Warning Counter
+                 sadm_write_err "[ WARNING ] at $WARNING_COUNT - [ ERROR ] at $ERROR_COUNT - $server_name"
+                 sadm_write_err " " 
+                 continue                                                # Go process next server
+        fi
+
+
+        # If First Ssh Failed, Try Again 3 Times To Prevent False Error
+        if [[ $RC -ne 0 ]]                                              # If SSH Failed fiurst time
+            then RETRY=0                                                # Set Retry counter to zero
+                 while [ $RETRY -lt 3 ]                                 # Retry rsync 3 times
+                    do
+                    RETRY=$((RETRY+1))                                  # Incr Retry counter
+                    sadm_write_log "Retry no.$RETRY to ssh to $server_fqdn on port $server_ssh_port"
+                    $SADM_SSH -qnp "$server_ssh_port" "$server_fqdn" date >/dev/null 2>&1
+                    RC=$?                                               # Save Error Number
+                    if [ $RC -ne 0 ]                                    # If Error doing ssh
+                        then continue
+                        else sadm_writelog "[ OK ] $SADM_SSH -qnp $server_ssh_port $server_fqdn date "
+                             break                                      # Break out of loop RC=0
+                    fi
+                    done
+                 if [ "$RC" -ne 0 ] 
+                    then SMSG="[ ERROR ] All retries failed - Can't SSH to server '${server_fqdn}'"
+                         sadm_write_err "${SMSG}"                       # Display Error Msg
+                         ((ERROR_COUNT++))                              # Consider Error -Incr Cntr
+                         sadm_write_err "[ WARNING ] at ${WARNING_COUNT} - [ ERROR ] at ${ERROR_COUNT} - $server_name"
+                         continue                                       # Continue with next server
+                 fi
+        fi
+        sadm_writelog "[ OK ] SSH to $server_fqdn"                      # Good SSH Work
+
+        # Show Cumulative Warning and Error
+        if [ "$ERROR_COUNT" -ne 0 ] || [ "$WARNING_COUNT" -ne 0 ]
+           then sadm_write_err "$SADM_WARNING at ${WARNING_COUNT} - [ ERROR ] at ${ERROR_COUNT} - $server_name"
+                sadm_write_err " " 
+           else sadm_write_log "[ OK ] No error or warning for $server_name" 
+                sadm_write_log " "
+        fi
+        done < $SADM_TMP_FILE1
+
+# Show Total Error Count After Processing Each Server
+    sadm_write_log " "
+    sadm_write_log "${SADM_TEN_DASH}"
+    sadm_write_log "Total Error(s) count   : ${ERROR_COUNT}"
+    sadm_write_log "Total Warning(s) count : ${WARNING_COUNT}"
+    sadm_write_log "${SADM_TEN_DASH}"
+    sadm_write_log " "
+    return "$ERROR_COUNT"
+}
+
+
+
+
+
+# Main Processing Function
+# --------------------------------------------------------------------------------------------------
+main_process()
+{
+    # If script is run from command line, ask user if want to continue (To avoid causing damage).
+    if [ -t 0 ]                                                         # Running from cmdline
+        then sadm_write_log "$SADM_PN v${SADM_VER}"                     # Script name & version
+             sadm_write_log "$SADM_PDESC"                               # Script description
+             sadm_ask "Continue"                                        # Ask Continue (y/n) ? 
+             if [ $? -eq 0 ] ; then sadm_stop 0 ; exit 0 ; fi           # 0 = Don't want to continue
+    fi
+    
 
     # PROCESSING CAN BE PUT HERE
+    sadm_write_log "Starting Main Process ..."                          # Starting processing Mess.
+    sadm_sleep 6 2                                                      # Sleep 6Sec, 2sec increment
+
+
     # If Error occurred, set SADM_EXIT_CODE to 1 before returning to caller, else return 0 (default)
-    # ........
-
-
-    #sadm_sleep 6 2                                                     # Sleep 6Sec, 2sec increment
+    sadm_write_log " "
     return "$SADM_EXIT_CODE"                                            # Return ErrorCode to Caller
 }
 
@@ -171,10 +317,10 @@ main_process()
 # --------------------------------------------------------------------------------------------------
 # Command line Options functions
 # Evaluate Command Line Switch Options Upfront
-# -d[0-9] Set Debug Level  
-# -h) Show Help Usage, 
-# -v) Show Script Version,  
-# -X) Delete the script PID file before running the script.
+#   -d[0-9] Set Debug Level  
+#   -h) Show Help Usage, 
+#   -v) Show Script Version,  
+#   -X) Delete the script PID file before running the script.
 # --------------------------------------------------------------------------------------------------
 function cmd_options()
 {
@@ -209,12 +355,20 @@ function cmd_options()
 
 
 
-#===================================================================================================
+
+
 # Main Code Start Here
-#===================================================================================================
+# --------------------------------------------------------------------------------------------------
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Won't come back if error
-    main_process                                                        # Your PGM Main Process
-    SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
+    
+    # Want to use 'sadmin' database for processing, call 'process_systems', else call 'main_process'
+    if [ "$SADM_USE_DB" = "Y" ]                                         # If want to use database 
+        then process_systems                                            # Code using SADMIN Database
+             SADM_EXIT_CODE=$?                                          # Save Process Return Code 
+        else main_process                                               # Not using SADMIN Database
+             SADM_EXIT_CODE=$?                                          # Save Process Return Code 
+    fi
+
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
