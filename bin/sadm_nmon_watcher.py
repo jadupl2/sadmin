@@ -313,14 +313,9 @@ def cmd_options(argv):
 def main(argv):
     (pdebug) = cmd_options(argv)                                        # Analyze cmdline options
 
-    if sa.db_used : 
-        (db_conn,db_cur) = sa.start(pver,pdesc)                         # Initialize SADMIN env.
-        pexit_code = process_servers(db_conn,db_cur)                    # Loop All Active systems
-        sa.stop(pexit_code,db_conn,db_cur)                              # Exit Gracefully & Close DB
-    else: 
-        sa.start(pver,pdesc)                                            # Initialize SADMIN env.
-        pexit_code = main_process()                                  # Loop All Active systems
-        sa.stop(pexit_code)                                             # Exit Gracefully SADMIN Lib
+    sa.start()                                            # Initialize SADMIN env.
+    pexit_code = main_process()                                  # Loop All Active systems
+    sa.stop(pexit_code)                                             # Exit Gracefully SADMIN Lib
     sys.exit(pexit_code)                                                # Back to O/S with Exit Code
 
 # This idiom means the below code only runs when executed from command line
