@@ -287,19 +287,19 @@ process_servers()
         if [ $? -ne 0 ]                                                 # Yes system is lock
             then sadm_write_err "[ WARNING ] System ${server_fqdn} is currently lock."
                  ((WARNING_COUNT++))                                    # Increase Warning Counter
-                 sadm_write_err "[ WARNING ] at ${WARNING_COUNT} - [ ERROR ] at ${ERROR_COUNT}"
+                 sadm_write_err "[ WARNING ] at ${WARNING_COUNT} - [ ERROR ] at ${ERROR_COUNT} - $server_name"
                  sadm_write_err " " 
                  continue                                               # Go process next server
         fi
 
 
-        # If SSH to server failed & it's a sporadic server = warning & next server
+        # If SSH to server failed & it's a sporadic server = warning & next server to system
         ${SADM_SSH} -qnp $server_ssh_port $server_fqdn date >/dev/null 2>&1 # SSH test to system
         RC=$?                                                           # Save Error Number
         if [ $RC -ne 0 ] &&  [ "$server_sporadic" == "1" ]              # SSH don't work & Sporadic
             then sadm_write_err "[ WARNING ] Can't SSH to sporadic server ${server_fqdn}"
                  ((WARNING_COUNT++))                                     # Increase Warning Counter
-                 sadm_write_err "[ WARNING ] at ${WARNING_COUNT} - [ ERROR ] at ${ERROR_COUNT}"
+                 sadm_write_err "[ WARNING ] at ${WARNING_COUNT} - [ ERROR ] at ${ERROR_COUNT} - $server_name"
                  sadm_write_err " " 
                  continue                                                # Go process next server
         fi
@@ -324,7 +324,7 @@ process_servers()
                     then SMSG="[ ERROR ] All retries failed - Can't SSH to server '${server_fqdn}'"
                          sadm_write_err "${SMSG}"                       # Display Error Msg
                          ((ERROR_COUNT++))                              # Consider Error -Incr Cntr
-                         sadm_write_err "[ WARNING ] at ${WARNING_COUNT} - [ ERROR ] at ${ERROR_COUNT}"
+                         sadm_write_err "[ WARNING ] at ${WARNING_COUNT} - [ ERROR ] at ${ERROR_COUNT} - $server_name"
                          continue                                       # Continue with next server
                  fi
         fi
@@ -537,7 +537,10 @@ process_servers()
 
         # Show Cumulative Warning and Error
         if [ "$ERROR_COUNT" -ne 0 ] || [ "$WARNING_COUNT" -ne 0 ]
-           then sadm_write_log "$SADM_WARNING at ${WARNING_COUNT} - [ ERROR ] at ${ERROR_COUNT}"
+           then sadm_write_log "$SADM_WARNING at ${WARNING_COUNT} - [ ERROR ] at ${ERROR_COUNT} - $server_name"
+                sadm_write_log " " 
+             else sadm_write_log "[ OK ] No error or warning for $server_name" 
+                  sadm_write_log " "
         fi
 
         done < $SADM_TMP_FILE1
