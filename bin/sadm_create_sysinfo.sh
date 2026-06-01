@@ -73,6 +73,7 @@
 #@2025_08_25 client v3.43 Solve problem when "$SADM_USER" display stuff when login (.bash_profile)
 #@2026_04_27 client v3.44 Fix problem with creating VM list, under VBox 7.2.6, is ok in 7.2.8
 #@2026_04_27 client v3.45 Adjustment for Virtual Box 7.2.8, VBoxManage list vms output format change
+#@2026_06_01 client v3.46 chmod 664 $SADMIN/dat/dr/HOSTNAME_sysinfo.txt
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 0' 2                                            # Intercept the ^C
 #set -x
@@ -102,7 +103,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.45'                                     # Script version number
+export SADM_VER='3.46'                                     # Script version number
 export SADM_PDESC="Collect hardware & software info of system" # Script Description
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -949,7 +950,7 @@ create_summary_file()
     # for later use by 'sadm_database_update.py' script to update SADMIN database with VM info.
     create_vmlist                                                    
   
-    chmod 644 $HWD_FILE 
+    chmod 664 $HWD_FILE 
     chown "$SADM_USER:$SADM_GROUP" "$HWD_FILE"
     return 0
 }
