@@ -84,6 +84,7 @@
 #@2025_05_18 lib v4.68 NFS Export Server Name was not loaded properly.
 #@2025_05_20 lib v4.68.1 Load new configuratio fields for using with batch mode.
 #@2025_05_30 lib v4.69.0 Lot of modification enhance speed and security
+#@2025_06_01 lib v4.69.1 Added "chmod 0775 $SADMIN" to 'freshen_directories_structure()' function.
 # 
 # --------------------------------------------------------------------------------------------------
 
@@ -137,7 +138,7 @@ except ImportError as e:
 
 # Global Variables to this script 
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.69.0"                              # This Library Version
+lib_ver             = "4.69.1"                              # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -2403,6 +2404,11 @@ def freshen_directories_structure() :
     uid = pwd.getpwnam(sadm_user).pw_uid                                # Get UID User in sadmin.cfg
     gid = grp.getgrnam(sadm_group).gr_gid                               # Get GID User in sadmin.cfg
 
+    # Make sure that $SADMIN directory is created, get the right permission and owner/group ID.
+    os.chown(dir_base,uid,gid)                                          # Set Owner of log file
+    os.chmod(dir_base,0o775)                                            # Chg log file Perm.
+
+
     # Directories list to create (if don't exist) and assign them to SADMIN user/group
     client_dir = [ dir_bin, dir_cfg, dir_dat, dir_doc, dir_lib, dir_log, dir_pkg, dir_setup,
                    dir_sys, dir_tmp, dir_nmon, dir_dr, dir_rch, dir_net, dir_rpt, dir_dbb, 
@@ -2445,7 +2451,6 @@ def freshen_directories_structure() :
 
 
 # --------------------------------------------------------------------------------------------------
-#def start(ver=0.0,desc=pn,db_name="sadmin") : 
 def start(db_name="sadmin") : 
     
 
