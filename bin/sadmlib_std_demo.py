@@ -97,43 +97,46 @@ except ImportError as e:                                             # If Error 
 # Local variables local to this script.
 sa.ver               = "3.27.0"                                      # Program version no.
 sa.desc              = "Demo of functions & variables available to developers using SADMIN Tools"
-sa.pn                = os.path.basename(sys.argv[0])                 # Script name with extension
-sa.inst              = sa.pn.split('.')[0]                           # Pgm name without Ext
-sa.hostname          = sa.get_hostname()                             # Get current `hostname -s`
-sa.proot_only        = False      # True = Script can only be run by 'root' user only else 'N'.
-sa.server_only       = False      # True = Script can only be run on SADMIN server else 'N'.
-sa.debug             = 0          # Debug level from 0 to 9
-sa.exit_code         = 0          # Script default exit code
-sa.quiet             = False      # If Error in a function & quiet is 
-                                  # False: Show error message & return Error No.
-                                  # True : Only return Error No, but No Error Message is shown.
-sa.use_rch           = False      # Generate entry in [R]esult [C]ode [H]istory file (.rch)
-sa.log_type          = 'B'        # Output goes to [S]creen, [L]ogFile or [B]oth
-sa.log_append        = False      # Append Existing Log (True) or Create New Log (False)
-sa.log_header        = True       # Show/Generate Header in script log (.log)
-sa.log_footer        = True       # Show/Generate Footer in script log (.log)
-sa.multiple_exec     = "N"        # Allow multiple copy to run at same time 'Y' else 'N'.
-sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (sa.cmd_ssh,sa.sadm_ssh_port)
+sa.desc          = "Description of program '%s'" % (sa.pn)# Your Program DESCRIPTION 
+sa.inst          = sa.pn.split('.')[0]                   # INSTance Name = Pgm Name Without Ext
+sa.pid           = os.getpid()                           # Get Current Process ID.
+sa.hostname      = sa.get_hostname()                     # Get Current hostname
+sa.username      = sa.get_username()                     # Get Current User Name
+sa.root_only     = False                                 # Can Only be run by 'root' (True/False)
+sa.server_only   = False                                 # Run Only on SADMIN server (True/False)
+sa.use_rch       = True                                  # Write exec info to RCH file(True/False)
+sa.db_used       = False                                 # Open/Use auto connect DB(True)
+sa.db_name       = ""                                    # Database Name (sadmin=default) 
+sa.debug         = 0                                     # Debug Level 0-9 (Increase Verbose)
+sa.exit_code     = 0                                     # Default Return Code (0=Success 1-Error)
+sa.log_type      = "B"                                   # S=Screen L=Log B=Both
+sa.log_append    = False                                 # Append to previous log (True/False)
+sa.log_header    = True                                  # Produce Log Header (True/False)
+sa.log_footer    = True                                  # Produce Log Footer (True/False)
+sa.multiple_exec = False                                 # Allow running multiple Instance ?
+sa.pid_timeout   = 7200                                  # PID File TimeToLive default
+sa.lock_timeout  = 3600                                  # Sec. (TTL) before automatically unlock 
+sa.max_logline   = 500                                   # Maximum number of lines in log file.
+sa.max_rchline   = 35                                    # Maximum number of lines in rch file.
+sa.mail_addr     = ""                                    # Default use email(s) in sadmin.cfg
+sa.quiet         = False                                 # If error in a function & quiet is :
+                                                         # False: Show error msg & return Error No 
+                                                         # True : Omly returm Error No. but No Msg
 
-# Fields used by sa.start(),sa.stop() & DB functions that influence execution of SADMIN library
-sa.db_used           = True       # Open/Use DB(True), No DB needed (False), sa.start() auto connect
-sa.db_conn           = None       # Database Connector (if used sa.db_used=True)
-sa.db_cur            = None       # Database Cursor (if used sa.db_used=True)
-sa.db_name           = "sadmin"   # Database Name default to name define in $SADMIN/cfg/sadmin.cfg
-sa.db_errno          = 0          # Database Error Number
-sa.db_errmsg         = ""         # Database Error Message
-#
+# You don't have to worry about the fields below, they will be set & used by the SADMIN Python Libr.
+# They act like Global Var, but they are actually fields of the SADMIN Python Libr. (sadmlib2_std).
+sa.db_conn        = None           # Use this Database Connector when using DB,  set by sa.start()
+sa.db_cur         = None           # Use this Database cursor if you use the DB, set by sa.start()
+sa.db_errno       = 0              # PyMysql Database Error Number
+sa.db_errmsg      = ""             # PyMysql Database Error Message
+sa.cmd_ssh_full   = "%s -qnp %s " % (cmd_ssh,sadm_ssh_port)   # SSH Cmd with Port, set by sa.start()
 
-# The values of fields below, are loaded from sadmin.cfg when you import the SADMIN library.
-# Change them to fit your need, they are use by start() & stop() functions of SADMIN Python Libr.
-#
-#sa.sadm_alert_type  = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
-#sa.sadm_alert_group = "default"  # Valid Alert Group defined in $SADMIN/cfg/alert_group.cfg
-#sa.max_logline      = 500        # Max. lines to keep in log (0=No trim) after execution.
-#sa.max_rchline      = 40         # Max. lines to keep in rch (0=No trim) after execution.
-#sa.sadm_mail_addr   = ""         # All mail goes to this email (Default is in sadmin.cfg)
-#sa.pid_timeout      = 7200       # Default Time to Live in seconds for the PID File
-#sa.lock_timeout     = 3600       # A host can be lock for this number of seconds, auto unlock after
+# The values of fields below, are loaded automatically from sadmin.cfg when you import sadmlib2_std.
+# Change them to fit your need, before you call 'start()' functions of SADMIN Python Library.
+sa.sadm_alert_type    = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
+sa.sadm_alert_group   = "default"  # Valid Alert Group defined in $SADMIN/cfg/alert_group.cfg
+sa.sadm_warning_group = "warning"  # Valid Alert Group defined in $SADMIN/cfg/alert_group.cfg
+sa.sadm_info_group    = "info"     # Valid Alert Group defined in $SADMIN/cfg/alert_group.cfg
 # ==================================================================================================
 
 
@@ -604,15 +607,13 @@ def print_env():
 # Print Database Information
 #===================================================================================================
 def print_db_variables():
-    printheader ("Database Information","Description","  This System Result")
-         
-    pexample="sa.db_used"                                               # Variable Name
-    pdesc="Script using Database ?"                                     # Function Description
-    presult=sa.db_used                                                  # Return Value(s)
-    printline (pexample,pdesc,presult)                                  # Print Example Line
+
+    printheader ("Database Information","Description","  This System Result")     
+    printline ("sa.db_used","Program want to use Database ?",sa.db_used)
+    if (sa.sadm_host_type != "S") : return(0)                           # If not on a SADMIN server
 
     # Test Database Connection
-    if ((sa.on_sadmin_server == "Y") and (sa.db_used)):                 # On SADMIN srv & usedb True
+    if (sa.db_used):                                                    # On SADMIN srv & usedb True
         print ("\n\nShow SADMIN Tables:")
         sql="show tables;" 
         cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser,sa.sadm_ro_dbpwd,sa.sadm_dbhost)
