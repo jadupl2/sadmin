@@ -2463,7 +2463,10 @@ sadm_freshen_directories_structure() {
         then mkdir -p -m 755 /tmp/nfs2                                  # Create NFS mount point
     fi
 
-    chmod 0775 $SADMIN > /dev/null 2>&1 ; chown ${SADM_USER}:${SADM_GROUP} $SADMIN > /dev/null 2>&1
+    if [ "$(id -u)" -eq 0 ]
+       then chmod 0775 $SADMIN > /dev/null 2>&1 
+            chown ${SADM_USER}:${SADM_GROUP} $SADMIN > /dev/null 2>&1
+    fi 
 
     # $SADMIN directories creation (If do not exist and ignore error)
     mkdir -p ${SADMIN}/{bin,lib,cfg,sys,doc,pkg,setup,dat,usr,log,www,tmp} > /dev/null 2>&1

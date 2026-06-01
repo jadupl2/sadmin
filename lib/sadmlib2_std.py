@@ -2405,8 +2405,9 @@ def freshen_directories_structure() :
     gid = grp.getgrnam(sadm_group).gr_gid                               # Get GID User in sadmin.cfg
 
     # Make sure that $SADMIN directory is created, get the right permission and owner/group ID.
-    os.chown(dir_base,uid,gid)                                          # Set Owner of log file
-    os.chmod(dir_base,0o775)                                            # Chg log file Perm.
+    if os.getuid() == 0:                                                # if root user
+        os.chown(dir_base,uid,gid)                                      # Set Owner of log file
+        os.chmod(dir_base,0o775)                                        # Chg log file Perm.
 
 
     # Directories list to create (if don't exist) and assign them to SADMIN user/group
