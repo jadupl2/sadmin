@@ -73,7 +73,7 @@ sa.desc          = "Description of program '%s'" % (sa.pn)# Your Program DESCRIP
 sa.inst          = sa.pn.split('.')[0]                   # INSTance Name = Pgm Name Without Ext
 sa.pid           = os.getpid()                           # Get Current Process ID.
 sa.hostname      = sa.get_hostname()                     # Get Current hostname
-sa.username      = pwd.getpwuid(os.getuid())[0]          # Get Current User Name
+sa.username      = sa.get_username()                     # Get Current User Name
 sa.root_only     = False                                 # Can Only be run by 'root' (True/False)
 sa.server_only   = False                                 # Run Only on SADMIN server (True/False)
 sa.use_rch       = True                                  # Write exec info to RCH file(True/False)
