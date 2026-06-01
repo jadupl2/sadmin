@@ -1007,6 +1007,8 @@ def oscommand (command : str) :
 
 
 
+
+
 # --------------------------------------------------------------------------------------------------
 # Function that return the Mac Address of the received IP address.
 def get_mac_address(ip_address : str) -> str:
@@ -1029,6 +1031,37 @@ def get_mac_address(ip_address : str) -> str:
     if mac_address == "<incomplete>" : mac_address = ""
     return mac_address
 
+
+
+
+
+# --------------------------------------------------------------------------------------------------
+# Function that return the current username.
+def get_username() -> str:
+
+    """ 
+    get_username() 
+        Return the current username.
+        
+    Args:
+        None
+
+    Returns:
+        The username of the user executing the script.
+        Blank if could not be obtained..
+
+    """ 
+    username=""
+
+    # For Windows systems
+    if get_ostype() == "Windows":
+        username = os.environ.get("USERNAME")
+    
+    # For Linux / macOS systems
+    if get_ostype() in ["Linux", "macOS"]:
+        username = os.environ.get("USER")
+        
+    return username
 
 
 # --------------------------------------------------------------------------------------------------
