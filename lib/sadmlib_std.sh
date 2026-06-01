@@ -267,6 +267,7 @@
 #@2026_04_19 lib v4.87 Function 'sadm_write_log' rewrote and now support '\n' in message.
 #@2026_04_26 lib v4.88 Add Function 'sadm_ping hostname' Return 0=OK 1=Error.
 #@2026_04_28 lib v4.89 NFS Mount use sudo to avoid problem with NFS mount is run by non root user.
+#@2026_06_01 lib v4.90.1 Added "chmod 0775 $SADMIN".
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -277,7 +278,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.89"                                              # his Library Version
+export SADM_LIB_VER="4.90.1"                                            # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -2461,6 +2462,8 @@ sadm_freshen_directories_structure() {
     if [ "$SADM_OS_TYPE" = "DARWIN" ] && [ ! -d "/tmp/nfs2" ]           # NFS Mount Point not exist
         then mkdir -p -m 755 /tmp/nfs2                                  # Create NFS mount point
     fi
+
+    chmod 0775 $SADMIN > /dev/null 2>&1 ; chown ${SADM_USER}:${SADM_GROUP} $SADMIN > /dev/null 2>&1
 
     # $SADMIN directories creation (If do not exist and ignore error)
     mkdir -p ${SADMIN}/{bin,lib,cfg,sys,doc,pkg,setup,dat,usr,log,www,tmp} > /dev/null 2>&1
