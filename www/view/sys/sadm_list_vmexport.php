@@ -32,6 +32,7 @@
 #@2025_09_19 web v1.9 Show only active systems and virtual machines.
 #@2026_03_03 web v2.0 Add average execution time statistics..
 #@2026_04_27 web v2.1 Add the total space occupy on disk for the export of all VMs.
+#@2026_06_03 web v2.2 Text "Manually" in occurrence column when schedule was not active.
 # ==================================================================================================
 
 
@@ -115,7 +116,7 @@ ini_set('display_errors', 1);
 #                                       Local Variables
 #===================================================================================================
 $DEBUG              = False ;                                           # Debug Activated True/False
-$WVER               = "2.1" ;                                           # Current version number
+$WVER               = "2.2" ;                                           # Current version number
 $URL_HOME           = '/index.php';                                     # Site Main Page
 
 # Server Static Data Maintenance
@@ -385,16 +386,17 @@ function display_data($con) {
         echo "</td>\n";
 
 
-        # Schedule Update Button
+        # Button to Update Schedule
         # Zero and an empty string are considered to be false (without schedule). 
         # Any other numerical value or string is true (Schedule exist). 
         if ($row['srv_export_sched'] == True ) {                            # If Export Schedule Active
             $tooltip = 'Schedule is active, click to edit export schedule.';
             echo "<td align=center style='color: green'<b>Y</b> ";
-            #echo "<td align='center' style='color: green'>";
         }else{                                                              # If Schedule not Activate
             $tooltip = 'Schedule is inactive, click to activate export schedule.';
-            echo "<td align='center' style='color:red' bgcolor='#DAF7A6'> ";
+#           echo "<td align='center' style='color:red' bgcolor='#DAF7A6'> ";
+            echo "<td align=center style='color: Black'<b>N</b> ";
+
         }
         echo "<a href='" .$URL_EXPORT_SCHED. "?sel=" . $row['srv_name'];
         echo "&back=" .$URL_VIEW_VBEXPORT. "'>";
@@ -422,7 +424,7 @@ function display_data($con) {
                 $row['srv_export_hrs'], $row['srv_export_min']);
             echo $STR_SCHEDULE . "</td>\n";
         }else{
-            echo "No Schedule</td>\n";
+            echo "Manually</td>\n";
         }
 
 
