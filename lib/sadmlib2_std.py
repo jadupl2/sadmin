@@ -181,9 +181,9 @@ mail_addr          = ""                                    # Default use email(s
 
 # Fields used by sa.start(),sa.stop() & DB functions that influence execution of SADMIN library
 # Thwse are default values, they can be changed by the script that use this library.
-db_used        = False           # Open/Use auto connect DB(True), No DB needed (False) 
-db_conn        = None             # Use this Database Connector when using DB,  set by sa.start()
-db_cur         = None             # Use this Database cursor if you use the DB, set by sa.start()
+db_used        = False          # Open/Use auto connect DB(True), No DB needed (False) 
+db_conn        = None           # Use this Database Connector when using DB,  set by sa.start()
+db_cur         = None           # Use this Database cursor if you use the DB, set by sa.start()
 db_name        = ""             # Database Name (sadmin=default) define in $SADMIN/cfg/sadmin.cfg
 db_errno       = 0              # PyMysql Database Error Number
 db_errmsg      = ""             # Database Error Message
