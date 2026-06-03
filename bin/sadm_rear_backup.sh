@@ -272,7 +272,7 @@ create_etc_rear_site_conf()
         then sadm_write_log "The $REAR_CFGFILE exist, no need to create it." 
              return 0 
         else sadm_write_log "The $REAR_CFGFILE isn't present."
-             sadm_write_log "Creating a ReaR default site file."
+             sadm_write_log "Creating a ReaR default site file '$REAR_CFGFILE'."
     fi
     
     # Start creating the header of ReaR site.conf file into a temp. file for now.
@@ -779,7 +779,6 @@ function cmd_options()
 #===================================================================================================
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Create Dir.,PID,log,rch
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
     
     rear_preparation                                                    # NFS Mount Point Work ?  ...
     SADM_EXIT_CODE=$?
