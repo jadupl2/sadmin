@@ -268,6 +268,8 @@
 #@2026_04_26 lib v4.88 Add Function 'sadm_ping hostname' Return 0=OK 1=Error.
 #@2026_04_28 lib v4.89 NFS Mount use sudo to avoid problem with NFS mount is run by non root user.
 #@2026_06_01 lib v4.90.1 Added "chmod 0775 $SADMIN".
+#@2026_06_03 lib v4.90.2 Intro. of "SADM_QUIET" var. to ctrl the display of error msg in functions.
+
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -278,7 +280,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.90.1"                                            # This Library Version
+export SADM_LIB_VER="4.90.2"                                            # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -286,7 +288,11 @@ export SADM_TEN_DASH=$(printf %10s |tr ' ' '-')                         # 10 das
 export SADM_STIME=""                                                    # Script Start Time
 export DELETE_PID="Y"                                                   # Default Delete PID On Exit
 export LIB_DEBUG=0                                                      # This Library Debug Level
-export SADM_QUIET="N"                                       # N=Show Err.Msg Y=ReturnCodeOnly No Msg
+
+# Use inside functions to control the display of error message (Y/N)
+# Y = Function will not show error msg, but will return error code (0or1) to caller.
+# N = Function will show error msg and return error code (0or1) to caller.
+export SADM_QUIET="N"
 
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
@@ -760,6 +766,7 @@ sadm_write_dbg() {
 
 # --------------------------------------------------------------------------------------------------
 # Mount NFS Directory.
+#
 # Example: sadm_nfs_mount "batnas.maison.ca" "/volume1/software" "$MountPoint" 
 #    NFS_SERVER="$1"                              # NFS Server name or IP
 #    NFS_DIR="$2"                                 # NFS Directory to mount
@@ -768,11 +775,13 @@ sadm_write_dbg() {
 # --------------------------------------------------------------------------------------------------
 sadm_nfs_mount()
 {
-    # Validate number of parameter.
-    if [ $# -lt 3 ] 
-        then sadm_write_err "[ ERROR ] $FUNCNAME - Nb. of parameter should be '3' or '4', mot '$#'."
-             sadm_write_err "  - Parameters received are '$@'."
-             sadm_write_err "  - 'nfs_server' 'nfs_dir' 'local mount point'  'vers=3' (optional)"
+    # Validate number of parameters received (3 or 4)
+    if [ $# -lt 3 ]                                                     # Less than 3 Parameter ? 
+        then if [ "$SADM_QUIET" == "N" ]                                # If not in quiet mode
+                then sadm_write_err "[ ERROR ] $FUNCNAME - Nb. of parameter should be '3' or '4', mot '$#'."
+                     sadm_write_err "  - Parameters received are '$@'."
+                     sadm_write_err "  - 'nfs_server' 'nfs_dir' 'local mount point'  'vers=3' (optional)"
+             fi 
              return 1                                                   # Error back to caller 
     fi 
 
@@ -781,29 +790,21 @@ sadm_nfs_mount()
     NFS_DIR="$2"                                                        # NFS Directory to mount
     NFS_MOUNT_POINT="$3"                                                # Local dir. to mount nfs
     NFS_MOUNT_OPTIONS=""                                                # No NFS option default
-    if [ "$#" -gt 3 ] ; then NFS_MOUNT_OPTIONS="$4" ; fi                # NFS Mount option Specified
-
-    # Validate that NFS server can be ping.
-    ping -c2 "$NFS_SERVER" > /dev/null 2>&1                             # Ping NFS server
-    if [ $? -ne 0 ]                                                     # Problem pinging NFS server
-        then if [ "$SADM_QUIET" == "N" ]                                # User want error message
-                then sadm_write_err "[ ERROR ] System '$NFS_SERVER' seems to be down."
-             fi 
-             return 1 
-        else if [ "$SADM_QUIET" == "N" ] 
-                then sadm_write_log "[ OK ] NFS server '$NFS_SERVER' is alive." 
+    if [ $# -gt 3 ] ; then NFS_MOUNT_OPTIONS="$4" ; fi                  # NFS Mount option Specified
+  
+    # Verify existence of mount point directory, if don't exist create it. 
+    umount  "$NFS_MOUNT_POINT" > /dev/null 2>&1                         # Make sure it's not mounted 
+    if [ ! -d "$NFS_MOUNT_POINT" ]                                      # If mount point not exist
+        then sudo mkdir -p "$NFS_MOUNT_POINT" >> $SADM_LOG 2>&1         # Create Dir mount point
+             if [ $? -ne 0 ]                                            # Problem creating dir
+                then if [ "$SADM_QUIET" = "N" ]                         # User want message
+                        then errmsg="[ ERROR ] Can't create NFS mount point '$NFS_MOUNT_POINT'." 
+                             sadm_write_err "$errmsg"
+                     fi 
+                     return 1 
              fi
     fi
-  
-    # Verify existence of directory mount point
-    umount  "$NFS_MOUNT_POINT" > /dev/null 2>&1                         # Make sure it's unmounted 
-    if [ -d "$NFS_MOUNT_POINT" ] ; then rm -fr "$NFS_MOUNT_POINT" ; fi  # If old mount point exist
-    sudo mkdir -p "$NFS_MOUNT_POINT" >> $SADM_LOG 2>&1                 # Create Dir mount point
-    if [ $? -ne 0 ]                                                     # Problem creating dir
-        then sadm_write_err "[ ERROR ] Can't create NFS mount point '$NFS_MOUNT_POINT'." 
-             return 1 
-    fi
-    sadm_write_log "[ OK ] NFS mount point '$NFS_MOUNT_POINT' created."
+    if [ "$SADM_QUIET" = "N" ] ;then sadm_write_log "[ OK ] NFS mount point '$NFS_MOUNT_POINT' created." ; fi
 
     # Mount the NFS Directory (With and Without options)
     if [ "$NFS_MOUNT_OPTIONS" = "" ] 
@@ -811,20 +812,21 @@ sadm_nfs_mount()
         else CMD="sudo mount -t nfs -o ${NFS_MOUNT_OPTIONS} ${NFS_SERVER}:${NFS_DIR} $NFS_MOUNT_POINT "
     fi 
     eval "$CMD" >>$SADM_LOG 2>&1
-
-    # Error occured with mount command
     if [ $? -ne 0 ]                                                     # Problem Mounting NFS Dir.
-        then if [ "$SADM_QUIET" = "N" ] ; then sadm_write_err "[ ERROR ] Doing $CMD" ; fi 
-             umount ${NFS_MOUNT_POINT} > /dev/null 2>&1                 # Ensure mount point unmount
+        then if [ "$SADM_QUIET" = "N" ] 
+                then sadm_write_err "[ ERROR ] Doing $CMD"              # Show command that failed.
+             fi 
+             umount "$NFS_MOUNT_POINT" > /dev/null 2>&1                 # Ensure mount point unmount
              return 1
     fi 
 
     # Mount Succeeded 
     if [ "$SADM_QUIET" = "N" ]                                          # User want message
        then sadm_write_log "[ OK ] $CMD"                                # Show command that failed.
-#            df -h |grep "$NFS_MOUNT_POINT" |tee -a "$SADM_LOG"          # Show disk usage after mount
-            RC=0
+            sadm_write_log "[ INFO ] $(df -h |grep "$NFS_MOUNT_POINT")" |tee -a "$SADM_LOG" # Show df 
     fi
+    RC=0                                                                # Mount OK Return 0 to caller
+                                                                        
     return $RC                                                          # Return Mount Status to Usr
 }
 
@@ -869,6 +871,7 @@ sadm_nfs_unmount()
     fi
  
     # NFS mount point is not needed anymore, we delete it.
+    cd /tmp                            # Change to /tmp to ensure we are not in the mount point dir.
     if [ -d "$NFS_MOUNT_POINT" ]                                        # Mount point exist
         then rm -fr "$NFS_MOUNT_POINT"                                  # Delete dir content
              if [ "$SADM_QUIET" = "N" ] 
@@ -911,18 +914,30 @@ sadm_nfs_unmount()
 # --------------------------------------------------------------------------------------------------
 sadm_ping()
 {
-    WSERVER=$1                                                          # Server Name to ping
+    if [ $# -ne 1 ]                                                     # Invalid No. of Parameter
+        then if [ "$SADM_QUIET" = "N" ]                                 # User want error message
+                then sadm_write_err "[ ERROR ] Number of argument invalid, '$#' received by ${FUNCNAME}."
+                     sadm_write_err "Should be 1, but we received $# : $* "     # Show what received
+             fi
+             return 1                                                   # Return Error to caller
+    fi
+
+    WSERVER=$1                                                          # System Name to ping
     ping -c 2 -W 2 $WSERVER >/dev/null 2>/dev/null                      # Ping the Server
     RC=$?  
-    if [ $RC -ne 0 ] 
-        then sadm_write_err "[ ERROR ] #$RC Ping to system '$WSERVER' failed."
-             RC=1                                                       # Make sure RC is 1 or 0 
-        else sadm_write_log "[ OK ] System '$WSERVER' is alive."
-             RC=0
+    if [ $RC -ne 0 ]                                                    # Ping did not work
+        then if [ "$SADM_QUIET" = "N" ]                                 # If Quiest mode is OFF
+                then sadm_write_err "[ ERROR ] No.$RC - System '$WSERVER' doesn't respond to ping."
+                     sadm_write_err "[ ERROR ] Can't Ping the NFS Server ${WSERVER}"
+             fi                                                         # Then show user error msg.
+             RC=1                                                       # Return error to caller
+        else if [ "$SADM_QUIET" = "N" ] 
+                then sadm_write_log "[ OK ] System '$WSERVER' is alive." # Inform user ping is OK
+             fi 
+             RC=0                                                       # Return success to caller      
     fi
     return $RC
 }
-
 
 
 
@@ -934,6 +949,7 @@ sadm_ping()
 #
 sadm_abort()
 {
+    # Call stop(1) ? if start() was executed before ?
     sadm_write_err "[ ERROR ] Aborting execution of script '${SADM_PN}'."
     exit 1
 
