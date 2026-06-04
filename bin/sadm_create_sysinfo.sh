@@ -992,9 +992,9 @@ function create_vmlist()
                 echo "${SADM_HOSTNAME},${vmname},${SADMIN}"  >> "$SADM_VMLIST"   
                 sadm_write_log "${SADM_HOSTNAME},${vmname},${SADMIN}"
                 done 
-             chmod 644 "$SADM_VMLIST"
-             chown "$SADM_USER:$SADM_GROUP" "$SADM_VMLIST" 
     fi
+    chmod 644 "$SADM_VMLIST"
+    chown "$SADM_USER:$SADM_GROUP" "$SADM_VMLIST" 
     return 0 
 }
 
@@ -1045,6 +1045,7 @@ function cmd_options()
     pre_validation                                                      # Cmd neede are present ?
     SADM_EXIT_CODE=$?                                                   # Save Function Return code
     if [ $SADM_EXIT_CODE -ne 0 ] ; then sadm_stop 1 ; exit 1 ; fi       # If pre_validation failed
+    
     if [ "$SADM_OS_TYPE"  = "AIX"   ]                                   # If running on AIX
         then create_aix_config_files                                    # Collect Aix Info
         else create_linux_config_files                                  # Collect Linux/OSX Info
