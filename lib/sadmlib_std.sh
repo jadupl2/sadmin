@@ -505,11 +505,11 @@ export SADM_VM_EXPORT_DIF=25                                # When Size 25% grea
 export SADM_VM_EXPORT_SCRIPT="sadm_vm_export.sh"            # Default path to export script
 
 # To be a valid SADMIN server 'SADM_HOST_TYPE' must be "S" and 'SADM_SERVER' IP must exist on host.
-export SADM_ON_SADMIN_SERVER="N"                            # Valid SADMIN Server Y/N ?
+#export SADM_ON_SADMIN_SERVER="N"                            # Valid SADMIN Server Y/N ?
 
 # Array of O/S Supported & Package Family
-#export SADM_OS_SUPPORTED=( 'REDHAT' 'CENTOS' 'FEDORA' 'ALMA' 'ROCKY'
-#                           'DEBIAN' 'RASPBIAN' 'UBUNTU' 'MINT' 'AIX' )
+#export SADM_OS_SUPPORTED=(  'REDHAT' 'CENTOS' 'FEDORA' 'ALMA' 'ROCKY'
+#                            'DEBIAN' 'RASPBIAN' 'UBUNTU' 'MINT' 'AIX' )
 #export SADM_REDHAT_FAMILY=( 'REDHAT' 'CENTOS' 'FEDORA' 'ALMA' 'ROCKY' )
 #export SADM_DEBIAN_FAMILY=( 'DEBIAN' 'RASPBIAN' 'UBUNTU' 'MINT' )
 export OS_REL="/etc/os-release"                                         # O/S Release File
@@ -2606,7 +2606,7 @@ sadm_start() {
                      printf "\n    - Change permission of '$SADM_RCH_FILE'.\n"
                      ls -l "$SADM_RCH_FILE"
                      printf "\nScript Aborted !\n"
-                     sadm_stop 1 
+                     sadm_stop 1                                        # clean up before exit
                      exit 1
              fi
     fi
@@ -2634,16 +2634,16 @@ sadm_start() {
              sadm_write_err "Try 'sudo ${0##*/}'."                      # Suggest using sudo
              sadm_write_err "Process aborted."                          # Abort advise message
              sadm_write_err " "
-             sadm_stop 1
+             sadm_stop 1                                                # clean up before exit
              exit 1                                                     # Exit To O/S with Error
     fi
 
     # Check if this script to be run only on the SADMIN server.
-    if [ "$SADM_ON_SADMIN_SERVER" = "N" ] &&  [ "$SADM_SERVER_ONLY" = "Y" ] 
+    if [ "$SADM_SADM_HOST_TYPE" != "S" ] && [ "$SADM_SERVER_ONLY" = "Y" ]
         then sadm_write_err "[ ERROR ] This script will only run on the SADMIN server '$SADM_SERVER'."
              sadm_write_err "The variable 'SADM_SERVER_ONLY' is set to 'Y'."
              sadm_write_err "Process aborted."                          # Abort advise message
-             sadm_stop 1
+             sadm_stop 1                                                # clean up before exit
              exit 1                                                     # Exit To O/S
     fi
 
@@ -3434,30 +3434,34 @@ EOF
 
 
 # --------------------------------------------------------------------------------------------------
-# Things to do when first called
+# Things to do when first called - Initialize SADMIN Library
 # --------------------------------------------------------------------------------------------------
     SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`                            # Save Startup Date & Time
     if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # If invoke from cmdline
         then printf "\n$SADM_STIME Loading SADMIN Shell Library ..."    # Show reference point #1
     fi
 
-    # Make sure /etc/environment exist
+
+    # Make Sure /etc/environment Exist and is readable, if not we can't continue.
     if [ ! -r "$SADM_ETCENV" ]                                          # /etc/environment not there
-        then printf "\n\nFile '$SADM_ETCENV' is missing & require."     # Inform User 
+        then printf "\n\nFile '$SADM_ETCENV' is missing & required."    # Inform User 
              printf "\nCan't continue, aborting."                       # We are aborting
              printf "\nFor more info: https://sadmin.ca/sadm-section/#environment \n"
-             exit 1                                                     # Exit with error
+             exit 1                                                     # Exit shell with error
     fi 
 
-    # Make sure 'SADMIN' directory declaration exist in /etc/environment.
+
+    # Make Sure 'SADMIN' Directory Declaration Exist In /etc/environment.
     grep "SADMIN=" $SADM_ETCENV >/dev/null 2>&1                         # Do Env.File include SADMIN
     if [ $? -ne 0 ] ; then echo "SADMIN=$SADMIN" >> $SADM_ETCENV ; fi   # Then add it to the file
 
-    # Load $SADMIN/cfg/sadmin.cfg
+
+    # Load the SADMIN configuration file and set the SADMIN Global variables.
     if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # If invoke from cmdline
         then printf "\n$(date "+%C%y.%m.%d %H:%M:%S") Loading $SADM_CFG_FILE ..."
     fi
     sadm_load_config_file                                               # Load sadmin.cfg file
+
     sadmin_cfg_update                                                   # New Stuff was added to cfg
 
     # Check if on a valid SADMIN server and set SADM_ON_SADMIN_SERVER to "Y" or "N" 

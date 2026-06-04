@@ -1873,8 +1873,7 @@ def locate_command(cmd) :
     """
 
     cmd_path = shutil.which(cmd)
-    if cmd_path == None : 
-        cmd_path='' 
+    if cmd_path == None : cmd_path='' 
     return(cmd_path)                                                   
 
 
@@ -2039,6 +2038,7 @@ def load_cmd_path():
     requisites_status=True                                              # Assume Requirement all Met
     ostype=get_ostype()                                                 # AIX,WINDOWS,LINUX,DARWIN
     if ostype == "WINDOWS" : return(requisites_status)                  # Not used on Windows
+
     if not os.path.exists(cmd_which)  :                                 # Command 'which' is present
         write_err("[ERROR] The command 'which' couldn't be found")      # is not available
         write_err("        This command is needed by the SADMIN tools") # If which is not available
