@@ -504,9 +504,6 @@ export SADM_VM_START_INTERVAL=30                            # Sec before start o
 export SADM_VM_EXPORT_DIF=25                                # When Size 25% greater 
 export SADM_VM_EXPORT_SCRIPT="sadm_vm_export.sh"            # Default path to export script
 
-# To be a valid SADMIN server 'SADM_HOST_TYPE' must be "S" and 'SADM_SERVER' IP must exist on host.
-#export SADM_ON_SADMIN_SERVER="N"                            # Valid SADMIN Server Y/N ?
-
 # Array of O/S Supported & Package Family
 #export SADM_OS_SUPPORTED=(  'REDHAT' 'CENTOS' 'FEDORA' 'ALMA' 'ROCKY'
 #                            'DEBIAN' 'RASPBIAN' 'UBUNTU' 'MINT' 'AIX' )
@@ -2639,7 +2636,7 @@ sadm_start() {
     fi
 
     # Check if this script to be run only on the SADMIN server.
-    if [ "$SADM_SERVER_ONLY" = "Y" ] && [ "$SADM_SADM_HOST_TYPE" != "S" ] 
+    if [ "$SADM_SERVER_ONLY" = "Y" ] && [ "$SADM_HOST_TYPE" != "S" ] 
         then sadm_write_err "[ ERROR ] This script will only run on the SADMIN server '$SADM_SERVER'."
              sadm_write_err "The variable 'SADM_SERVER_ONLY' is set to 'Y'."
              sadm_write_err "Process aborted."                          # Abort advise message
