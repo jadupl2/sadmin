@@ -993,8 +993,12 @@ function create_vmlist()
                 sadm_write_log "${SADM_HOSTNAME},${vmname},${SADMIN}"
                 done 
     fi
-    chmod 644 "$SADM_VMLIST"
-    chown "$SADM_USER:$SADM_GROUP" "$SADM_VMLIST" 
+    
+    if [ -f "$SADM_VMLIST" ] 
+        then chmod 664 "$SADM_VMLIST"
+             chown "$SADM_USER:$SADM_GROUP" "$SADM_VMLIST" 
+    fi
+
     return 0 
 }
 
