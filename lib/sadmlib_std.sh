@@ -2639,7 +2639,7 @@ sadm_start() {
     fi
 
     # Check if this script to be run only on the SADMIN server.
-    if [ "$SADM_SADM_HOST_TYPE" != "S" ] && [ "$SADM_SERVER_ONLY" = "Y" ]
+    if [ "$SADM_SERVER_ONLY" = "Y" ] && [ "$SADM_SADM_HOST_TYPE" != "S" ] 
         then sadm_write_err "[ ERROR ] This script will only run on the SADMIN server '$SADM_SERVER'."
              sadm_write_err "The variable 'SADM_SERVER_ONLY' is set to 'Y'."
              sadm_write_err "Process aborted."                          # Abort advise message
