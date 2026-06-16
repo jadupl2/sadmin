@@ -47,6 +47,7 @@
 # 2023_12_21 install v1.15 Revision of the list of the packages require.
 #@2024_04_21 install v1.16 Replace 'sadm_write' by 'sadm_write_log' and 'sadm_write_err'.
 #@2025_02_22 install v1.17 Replace 'command_available()' by the one in library 'sadm_get_command_path()'.
+#@2026_06_16 install v1.18 Change the test to verify if we are on the server admin.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -78,7 +79,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='1.17'                                     # Your Current Script Version
+export SADM_VER='1.18'                                     # Your Current Script Version
 export SADM_PDESC="Check if all SADMIN Tools requirement are present (-i install missing packages)."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -706,7 +707,7 @@ check_sadmin_requirements() {
 
 
     # If on the SADMIN Server mysql MUST be present - Check Availibility of the mysql command.
-    if [ "$SADM_ON_SADMIN_SERVER" = "Y" ] || [ "$CHK_SERVER" = "Y" ] # Check Server Req.
+    if [ "$SADM_HOST_TYPE" = "S" ] 
         then sadm_write_log " "
              sadm_write_log "${YELLOW}${BOLD}SADMIN server requirements.${NORMAL}"
              sadm_get_command_path "mysql" ; SADM_MYSQL=$SPATH              # Get mysql cmd path  
