@@ -58,12 +58,10 @@
 	  - v4.46 - Fix crash when running a script that need to be run by 'root' and was not.
 	  - v4.47 - Fix error in db_close(), when trying to close a connection that isn't open.
 	  - v4.48 - 'SADM_HOST_TYPE' in 'sadmin.cfg', determine if system is a client or a server.
-	  - v4.49 - New function 'on_sadmin_server()' Return "Y" if on SADMIN server else "N".
 	  - v4.50 - Correct typo and remove need to use 'psutil' python module.
   - sadmlib_os.sh 
 	  - v0.1 - Initial working version
   - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) 
-	  - v4.30 - New function 'sadm_on_sadmin_server(), it return "Y" if on SADMIN server else "N".
 	  - v4.31 - Fix problem when copying log and rch when initially created and user isn't root.
 	  - v4.32 - Eliminate 'cp' error message in 'sadm_stop()'' function, when file is missing.
 	  - v4.33 - Add user message when user is not part if the SADMIN group.
@@ -154,7 +152,7 @@
 	  - v1.4 - Make sure only one instance of 'nmon' in running.
 	  - v1.5 - Update to SADMIN section v2.3, fix 'pymysql' error msg & added log verbosity.
   - [sadm_template.py](https://sadmin.ca/sadm-template-py) 
-	  - v1.3 - Update SADMIN section (More fields sa.db_errno, sa.db_errmsg, sa.db_name)
+	  - v1.3 - Update SADMIN section (More fields sa.errno, sa.db_errmsg, sa.db_name)
   - [sadm_wrapper.sh](https://sadmin.ca/sadm-wrapper) 
 	  - v1.7 - Update with latest SADMIN section(v1.56).
 
