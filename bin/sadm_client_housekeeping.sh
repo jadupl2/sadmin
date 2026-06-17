@@ -94,6 +94,7 @@
 #@2026_03_12 client v2.30 Adjust output of 'chage' command & small log changes.
 #@2026_03_15 client v2.31 Fix removal of $SADMIN.git directory & '.gitignore' (if exist) on client.
 #@2026_03_27 client v2.32 Default set password expiration to never (Since passwd off, use ssh keys).
+#@2026_06_15 client v2.33 Add $SADMIN/sys files, create them if not exist from template
 # --------------------------------------------------------------------------------------------------
 # Add trap to catch ^C and stop script gracefully.
 trap 'sadm_stop 1; exit 1' 2                                        
@@ -125,7 +126,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.32'                                     # Script version number
+export SADM_VER='2.33'                                     # Script version number
 export SADM_PDESC="Set \$SADMIN owner:group permission, prune old log,rch files & check 'sadmin' account."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -673,7 +674,30 @@ file_housekeeping()
              if [ -f "${SADMIN}/.gitignore" ] ; then rm -f "${SADMIN}/.gitignore" ; fi
 
     fi
-    
+
+
+    # If System Startup Script does not exist - Create one from the startup template script
+    if [ ! -r "$SADM_SYS_STARTUP" ] && [ -r "$SADM_SYS_START" ] 
+        then cp $SADM_SYS_START $SADM_SYS_STARTUP
+    fi 
+    if [ $(id -u) -eq 0 ]
+        then chmod 0774 $SADM_SYS_STARTUP 
+             chown ${SADM_USER}:${SADM_GROUP} $SADM_SYS_STARTUP
+             chmod 0774 $SADM_SYS_START
+             chown ${SADM_USER}:${SADM_GROUP} $SADM_SYS_START
+    fi
+
+    # If System Shutdown Script does not exist - Create it from the shutdown template script
+    if [ ! -r "$SADM_SYS_SHUTDOWN" ] && [ -r "$SADM_SYS_SHUT" ] 
+        then cp $SADM_SYS_SHUT $SADM_SYS_SHUTDOWN 
+    fi 
+    if [ $(id -u) -eq 0 ]
+        then chmod 0774 $SADM_SYS_SHUTDOWN 
+             chown ${SADM_USER}:${SADM_GROUP} $SADM_SYS_SHUTDOWN
+             chmod 0774 $SADM_SYS_SHUT
+             chown ${SADM_USER}:${SADM_GROUP} $SADM_SYS_SHUT
+    fi
+
     if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error: ${ERROR_COUNT}" ;fi
     return $ERROR_COUNT
 }

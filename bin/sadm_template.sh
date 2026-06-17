@@ -45,7 +45,6 @@ trap 'sadm_stop 1; exit 1' 2
 # v1.56 - Setup Global Variables and load the SADMIN standard library $SADMIN/lib/sadmlib_std.sh.
 #       - To use SADMIN scripting tools, this section MUST be present near the top of your code.    
 
-
 # Make sure environment variable 'SADMIN' is defined.
 if [ -r /etc/environment ] && [ -z "$SADMIN" ] ; then source /etc/environment ; fi 
 if [ -z "$SADMIN" ]                                        # Advise user, SADMIN Env. Var. is a MUST
@@ -71,6 +70,7 @@ export SADM_VER='4.4'                                      # Script version numb
 export SADM_PDESC="SADMIN template shell script"           # Script Optional Desc.(Not use if empty)
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
+export SADM_SADMGRP_ONLY='N'                               # Run only if user is part of SADMIN Grp
 export SADM_QUIET="N"                                      # N=Show Err.Msg Y=ReturnErrorCode No Msg
 export SADM_LOG_TYPE="B"                                   # Write log to [S]creen, [L]og, [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -361,14 +361,11 @@ function cmd_options()
 # --------------------------------------------------------------------------------------------------
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Won't come back if error
-    
-    # Want to use 'sadmin' database for processing, call 'process_systems', else call 'main_process'
     if [ "$SADM_USE_DB" = "Y" ]                                         # If want to use database 
         then process_systems                                            # Code using SADMIN Database
              SADM_EXIT_CODE=$?                                          # Save Process Return Code 
         else main_process                                               # Not using SADMIN Database
              SADM_EXIT_CODE=$?                                          # Save Process Return Code 
     fi
-
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)

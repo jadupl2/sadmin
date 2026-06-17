@@ -25,9 +25,7 @@
 #
 # VERSION CHANGE LOG
 # ------------------
-# 2025_08_25 lib v1.00 Initial Version
-#@2025_09_04 lib v1.1.1 Now ONE template for Python & remove the need of importing pymysql.
-#@2026_05_30 lib v1.2.1 Added 'quiet' parameter to 'db_connect()' function in SADMIN Python Library.
+#@2026_06_17 lib v1.0.0 Initial Version
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -203,8 +201,27 @@ def process_servers():
 def main_process():
     sa.write_log ("In main_process")
 
-    sa.sleep(3,1)                                                       # Sleep 3 sec progress 1 sec
     sa.write_log(" ")                                                   # Blank line on screen & Log
+
+    sadm = sa.sadmin()
+    sa.write_log ("Default version = %s" % sadm.ver)
+
+    sadm.set_ver("2.0.0")
+    sa.write_log ("version should be 2.0.0 = %s" % sadm.get_ver())
+
+    sadm.set_ver("3.0.0")
+    sa.write_log ("version should be 3.0.0 = %s" % sadm.ver)
+
+    sadm.set_ver("4.0.0")
+    sa.write_log ("version should be 4.0.0 = %s" % sadm.get_ver())
+
+    sa.write_log ("Initial Header : %s " % sadm.get_log_header())
+    sadm.set_log_header(False)
+    sa.write_log ("After setting to False : %s " % sadm.get_log_header())
+    sadm.set_log_header(True)
+    sa.write_log ("After setting to True : %s " % sadm.get_log_header())
+    sadm.log_header = False
+    sa.write_log ("After setting to False : %s " % sadm.get_log_header())
 
     return(sa.exit_code)                                                  # Result Code to caller
 

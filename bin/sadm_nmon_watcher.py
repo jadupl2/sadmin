@@ -80,8 +80,8 @@ db_cur      = None                # Database Cursor (if used)
 sa.db_used           = False      # Open/Use DB(True), No DB needed (False), sa.start() auto connect
 sa.db_silent         = False      # True=ReturnErrorNo & No ErrMsg, False=ReturnErrorNo & ShowErrMsg
 sa.db_name           = "sadmin"   # Database Name default to name define in $SADMIN/cfg/sadmin.cfg
-sa.db_errno          = 0          # Database Error Number
-sa.db_errmsg         = ""         # Database Error Message
+sa.errno          = 0          # Database Error Number
+sa.errmsg        = ""         # Database Error Message
 #
 sa.use_rch           = True       # Generate entry in Result Code History (.rch)
 sa.log_type          = 'B'        # Output goes to [S]creen to [L]ogFile or [B]oth
@@ -91,7 +91,6 @@ sa.log_footer        = True       # Show/Generate Footer in script log (.log)
 sa.multiple_exec     = "N"        # Allow running multiple copy at same time ?
 sa.proot_only        = True       # Pgm run by root only ?
 sa.psadm_server_only = False      # Run only on SADMIN server ?
-sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (sa.cmd_ssh,sa.sadm_ssh_port)
 
 # The values of fields below, are loaded from sadmin.cfg when you import the SADMIN library.
 # Change them to fit your need, they are use by start() & stop() functions of SADMIN Python Libr.

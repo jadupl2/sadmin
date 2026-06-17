@@ -120,10 +120,9 @@ sa.db_used            = True                # Open/Use auto connect DB(True), No
 db_conn        = None              # Use this Database Connector when using DB,  set by sa.start()
 db_cur         = None              # Use this Database cursor if you use the DB, set by sa.start()
 sa.db_name        = "sadmin"             # Database Name (sadmin=default) define in $SADMIN/cfg/sadmin.cfg
-sa.db_errno       = 0              # PyMysql Database Error Number
-sa.db_errmsg      = ""             # Database Error Message
+sa.errno       = 0              # PyMysql Database Error Number
+sa.errmsg     = ""             # Database Error Message
 
-sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (sa.cmd_ssh,sa.sadm_ssh_port)
 
 # The values of fields below, are loaded automatically from sadmin.cfg when you import sadmlib2_std.
 # Change them to fit your need, they are use by start() & stop() functions of SADMIN Python Library.

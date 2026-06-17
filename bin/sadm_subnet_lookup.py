@@ -105,10 +105,9 @@ sa.mail_addr          = ""                                    # Default use emai
 sa.db_conn        = None           # Use this Database Connector when using DB,  set by sa.start()
 sa.db_cur         = None           # Use this Database cursor if you use the DB, set by sa.start()
 sa.db_name        = ""             # Database Name (sadmin=default) define in $SADMIN/cfg/sadmin.cfg
-sa.db_errno       = 0              # PyMysql Database Error Number
-sa.db_errmsg      = ""             # PyMysql Database Error Message
+sa.errno       = 0              # PyMysql Database Error Number
+sa.errmsg     = ""             # PyMysql Database Error Message
 
-sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (sa.cmd_ssh,sa.sadm_ssh_port)
 
 # The values of fields below, are loaded automatically from sadmin.cfg when you import sadmlib2_std.
 # Change them to fit your need, they are use by start() & stop() functions of SADMIN Python Library.
@@ -232,8 +231,8 @@ def db_insert(tbkey,tbdata,db_conn,db_cur):
         emsg=e                                                          # Get Error Message
         if not sa.db_silent:                                            # If not in Silent Mode
             sa.write_log("[ ERROR ] (%d) %s" % (enum,e))                # Print Error No. & Message
-            sa.db_errmsg = e
-            sa.db_errno  = enum
+            sa.errmsg= e
+            sa.errno  = enum
             return(enum)                                                # return (1) indicate Error
 
     # Execute the insert statement
