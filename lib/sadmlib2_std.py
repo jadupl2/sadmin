@@ -102,7 +102,7 @@ try :
     import time                                             # Time access & conversions
     import socket                                           # LowLevel network interface
     import subprocess                                       # Subprocess management
-    from email_validator import validate_email, EmailNotValidError
+    #from email_validator import validate_email, EmailNotValidError
     import grp                                              # Access group database
     import linecache                                        # Text lines Random access 
     import subprocess                                       # Subprocess management
@@ -2916,13 +2916,13 @@ def sendmail(waddr, wsub, wbody, wattach="") :
     """
 
     # Validate email address
-    try:
-        email_info = validate_email(waddr, check_deliverability=True)
-    except EmailNotValidError as e:
-        errmsg = {str(e)}
-        write_err ("The email specified is not valid '%s'." % waddr)
-        write_err (errmsg)
-        return 1
+#    try:
+#        email_info = validate_email(waddr, check_deliverability=True)
+#    except EmailNotValidError as e:
+#        errmsg = {str(e)}
+#        write_err ("The email specified is not valid '%s'." % waddr)
+#        write_err (errmsg)
+#        return 1
 
     # Ensure email body file exists before checking its size
     if not os.path.exists(wbody) or os.path.getsize(wbody) == 0:    
