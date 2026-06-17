@@ -2538,9 +2538,11 @@ def start(db_name="sadmin") :
     uid = pwd.getpwnam(sadm_user).pw_uid                                # Get UID User in sadmin.cfg
     gid = grp.getgrnam(sadm_group).gr_gid                               # Get GID User in sadmin.cfg
 
+    # Web Server only on the SADMIN server.
     # Get the Web user uid and gid chosen in sadmin.cfg (SADM_WWW_USER/SADM_WWW_GROUP)
-    wuid = pwd.getpwnam(sadm_www_user).pw_uid                           # Get Web UID running apache
-    wgid = grp.getgrnam(sadm_www_group).gr_gid                          # Get Web GID User Group
+    if (sadm_host_type != "S" and server_only) :
+        wuid = pwd.getpwnam(sadm_www_user).pw_uid                       # Get Web UID running apache
+        wgid = grp.getgrnam(sadm_www_group).gr_gid                      # Get Web GID User Group
 
     # Initialize the script log file
     # Make sure that $SADMIN/log directory is created, get the right permission and owner/group ID.
