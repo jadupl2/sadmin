@@ -269,7 +269,7 @@
 #@2026_04_28 lib v4.89 NFS Mount use sudo to avoid problem with NFS mount is run by non root user.
 #@2026_06_01 lib v4.90.1 Added "chmod 0775 $SADMIN".
 #@2026_06_03 lib v4.90.2 Intro. of "SADM_QUIET" var. to ctrl the display of error msg in functions.
-
+#@2026_06_08 lib v4.90.3 Don't remove the mount point Dir. after the unmount in 'sadm_nfs_unmount()'.
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -280,7 +280,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.90.2"                                            # This Library Version
+export SADM_LIB_VER="4.90.3"                                            # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -288,6 +288,7 @@ export SADM_TEN_DASH=$(printf %10s |tr ' ' '-')                         # 10 das
 export SADM_STIME=""                                                    # Script Start Time
 export DELETE_PID="Y"                                                   # Default Delete PID On Exit
 export LIB_DEBUG=0                                                      # This Library Debug Level
+export SADMGRP_ONLY='N'                                     # Run only if user is part of SADMIN Grp
 
 # Use inside functions to control the display of error message (Y/N)
 # Y = Function will not show error msg, but will return error code (0or1) to caller.
@@ -820,7 +821,7 @@ sadm_nfs_mount()
     # Mount Succeeded 
     if [ "$SADM_QUIET" = "N" ]                                          # User want message
        then sadm_write_log "[ OK ] $CMD"                                # Show command that failed.
-            sadm_write_log "[ INFO ] $(df -h |grep "$NFS_MOUNT_POINT")" |tee -a "$SADM_LOG" # Show df 
+            sadm_write_log "[ INFO ] $(df -h |grep "$NFS_MOUNT_POINT")" # Show df 
     fi
     RC=0                                                                # Mount OK Return 0 to caller
                                                                         
@@ -845,7 +846,7 @@ sadm_nfs_unmount()
              sadm_write_err "  - Example:   \"sadm_nfs_unmount 'local mount point'\""
              return 1                                                   # Error back to caller 
     fi 
-    NFS_MOUNT_POINT="$1"                                                # Local dir. to mount nfs
+    NFS_MOUNT_POINT="$1"                                                # Local dir. to unmount
 
     # Verify existence of directory mount point
     if [ ! -d "$NFS_MOUNT_POINT" ]                                      # Mount point not there
@@ -856,6 +857,7 @@ sadm_nfs_unmount()
     fi 
 
     # Unmount NFS mounted Directory
+    xpwd=$(pwd) && cd /tmp                                              # Save Cur. Dir. & cd /tmp
     umount "$NFS_MOUNT_POINT" >> "$SADM_LOG" 2>&1                       # Unmount NFS Source
     if [ $? -eq 0 ] 
         then if [ "$SADM_QUIET" = "N" ] 
@@ -866,15 +868,17 @@ sadm_nfs_unmount()
              fi 
              return 1                                                   # Return error to caller
     fi
- 
-    # NFS mount point is not needed anymore, we delete it.
-    cd /tmp                            # Change to /tmp to ensure we are not in the mount point dir.
-    if [ -d "$NFS_MOUNT_POINT" ]                                        # Mount point exist
-        then rm -fr "$NFS_MOUNT_POINT"                                  # Delete dir content
-             if [ "$SADM_QUIET" = "N" ] 
-                then sadm_write_log "[ OK ] NFS mount point '$NFS_MOUNT_POINT' removed." 
-             fi 
-    fi 
+    cd "$xpwd"                                                          # Back to previous dir.
+
+    # Save current directory & 'cd /tmp' to ensure we are not in the mount point dir. 
+    # Unmount NFS mount point 
+    #if [ -d "$NFS_MOUNT_POINT" ]                                        # Mount point exist
+    #   then rm -fr "$NFS_MOUNT_POINT"                                  # Delete dir content
+    #        if [ "$SADM_QUIET" = "N" ] 
+    #          then sadm_write_log "[ OK ] NFS mount point '$NFS_MOUNT_POINT' removed." 
+    #         fi 
+    #fi 
+
     return 0 
 } 
 
@@ -2568,14 +2572,12 @@ sadm_start() {
     if [ "$SADM_LOG_APPEND" = "N" ]                                     # Want [N]ew log each time
         then rm -f "$SADM_LOG" "$SADM_ELOG" >/dev/null 2>&1             # Remove old log & errorlog
     fi 
-
-    # Check and make sure script log, errorlog and RCH file exist and will be writable.
     [ ! -f "$SADM_RCH_FILE" ] && touch "$SADM_RCH_FILE"                 # Create RCH  If not exist
     [ ! -f "$SADM_LOG" ]      && touch "$SADM_LOG"                      # Create LOG  If not exist
     [ ! -f "$SADM_ELOG" ]     && touch "$SADM_ELOG"                     # Create ELOG If not exist
 
     # Will work when running with root, don't give error if we are not 'root'.
-    chmod 666 "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 # Log & RCH Change Permission 
+    chmod 664 "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 # Log & RCH Change Permission 
     if [ "$(id -u)" -eq 0 ] 
        then chown "${SADM_USER}:${SADM_GROUP}"  "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 
     fi 
@@ -2645,7 +2647,7 @@ sadm_start() {
     fi
 
     # User got to be part of the SADMIN Group specified in $SADMIN/cfg/sadmin.cfg
-    if [ -r $SADMIN/cfg/sadmin.cfg ]
+    if [ -r $SADMIN/cfg/sadmin.cfg ] && [ "$SADMGRP_ONLY" = "Y" ]
        then SADM_GROUP=`awk -F= '/^SADM_GROUP/ {print $2}' $SADMIN/cfg/sadmin.cfg | tr -d ' '` 
             if [ $(id -u) -ne 0 ]                                       # If user is not 'root' user
                then usrname=$(id -un)                                   # Get Current User Name
@@ -2691,7 +2693,7 @@ sadm_start() {
 
             sadm_write_err " "
             sadm_write_err "  - Can't run multiple copy of this script (\$SADM_MULTIPLE_EXEC='N')." 
-            sadm_write_err "  - ThePID file ('$SADM_PID_FILE'), was created $runsec seconds ago, meaning $(sadm_convert_sec2hms $pelapse)."
+            sadm_write_err "  - The PID file ('$SADM_PID_FILE'), was created $(sadm_convert_sec2hms $pelapse) ($runsec sec.) ago."
             sadm_write_err "  - The PID timeout ('\$SADM_PID_TIMEOUT') is set to $ptimeout seconds, meaning $(sadm_convert_sec2hms $SADM_PID_TIMEOUT)."
             if [ $pid_TimeLeft -gt 0 ] 
                 then sadm_write_err "  - So the PID file will automatically be remove in $(sadm_convert_sec2hms $pid_TimeLeft)."
@@ -2716,7 +2718,7 @@ sadm_start() {
 
                     rm -f "$SADM_PID_FILE" > /dev/null 2>&1
                     sadm_write_err "  - The PID file ('$SADM_PID_FILE') is now removed." 
-                    sadm_write_err "  - The script will continue as normal, new PID file created."                      
+                    sadm_write_err "  - The script will continue as normal, with a new PID file."                      
                     echo "SADM_TPID" > ${SADM_PID_FILE} >/dev/null 2>&1  
                     DELETE_PID="Y"                                      # Del PID Since running
             fi
@@ -2724,41 +2726,27 @@ sadm_start() {
             DELETE_PID="Y"                                              # Del PID at end, by stop
     fi 
 
-
-    # If System Startup Script does not exist - Create one from the startup template script
-    [ ! -r "$SADM_SYS_STARTUP" ] && cp $SADM_SYS_START $SADM_SYS_STARTUP
-    if [ $(id -u) -eq 0 ]
-        then chmod 0774 $SADM_SYS_STARTUP 
-             chown ${SADM_USER}:${SADM_GROUP} $SADM_SYS_STARTUP
-    fi
-
-    # If System Shutdown Script does not exist - Create it from the shutdown template script
-    [ ! -r "$SADM_SYS_SHUTDOWN" ] && cp $SADM_SYS_SHUT $SADM_SYS_SHUTDOWN
-    if [ $(id -u) -eq 0 ]
-        then chmod 0774 $SADM_SYS_SHUTDOWN 
-             chown ${SADM_USER}:${SADM_GROUP} $SADM_SYS_SHUTDOWN
-    fi
-
     # Alert Group File ($SADMIN/cfg/alert_group.cfg) MUST be present.
     # If it doesn't exist, create it from initial file ($SADMIN/cfg/.alert_group.cfg)
     if [ ! -f "$SADM_ALERT_FILE" ]                                      # alert_group.cfg not Exist
        then if [ ! -f "$SADM_ALERT_INIT" ]                              # .alert_group.cfg not Exist
-               then sadm_write_log "********************************************************"
-                    sadm_write_log "SADMIN Alert Group file not found - $SADM_ALERT_FILE "
-                    sadm_write_log "Even Alert Group Template file is missing - $SADM_ALERT_INIT"
-                    sadm_write_log "Copy both files from another system to this server"
-                    sadm_write_log "Or restore them from a backup"
-                    sadm_write_log "Don't forget to review the file content."
-                    sadm_write_log "********************************************************"
+               then sadm_write_err "********************************************************"
+                    sadm_write_err "SADMIN Alert Group file not found - $SADM_ALERT_FILE "
+                    sadm_write_err "Even Alert Group Template file is missing - $SADM_ALERT_INIT"
+                    sadm_write_err "Copy both files from another system to this server"
+                    sadm_write_err "Or restore them from a backup"
+                    sadm_write_err "Don't forget to review the file content."
+                    sadm_write_err "********************************************************"
                     sadm_stop 1                                         # Exit to O/S with Error
                     exit 1
-               else cp $SADM_ALERT_INIT $SADM_ALERT_FILE                # Copy Template as initial
+               else sadm_write_log "Alert file initialize '$SADM_ALERT_FILE' with '$SADM_ALERT_INIT'" 
+                    cp $SADM_ALERT_INIT $SADM_ALERT_FILE                # Copy Template as initial
                     chmod 664 $SADM_ALERT_FILE
             fi
     fi
 
     # Check Files that are present ONLY ON SADMIN SERVER
-    if [ "$SADM_ON_SADMIN_SERVER" = "Y" ]                               # If we're on  SADMIN server
+    if [ "$SADM_HOST_TYPE" = "S" ]                                      # If we're on  SADMIN server
         then if [ ! -r "$SADM_ALERT_HIST" ]                             # If Alert History Missing
                 then if [ ! -r "$SADM_ALERT_HINI" ]                     # If Alert Init File not Fnd
                         then touch $SADM_ALERT_HIST                     # Create a Blank One
@@ -2996,8 +2984,8 @@ sadm_sendmail() {
     # Save Parameters Received (After Removing leading and trailing spaces).
     maddr=$(echo "$1" |awk '{$1=$1;print}')                             # Send to this email
     msubject="$2"                                                       # Save Alert Subject
-    mbody="$3"                                                          # Save Alert Message
-    if [ $# -eq 3 ] ; then mfile="" ; else mfile="$4" ; fi              # Comma separatedFileName(s)
+    mbody="$3"                                                          # Save Alert Message Body
+    if [ $# -eq 3 ] ; then mfile="" ; else mfile="$4" ; fi              # Comma separated FileName(s)
     if [ "$LIB_DEBUG" -gt 4 ] 
          then sadm_write_log "1- Email sent to : ${maddr}" 
               sadm_write_log "2- Email subject : ${msubject}" 
@@ -3430,7 +3418,6 @@ EOF
 
 
 
-# --------------------------------------------------------------------------------------------------
 # Things to do when first called - Initialize SADMIN Library
 # --------------------------------------------------------------------------------------------------
     SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`                            # Save Startup Date & Time
@@ -3439,9 +3426,9 @@ EOF
     fi
 
 
-    # Make Sure /etc/environment Exist and is readable, if not we can't continue.
+    # Make Sure /etc/environment exist and is readable, if not we can't continue.
     if [ ! -r "$SADM_ETCENV" ]                                          # /etc/environment not there
-        then printf "\n\nFile '$SADM_ETCENV' is missing & required."    # Inform User 
+        then printf "\n\n[ ERROR ] File '$SADM_ETCENV' is missing & required."
              printf "\nCan't continue, aborting."                       # We are aborting
              printf "\nFor more info: https://sadmin.ca/sadm-section/#environment \n"
              exit 1                                                     # Exit shell with error
@@ -3453,28 +3440,31 @@ EOF
     if [ $? -ne 0 ] ; then echo "SADMIN=$SADMIN" >> $SADM_ETCENV ; fi   # Then add it to the file
 
 
-    # Load the SADMIN configuration file and set the SADMIN Global variables.
+    # Load the SADMIN configuration file $SADMIN/cfg/sadmin.cfg and set the SADMIN Global variables.
     if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # If invoke from cmdline
         then printf "\n$(date "+%C%y.%m.%d %H:%M:%S") Loading $SADM_CFG_FILE ..."
     fi
     sadm_load_config_file                                               # Load sadmin.cfg file
 
+
+    # Update SADMIN configuration if needed, when new variables are added with new version, 
+    # they will be added to the sadmin.cfg file here.
+    if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # If invoke from cmdline
+        then printf "\n$(date "+%C%y.%m.%d %H:%M:%S") Updating $SADM_CFG_FILE ..."
+    fi
     sadmin_cfg_update                                                   # New Stuff was added to cfg
 
-    # Check if on a valid SADMIN server and set SADM_ON_SADMIN_SERVER to "Y" or "N" 
-    if [ "$SADM_HOST_TYPE" = "S" ] ;then SADM_ON_SADMIN_SERVER="Y" ;else SADM_ON_SADMIN_SERVER="N" ;fi
 
     # Load the path of commands used in SADMIN
     if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
         then printf "\n$(date "+%C%y.%m.%d %H:%M:%S") Loading command path ..."
-             #printf "SADM_ON_SADMIN_SERVER = $SADM_ON_SADMIN_SERVER \n"
     fi
     sadm_load_cmd_path                                                  # Load Cmd Path Variables
-    if [ $? -ne 0 ] ; then exit 1 ; fi                                  # If Requirement not met
+
 
     # Build SSH command according to Path and Port used
     export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT}"             # SSH Command to SSH CLient
     if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
-        then printf "\n$(date "+%C%y.%m.%d %H:%M:%S") Library Loaded ...\n"
+        then printf "\n$(date "+%C%y.%m.%d %H:%M:%S") Library Loaded ...\n\n"
     fi
 

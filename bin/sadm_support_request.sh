@@ -208,7 +208,7 @@ main_process()
     print_file "/etc/cron.d/sadm_client"
 
     # Files that appears only on the SADMIN server.
-    if [ $SADM_ON_SADMIN_SERVER = "Y" ] 
+    if [ $SADM_HOST_TYPE = "S" ] 
         then print_file "/etc/cron.d/sadm_server"
              print_file "/etc/cron.d/sadm_osupdate"
              print_file "/etc/cron.d/sadm_backup"

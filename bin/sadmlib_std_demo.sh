@@ -76,13 +76,13 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='3.30'                                      # Script version number
 export SADM_PDESC="Demonstrate functions & variables available to developers using SADMIN Tools"
-export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
+export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
-export SADM_LOG_HEADER="N"                                 # Y=ProduceLogHeader N=NoHeader
-export SADM_LOG_FOOTER="N"                                 # Y=IncludeFooter N=NoFooter
+export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
+export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
 export SADM_MULTIPLE_EXEC="Y"                              # Run Simultaneous copy of script
 export SADM_USE_RCH="N"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
@@ -1295,50 +1295,62 @@ print_db_variables()
 }
 
 
-#===================================================================================================
-# Print sadm_start() and sadm_stop() functions used by SADMIN tools.
-#===================================================================================================
-print_start_stop()
-{
-    printheader "Overview of sadm_start() and sadm_stop() functions."
 
-    printf "\nExample of utilization:\n\n"
-    printf " # sadm_start                                         # Init Env Dir & RCH/Log File\n"
-    printf " # if [ \$? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi    # Exit if Problem\n" 
-    printf " # main_process                                       # Main Process\n"
-    printf " # SADM_EXIT_CODE=\$?                                  # Save Error Code\n"
-    printf " # sadm_stop \$SADM_EXIT_CODE                          # Close SADM Tool & Upd RCH\n"
-    printf " # exit \$SADM_EXIT_CODE                               # Exit With Global Err (0/1)\n"
-    printf "\n"
-    printf "Function 'sadm_start()':\n"
-    printf "    Start and initialize SADMIN environment - accept no parameter\n"
-    printf "    If SADMIN env. variable is not set /opt/sadmin, make sure it's set to proper dir.\n"
-    printf "    Call this function when your script is starting.\n"
-    printf "    What this function will do for us :\n" 
-    printf "        1) Make sure all directories & sub-directories exist and have proper permissions.\n"
-    printf "        2) Make sure log file exist with proper permission ($SADM_LOG)\n"
-    printf "        3) Make sure Return Code History (.rch) exist and have the right permission\n"
-    printf "        4) If PID file exist, show error message and abort.\n" 
-    printf "           Unless user allow more than one copy to run simultaniously (SADM_MULTIPLE_EXEC='Y')\n"
-    printf "        5) Add line in the [R]eturn [C]ode [H]istory file stating script is started (Code 2)\n"
-    printf "        6) Write HostName - Script name and version - O/S Name and version to the Log file (SADM_LOG)\n"
-    printf "\n"
-    printf "Function 'sadm_stop($exit_code)':\n"
-    printf "    Accept one parameter - Either 0 (Successfull) or non-zero (Error Encountered)\n"
-    printf "    Please call this function just before your script end\n"
-    printf "    What this function do.\n"
-    printf "        1) If Exit Code is not zero, change it to 1.\n"
-    printf "        2) Get Actual Time and Calculate the Execution Time.\n"
-    printf "        3) Writing the Script Footer in the Log (Script Return code, Execution Time, ...)\n"
-    printf "        4) Update the RCH File (Start/End/Elapse Time and the Result Code)\n"
-    printf "        5) Trim The RCH File Based on User choice in sadmin.cfg\n"
-    printf "        6) Write to Log the user mail alerting type choose by user (sadmin.cfg)\n"
-    printf "        7) Trim the Log based on user selection in sadmin.cfg\n"
-    printf "        8) Send Email to sysadmin (if user selected that option in sadmin.cfg)\n"
-    printf "        9) Delete the PID File of the script (SADM_PID_FILE)\n"
-    printf "       10) Delete the User 3 TMP Files (SADM_TMP_FILE1, SADM_TMP_FILE2, SADM_TMP_FILE3)\n"
-    printf " \n"
-}
+
+
+# Bash Library - Overview of the 'sadm_start()' and 'sadm_stop()' function used by SADMIN Tools.
+#===================================================================================================
+function print_start_stop()
+{
+    printheader "Overview of the 'sa.start' and 'sa.stop' functions in Bash Library" "." "."
+
+    echo "Bash Library Function"
+    echo ""
+    echo "   'start()' Bash Library Function "
+    echo ""
+    echo "   The 'start()' function basically initialize the SADMIN environment.\n"
+    echo "   When you call 'sadm_start()', it will only come back to caller if everything went OK."
+    echo "   Otherwise it will advise the user of the error and exit(1)."
+    echo ""
+    echo "  Here is a summary of the different things it does :"
+    echo "    1) Make sure all \$SADMIN directories & sub-dir. exist and have proper permissions."
+    echo "    2) If \$SADN_LOG_APPEND='N', create new log & error log, else append to actual log."
+    echo "    3) If \$SADM_LOG_HEADER='Y', write the log header."
+    echo "    4) if \$SADM_ROOT_ONLY='Y', and current user is not root, show error message and exit(1)."
+    echo "    5) If \$SADM_SERVER_ONLY='Y', and not on the SADMIN server, show error message and exit(1)."
+    echo "    6) If \$SADM_SADMGRP_ONLY='Y', and the user is not part of the SADM_GROUP (unless 'root'), "
+    echo "       show error message and exit(1)."
+    echo "    7) If \$SADM_USE_DB='Y' but not on SADMIN Server, show error message and exit(1)."
+    echo "    8) If \$SADM_USE_RCH='Y', write starting time to the RCH file (With a code 2=Running)."
+    echo "    9) If system is lock (and running on the SADMIN), issue message and exit(1)"
+    echo "   10) If PID file '\$SADM_PID_FILE' exist and '\$SADM_MULTIPLE_EXEC='Y'', continue normal execution"
+    echo "       If PID file exist and execution time (sec) is less than the '\$SADM_PID_TIMEOUT', show error message and exit(1)."
+    echo "       If PID file exist and execution time (sec) exceed the '\$SADM_PID_TIMEOUT' a new '\$SADM_PID_FILE' is created"
+    echo "       and execution is resume."
+    echo " "
+    echo "   *** If any unrecoverable error occurs while executing this function the program is aborted exit(1). ***"
+    echo ""
+    echo ""
+    echo ""
+    echo "    'stop(exit_code)' Bash Library Function "
+    echo "        - exit_code (0=Success, 1=Error): Variable defined in SADMIN section."
+    echo ""
+    echo "  This should be the one of the last function called at the end of your program."
+    echo ""
+    echo "  What this function does:"
+    echo "    1) Calculate execution Time."
+    echo "    2) If $SADM_USE_RCH='Y', update the rch file (End Time & Elapse Time ...)."
+    echo "    3) Validate the alert group, "
+    echo "    4) If $SADM_LOG_FOOTER='Y', write the log footer."
+    echo "    5) If the error log file is empty, then delete it."
+    echo "    6) Delete the PID file ($SADM_PID_FILE) of the program."
+    echo "    7) Close log and error log files."
+    echo "    8) If $SADM_MAX_LOGLINE is not zero, trim the log according to user choice in '$SADM_MAX_LOGLINE'."
+    echo "    9) If $SADM_MAX_RCLINE is not zero, trim the 'rch' according to user choice in 'SADM_MAX_RCLINE'." 
+    echo "   10) Set permission and owner/group to log and rch files."
+    echo "   11) If on the SADMIN server, then rch and log are immediatly web central directory."
+    echo " "
+} 
 
 
 # --------------------------------------------------------------------------------------------------

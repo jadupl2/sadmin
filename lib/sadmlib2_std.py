@@ -60,7 +60,6 @@
 # 2023_11_17 lib v4.47 Fix error in db_close(), when trying to close a connection that isn't open.
 # 2023_12_14 lib v4.48 'SADM_HOST_TYPE' in 'sadmin.cfg', determine if system is a client or a server.
 # 2023_12_14 lib v4.48 Correct some type in the header
-# 2023_12_19 lib v4.49 New function 'on_sadmin_server()' Return "Y" if on SADMIN server else "N".
 # 2024_01_01 lib v4.50 Correct typo and remove need to use 'psutil' python module.
 # 2024_02_22 LIB V4.51 Was removing gmail password file (.gmpw) when on the SADMIN server.
 #@2024_03_20 lib v4.52 Load new Global variables for VM from \$SADMIN/cfg/sadmin.cfg
@@ -97,17 +96,13 @@ try :
     import datetime                                         # Date & Time Module
     import shutil                                           # HighLevel File Operations
     import platform                                         # Platform identifying data
-    #import psutil                                           # Get all IPs defined on host
+    import psutil                                           # Get all IPs defined on host
     import base64                                           # To Encrypt, decrypt password file
     import inspect                                          # Check Object Type
     import time                                             # Time access & conversions
     import socket                                           # LowLevel network interface
     import subprocess                                       # Subprocess management
-    import smtplib,ssl                                      # SMTP/SSL protocol client
-    from email.mime.multipart import MIMEMultipart          # Use for sending email
-    from email.mime.text import MIMEText                    # Use for sending email
-    from email.mime.base import MIMEBase                    # Use for sending email
-    from email import encoders                              # Use for sending email
+    from email_validator import validate_email, EmailNotValidError
     import grp                                              # Access group database
     import linecache                                        # Text lines Random access 
     import subprocess                                       # Subprocess management
@@ -122,9 +117,17 @@ try :
     if platform.system() == 'Linux' or platform.system() == 'Darwin' :
         #print("Running on Linux or MacOS system")
         import pwd                                          # Pwd /etc/passwd Database 
-    if platform.system() == 'Windows':
-        print("Running on Windows")
-        import win32security
+
+# PyWin32 is a Python extension for Windows systems, comprising a set of modules. 
+# It provides access to many of the Windows APIs from Python, allowing developers to create 
+# Windows applications, automate tasks, and interact with the operating system in various ways. 
+# PyWin32 includes modules for working with COM objects, Windows services, registry, event logs, 
+# and more. It is commonly used for tasks such as automating administrative tasks, creating GUI 
+# applications, and interacting with Windows-specific features.    
+    #if platform.system() == 'Windows':
+    #   print("Running on Windows")                          # (pip install pywin32)
+    #   import PyWin32                                       # Windows API for Python 
+
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
@@ -148,10 +151,7 @@ dict_alert          = {}                                    # Define empty alert
 dict_sadmin         = {}                                    # Define SADMIN Dict. for config file
 
 
-
-
-
-# Shared Variables between SADMIN Python Library and your script 
+# Shared Variables between SADMIN Python Library and your program 
 # --------------------------------------------------------------------------------------------------
 pn                 = os.path.basename(sys.argv[0])         # [P]rogram [N]ame with extension
 ver                = "1.0.0"                               # Your Program VERSION number
@@ -159,13 +159,16 @@ desc               = "Description of script '%s'" % (pn)   # Your Program DESCRI
 inst               = pn.split('.')[0]                      # INSTANCEName = Program Name Without Ext
 pid                = os.getpid()                           # Get Current Process ID.
 hostname           = platform.node().split('.')[0].strip() # Get Current hostname
-username           = pwd.getpwuid(os.getuid())[0]          # Get Current User Name
-root_only          = False        # True = Script can only be run by 'root' user only else 'False'.
-server_only        = False        # True = Script can only be run on SADMIN server else 'False'.
+username           = pwd.getpwuid(os.getuid()).pw_name     # Get Current User Name
+root_only          = False       # True = Script can only be run by 'root' user only else 'False'.
+server_only        = False       # True = Script can only be run on SADMIN server else 'False'.
+sadmgrp_only       = False       # True = Script can only be run by 'root' or user part of SADMIN Grp
+                                                           # SADMIN Group = SADM_GROUP in sadmin.cfg
 use_rch            = True                                  # Write exec info to RCH file(True/False)
+db_used            = False                                 # Connect to DB (True), No DB (False) 
 quiet              = False                                 # If error in a function & quiet is :
-                                                           # False: Show error msg & return Error No 
-                                                           # True : Omly returm Error No. but No Msg
+                                                           # False: Show error msg & return error no 
+                                                           # True : Only returm error no. but no mess
 debug              = 0                                     # Debug Level 0-9 (Increase Verbose)
 exit_code          = 0                                     # Default Return Code (0=Success 1-Error)
 log_type           = "B"                                   # S=Screen L=Log B=Both
@@ -181,12 +184,11 @@ mail_addr          = ""                                    # Default use email(s
 
 # Fields used by sa.start(),sa.stop() & DB functions that influence execution of SADMIN library
 # Thwse are default values, they can be changed by the script that use this library.
-db_used        = False          # Open/Use auto connect DB(True), No DB needed (False) 
 db_conn        = None           # Use this Database Connector when using DB,  set by sa.start()
 db_cur         = None           # Use this Database cursor if you use the DB, set by sa.start()
-db_name        = ""             # Database Name (sadmin=default) define in $SADMIN/cfg/sadmin.cfg
-db_errno       = 0              # PyMysql Database Error Number
-db_errmsg      = ""             # Database Error Message
+db_name        = "sadmin"       # Database Name (sadmin=default) define in $SADMIN/cfg/sadmin.cfg
+errno          = 0              # PyMysql Database Error Number
+errmsg         = ""             # Database Error Message
 
 
 
@@ -205,7 +207,7 @@ sadm_textbelt_url             = "https://textbelt.com/text" # Textbelt.com Def. 
 sadm_host_type                = ""                          # [C or S] Client or Server
 sadm_server                   = ""                          # SADMIN Server FQDN 
 sadm_domain                   = ""                          # Default Host Domain
-sadm_mail_addr                = ""                          # Default is in sadmin.cfg
+sadm_mail_addr                = ""                          # SysAdmin email, default in sadmin.cfg
 sadm_cie_name                 = ""                          # Company Name
 sadm_user                     = ""                          # sadmin user account
 sadm_group                    = ""                          # sadmin user group
@@ -269,10 +271,10 @@ sadm_network5                 = ""                          # Network Subnet 5 t
 sadm_monitor_update_interval  = 60                          # Sysmon refresh rate
 sadm_monitor_recent_count     = 10                          # SysMon Nb Recent Script
 sadm_monitor_recent_exclude   = "sadm_nmon_watcher"         # SysMon Recent list Exclude 
-sadm_pid_timeout              = 7200                        # PID File TTL default
-sadm_lock_timeout             = 3600                        # Host Lock File TTL 
+sadm_pid_timeout              = 14400                       # PID File TTL default (14400=4hrs)
+sadm_lock_timeout             = 7200                        # Host Lock File TTL (7200=2hrs)
 sadm_max_logline              = 500                         # Max Nb. Lines in LOG
-sadm_max_rchline              = 100                         # Max Nb. Lines in RCH file
+sadm_max_rchline              = 50                          # Max Nb. Lines in RCH file
 sadm_smtp_server              = "smtp.gmail.com"            # smtp host relay name
 sadm_smtp_port                = 587                         # smtp relay host port
 sadm_smtp_sender              = "sender@gmail.com"          # smtp sender account
@@ -327,8 +329,7 @@ if platform.system().upper() != "DARWIN":                   # If not on MAc
 
 
 # O/S Path to various commands used by SADM Tools
-cmd_which           = "/usr/bin/which"                      # which Path - Required
-cmd_locate          = "/usr/bin/locate"                     # Locate command 
+cmd_which           = shutil.which("which")                 # which Path - Required
 cmd_lsb_release     = ""                                    # Command lsb_release Path
 cmd_dmidecode       = ""                                    # Command dmidecode Path
 cmd_bc              = ""                                    # Command bc (Do Some Math)
@@ -342,7 +343,7 @@ cmd_ethtool         = ""                                    # ethtool command pa
 cmd_curl            = ""                                    # curl command path
 cmd_mutt            = ""                                    # mutt command path
 cmd_rrdtool         = ""                                    # rrdtool command path
-cmd_ssh             = ""                                    # ssh command path
+cmd_ssh             = shutil.which("ssh")                   # ssh command path
 
 
 # Clients SADMIN Main Directories Definitions
@@ -431,8 +432,6 @@ tmp_file1          = "%s_1.%s" % (tmp_file_prefix,pid)                 # Temp1 F
 tmp_file2          = "%s_2.%s" % (tmp_file_prefix,pid)                 # Temp2 Filename
 tmp_file3          = "%s_3.%s" % (tmp_file_prefix,pid)                 # Temp3 Filename
 
-# The SSH command used to communicate with all the systems.
-cmd_ssh_full = "%s -qnp %s " % (cmd_ssh,sadm_ssh_port) 
 
 
 
@@ -458,7 +457,6 @@ def write_log (wline, lf=True ):
 
     now = datetime.datetime.now()                                       # Get current Time
     logLine = now.strftime("%Y.%m.%d %H:%M:%S") + " - " + wline         # Add Date/Time to Log Line
-
 
     # Write to [L]og file
     if (log_type.upper() == "L") or (log_type.upper() == "B") :         # Output to Log or Both
@@ -687,12 +685,90 @@ def trimfile(filename,nlines=500) :
 
 
 
+# --------------------------------------------------------------------------------------------------
+def load_sadmin_config(cfg_file):
+    
+    """ 
+        Load SADMIN Configuration File ($SADMIN/cfg/sadmin.cfg) into a dictionary (cfg_dict)
+        
+        Args:
+            cfg_file (str)  :   Is the full path of the configuration file.
+
+        Returns:
+            All Global variables are loader with the content of sadmin.cfg
+    """
+
+    cfg_dict = {}                                                       # Create empty Dictionnary
+    if lib_debug > 4 : print ("Loading Configuration file %s in a dictionnary" % (cfg_file))
+
+
+    # If no configuration file (cfg_file) and no configuration template (cfg_hidden) exist.
+    #  - Copy the template ($SADMIN/.sadm_config) to Live file ($SADMIN/sadmin.cfg)
+    #  - If none of these files can be found then exit to O/S.
+    if  not os.path.exists(cfg_file) and not os.path.exists(cfg_hidden) :
+        print ("\n[ ERROR ] SADMIN Configuration file '%s' can't be found" % (cfg_file))
+        print ("   - Even the template file %s can't be found" % (cfg_hidden))
+        print ("   - Copy the template file from another system to this system.")
+        print ("   - Or restore the files from a backup & review the file content.\n")
+        sys.exit(1)
+
+
+    # If no configuration file (cfg_file) exist but configuration template (cfg_hidden) exist.
+    if  not os.path.exists(cfg_file) and os.path.exists(cfg_hidden) :
+        print ("\nThe SADMIN configuration file '%s' doesn't exist." % (cfg_file))
+        print ("   - Will continue using template configuration file '%s'." % (cfg_hidden))
+        print ("   - You may want to review the configuration file.")
+        print ("   - cp %s %s \n" % (cfg_hidden,cfg_file))          # Install template cfg file
+        try: 
+            shutil.copy2(cfg_hidden,cfg_file)                       # Copy template to Live cfg file
+        except Exception as e:
+            print ("[ ERROR ] Copying template file %s to %s" % (cfg_hidden,cfg_file))
+            print ("\nCould not copy %s to %s" % (cfg_hidden,cfg_file))
+            print ("Restore the file from a backup & review the file content.\n")
+            print ("Program need a valid %s to run - Program aborted\n" % (cfg_file))
+            sys.exit(1)
+                
+
+    # Open Configuration file
+    try:
+        cfg_file_fh= open(cfg_file,'r')                                 # Open Config File
+    except (IOError, FileNotFoundError) as e:                           # If Can't open cfg file
+        print ("Error opening file %s." % (cfg_file))                   # write_log Log FileName
+        print ("Error Line No. : %d" % (inspect.currentframe().f_back.f_lineno)) # Print LineNo
+        print ("Function Name  : %s" % (sys._getframe().f_code.co_name)) # Get cur function Name
+        print ("Error Number   : %d" % (e.errno))                       # write_log Error Number
+        print ("Error Text     : %s" % (e.strerror))                    # write_log Error Message
+        sys.exit(1)                                                     # Exit to O/S with Error
+    except Exception as e:                                              # If Can't open cfg file
+        print(e)                                                        # Print Error Message
+        sys.exit(1)                                                     # Exit to O/S with Error
+
+    # Read Configuration file and Save Options values
+    for cfg_line in cfg_file_fh:                                        # Loop until on all servers
+        wline        = cfg_line.strip()                                 # Strip CR/LF & Trail spaces
+        if (wline[0:1] == '#' or len(wline) == 0) :continue             # If comment or blank line
+        split_line   = wline.split('=')                                 # Split based on equal sign
+        CFG_NAME   = split_line[0].upper().strip()                      # Param Name Uppercase Trim
+        CFG_VALUE  = str(split_line[1]).strip()                         # Get Param Value Trimmed
+
+        # General Variables found in SADMIN configuration File
+        if "SADM_MAIL_ADDR"                in cfg_dict: cfg_dict['SADM_MAIL_ADDR'] = CFG_VALUE
+
+    # Return Dictionnary loaded with sadmin.cfg content
+    return(cfg_dict)                                                    
+
+
+
+
+
+
+
 
 # --------------------------------------------------------------------------------------------------
 def load_config_file(cfg_file):
     
     """ 
-        Load Sadmin Configuration File (sadmin.cfg) in dictionary.
+        Load Sadmin Configuration File ($SADMIN/cfg/sadmin.cfg) in dictionary.
         
         Args:
             cfg_file (str)  :   Is the full path of the configuration file.
@@ -813,6 +889,7 @@ def load_config_file(cfg_file):
         if "SADM_LOG_KEEPDAYS"             in CFG_NAME: sadm_log_keepdays            = int(CFG_VALUE)
         if "SADM_PID_TIMEOUT"              in CFG_NAME: sadm_pid_timeout             = int(CFG_VALUE)
         if "SADM_LOCK_TIMEOUT"             in CFG_NAME: sadm_lock_timeout            = int(CFG_VALUE)
+        if "SADM_LOCK_TIMEOUT"             in CFG_NAME: lock_timeout                 = int(CFG_VALUE)
         if "SADM_MONITOR_UPDATE_INTERVAL"  in CFG_NAME: sadm_monitor_update_interval = int(CFG_VALUE)
         if "SADM_MONITOR_RECENT_COUNT"     in CFG_NAME: sadm_monitor_recent_count    = int(CFG_VALUE)
         if "SADM_MONITOR_RECENT_EXCLUDE"   in CFG_NAME: sadm_monitor_recent_exclude  = CFG_VALUE
@@ -1048,21 +1125,15 @@ def get_username() -> str:
         None
 
     Returns:
-        The username of the user executing the script.
-        Blank if could not be obtained..
+        The user name that is executing the program.
+        Blank if could not be obtained.
 
     """ 
     username=""
+    if get_ostype() == "WINDOWS"          : username = os.environ.get("USERNAME")
+    if get_ostype() in ["LINUX", "MACOS"] : username = pwd.getpwuid(os.getuid()).pw_name
+    return (username)
 
-    # For Windows systems
-    if get_ostype() == "Windows":
-        username = os.environ.get("USERNAME")
-    
-    # For Linux / macOS systems
-    if get_ostype() in ["Linux", "macOS"]:
-        username = os.environ.get("USER")
-        
-    return username
 
 
 # --------------------------------------------------------------------------------------------------
@@ -1105,7 +1176,8 @@ def lock_system(fname, errmsg=True ) :
         Lock system will appears on the monitor web page until the 'lock_file' is removed, 
         either by calling then 'unlock_system' function or when the lock file time stamp exceed 
         the number of seconds set by 'sa.lock_timeout' variable. The 'unlock system()' function
-        will automatically remove the 'lock_file' when this time is expired.
+        will automatically remove 'lock_file' when this time is expired or when you manually 
+        remove it.
         
     Args: 
         fname : Name of the system you want to remove the lock file (hostname -s, not FQDN).
@@ -1221,10 +1293,16 @@ True)  System is lock.
     # Check if System is Locked.
     if sa.lock_status(wname) :                                      # System is Lock
         sa.write_err("[ WARNING ] System '%s' is currently lock." % (wname))
-        sa.write_err("Continuing with next system.)                 # Not Error if system lock
+        sa.stop(1)
+        exit(1)
 ```
     
     """
+    
+    try : 
+        lock_timeout                                                    # Is variable exist,defined? 
+    except NameError:                                                   # If var is not define
+        lock_timeout=7200                                               # 7200=2hrs - set default
     
     fexit_code = 0    
     lock_file = dir_base + '/' + fname + '.lock'                        # Lock File Name
@@ -1430,12 +1508,13 @@ def get_fqdn():
 def get_ostype():
     
     """ 
-        Return the O/S type (Linux, Aix, Darwin, Windows) in uppercase.
+        Return the O/S type (Linux, Aix, Darwin, Windows) in UPPERCASE.
 
         Args:
             None
+
         Return:
-            Return The OS Type (LINUX, AIX, DARWIN, WINDOWS)
+            Return The OS Type (LINUX, AIX, DARWIN, or WINDOWS)
             Result are always returned in Uppercase. 
             If couldn't determine O/S type, an empty string is returned.
     """
@@ -1443,7 +1522,7 @@ def get_ostype():
     try: 
         wostype=platform.system().upper()   
     except: 
-        write_log ("[ ERROR ] Couldn't get the O/S type.")
+        print ("[ ERROR ] Couldn't get the O/S type.")
         wostype="" 
     return(wostype)
 
@@ -1847,34 +1926,12 @@ def get_oscodename() :
             except KeyError as e:     
                 oscodename=""
     #
-    if ostype == "AIX" :
-        oscodename="IBM AIX"
-    #
-    if ostype == "WINDOWS" :
-        oscodename = "%s %s" % (platform.system(), platform.release())
+    if ostype == "AIX"     : oscodename="IBM AIX"
+    if ostype == "WINDOWS" : oscodename = "%s %s" % (platform.system(), platform.release())
     #
     return (oscodename)
 
 
-
-
-# --------------------------------------------------------------------------------------------------
-def locate_command(cmd) :
-    
-    """ 
-        Return the full path of the O/S command received.
-        If command can't be found then an empty string is returned.
-        
-        Args:
-            cmd (str)       :   Name of the command to locate on system.
-
-        Returns:
-            cmd_path (str)  :   Full path of the command or "" if not found.
-    """
-
-    cmd_path = shutil.which(cmd)
-    if cmd_path == None : cmd_path='' 
-    return(cmd_path)                                                   
 
 
 
@@ -1978,7 +2035,7 @@ def elapse_time(wdate1 : str ,wdate2 : str) -> str:
 def get_serial():
     
     """ 
-        Return system board serial number 
+        Return system board serial number.
         
         Args:
             None
@@ -1996,19 +2053,21 @@ def get_serial():
         if get_osname() == "RASPBIAN" :
             command = "cat /sys/firmware/devicetree/base/serial-number; echo" 
         else:
-            command = "cmd_dmidecode -s baseboard-serial-number"
+            command = "sudo %s -s baseboard-serial-number" % (cmd_dmidecode)
+    elif "AIX" in ostype:   
+            command = "prtconf | grep -i 'Serial Number' | awk -F: '{print $2}' | tr -d ' ' "
+    
     try: 
         ccode,cstdout,cstderr = oscommand("%s" % (command)) 
         if ccode == 0 : 
             wserial = cstdout                              # Save command Path when found
         else:
-            wserial = ""  
+            wserial = ""
     except Exception: 
-        write_err("Error trying to get system board serial number")
-        write_err(e)
+        write_err ("[ ERROR ] Trying to get system board serial number")
+        write_err (e)
         wserial = ""
     return(wserial)
-
 
 
 
@@ -2018,9 +2077,9 @@ def load_cmd_path():
 
     """ 
         Function tries to locate every command that the SADMIN tools library or scripts may used.  
-        If some of them are not present, some of the functions may not report proper information.
-        It is recommended to install any missing command.
-
+        If some of them are not present, some of the functions may not work correctly.
+        Please install any missing command, to insure full functionality.
+        
         Args:
             None
 
@@ -2030,60 +2089,61 @@ def load_cmd_path():
     """ 
 
     global \
-        cmd_ssh         ,   cmd_lsb_release ,   cmd_dmidecode   ,   cmd_bc          ,\
-        cmd_fdisk       ,   cmd_perl        ,   cmd_locate      ,   cmd_which       ,\
-        cmd_nmon        ,   cmd_lscpu       ,   cmd_inxi        ,   cmd_parted      ,\
-        cmd_ethtool     ,   cmd_curl        ,   cmd_mutt        ,   cmd_rrdtool     
+        cmd_ssh         ,   cmd_lsb_release ,   cmd_dmidecode                       ,\
+        cmd_fdisk       ,   cmd_perl        ,   cmd_nmon        ,   cmd_lscpu       ,\
+        cmd_inxi        ,   cmd_parted      ,   cmd_ethtool     ,   cmd_curl        ,\
+        cmd_mutt        ,   cmd_rrdtool     ,   cmd_bc 
 
-    requisites_status=True                                              # Assume Requirement all Met
-    ostype=get_ostype()                                                 # AIX,WINDOWS,LINUX,DARWIN
-    if ostype == "WINDOWS" : return(requisites_status)                  # Not used on Windows
+    if get_ostype() == "WINDOWS" : return(False)                        # Not valid on Windows
 
-    if not os.path.exists(cmd_which)  :                                 # Command 'which' is present
-        write_err("[ERROR] The command 'which' couldn't be found")      # is not available
-        write_err("        This command is needed by the SADMIN tools") # If which is not available
-        write_err("        Please install it and re-run this script")   # We will ask the user to
-        write_err("        Script Aborted")                             # install it & abort script
-        requisites_status=False                                         # Requirement not Met
-        return(requisites_status)
+    cmd_list = ['fdisk','dmidecode','parted','lscpu','inxi',            # List of command to locate
+                'lsb_release','bc','ssh','perl','nmon','ethtool','mutt','curl','rrdtool']    
     
-    # Commands available only on Linux
-    if (ostype == "LINUX"):                                             # On Linux Only
-        cmd_fdisk    = locate_command('fdisk')                          # Locate fdisk command
-        if cmd_fdisk       == "" : requisites_status=False              # if blank didn't find it
-        cmd_dmidecode       = locate_command('dmidecode')               # Locate dmidecode command
-        if cmd_dmidecode   == "" : requisites_status=False              # if blank didn't find it
-        cmd_parted          = locate_command('parted')                  # Locate the parted command
-        if cmd_parted      == "" : requisites_status=False              # if blank didn't find it
-        cmd_lscpu           = locate_command('lscpu')                   # Locate the lscpu command
-        if cmd_lscpu       == "" : requisites_status=False              # if blank didn't find it
-        cmd_inxi            = locate_command('inxi')                    # Locate the inxi command
-        if cmd_inxi        == "" : requisites_status=False              # if blank didn't find it
-        cmd_lsb_release     = locate_command('lsb_release')             # Locate lsb_release command
-        if cmd_lsb_release == "" : requisites_status=False              # if blank didn't find it
 
-    # Commands that should be on every Unix supported platform
-    cmd_bc       = locate_command('bc')                                 # Locate bc command
-    if cmd_bc    == "" : requisites_status=False                        # if blank didn't find it
-    cmd_ssh      = locate_command('ssh')                                # Locate the SSH command
-    if cmd_ssh   == "" : requisites_status=False                        # If blank didn't find it
-    cmd_perl     = locate_command('perl')                               # Locate the perl command
-    if cmd_perl  == "" : requisites_status=False                        # if blank didn't find it
-    cmd_nmon     = locate_command('nmon')                               # Locate the nmon command
-    if cmd_nmon  == "" : requisites_status=False                        # if blank didn't find it
-    cmd_ethtool  = locate_command('ethtool')                            # Locate the ethtool command
-    if cmd_ethtool == "" : requisites_status=False                      # if blank didn't find it
-    cmd_mutt     = locate_command('mutt')                               # Locate the mutt command
-    if cmd_mutt  == "" : requisites_status=False                        # if blank didn't find it
-    cmd_curl     = locate_command('curl')                               # Locate the curl command
-    if cmd_curl  == "" : requisites_status=False                        # if blank didn't find it
-    cmd_rrdtool  = locate_command('rrdtool')                            # Locate the rrdtool command
-    if cmd_rrdtool == "" : requisites_status=False                      # if blank didn't find it
+    # Making sure the Path to these commands are blank
+    cmd_fdisk=""
+    cmd_dmidecode=""
+    cmd_parted=""
+    cmd_lscpu=""
+    cmd_inxi=""
+    cmd_lsb_release=""
+    cmd_bc=""
+    cmd_ssh=""
+    cmd_perl=""
+    cmd_nmon=""
+    cmd_ethtool=""
+    cmd_mutt=""
+    cmd_curl=""
+    cmd_rrdtool=""
+
+    requisites_status=True                                              # Assume Requirements all OK
+    for cmd in cmd_list:
+        if shutil.which(cmd) != None : 
+            if lib_debug > 4 : print ("Command '%s' found at '%s'." % (cmd,shutil.which(cmd)))
+            if (cmd == 'fdisk') : cmd_fdisk = shutil.which(cmd)
+            if (cmd == 'dmidecode') : cmd_dmidecode = shutil.which(cmd)
+            if (cmd == 'parted') : cmd_parted = shutil.which(cmd)
+            if (cmd == 'lscpu') : cmd_lscpu = shutil.which(cmd)
+            if (cmd == 'inxi') : cmd_inxi = shutil.which(cmd)
+            if (cmd == 'lsb_release') : cmd_lsb_release = shutil.which(cmd)
+            if (cmd == 'bc') : cmd_bc = shutil.which(cmd)
+            if (cmd == 'ssh') : cmd_ssh = shutil.which(cmd)
+            if (cmd == 'perl') : cmd_perl = shutil.which(cmd)
+            if (cmd == 'nmon') : cmd_nmon = shutil.which(cmd)
+            if (cmd == 'ethtool') : cmd_ethtool = shutil.which(cmd)
+            if (cmd == 'mutt') : cmd_mutt = shutil.which(cmd)
+            if (cmd == 'curl') : cmd_curl = shutil.which(cmd)
+            if (cmd == 'rrdtool') : cmd_rrdtool = shutil.which(cmd)
+        else : 
+            if lib_debug > 4 : print ("Command '%s' not found on system." % (cmd))
+            requisites_status=False                                     # Requirement not Met
+            print ("\n[ WARNING ] Command '%s' not found." % (cmd))     # is not available
+            print ("              Command '%s'needed by the SADMIN tools library." % (cmd)) 
+            print ("              Please install it to insure full functionality.\n")
 
     return(requisites_status)                                           # Requirement Met True/False
 
-
-
+ 
 
 # --------------------------------------------------------------------------------------------------
 def db_close(db_conn):
@@ -2100,42 +2160,54 @@ def db_close(db_conn):
                               Return the error number returned by PyMySQL.
     """    
 
-    db_errno = 0                                                        # Set default return value
+    errno = 0                                                        # Set default return value
     #if db_conn:         db_conn.close()
     # Connection.open field will be 1 if the connection is open and 0 otherwise.
     #if db_conn.closed != 0 :
-    #   db_errmsg = "Error: %d, database '%s' already close."  % (db_errno, db_name) 
-    #   return(db_errno)                                                 # No need to close
+    #   errmsg= "Error: %d, database '%s' already close."  % (errno, db_name) 
+    #   return(errno)                                                 # No need to close
 
 #    # Close Database cursor 
 #    try:
 #        db_cur.close()
 #    except Exception as e:
 #        if len(e.args) > 1 : 
-#            db_errno  = e.args[0]
-#            db_errmsg = "[ ERROR ] On 'db_cur.close' %d %s"  % (db_errno, e.args[1])
+#            errno  = e.args[0]
+#            errmsg= "[ ERROR ] On 'db_cur.close' %d %s"  % (errno, e.args[1])
 #        else: 
-#            db_errno = 1 
-#            db_errmsg = str(e.args)
+#            errno = 1 
+#            errmsg= str(e.args)
 #        if not quiet : write_err (db_errmsg)
-#        return(db_errno)                                                 
+#        return(errno)                                                 
 
 
     # Close Database connecton
     try: 
         db_conn.close()
         if not quiet : write_log ("[ OK ] Database connection to %s is close." % db_name)
-        db_errno  = 0
+        errno  = 0
 
     except Exception as e:
         if len(e.args) > 1 : 
-            db_errno  = e.args[0]
-            db_errmsg = "[ ERROR ] (%d) On 'db_conn.close' %s"  % (db_errno, e.args[1])
+            errno  = e.args[0]
+            errmsg= "[ ERROR ] (%d) On 'db_conn.close' %s"  % (errno, e.args[1])
         else: 
-            db_errno  = 1 
-            db_errmsg = e
-        if not quiet : write_err ("[ ERROR ] On 'db_close' %s " % (db_errmsg))
-    return(db_errno)
+            errno  = 1 
+            errmsg= "[ ERROR ] On 'db_close' %s " % (e)
+        if not quiet : write_err (db_errmsg)
+    return(errno)
+
+
+
+# Check the user is part of the group 
+def user_in_group(user_name,group_name):
+    try:
+        group_data = grp.getgrnam(group_name)                           # Get Group Data Member
+        return user_name in group_data.gr_mem
+    except KeyError:
+        return False                                                    # Group don't exist
+
+
 
 
 
@@ -2143,19 +2215,29 @@ def db_close(db_conn):
 def stop(pexit_code : int) -> None:
     
     """ 
-        The stop() function will update the log and the RCH file, trim them if needed 
-        and return to caller.
+    Function 'stop(exit_code)'
+        - exit_code (0=Success, 1=Error).
 
-        What stop() function does  
-        - Calculate the execution time.  
-        - Write the script footer in the log (script return code, execution time, …)
-        - Update the RCH File (Start/End/Elapse Time and the Result Code)
-        - Trim The RCH file Based on user choice in sadmin.cfg
-        - Write to log the user mail alerting type choose by user (sadmin.cfg)
-        - Trim the log based on user selection in sadmin.cfg
-        - Send email to sysadmin (if user selected that option in sadmin.cfg)
-        - Delete the PID file of the script ($SADM_PID_FILE)
-        - If rch file is not in used (use_rch is False), delete script rch file.
+      This should be the one of the last function called at the end of your program.
+
+      What this function does:
+        1) Calculate execution Time.
+        2) If 'sa.use_rch = True', update the rch file (End Time & Elapse Time ...).
+        3) Validate the alert group, 
+           If any alert is pending, send notification to group members.
+           move the alert to the history file.
+        4) If 'db_used' is True, and we are on the SADMIN server, close the database connection.
+        5) If the error log file is empty, delete it.
+        6) Delete the PID file of the program (sa.pid_file).
+        7) Trim the log according to user choice in 'sa.sadm_max_logline'.
+           No trim is done if 'sa.sadm_max_logline = 0'.
+        8) Trim The RCH File according to user choice in 'sa.sadm_max_rchline'.
+           No trim is done if 'sa.sadm_max_rchline = 0'.
+        9) If 'sa.log_footer = True', write the log footer.
+       10) Close log and error log files.
+       11) Set permission and owner/group to log and rch files.
+       12) If on the SADMIN server, then rch and log are immediatly web central directory.
+ 
 
         Args:            
             pexit_code (int)    : Can be either 0 (Successfully) if the script terminate 
@@ -2167,142 +2249,128 @@ def stop(pexit_code : int) -> None:
             None
     """
 
-    global  \
-        pn,log_file_fh, err_log_fh, sadm_alert_type, start_time, start_epoch, delete_pid ,\
-        dict_alert, rch_file_fh, rch_file, use_rch, max_rchline, log_footer, sadm_user, sadm_group
+    global log_file_fh, err_log_fh, rch_file_fh, sadm_alert_type, sadm_alert_group
 
-    
- 
     # Making sure exit code is either 0 (Success) or 1 (error).
     if pexit_code != 0 : pexit_code = 1 
 
+    # Calculate the execution time and format it.
+    end_epoch = int(time.time())                                        # Save End Time in Epoch
+    i = datetime.datetime.now()                                         # Get Current Stop Time
+    stop_time=i.strftime('%Y.%m.%d %H:%M:%S')                           # Save Stop Date & Time    
+    execution_time=elapse_time(stop_time,start_time)                    # Calculate Elapse Time  
+    
 
-    # Calculate the execution time, format it and write it to the log
-    end_epoch = int(time.time())                                        # Save End Time in Epoch Time
-    elapse_seconds = end_epoch - start_epoch                            # Calc. Total Seconds Elapse
-    hours = elapse_seconds//3600                                        # Calc. Nb. Hours
-    elapse_seconds = elapse_seconds - 3600*hours                        # Subs. Hrs*3600 from elapse
-    minutes = elapse_seconds//60                                        # Cal. Nb. Minutes
-    seconds = elapse_seconds - 60*minutes                               # Subs. Min*60 from elapse
-    elapse_time="%02d:%02d:%02d" % (hours,minutes,seconds)              # Format execution time
-    if (log_footer) :                                                   # Want to Produce log Footer
-        write_log (" ")                                                 # Space Line in the LOG
-        write_log ('='*50)                                              # 80 '=' Lines
-        wmess = "Script exit code is " + str(pexit_code)                # Log exit code Footer
-        if pexit_code == 0 :                                            # If Success
-            wmess += " (Success) "                                      # Script Success to Log        
-        else :                                                          # Script encountered Error
-            wmess += " (Failed) "                                       # Script Failed to Log        
-        wmess += "and execution time is %02d:%02d:%02d" % (hours,minutes,seconds)
-        write_log (wmess)                                               # Write 1st Footer line
 
-    # Get the userid and groupid chosen in sadmin.cfg (SADM_USER/SADM_GROUP)
-    try :
-        uid = pwd.getpwnam(sadm_user).pw_uid                            # Get UID User in sadmin.cfg
-        gid = grp.getgrnam(sadm_group).gr_gid                           # Get GID User in sadmin.cfg
-    except KeyError as e:
-        msg = "Invalid or Non-Existant User %s in sadmin.cfg" % (sadm_user)
-        write_log (msg)
-
-    # Update the [R]eturn [C]ode [H]istory File and trim it, if needed.
-    if (use_rch) :                                                      # If User use RCH File
-        if (os.path.exists(rch_file) and os.path.getsize(rch_file) != 0) : 
-            with open(rch_file) as xrch:                                # Open rch file
-                try: 
-                    lastLine = (list(xrch)[-1])                             # Get Last Line of rch file
-                    rch_code = lastLine.split(' ')[-1].strip()              # Get Last fld (RCode) 
-                    if rch_code == "2" :                                    # If Code 2 - want to del it
-                        rch_file_fh = open(rch_file,'r')                    # Open RCH File for reading
-                        lines = rch_file_fh.readlines()                     # Read all Lines in Memory
-                        del lines[-1]                                       # Delete last line (Code 2)
-                        rch_file_fh.close()                                 # Write changes to disk
-                        rch_file_fh = open(rch_file,'w')                    # Open RCH to rewrite it
-                        rch_file_fh.writelines(lines)                       # Write RCH without code2
-                        rch_file_fh.close()                                 # Close & Write change 
-                except IndexError as e:  
-                    write_log ("[ ERROR ] Getting the last line of RCH file %s." % (rch_file))
-                    rch_file_fh.close()                                 # Close & Write change 
-
-        i = datetime.datetime.now()                                     # Get Current Stop Time
-        stop_time=i.strftime('%Y.%m.%d %H:%M:%S')                       # Format Stop Date & Time
-        rch_file_fh=open(rch_file,'a')                                  # Open RCH Log - append mode
-        rch_line="%s %s %s %s" % (hostname,start_time,stop_time,elapse_time)
-        rch_line="%s %s %s" % (rch_line,inst,sadm_alert_group)
-        rch_line="%s %s %s" % (rch_line,sadm_alert_type,pexit_code)
-        rch_file_fh.write ("%s\n" % (rch_line))                         # Write Line to RCH Log
-        rch_file_fh.close()                                             # Close RCH File
-        if (max_rchline != 0) :                                         # Trim nb. Line != 0 
-            trimfile (rch_file,max_rchline)                             # Trim the Script RCH Log
-            if log_footer :                                             # Want to Produce log Footer
-                write_log ("History file %s trim to %s lines." % (rch_file,str(max_rchline)))
-        if os.getuid() == 0 :                                           # If running as root
-            os.chown(rch_file,uid,gid)                                  # Change RCH File Owner
-            os.chmod(rch_file,0o0660)                                   # Change RCH File Perm.
-
-    # Set the Alert Group Name, Group Type and Group Recipient(s) (Dest).
-    if sadm_alert_group in dict_alert :
-        wgrp_name = sadm_alert_group.lower().strip()
-        wgrp_type = dict_alert[wgrp_name][1].lower().strip()
-        wgrp_dest = dict_alert[wgrp_name][2].lower().strip()
-        #print('%s - %s - %s ' % (wgrp_name, wgrp_type, wgrp_dest))
+    # Validate and set the Alert Group Name, Group Type and Group Recipient(s) (Dest) we will use.
+    # Example of entry in dict_alert : 
+    #   dict_alert['default']   : 'default', 'm', 'mail_sysadmin', '')
+    if sadm_alert_group in dict_alert :                                 # Group exist in Alert Dict.
+        wgrp_name = sadm_alert_group.lower().strip()                    # Save alert group Name
+        wgrp_type = dict_alert[wgrp_name][1].lower().strip()            # Group Type m,c,s,t
+        wgrp_dest = dict_alert[wgrp_name][2].lower().strip()            # Alert Destination
     else:
-        write_log("Alert group '%s' not defined in %s." % (sadm_alert_group,alert_file))      
-        write_log("Alert group now changed to 'default'.")
-        wgrp_name = 'default'
-        wgrp_type = dict_alert['default'][1].lower().strip()
-        wgrp_dest = dict_alert['default'][2].lower().strip()
-        #print('%s - %s - %s ' % (wgrp_name, wgrp_type, wgrp_dest))
-    if wgrp_name == 'default' : 
-        if wgrp_dest in dict_alert :
-            wgrp_name = wgrp_dest
-            wgrp_type = dict_alert[wgrp_name][1].lower().strip()
-            wgrp_dest = dict_alert[wgrp_name][2].lower().strip()
-            #print('%s - %s - %s ' % (wgrp_name, wgrp_type, wgrp_dest))
-    if wgrp_type == 'm':
-        grp_desc = "by email to group '%s'." % (wgrp_name)
-    if wgrp_type == 's':
-        grp_desc = "using Slack to '%s' channel)" % (wgrp_name) 
-    if wgrp_type == 'c':
-        grp_desc = "to Cell. group '%s'" % (wgrp_name)
-    if wgrp_type == 't':
-        grp_desc = "by SMS to group '%s'" % (wgrp_name)
-    if wgrp_type != 'm' and wgrp_type != 's' and wgrp_type != 'c' and   wgrp_type != 't': 
-        grp_desc = "Group '%s' invalid" % (wgrp_name)
+        write_err("[ ERROR ] Alert group '%s' not defined in %s." % (sadm_alert_group,alert_file))
+        write_err("[ INFO ] Alert group now changed to 'default'.")
+        wgrp_name = 'default'                                           # Save alert group Name
+        wgrp_type = dict_alert['default'][1].lower().strip()            # Group Type m,c,s,t
+        wgrp_dest = dict_alert['default'][2].lower().strip()            # Alert Destination
+
+    # Example of sub group in alert dictionnary
+    #  - dict_alert['mail_sysadmin']    : ('mail_sysadmin', 'm', 'brucetalbot95@gmail.com', '')
+    if wgrp_name == 'default' :                                         # alert group is 'default'
+        if wgrp_dest in dict_alert :                                    # if refer to a sub group
+            wgrp_name = wgrp_dest                                       # Sub Group Name
+            wgrp_type = dict_alert[wgrp_name][1].lower().strip()        # Sub Group Type m,c,s,t
+            wgrp_dest = dict_alert[wgrp_name][2].lower().strip()        # Sub group destination
+
+    # Validate the Alert Group Type & Set Description to put in the footer
+    if wgrp_type == 'm': grp_desc = "by email to alert group '%s'"  % (wgrp_name)
+    if wgrp_type == 's': grp_desc = "using Slack to '%s' channel)"  % (wgrp_name) 
+    if wgrp_type == 'c': grp_desc = "to Cell. group '%s'"           % (wgrp_name)
+    if wgrp_type == 't': grp_desc = "by SMS to group '%s'"          % (wgrp_name)
+    if wgrp_type == 'n': grp_desc = "by 'ntfy' group '%s'"          % (wgrp_name)
+    if wgrp_type not in [ "m", "s", "c", "t", "n" ] :
+       grp_desc = "Alert group '%s' is not valid." % (wgrp_name)
+
 
     # Write in Log the email choice the user as requested (via the sadmin.cfg file)
     # 0 = No Mail Sent      1 = On Error Only   2 = On Success Only   3 = Always send email
-    MailMess2=""                                                        # Use if invalid alert type
     if sadm_alert_type == 0 :                                           # User don't want any email
-        MailMess="Never send an alert, regardless of it termination status." 
-        
+        MailMess="Never send an alert, regardless of Success or Failure." 
     if sadm_alert_type == 1 :                                           # Alert on Error Only
         if pexit_code != 0 :                                            # If Script end with error
             MailMess="An alert will be sent %s." % (grp_desc)           # Make Error Message
         else :
-            MailMess="Send an alert only when it terminate with error." # No Error Message 
-
+            MailMess="Send alert only when it terminate with error." # No Error Message 
     if sadm_alert_type == 2 :                                           # Alert on Success Only
         if pexit_code != 0 :                                            # If Script end with error
             MailMess="Send alert only on success, none will be send."   # Failed = No Alert Message
         else : 
             MailMess="Alert only send on success %s." % (grp_desc)      # Success Send Alert Message
-                    
     if sadm_alert_type == 3 :                                           # User always Want email
         MailMess="Always send an alert %s." % (grp_desc)                # Mess + Group we will send
-                     
-    if sadm_alert_type > 3 or sadm_alert_type < 0 :                     # Alert Type is Invalid
-        MailMess="Invalid 'sadm_alert_type' value %s",(str(sadm_alert_type))
-        MailMess2="It's set to '%s', changing it to 3.\n" % (sadm_alert_type)
-        sadm_alert_type=3
+
 
     # Close Database if was used
-    if sadm_host_type == "S" and db_used :                              # If Database was Used
-       db_close(db_conn)                                         # Close Database
+    if sadm_host_type == "S" and db_used : db_close(db_conn)            # Close Database if Used
 
+    # If the Last line of RCH file have a code 2 as the last field (Running).
+    # We want to delete this line and add a line with the real exit code of the script 
+    # (0=Success or 1=Error) and add the Stop Time and Elapse Time.
+    if (use_rch) :                                                      # If User use RCH File
+        # If RCH file exist and is not empty, we want to delete the last line of the RCH file 
+        # if it end with a code 2 (Running)
+        if (os.path.exists(rch_file) and os.path.getsize(rch_file) != 0) : 
+            with open(rch_file) as xrch:                                # Open Program RCH file
+                try:                                                    # Del rch lastLine if code 2
+                    lastLine = (list(xrch)[-1])                         # Line LastField Line of rch
+                    rch_code = lastLine.split(' ')[-1].strip()          # Get Last fld (RCode) 
+                    if rch_code == "2" :                                # Code 2, we want replace 
+                        rch_file_fh = open(rch_file,'r')                # Open RCH File for reading
+                        lines = rch_file_fh.readlines()                 # Read all Lines in Memory
+                        del lines[-1]                                   # Delete last line (Code 2)
+                        rch_file_fh.close()                             # Write changes to disk
+                        rch_file_fh = open(rch_file,'w')                # Open RCH to rewrite it
+                        rch_file_fh.writelines(lines)                   # Read newly rewritten rch
+                except IndexError as e:  
+                    write_log ("[ ERROR ] Getting the last line of RCH file %s." % (rch_file))
+        
+        # Write the start, stop, elapse time, alert group, alert type and exit code in RCH file.
+        rch_file_fh=open(rch_file,'a')                                  # Open RCH Log - append mode
+        rch_line="%s %s %s %s" % (hostname,start_time,stop_time,execution_time)
+        rch_line="%s %s %s %s %s" % (rch_line,inst,sadm_alert_group,sadm_alert_type,pexit_code)
+        rch_file_fh.write ("%s\n" % (rch_line))                         # Write Line to RCH Log
+        rch_file_fh.close()                                             # Close the RCH File
+
+
+    # Get the userid and groupid chosen in sadmin.cfg (SADM_USER/SADM_GROUP)
+    try :
+        gid = grp.getgrnam(sadm_group).gr_gid                           # Get GID User in sadmin.cfg
+    except KeyError as e:
+        write_err ("Group %s doesn't exist or typo error in sadmin.cfg" % (sadm_group))
+        write_err ("%s" % (e))
+        
+
+    # Normally we Delete the PID File when terminate the program.
+    # But when the program is already running, then we are the second instance of the program.
+    # So we don't want to delete PID file. 
+    # When this situation happen (delete_pid is set to "N") in start() function to prevent deletion.
+    if (os.path.isfile(pid_file) and delete_pid == "Y" ) :              # PID Exist & Only Running 1
+        silentremove (pid_file) 
+
+
+    # User want log Footer (log_footer = True)
     if (log_footer) :                                                   # Want to Produce log Footer
+        write_log (" ")                                                 # Space Line in the LOG
+        write_log ('='*50)                                              # 50 '=' Lines
+        if pexit_code == 0 : wmess = "Script exit code is " + str(pexit_code) + " (Success) "
+        if pexit_code != 0 : wmess = "Script exit code is " + str(pexit_code) + " (Failed) " 
+        wmess += "and execution time is %s" % (execution_time)          # Finalize 1st footer line
+        write_log (wmess)                                               # Write 1st Footer line
+        write_log ("History file $SADMIN/dat/rch/%s trim to %s lines." % (os.path.basename(rch_file),str(max_rchline)))
         write_log ("%s" % (MailMess))                                   # User alert choice to log
-        if (MailMess2 != "") :  write_log ("%s" % (MailMess2))          # Invalid sadm_alert_type
-        write_log ("Trim log file %s to %s lines." %  (log_file, str(max_logline)))
+        write_log ("Log file $SADMIN/log/%s trim to %s lines." %  (os.path.basename(log_file),str(max_logline)))
         i = datetime.datetime.now()                                     # Get Current Time
         stop_time=i.strftime('%Y.%m.%d %H:%M:%S')                       # Save Stop Date & Time
         footer_date=i.strftime('%a %d %b %Y %H:%M:%S')                  # Date format for Log footer 
@@ -2310,82 +2378,61 @@ def stop(pexit_code : int) -> None:
         write_log ('='*80)                                              # 80 '=' Lines
         write_log (" ")                                                 # Space Line in the LOG
   
-
-    if (os.path.exists(err_file) and os.stat(err_file).st_size == 0):   # Error Log Exist & size > 0
-        silentremove (err_file)                                         # Delete Error log File  
-
-    if ((log_footer) and (max_logline != 0)) : 
-        trimfile (log_file,max_logline)                                 # Trim the Script Log
-
-    # Get the userid and groupid chosen in sadmin.cfg (SADM_USER/SADM_GROUP)
-    try :
-        uid = pwd.getpwnam(sadm_user).pw_uid                            # Get UID User in sadmin.cfg
-        gid = grp.getgrnam(sadm_group).gr_gid                           # Get GID User in sadmin.cfg
-    except KeyError as e:
-        msg = "User %s doesn't exist or not define in sadmin.cfg" % (sadm_user)
-        write_err (msg)
-        write_err ("%s" % (e))
-
-    # Make Sure Owner/Group of Log File are the one chosen in sadmin.cfg (SADM_USER/SADM_GROUP)
-    try :
-        if os.getuid() == 0: os.chown(log_file, -1, gid)                # -1 leave UID unchange
-        if os.getuid() == 0: os.chmod(log_file, 0o0660)                 # Change Log File Permission
-    except Exception as e:
-        msg = "Warning : Couldn't change owner or chmod of "            # Build Warning Message
-        write_err ("%s %s to %s:%s" % (msg,log_file,sadm_user,sadm_group))
-        write_err ("%s" % (e))
-
-    # Make Sure Owner/Group of RCH File are the one chosen in sadmin.cfg (SADM_USER/SADM_GROUP)
-    if (use_rch) :                                         # If Using a RCH File
-        try :
-            if os.getuid() == 0: os.chown(rch_file, -1, gid)            # -1 leave UID unchange
-            if os.getuid() == 0: os.chmod(rch_file, 0o0660)             # Change RCH File Permission
-        except Exception as e:
-            msg = "Warning : Couldn't change owner or chmod of "        # Build Warning Message
-            write_err ("%s %s to %s.%s" % (msg,rch_file,sadm_user,sadm_group))
-
-    # Normally we Delete the PID File when exiting the script.
-    # But when script is already running, then we are the second instance of the script
-    # we don't want to delete PID file. 
-    # When this situation happend (delete_pid is set to "N") in start() function. 
-    if (os.path.isfile(pid_file) and delete_pid == "Y" ) :              # PID Exist & Only Running 1
-        silentremove (pid_file)                                         # Delete PID File
-
-
-
-    # Copy RCH & LOG files to Server Central Directory to be available to monitor quickly
-    if (sadm_host_type == "S" and os.getuid() == 0 ) :                  # If on SADMIN Server
-        if (use_rch) :                                                  # Copy Now rch to www
-            try:
-                woutput = dir_www_host + "/rch"  + '/' + hostname + '_' + inst + '.rch'      
-                if os.getuid() == 0 and os.path.exists(woutput): os.chmod(woutput, 0o0660) 
-                shutil.copyfile(rch_file, woutput )                     # Copy Now rch to www
-            except Exception as e:
-                print ("Couldn't copy %s to %s\n%s\n" % (rch_file,woutput,e)) # Advise user
-    #else :
-    #    if not use_rch :                                                # If not using RCH File
-    #        silentremove(rch_file)                                      # Then Delete it 
-
-    # If on SADMIN Server, copy immediately rch, log and elog to server central directories.
-    if (sadm_host_type == "S" and os.getuid() == 0 ) :              # If on SADMIN Server
-        if log_footer :
-            try:
-                woutput = dir_www_host + "/log"  + '/' + hostname + '_' + inst + '.log'
-                if os.getuid() == 0 and os.path.exists(woutput): os.chmod(woutput, 0o0660) 
-                shutil.copyfile(log_file,woutput )                      # Copy Now log to www
-            except Exception as e:
-                print ("Couldn't copy %s to %s\n%s\n" % (log_file,woutput,e)) # Advise user
-            try:
-                welog = dir_www_host + '/' + hostname + '_' + inst + '_e.log'
-                if (os.path.exists(err_file)): 
-                    shutil.copyfile(err_file,welog)                     # Copy Now log to www
-            except Exception as e:
-                print ("Couldn't copy %s to %s\n%s\n" % (err_file,welog,e))
-
-    log_file_fh.flush()                                                 # Got to do it - Missing end
+    # Finally close the log and error log file handlers, to make sure all data is written to disk.
+    log_file_fh.flush()                                                 # Got to do it - Missing EOF
     log_file_fh.close()                                                 # Close the Log File
-    err_log_fh.flush()                                                 # Got to do it - Missing end
-    err_log_fh.close()                                                 # Close the Error Log File
+    err_log_fh.flush()                                                  # Got to do it - Missing EOF
+    err_log_fh.close()                                                  # Close the Error Log File
+
+
+    # Trim error log, standard log and rch file if needed 
+    if (os.path.exists(err_file) and os.stat(err_file).st_size == 0):   # Error Log Exist & size = 0
+        silentremove (err_file)                                         # Remove Error log File  
+    if os.path.exists(err_file) and max_logline != 0 and os.stat(err_file).st_size > 0:
+        trimfile (err_file,max_logline)                                 # Trim the Script Error Log
+    if os.path.exists(log_file) and max_logline != 0 and os.stat(log_file).st_size > 0:
+        trimfile (log_file,max_logline)                                 # Trim the Script Log
+    if os.path.exists(rch_file) and max_rchline != 0 and os.stat(rch_file).st_size > 0:
+        trimfile (rch_file,max_rchline)                                 # Trim the Script RCH Log
+
+    # Make sure Group of rch file, log and error log have the one chosen in sadmin.cfg 
+    if os.getuid() == 0 and os.path.exists(log_file) : 
+        os.chown(log_file, -1, gid)                                     # -1 leave UID unchange
+        os.chmod(log_file, 0o0664)                                      # Change Log File Permission
+    if os.getuid() == 0 and os.path.exists(err_file) : 
+        os.chown(err_file, -1, gid)                                     # -1 leave UID unchange
+        os.chmod(err_file, 0o0664)                                      # Error Log File Permission
+    if os.getuid() == 0 and os.path.exists(rch_file) : 
+        os.chown(rch_file, -1, gid)                                     # Mod.only Group of RCH File
+        os.chmod(rch_file, 0o0664)                                      # Change RCH File Permission
+
+
+    # If we are on the SADMIN server and running as root user :
+    # Copy RCH & LOG files to SADMIN server web central directory ($SADMIN/www/dat/hostname/rpt,log)
+    # to be available to the SADMIN monitor now.
+    if sadm_host_type == "S" and os.getuid() == 0 :                     # If on SADMIN Server & root
+        try:
+            if os.path.exists(rch_file) and os.stat(rch_file).st_size != 0: 
+                woutput = dir_www_host + "/rch"  + '/' + hostname + '_' + inst + '.rch'   
+                winput  = rch_file
+                if os.getuid() == 0 and os.path.exists(woutput) : os.chmod(woutput, 0o0664) 
+                shutil.copy2 (rch_file,woutput)                         # Copy Now rch to www
+            if os.path.exists(log_file) and os.stat(log_file).st_size != 0: 
+                woutput = dir_www_host + "/log"  + '/' + hostname + '_' + inst + '.log'
+                winput  = log_file
+                if os.getuid() == 0 and os.path.exists(woutput): os.chmod(woutput, 0o0664) 
+                shutil.copy2 (log_file, woutput )                       # Copy Now Std log to www
+            if os.path.exists(err_file) and os.stat(err_file).st_size != 0: 
+                woutput = dir_www_host + '/' + hostname + '_' + inst + '_e.log'
+                winput  = err_file  
+                if (os.path.exists(err_file)): 
+                    shutil.copy2 (winput, woutput)                      # Copy Now ErrLog to www
+        except Exception as e:
+                errmsg = str(e.args)
+                write_err ("Couldn't copy %s to %s\n" % (winput,woutput)) # Advise user
+                write_err ("[ ERROR ] Errno: '%s' Errmsg: '%s'" % (errmsg)) 
+
+
     return
 
 
@@ -2396,8 +2443,8 @@ def stop(pexit_code : int) -> None:
 def freshen_directories_structure() :
 
     # On MacOS this path is needed to perform NFS Backup (It doesn't exist by default on Mac)
-    if (get_ostype() == "DARWIN" ) and (not os.path.exists("/tmp/nfs2")): # NFS Mount Point not exist
-        os.mkdir("/tmp/nfs2", 0o0755)                                  # Create NFS mount point
+    if get_ostype() == "DARWIN"  and not os.path.exists("/tmp/nfs2"):   # NFS Mount Point not exist
+        os.mkdir("/tmp/nfs2", 0o0755)                                   # Create NFS mount point
     
 
     # Get the SADMIN user uid and gid chosen in sadmin.cfg (SADM_USER/SADM_GROUP)
@@ -2409,11 +2456,11 @@ def freshen_directories_structure() :
         os.chown(dir_base,uid,gid)                                      # Set Owner of log file
         os.chmod(dir_base,0o775)                                        # Chg log file Perm.
 
-
     # Directories list to create (if don't exist) and assign them to SADMIN user/group
     client_dir = [ dir_bin, dir_cfg, dir_dat, dir_doc, dir_lib, dir_log, dir_pkg, dir_setup,
                    dir_sys, dir_tmp, dir_nmon, dir_dr, dir_rch, dir_net, dir_rpt, dir_dbb, 
                    dir_usr, dir_usr_bin, dir_usr_lib, dir_usr_doc, dir_usr_mon, dir_usr_cfg ]
+
 
     # Create the client directories if they don't exist and assign them to SADMIN user/group
     for wdir in client_dir :
@@ -2426,7 +2473,6 @@ def freshen_directories_structure() :
                 os.chown(wdir,uid,gid)                                  # Set Owner of log file
                 os.chmod(wdir,0o775)                                    # Chg log file Perm.
     if (os.getuid() == 0) :  os.chmod(dir_tmp, 0o1777)                  # Except $SADMIN/tmp=1777
-
 
 
     # Create the server directories if they don't exist and assign them to SADMIN user/group
@@ -2454,35 +2500,47 @@ def freshen_directories_structure() :
 # --------------------------------------------------------------------------------------------------
 def start(db_name="sadmin") : 
     
-
     """
-    Initialize the SADMIN environment
+    Function 'start()'
+        - If 'sa.db_used' is True, then it will return connection (sa_conn) & the cursor (db_cur).
+        - If 'sa.db_used' is False, then it will return None for both.
 
-        - Make sure all Directories require exist and have the right permission and owner/group ID.
-        - Open script log in append mode (log_append=True) or new log.
-        - Write Log Header, record startup Date/Time and update RCH file.
-        - Check if script is already running (pid_file).
-        - Advise user & Quit if Attribute multiple_exec="N".
-        *** If nay error occurs while executing the function script is aborted. ***        
+      The function 'start()' basically initialize the SADMIN environment.
 
-        Arguments required:
-          - None
-
-        Return: 
-         - If start() have succeeded it job, it will return to the caller.
-         - If any error occurs while executing the function, it will print the error & abort script.
-
+      Here a summary of the different things it does :
+        1) Make sure $SADMIN directories & sub-dirrectories exist and have proper permissions.
+        2) Open program & error log in append ('log_append=True') or write mode ('log_append=False').
+        3) If 'sa.log_header' is 'True', write the log header.
+        4) Check if this program can only be run by 'root' (sa.root_only=True
+           If 'True' and current user is not 'root', show error message and abort.
+        5) Check if this program can only be run on the SADMIN server (sa.server_only=True).
+           If current host is not the SADMIN server, show error message and abort.
+        6) If 'sa.sadmgrp_only' is 'True', then user MUST be part of the SADMIN group 
+           ('sadm_group') for the program to run (Unless you run it as 'root').
+        7) Check if user want to use Database (db_used=True) but not on SADMIN Server
+           Show error message and abort.
+        8) If system is lock (and running on the SADMIN), issue message and exit(1)
+        9) Check if PID file exist, check if timeout is reached, if not show error message and abort.
+           Unless program is allow to run more than one copy at the same time (sa.multiple_exec=True).
+       10) Record starting time of your program & record it in the RCH file (if 'use_rch' is True).
+       11) If 'db_used' is True, open connection to database and return connection and cursor.
+           If not on SADMIN system, show error message and abort.
+    
+       *** If any error occurs while executing this function the program is aborted. ***
+       *** When you call 'sa.start()', it will come back to your program only when everything is OK. **
+    
     """
-    global \
-        log_file_fh, err_log_fh, log_type, log_append, start_time, start_epoch,\
-        delete_pid,  dict_alert, db_conn,  db_cur,  lib_debug
+    global log_file_fh, err_log_fh, start_time, start_epoch, delete_pid, db_conn, db_cur
 
-    #lib_debug=0                                                         # Library debug level
+    freshen_directories_structure()                                     # Make Dir,Perm.,Owner/Group
 
     # Get the SADMIN user uid and gid chosen in sadmin.cfg (SADM_USER/SADM_GROUP)
     uid = pwd.getpwnam(sadm_user).pw_uid                                # Get UID User in sadmin.cfg
     gid = grp.getgrnam(sadm_group).gr_gid                               # Get GID User in sadmin.cfg
 
+    # Get the Web user uid and gid chosen in sadmin.cfg (SADM_WWW_USER/SADM_WWW_GROUP)
+    wuid = pwd.getpwnam(sadm_www_user).pw_uid                           # Get Web UID running apache
+    wgid = grp.getgrnam(sadm_www_group).gr_gid                          # Get Web GID User Group
 
     # Initialize the script log file
     # Make sure that $SADMIN/log directory is created, get the right permission and owner/group ID.
@@ -2532,23 +2590,28 @@ def start(db_name="sadmin") :
         os.chown(err_file,uid,gid)                                      # Set Owner, error log file
         os.chmod(err_file,0o664)                                        # Chg error log file Perm.
 
-    freshen_directories_structure()                                     # Make Dir,Perm.,Owner/Group
 
     # Validate Log Type (S=Screen L=Log B=Both), if not set it to 'B' (Both)
     if ((log_type.upper() != 'S') and (log_type.upper() != "B") and (log_type.upper() != 'L')):
         write_err ("Valid 'log_type' are 'S','L','B' - Invalid log_type : %s" % (log_type.upper()))
-        log_type = 'B'                                                  # Set default type to [B]oth
-        write_err ("Defaulting to %s for the Log type (log_type)." % (log_type.upper()))
+        write_err ("Script aborted\n") 
+        sys.exit(1)  
 
+    # Validate Alert type (Can be 1 to 3).
+    if sadm_alert_type > 3 or sadm_alert_type < 0 :                     # Alert Type is Invalid
+        write_err ("[ ERROR ] Invalid 'sadm_alert_type' value %s",(str(sadm_alert_type)))
+        write_err ("Should be set to 0,1,2 or 3, please correct situation and re-run this program.") 
+        write_err ("Script aborted\n") 
+        sys.exit(1)                                                     # Back to O/S 
 
     # Log Append can be True or False. If not set it to True (Append)
     if ( (log_append != True) and (log_append != False) ):
         write_err ("Invalid 'log.append' attribute, can only be True or False (%s)" % (log_append))
-        log_append = True
-        write_err ("Defaulting to %s for the Log append mode (log_append)." % (log_append))
+        write_err ("Script aborted\n") 
+        sys.exit(1)                                                     # Back to O/S 
 
     # Set & Save Starting Date/Time
-    start_epoch = int(time.time())                                      # StartTime in Epoch Time
+    start_epoch = int(time.time())                                      # Current Epoch Time
     i = datetime.datetime.now()                                         # Get Current Time
     start_time=i.strftime('%Y.%m.%d %H:%M:%S')                          # Save Start Date & Time    
     header_date=i.strftime('%a %d %b %Y %H:%M:%S')                      # Date format for Log Header 
@@ -2561,12 +2624,9 @@ def start(db_name="sadmin") :
         wmess += "v%s " % (ver)                                         # 1st line Script Version
         wmess += "- Library v%s" % (lib_ver)                            # 1st line SADM Library Ver.
         write_log (wmess)                                               # Write 1st Header Line
-        # 
-        if (desc != "") :                                              # If script Desc. not blank
-            write_log ("%s" % (desc))                                  # 2nd line Write Desc to Log
-        #
+        if (desc != "") : write_log ("%s" % (desc))                     # 2nd Line script Desc. 
         wmess = "%s - User: %s - Umask: %04d - " % (get_fqdn(),username,getUmask()) # 3th line part 1 
-        wmess += "Arch: %s " % (get_arch())        # 3th line part 2
+        wmess += "Arch: %s " % (get_arch())                             # 3th line part 2
         write_log (wmess)                                               # Write 3th Line to log
         #
         wmess  = "%s "  % (get_osname().capitalize())                   # 4th Line O/S Distr. Name
@@ -2578,10 +2638,9 @@ def start(db_name="sadmin") :
         write_log ('='*50)                                              # 50 '=' Lines
         write_log (" ")                                                 # Space Line in the LOG
 
-
     # If this script can only be run by 'root' 
     if root_only and os.getuid() != 0:                                  # UID of user is not 'root'
-        print ("This script can only be run by the 'root' user.")       # Advise User Message / Log
+        print ("This program can only be run by the 'root' user.")      # Advise User Message / Log
         print ("Try 'sudo %s'" % (os.path.basename(sys.argv[0])))       # Suggest to use 'sudo'
         print ("Or change the value of 'sa.root_only' to 'False'.")     # Choice of user
         print ("Process aborted.")                                      # Process Aborted Msg
@@ -2596,7 +2655,18 @@ def start(db_name="sadmin") :
         print (" - Variable 'SADM_HOST_TYPE' in $SADMIN/cfg/sadmin.cfg must be 'S'.")
         print (" - The IP of the host 'sadmin' must refer to an ip define on this host.")
         print (" - The 'SADMIN' MySQL database & Python module 'pymysql' must be present.") 
-        print("Process aborted.")                                       # Abort advise message
+        print ("Process aborted.")                                      # Abort advise message
+        stop(1)                                                         # Close SADMIN 
+        sys.exit(1)                                                     # Back to O/S 
+
+
+    # If this script can only be run by root or user part of SADMIN group (SADM_GROUP in sadmin.cfg)
+    if os.getuid() != 0 and not user_in_group(username,sadm_group) : 
+        print ("This script can only run by a user part of the %s group." % sadm_group)
+        print (" - Variable 'SADM_HOST_TYPE' in $SADMIN/cfg/sadmin.cfg must be 'S'.")
+        print (" - The IP of the host 'sadmin' must refer to an ip define on this host.")
+        print (" - The 'SADMIN' MySQL database & Python module 'pymysql' must be present.") 
+        print ("Process aborted.")                                      # Abort advise message
         stop(1)                                                         # Close SADMIN 
         sys.exit(1)                                                     # Back to O/S 
 
@@ -2612,11 +2682,15 @@ def start(db_name="sadmin") :
 
 
     # Check Files that should be present ONLY ON SADMIN SERVER
+    # If on the SADMIN server and the current system is lock
+    if (sadm_host_type == "S") and lock_status(hostname) :              # If on SADMIN server & Lock
+       stop(1)                                                          # if Lock Close gracefully
+       sys.exit(1)                                                      # If lock Exit back to O/S
+
+
+    # Check Files that should be present ONLY ON SADMIN SERVER
     # Make sure the alert History file exist , if not use the history template to create it.
     if (sadm_host_type == "S") :                                        # On SADMIN server (TYPE=S)
-        if lock_status(hostname) :                                      # System is Lock on SADMIN
-           stop(1)                                                      # Close SADMIN
-           sys.exit(1)                                                  # Exit back to O/S,Abort
         if not os.path.exists(alert_hist):                              # AlertHistory Missing
             if not os.path.exists(alert_hini):                          # AlertHistoryTemplate
                 touch_file(alert_hini)                                  # Create HistoryTemplate
@@ -2630,6 +2704,7 @@ def start(db_name="sadmin") :
         if os.getuid() == 0:                                            # If running as root
             os.chown(alert_hist,uid,gid)                                # Chg History File Owner
             os.chmod(alert_hist,0o0664)                                 # Chg History File Perm.
+
 
     # If the PID file already exist - Script is already Running, check for how long it's running
     if os.path.exists(pid_file) and not multiple_exec  :                # PID Exist & NoMultiRun
@@ -2651,7 +2726,7 @@ def start(db_name="sadmin") :
         if (pelapse >= int(pid_timeout)) :                              # PID Timeout reached
             write_err ("PID File exceeded it time to live.")            # Advise user of PID Timeout
             write_err ("Assuming script was aborted abnormally.")       # Assume reason for that
-            write_err ("Script execution re-enable, PID file updated.")
+            write_err ("Resume script execution, new PID file created.")
             write_log(" ")
             touch_file (pid_file)                                       # Create empty PID File
             delete_pid="Y"                                              # Del PID Since running
@@ -2690,23 +2765,20 @@ def start(db_name="sadmin") :
     if (not db_used) :
         db_conn   = None
         db_cur    = None
-        db_errno  = 0
-        db_errmsg = ""
+        errno  = 0
+        errmsg= ""
     else: 
         if (sadm_host_type == "S")  :
            (db_conn,db_cur) = db_connect() 
         else : 
            db_conn   = None
            db_cur    = None
-           db_errno  = 1
-           db_errmsg ="Cannot connect to database %s on host %s" % (db_name,sadm_server)
+           errno  = 1
+           errmsg="Cannot connect to database %s on host %s" % (db_name,sadm_server)
            if (not quiet) : write_err (db_errmsg)
 
     if lib_debug > 4 : print ("\nEnd of start(): db_conn=%s,db_cur=%s" % (db_conn,db_cur))
     return (db_conn,db_cur) 
-
-
-
 
 
 
@@ -2805,17 +2877,93 @@ def get_packagetype():
                                     deb (Ubuntu,Debian,Raspbian,Mint,...)  
                                     dmg (MacOS)  
                                     lpp (Aix)  
+                                    zypper (SUSE, OpenSUSE)
     """      
-    
-    packtype=""                                                         # Initial Packaging is None
-    if (locate_command('rpm')   != "")      : packtype="rpm"            # Is rpm command on system ?
-    if (locate_command('dpkg')  != "")      : packtype="deb"            # is deb command on system ?
-    if (locate_command('lslpp') != "")      : packtype="lpp"            # Is lslpp cmd on system ?
-    if (locate_command('launchctl') != "")  : packtype="dmg"            # launchctl MacOS on system?
-    if (packtype == ""):                                                # If unknow/unsupported O/S
-        write_err ('None of these commands are found (rpm, pkg, dmg or lslpp absent)')
+    packtype=""  
+    if shutil.which("rpm")       != None : return("rpm")
+    if shutil.which("dpkg")      != None : return("deb")
+    if shutil.which("lslpp")     != None : return("lpp")
+    if shutil.which("launchctl") != None : return("dmg")
+
+    if (packtype == "") or (packtype == None) :                     
+        write_err ('None of these commands were found on the system (rpm, pkg, dmg,lslpp,zypper).')
         write_err ('No supported package type is detected')
+        packtype=""  
     return(packtype)
+
+
+
+
+# Send an email to sysadmin define in sadmin.cfg with subject and body received
+# ----------------------------------------------------------------------------------------------
+def sendmail(waddr, wsub, wbody, wattach="") :
+    
+    """ Send mail to email address received, subject, body of email and attachment(s).
+        
+        Args:            
+            waddr (str)     : Email Address to which you want to send it
+            wsub  (str)     : Subject of email
+            wbody (str)     : Full Path to file containing the body of your email.
+                              If specified the file must exist and readable.
+            wattach (str)   : Name of the file(s) to attach to the email.
+                               - If more than one attachment, they go to be separated by comma.
+                               - If no attachment, leave blank.
+                               - Attachment file(s) must exist, otherwise error message.
+    
+        Returns:
+            Return Code (Int)   : 0 Successfully sent the email
+                                  1 Error while sending the email (Parameters may be wrong)
+    """
+
+    # Validate email address
+    try:
+        email_info = validate_email(waddr, check_deliverability=True)
+    except EmailNotValidError as e:
+        errmsg = {str(e)}
+        write_err ("The email specified is not valid '%s'." % waddr)
+        write_err (errmsg)
+        return 1
+
+    # Ensure email body file exists before checking its size
+    if not os.path.exists(wbody) or os.path.getsize(wbody) == 0:    
+       if (not quiet) : write_err ("Mail body file is is empty or not found '%s'."  % wbody)
+       return 1
+
+    # Add subject to mutt command
+    cmd_mutt="mutt -s '%s' " % wsub
+    if debug > 4 : write_log ("cmd_mutt with subject added  '%s'" % (cmd_mutt))
+
+    # Validate if attachment exist and prepare for a repetive '-a' option.
+    attachment = ""                                                     # -a with each attachment
+    if debug > 4 : write_log ("Attachment receive: %s" % wattach) # Show Attachment info rcv
+    if wattach != "" :                                                  # If attachment not blank
+        filenames = wattach.split(',')                                  # Split by , filename in array
+        for filename in filenames :                                     # For each attachement
+            if os.path.exists(filename):                                # Check if attachement exist
+                attachment += " -a %s " % filename                      # Add -a attachment
+                if debug > 4 : write_log ("Attachement list : %s" % attachment)
+            else:
+                write_err ("Attachment does not exist '%s'" % filename)
+                return 1 
+    if debug > 4 : write_log ("Final Attachment spec' %s'." % attachment) 
+
+    # Add attachment to mutt command
+    cmd_mutt = cmd_mutt + attachment + " -- "                           # combine '-a' and '--' opt
+    if debug > 4 : write_log ("Final email separater %s" % cmd_mutt) 
+
+    # Add email address & Body of email 
+    cmd_mutt += "%s < %s" % (waddr,wbody)                               # Add email addr & < body
+    if debug > 4 : write_log ("Final mutt command : %s" % cmd_mutt)
+
+    # Execute the mutt command
+    ccode, cstdout, cstderr = oscommand(cmd_mutt)                       # Go execute 'mutt' command
+    if not ccode == 0 :
+        write_err ("[ ERROR ] No.%s Trying to send email." % ccode)
+        write_err ("%s\n%s\n" % (cstdout,cstderr))
+        return(1) 
+    
+    return (0)
+
 
 
 
@@ -2823,67 +2971,111 @@ def get_packagetype():
 
 # Send an email to sysadmin define in sadmin.cfg with subject and body received
 # ----------------------------------------------------------------------------------------------
-def sendmail(mail_addr, mail_subject, mail_body, mail_attach="") :
-    
-    """ Send email to email address received.
-        
-        Args:            
-            mail_addr (str)     : Email Address to which you want to send it
-            mail_subject (str)  : Subject of your email
-            mail_body (str)     : Body of your email
-            mail_attach (str)   : Name of the file (MUST exist) to attach to the email.
-                                  (If no attachment, leave blank)
-    
-        Returns:
-            Return Code (Int)   : 0 Successfully sent the email
-                                  1 Error while sending the email (Parameters may be wrong)
-    """
-
-    data = MIMEMultipart()                                              # instance of MIMEMultipart
-    data['From '] = sadm_smtp_sender                                    # store sender email address  
-    data['To '] = mail_addr                                             # store receiver email 
-    data['Subject '] = mail_subject                                     # storing the subject 
-    data.attach(MIMEText(str(mail_body), 'plain'))                           # attach body with msg inst
-    #data.attach(MIMEText(encoded_elements, 'plain'))                     # attach body with msg inst
-
-    if mail_attach != "" :
-        filenames = mail_attach.split(',')
-        for filename in filenames :
-            if os.path.exists(filename): 
-                attachment = open(filename, "rb")                       # Read file into memory
-                p = MIMEBase('application', 'octet-stream')             # MIMEBase inst & named as p
-                p.set_payload((attachment).read())                      # Payload into encoded form
-                encoders.encode_base64(p)                               # encode into base64
-                p.add_header('Content-Disposition', "attachment; filename= %s" % filename)
-                data.attach(p)                                          # attach inst p to inst msg
-    text = data.as_string()                                             # Conv. Multipart msg 2 str
-    try : 
-        context = ssl.create_default_context()
-        with smtplib.SMTP(sadm_smtp_server, sadm_smtp_port) as server:
-            server.ehlo()  # Can be omitted
-            server.starttls(context=context)
-            server.ehlo()  # Can be omitted
-            try:
-                server.login(sadm_smtp_sender, sadm_gmpw)
-            except smtplib.SMTPException :
-                write_err("Authentication for %s at %s:%d failed (%s)." % (sadm_smtp_sender,sadm_smtp_server,sadm_smtp_port,sadm_gmpw))
-                return (1)
-            try : 
-                server.sendmail(sadm_smtp_sender, mail_addr, text)
-            except Exception as e: 
-                write_err("[ ERROR ] Trying to send email to %s" % (mail_addr))
-                write_err("%s" % e)
-                return (1)
-            finally:
-                server.close()
-    except (smtplib.SMTPException, socket.error, socket.gaierror, socket.herror) as e:
-            write_err("[ ERROR ] Connection to %s port %s failed" % (sadm_smtp_server,sadm_smtp_port))
-            write_err("%s" % e)
-            return(1)
-    return (0)
-
+#def sendmail(mail_addr, mail_subject, mail_body, mail_attach="") :
+#    
+#    """ Send email to email address received.
+#        
+#        Args:            
+#            mail_addr (str)     : Email Address to which you want to send it
+#            mail_subject (str)  : Subject of your email
+#            mail_body (str)     : Body of your email
+#            mail_attach (str)   : Name of the file (MUST exist) to attach to the email.
+#                                  (If no attachment, leave blank)
+#    
+#        Returns:
+#            Return Code (Int)   : 0 Successfully sent the email
+#                                  1 Error while sending the email (Parameters may be wrong)
+#    """
+#
+#    data = MIMEMultipart()                                              # Instance of MIMEMultipart
+#    data['From '] = sadm_smtp_sender                                    # store sender email address  
+#    data['To '] = mail_addr                                             # store receiver email 
+#    data['Subject '] = mail_subject                                     # storing the subject 
+#    data.attach(MIMEText(str(mail_body), 'plain'))                      # attach body with msg inst
+#
+#    if mail_attach != "" :
+#        filenames = mail_attach.split(',')
+#        for filename in filenames :
+#            if os.path.exists(filename): 
+#                attachment = open(filename, "rb")                       # Read file into memory
+#                p = MIMEBase('application', 'octet-stream')             # MIMEBase inst & named as p
+#                p.set_payload((attachment).read())                      # Payload into encoded form
+#                encoders.encode_base64(p)                               # encode into base64
+#                p.add_header('Content-Disposition', "attachment; filename= %s" % filename)
+#                data.attach(p)                                          # attach inst p to inst msg
+#    text = data.as_string()                                             # Conv. Multipart msg 2 str
+#    try : 
+#        context = ssl.create_default_context()
+#        with smtplib.SMTP(sadm_smtp_server, sadm_smtp_port) as server:
+#            server.ehlo()  # Can be omitted
+#            server.starttls(context=context)
+#            server.ehlo()  # Can be omitted
+#            try:
+#                server.login(sadm_smtp_sender, sadm_gmpw)
+#            except smtplib.SMTPException :
+#                write_err("Authentication for %s at %s:%d failed (%s)." % (sadm_smtp_sender,sadm_smtp_server,sadm_smtp_port,sadm_gmpw))
+#                return (1)
+#            try : 
+#                server.sendmail(sadm_smtp_sender, mail_addr, text)
+#            except Exception as e: 
+#                write_err("[ ERROR ] Trying to send email to %s" % (mail_addr))
+#                write_err("%s" % e)
+#                return (1)
+#            finally:
+#                server.close()
+#    except (smtplib.SMTPException, socket.error, socket.gaierror, socket.herror) as e:
+#            write_err("[ ERROR ] Connection to %s port %s failed" % (sadm_smtp_server,sadm_smtp_port))
+#            write_err("%s" % e)
+#            return(1)
+#    return (0)
 
 
+#def send_gmail(recipient_email, subject, body, attachment_str):
+#    # Retrieve Gmail credentials from environment variables for security
+#    sender_email = "brucetalbot95@gmail.com"
+#    sender_password = "wtuapkxdxtuaidon"
+#
+#    if not sender_email or not sender_password:
+#        return "Error: GMAIL_USER or GMAIL_APP_PASSWORD environment variables not set."
+#
+#    try:
+#        # Create the email message
+#        msg = EmailMessage()
+#        msg["Subject"] = subject
+#        msg["From"] = sender_email
+#        msg["To"] = recipient_email
+#        msg.set_content(body)
+#
+#        # Handle attachments if the string is not empty
+#        if attachment_str:
+#            # Split the string by comma and strip any whitespace
+#            files = [file.strip() for file in attachment_str.split(",")]
+#
+#            for file_path in files:
+#                if os.path.exists(file_path):
+#                    with open(file_path, "rb") as f:
+#                        file_data = f.read()
+#                        file_name = os.path.basename(file_path)
+#                        msg.add_attachment(
+#                            file_data,
+#                            maintype="application",
+#                            subtype="octet-stream",
+#                            filename=file_name,
+#                        )
+#                else:
+#                    return f"Error: File not found - {file_path}"
+#
+#        # Connect to Gmail's SMTP server
+##        with smtplib.SMTP_SSL("://gmail.com", 465) as smtp:
+#        with smtplib.SMTP_SSL("://gmail.com", 587) as smtp:
+#            smtp.login(sender_email, sender_password)
+#            smtp.send_message(msg)
+#
+#        return "Email sent successfully!"
+#
+#    except Exception as e:
+#        return f"Failed to send email. Error: {e}"
+#
 
 
 # --------------------------------------------------------------------------------------------------
@@ -2920,18 +3112,18 @@ def db_connect(db_name="sadmin",quiet=False):
               quiet (bool)  : If True, no error message is printed in case of error.
                               If False, error message is printed in case of error (default=False).
 
-        Returns: (db_conn,db_cur,db_errno,db_errmsg)
+        Returns: (db_conn,db_cur,errno,db_errmsg)
             db_conn (obj)   :   Connector to database or None if can't connect.
             db_cur (obj)    :   Database cursor or None if can't connect.
-            db_errno (int)  :   Return 0 when connected to database (Global variable).
+            errno (int)  :   Return 0 when connected to database (Global variable).
                                 Return 1 if error while connecting to database (Global Variable).
-            db_errmsg (str) :   Return Error message when connecting to DB else return empty string.
+            errmsg(str) :   Return Error message when connecting to DB else return empty string.
     """
 
-    global db_errno, db_errmsg
-    #global db_conn, db_cur, db_errno, db_errmsg
-    db_errno    = 0                                                     # Error No to return
-    db_errmsg   = ""                                                    # Error Mess. to return
+    global errno, db_errmsg
+    #global db_conn, db_cur, errno, db_errmsg
+    errno    = 0                                                     # Error No to return
+    errmsg  = ""                                                    # Error Mess. to return
 
     # Open a connection to Database
     try :
@@ -2954,8 +3146,8 @@ def db_connect(db_name="sadmin",quiet=False):
         (enum,emsg) = e.args                                            # Get Error No. & Message
         db_conn     = None
         db_cur      = None
-        db_errno    = enum
-        db_errmsg   = "[ ERROR ] Connecting to database '%s' - '%s'" % (db_name, emsg)
+        errno    = enum
+        errmsg  = "[ ERROR ] Connecting to database '%s' - '%s'" % (db_name, emsg)
         if ((not quiet) or (lib_debug > 2)):
             write_err ("%s" % db_errmsg)
             write_err ("[ ERROR ] Errno: '%s' Errmsg: '%s'" % (enum,emsg)) 
@@ -2985,57 +3177,64 @@ def get_ip_addresses(family):
                 yield (interface, snic.address)
 
 
-
 # --------------------------------------------------------------------------------------------------
-def on_sadmin_server():
-    
-    """ 
-        Check if the IP assigned to 'sadmin' is defined on the current system.
-        
-        Return True or False
-    
-            "Y"     : System is a valid SADMIN server,
-                        - System have "SADM_HOST_TYPE" equal to "S" in $SADMIN/cfg/sadmin.cfg.
-                        - The 'sadmin' host resolved to an IP present on the current system.
-                          This permit to use an IP other than the main system IP address.
-            "N"     : Mean that current is not a SADMIN server.
-                      
-    """
-    valid_server="N"                                                    # Default, Not SADMIN server
-    if (sadm_host_type != "S") : return(valid_server)                   # Not 'S' type in sadmin.cfg
+class sadmin:
+    def __init__(self):
+        self.ver                = "1.2.1"    # Your Program VERSION number
+        self.desc               = "Description of program" # Your Program DESCRIPTION 
+        self.root_only          = False      # Can Only be run by 'root'(True/False)
+        self.server_only        = False      # Run Only on SADMIN server(True/False) SADM_SERVER in sadmin.cfg
+        self.sadmgrp_only       = False      # Run if part of SADMIN Group 'SADM_GROUP' in sadmin.cfg or root
+        self.use_rch            = True       # Write exec info to RCH file(True/False)
+        self.db_used            = False      # Want to access Database ? Auto connect DB(True)
+        self.log_type           = "B"        # S=Screen L=Log B=Both
+        self.log_append         = False      # Append to previous log (True/False)
+        self.log_header         = True       # Produce Log Header (True/False)
+        self.log_footer         = True       # Produce Log Footer (True/False)
+        self.multiple_exec      = False      # Allow running multiple Instance ?
+        self.pid_timeout        = 14400      # PID File TTL (14400=4hrs) is SADM_PID_TIMEOUT in sadmin.cfg
+        self.lock_timeout       = 7200       # Sec. before unlock (7200=2hrs) SADM_LOCK_TIMEOUT in sadmin.cfg
+        self.max_logline        = 500        # Max. number of lines in log file SADM_MAX_LOGLINE in sadmin.cfg
+        self.max_rchline        = 50         # Max. number of lines in rch file SADM_MAX_RCLINE in sadmin.cfg
+        self.db_name            = "sadmin"   # Database Name (sadmin=default) SADM_DBNAME in sadmin.cfg
+        self.sadm_alert_type    = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
+        self.sadm_alert_group   = "default"  # Error Alert   Group defined in $SADMIN/cfg/alert_group.cfg
+        self.sadm_warning_group = "warning"  # Warning Alert Group defined in $SADMIN/cfg/alert_group.cfg
+        self.sadm_info_group    = "info"     # Info Alert    Group defined in $SADMIN/cfg/alert_group.cfg
+        self.quiet              = False      # If error in a function & quiet is: (give you ctrl of message)
+                                             # False: Show error message and return the error number. 
+                                             # True : Omly returm error number, but don't show error message.
+        self.pn        = os.path.basename(sys.argv[0])   # [P]rogram [N]ame with extension
+        self.inst      = self.pn.split('.')[0] # INSTance Name = Pgm Name Without Ext
 
-    # Get all IPs defined on this system in 'ips_on_system'. 
-    cmd =  "ip a | grep 'inet ' | grep -v '127.0.0.1' | awk '{ print $2 }' | awk -F/ '{ print $1 }'"
-    ccode, ips_on_system, cstderr = oscommand(cmd)
+    def set_ver(self,ver)      : self.ver = ver     # Set Program VERSION number
+    def get_ver(self)          : return self.ver    # Get Program VERSION number
 
-    # Get Ip of 'sadmin' server 
-    try : 
-        sadmin_ip = socket.gethostbyname("sadmin")                      # get 'sadmin' IP
-    except Exception as e:
-        print("\nCould not determine IP of 'sadmin'.")
-        print("\nYou may want to add it to /etc/hosts or in your DNS.")
-        print ("\n%s" % (e))
-        return(valid_server)
-    
-    # 'sadmin' server IP is define on this system ?
-    if sadmin_ip in ips_on_system : return('Y')
+    def set_log_header(self,head)   : self.log_header = head
+    def get_log_header(self)        : return(self.log_header)
 
-    # Get IP of the current IP 
-    try: 
-        hostname_ip = socket.gethostbyname(sadm_server) 
-    except Exception as e:
-        print("\nCould not determine IP of '%s'." % sadm_server)
-        print("\nYou may want to add it to /etc/hosts or in your DNS.")
-        print ("\n%s" % (e))
-        return(valid_server)
+    def set_max_rch_line(self,max_rch_line) : self.max_rch_line = max_rch_line
 
-    # Is SADM_SERVER var. that is define in sadmin.cfg is define on this host.                
-    if sadmin_ip in ips_on_system : return('Y')
-
-    return(valid_server)
+  #
+## Variables that are share with the Library available to Developer
+#sa.errno     = 0                   # Error No. set by function called (0=OK Else error/warning)
+#sa.errmsg    = ""                  # Error Mess. set by function you call (blank or error msg)
+#sa.db_conn   = None                # Database Connector when using DB,  set by sa.start()
+#sa.db_cur    = None                # Database Cursor if you use the DB, set by sa.start()
+#
+## Variable local to this script (not share with the library) you can use at your ease.
+#exit_code    = 0                   # Default Return Code (0=Success 1-Error)
+#debug        = 0                   # Debug Level 0-9 (Increase Verbose)
+#hostname     = sa.get_hostname()   # Get Current hostname
+#username     = sa.get_username()   # Get Current User Name
+#pid          = os.getpid()         # Get Current Process ID.
+#cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh,sa.sadm_ssh_port) # /usr/bin/ssh with sadmin.cfg port
+#current_time = datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S") # Format current Date and Time 
 
 
-# --------------------------------------------------------------------------------------------------
+
+
+
 # Things to do when the module is loaded
 # --------------------------------------------------------------------------------------------------
 
@@ -3048,10 +3247,9 @@ if (os.getenv("SADMIN",default="X") == "X"):                            # SADMIN
     print("\nThen logout and log back in and run the script again.")    # Show what to do 
     sys.exit(1)  
 
+load_cmd_path()                                                         # Get Secure Path to cmd.
 load_config_file(cfg_file)                                              # Load sadmin.cfg in Dict.
-load_cmd_path()                                                         # Load Cmd Path Variables
 
-# Load the alert group file into an dictionnay.
 dict_alert = load_alert_file()                                          # Load Alert group in dict
 if (lib_debug > 4) : print_dict_alert()                                 # Print Alert Group Dict
 

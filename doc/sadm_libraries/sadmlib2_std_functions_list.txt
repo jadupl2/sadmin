@@ -34,7 +34,6 @@ Fri Aug 22 09:59:23 PM EDT 2025
     33	def locate_command(cmd) :
     34	def lock_status(fname, errmsg=True):
     35	def lock_system(fname, errmsg=True ) :
-    36	def on_sadmin_server():
     37	def oscommand (command : str) :
     38	def print_dict_alert():
     39	def sendmail(mail_addr, mail_subject, mail_body, mail_attach="") :
