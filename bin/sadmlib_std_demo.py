@@ -97,7 +97,7 @@ except ImportError as e:                                             # If Error 
 
 # Variables shared with SADMIN Python Library.
 sa.ver                = "3.27"     # Your Program VERSION number
-sa.desc               = "Desc. of '%s' here." % (sa.pn)
+sa.desc               = "Describe '%s' here." % (sa.pn)
 sa.root_only          = False      # Can Only be run by 'root'(True/False)
 sa.server_only        = False      # Run Only on SADMIN server(True/False) SADM_SERVER in sadmin.cfg
 sa.sadmgrp_only       = False      # Run if part of SADMIN Group 'SADM_GROUP' in sadmin.cfg or root
@@ -255,7 +255,7 @@ def print_functions():
     printline ("sa.silentremove('file')","Silent file delete (no msg, no err)",sa.silentremove('file'))
     printline ("sa.touch_file('filename')","Create an empty file","0=Success 1=Error")
     printline ("sa.db_connect('sadmin')","Open connection to database","0=Success 1=Error") 
-    printline ("sa.db_close()","Close connection to database","0=Success 1=Error")
+    printline ("sa.db_close(conn,cur)","Close connection to database","0=Success 1=Error")
     return (0) 
 
 
@@ -282,13 +282,10 @@ def print_user_variables():
     printline ("sa.multiple_exec","Can run more than 1 copy simultaneously",sa.multiple_exec)
     printline ("sa.quiet","Quiet False=ErrNo+Mess True=OnlyErrNo",sa.quiet)  
     printline ("sa.use_rch","Save execution data to '.rch' file",sa.use_rch) 
-    printline ("debug","Program Debug Level (0-9)",debug)  
     printline ("sa.log_type","Set Output to [S]creen [L]og [B]oth",sa.log_type)
     printline ("sa.log_append","True=Append to log, False=New log",sa.log_append)
     printline ("sa.log_header","Generate header in log",sa.log_header)
     printline ("sa.log_footer","Generate footer in log",sa.log_footer)
-    printline ("sa.sadm_alert_type","0=NoMail 1=OnError 3=OnSuccess 4=All",sa.sadm_alert_type)
-    printline ("sa.exit_code","Script Exit Return Code",sa.exit_code)
     printline ("sa.db_used","Need Access to SADMIN Database ?",sa.db_used)
     printline ("sa.db_name","Database Name (Defaut:'sadmin')",sa.db_name)
     printline ("sa.sadm_pid_timeout","PID file default TimeToLive (Sec)",sa.sadm_pid_timeout)
@@ -315,6 +312,10 @@ def print_user_variables():
     printline ("sa.errmsg","Error Mess. returned by function called",sa.errmsg)
     printline ("sa.db_conn","Database connector",sa.db_conn)
     printline ("sa.db_cur","Database cursor",sa.db_cur)
+    printline ("sa.db_name","Database name",sa.db_name)
+    printline ("debug","Debug Level 0-9 (Incr. Verbose)",debug)
+    printline ("exit_code","Script Exit Return Code",exit_code)
+    printline ("current_time","Current date & Time",current_time)
     printline ("cmd_ssh_full","SSH cmd to client",cmd_ssh_full)
     return(0)
 
@@ -411,6 +412,7 @@ def print_sadmin_cfg(show_password=False):
     printline ("sa.sadm_pid_timeout","PID file default TimeToLive (Sec)",sa.sadm_pid_timeout)
     printline ("sa.sadm_lock_timeout","Maximun nb. sec. a host can be lock",sa.sadm_lock_timeout)
 
+
     print ("\n----- Database Section -----")
     printline ("sa.sadm_dbname","SADMIN Database Name",sa.sadm_dbname)  
     printline ("sa.sadm_dbhost","SADMIN Database Host",sa.sadm_dbhost)  
@@ -423,6 +425,7 @@ def print_sadmin_cfg(show_password=False):
     presult="*Hidden*"                                                  # Default don't show passwd
     if show_password : presult=sa.sadm_ro_dbpwd                         # Selected to Show DB Passwd
     printline ("sa.sadm_ro_dbpwd","SADMIN Database Read Only User Pwd",presult) 
+
 
     print ("\n----- Web Interface Section -----")
     printline ("sa.sadm_www_user","User that Run the Web Server",sa.sadm_www_user)   

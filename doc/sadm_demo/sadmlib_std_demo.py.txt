@@ -49,7 +49,7 @@ Fedora Linux v43 - Kernel 7.0.12-101.fc43.x86_64 - SADMIN(C): /opt/sadmin
 [036] sa.silentremove('file')             Silent file delete (no msg, no err)     0                       
 [037] sa.touch_file('filename')           Create an empty file                    0=Success 1=Error       
 [038] sa.db_connect('sadmin')             Open connection to database             0=Success 1=Error       
-[039] sa.db_close()                       Close connection to database            0=Success 1=Error       
+[039] sa.db_close(conn,cur)               Close connection to database            0=Success 1=Error       
 
 
 

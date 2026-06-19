@@ -1,6 +1,6 @@
 ### (function)  db_close   
 
-#### `def db_close(db_conn):`
+#### `def db_close(db_conn,db_cur):`
    
    
         Close the Database of the connector receive.
