@@ -63,6 +63,7 @@
 #@2025_05_31 osupdate v3.44 Re-enable the output when applying the update.
 #@2025_06_20 osupdate v3.45 Modify test to allow reboot at the end of update, if requested.
 #@2025_07_26 osupdate v3.46 Add 'dnf autoremove -y' at the end of a Redhat family system.
+#@2026_06_20 osupdate v3.47.01 Added chmod 664 and chown owner:groip to sysinfo.txt file.
 # --------------------------------------------------------------------------------------------------
 #set -x
 # dnf clean expire-cache && dnf makecache # Refresh cache in dnf5
@@ -90,7 +91,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.46'                                     # Your Current Script Version
+export SADM_VER='3.47.01'                                  # Your Current Script Version
 export SADM_PDESC="Script is used to perform an O/S update on the system"
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -413,6 +414,8 @@ update_sysinfo_file()
     
     rm -f  $HWD_FILE  >/dev/null 2>&1                                   # Del.  old sysinfo.txt file
     cp $SADM_TMP_FILE1 $HWD_FILE                                        # Replace old sysinfo.txt 
+    chmod 664 $HWD_FILE 
+    chown "$SADM_USER:$SADM_GROUP" "$HWD_FILE"
 }
 
 
