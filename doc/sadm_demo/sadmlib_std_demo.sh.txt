@@ -1,8 +1,8 @@
 ================================================================================
-Fri 12 Jun 2026 11:43:23 - sadmlib_std_demo.sh v3.30 - Library v4.90.3
+Sat 20 Jun 2026 15:20:53 - sadmlib_std_demo.sh v3.30 - Library v4.90.3
 Desc: Demonstrate functions & variables available to developers using SADMIN Tools
-bilbo - User: root - Umask : 0002 - Arch: x86_64
-Fedora Linux v43 - Kernel 7.0.12-101.fc43.x86_64 - SADMIN(C): /opt/sadmin
+sherlock.maison.ca - User: root - Umask : 0022 - Arch: x86_64
+Redhat Linux v9.8 - Kernel 5.14.0-687.15.1.el9_8.x86_64 - SADMIN(S): /opt/sadmin
 ==================================================
  
 
@@ -14,7 +14,7 @@ User Var. that affect SADMIN behavior  Description                           Thi
 [002] $SADM_PN                         Script Name                         : sadmlib_std_demo.sh            
 [003] $SADM_INST                       Script Name Without Extension       : sadmlib_std_demo               
 [004] $SADM_USERNAME                   Current User Name                   : root                           
-[005] $SADM_TPID                       Current Process ID                  : 65867                          
+[005] $SADM_TPID                       Current Process ID                  : 3456025                        
 [006] $SADM_MULTIPLE_EXEC              Allow running multiple copy [Y/N]   : Y                              
 [007] $SADM_USE_RCH                    Generate entry in '*.rch' file      : N                              
 [008] $SADM_LOG_TYPE                   Set Output to [S]creen [L]og [B]oth : B                              
@@ -30,22 +30,22 @@ Calling Functions                      Description                           Thi
 ====================================================================================================
 [001] $(sadm_get_release)              SADMIN Release Number (XX.XX)       : 2.1.2                          
 [002] $(sadm_get_ostype)               OS Type (Uppercase,LINUX,AIX,DARWIN): LINUX                          
-[003] $(sadm_get_osversion)            Return O/S Version (Ex: 7.2, 6.5)   : 43                             
-[004] $(sadm_get_osmajorversion)       Return O/S Major Version (Ex 7, 6)  : 43                             
-[005] $(sadm_get_osminorversion)       Return O/S Minor Version (Ex 2, 3)  :                                
-[006] $(sadm_get_osname)               O/S Name (REDHAT,CENTOS,UBUNTU,...) : FEDORA                         
+[003] $(sadm_get_osversion)            Return O/S Version (Ex: 7.2, 6.5)   : 9.8                            
+[004] $(sadm_get_osmajorversion)       Return O/S Major Version (Ex 7, 6)  : 9                              
+[005] $(sadm_get_osminorversion)       Return O/S Minor Version (Ex 2, 3)  : 8                              
+[006] $(sadm_get_osname)               O/S Name (REDHAT,CENTOS,UBUNTU,...) : REDHAT                         
 [007] $(sadm_get_oscodename)           O/S Project Code Name               : n/a                            
-[008] $(sadm_get_kernel_version)       O/S Running Kernel Version          : 7.0.12-101.fc43.x86_64         
+[008] $(sadm_get_kernel_version)       O/S Running Kernel Version          : 5.14.0-687.15.1.el9_8.x86_64   
 [009] $(sadm_get_kernel_bitmode)       O/S Kernel Bit Mode (32 or 64)      : 64                             
-[010] $(sadm_get_hostname)             Current Host Name                   : bilbo                          
-[011] $(sadm_get_host_ip)              Current Host IP Address             : 192.168.1.22                   
+[010] $(sadm_get_hostname)             Current Host Name                   : sherlock                       
+[011] $(sadm_get_host_ip)              Current Host IP Address             : 192.168.1.48                   
 [012] $(sadm_get_domainname)           Current Host Domain Name            : maison.ca                      
-[013] $(sadm_get_fqdn)                 Fully Qualified Domain Host Name    : bilbo                          
-[014] $(sadm_server_serial)            Server serial number (Ex: 4S7GYF1)  : E537F839                       
-[015] $(sadm_get_epoch_time)           Get Current Epoch Time              : 1781279004                     
-[016] $(sadm_epoch_to_date 1781279004) Convert epoch time to date          : 2026.06.12 11:43:24            
-      WDATE='2026.06.12 11:43:24'
-[017] $(sadm_date_to_epoch "$WDATE")   Convert Date to epoch time          : 1781279004                     
+[013] $(sadm_get_fqdn)                 Fully Qualified Domain Host Name    : sherlock.maison.ca             
+[014] $(sadm_server_serial)            Server serial number (Ex: 4S7GYF1)  :                                
+[015] $(sadm_get_epoch_time)           Get Current Epoch Time              : 1781983253                     
+[016] $(sadm_epoch_to_date 1781983253) Convert epoch time to date          : 2026.06.20 15:20:53            
+      WDATE='2026.06.20 15:20:53'
+[017] $(sadm_date_to_epoch "$WDATE")   Convert Date to epoch time          : 1781983253                     
       DATE1='2016.01.30 10:00:44'
       DATE2='2016.01.30 10:00:03'
 [018] $(sadm_elapse "$DATE1" "$DATE2") Elapse Time between two timestamps  : 00:00:41                       
@@ -65,19 +65,19 @@ Calling Functions                      Description                           Thi
 ====================================================================================================
 FUNCTIONS AVAIl. ONLY IN BASH LIBRARY  Description                           This System Result             
 ====================================================================================================
-[001] $(sadm_server_type)              Host is Physical or Virtual (P/V)   : P                              
-[002] $(sadm_server_model)             Server model (Ex: HP ProLiant DL580):  ThinkPad T470 W10DG           
-[003] $(sadm_server_memory)            Server total memory in MB (Ex: 3790): 31963                          
+[001] $(sadm_server_type)              Host is Physical or Virtual (P/V)   : V                              
+[002] $(sadm_server_model)             Server model (Ex: HP ProLiant DL580): VIRTUALBOX                     
+[003] $(sadm_server_memory)            Server total memory in MB (Ex: 3790): 7681                           
 [004] $(sadm_server_hardware_bitmode)  CPU Hardware capable of 32/64 bits  : 64                             
-[005] $(sadm_server_nb_logical_cpu)    Number of Logical CPU on system     : 4                              
+[005] $(sadm_server_nb_logical_cpu)    Number of Logical CPU on system     : 2                              
 [006] $(sadm_server_nb_cpu)            Number of Physical CPU on system    : 1                              
 [007] $(sadm_server_nb_socket)         Number of socket on system          : 1                              
 [008] $(sadm_server_core_per_socket)   Number of Core per Socket           : 2                              
-[009] $(sadm_server_thread_per_core)   Number of Thread per Core           : 2                              
-[010] $(sadm_server_cpu_speed)         Server CPU Speed in MHz             : 3000                           
-[011] $(sadm_server_disks)             Disks list(MB) (DISKNAME|SIZE,...)  : nvme0n1|524288                 
+[009] $(sadm_server_thread_per_core)   Number of Thread per Core           : 1                              
+[010] $(sadm_server_cpu_speed)         Server CPU Speed in MHz             : 3292                           
+[011] $(sadm_server_disks)             Disks list(MB) (DISKNAME|SIZE,...)  : sda|549888                     
 [012] $(sadm_server_vg)                VG list(MB) (VGNAME|SIZE|USED|FREE) : No VG                          
-[013] $(sadm_server_ips)               Network IP(Name|IP|Netmask|MAC)     : enp0s31f6|192.168.1.22|255.255.255.0|54:e1:ad:75:8e:0e,enp0s31f6|192.168.1.24|255.255.255.0|54:e1:ad:75:8e:0e,wlp4s0|192.168.1.198|255.255.255.0|b6:4a:99:49:bb:bf
+[013] $(sadm_server_ips)               Network IP(Name|IP|Netmask|MAC)     : enp0s3|192.168.1.48|255.255.255.0|08:00:27:44:cf:8f,enp0s3|192.168.1.3|255.255.255.0|08:00:27:44:cf:8f
 [014] sadm_toupper string              Return string uppercase             : STRING                         
 [015] sadm_tolower STRING              Return string lowercase             : string                         
 [016] sadm_capitalize STRING           Return string capitalize            : String                         
@@ -137,7 +137,7 @@ Overview of the 'sa.start' and 'sa.stop' functions in Bash Library.             
 SADMIN CONFIG FILE VARIABLES           Description                           This System Result             
 ====================================================================================================
 [001] $SADM_SERVER                     SADMIN SERVER NAME (FQDN)           : sherlock.maison.ca             
-[002] $SADM_HOST_TYPE                  SADMIN [C]lient or [S]erver         : C                              
+[002] $SADM_HOST_TYPE                  SADMIN [C]lient or [S]erver         : S                              
 [003] $SADM_MAIL_ADDR                  SADMIN Administrator Default Email  : brucetalbot95@gmail.com        
 [004] $SADM_ALERT_TYPE                 0=NoMail 1=OnError 2=OnSuccess 3=All: 1                              
 [005] $SADM_ALERT_GROUP                Default Alert Group                 : default                        
@@ -248,13 +248,13 @@ SADMIN FILES VARIABLES AVAIL.          Description                           Thi
 [005] $SADM_ALERT_INIT                 SADMIN Initial Alert Group File     : /opt/sadmin/cfg/.alert_group.cfg
 [006] $SADM_ALERT_HIST                 SADMIN Alert History File           : /opt/sadmin/cfg/alert_history.txt
 [007] $SADM_ALERT_HINI                 SADMIN Initial Alert History File   : /opt/sadmin/cfg/.alert_history.txt
-[008] $SADM_TMP_FILE1                  User usable Temp Work File 1        : /opt/sadmin/tmp/sadmlib_std_demo1_Ll4
-[009] $SADM_TMP_FILE2                  User usable Temp Work File 2        : /opt/sadmin/tmp/sadmlib_std_demo2_og7
-[010] $SADM_TMP_FILE3                  User usable Temp Work File 3        : /opt/sadmin/tmp/sadmlib_std_demo3_8QR
-[011] $SADM_LOG                        Script Log File                     : /opt/sadmin/log/bilbo_sadmlib_std_demo.log
-[012] $SADM_RCH_FILE                   Script Return Code History File     : /opt/sadmin/dat/rch/bilbo_sadmlib_std_demo.rch
+[008] $SADM_TMP_FILE1                  User usable Temp Work File 1        : /opt/sadmin/tmp/sadmlib_std_demo1_1LQ
+[009] $SADM_TMP_FILE2                  User usable Temp Work File 2        : /opt/sadmin/tmp/sadmlib_std_demo2_8Zp
+[010] $SADM_TMP_FILE3                  User usable Temp Work File 3        : /opt/sadmin/tmp/sadmlib_std_demo3_V36
+[011] $SADM_LOG                        Script Log File                     : /opt/sadmin/log/sherlock_sadmlib_std_demo.log
+[012] $SADM_RCH_FILE                   Script Return Code History File     : /opt/sadmin/dat/rch/sherlock_sadmlib_std_demo.rch
 [013] $DBPASSFILE                      SADMIN Database User Password File  : *Hidden*                       
-[014] $SADM_RPT_FILE                   System Monitor Report File          : /opt/sadmin/dat/rpt/bilbo_sadmlib_std_demo.rpt
+[014] $SADM_RPT_FILE                   System Monitor Report File          : /opt/sadmin/dat/rpt/sherlock_sadmlib_std_demo.rpt
 [015] $SADM_BACKUP_LIST                Backup List File Name               : /opt/sadmin/cfg/backup_list.txt
 [016] $SADM_BACKUP_LIST_INIT           Initial Backup List (Template)      : /opt/sadmin/cfg/.backup_list.txt
 [017] $SADM_BACKUP_EXCLUDE             Backup Exclude List File Name       : /opt/sadmin/cfg/backup_exclude.txt
@@ -282,13 +282,276 @@ COMMAND PATH USE BY SADMIN STD. LIBR.  Description                           Thi
 [017] $SADM_MYSQL                      'mysql' binary location             : /usr/bin/mysql                 
 [018] $SADM_SED                        'sed' binary location               : /usr/bin/sed                   
 
+====================================================================================================
+Database Information                   Description                           This System Result             
+====================================================================================================
+
+Show SADMIN Tables:
++------------------------+
+| pma__bookmark          |
+| pma__central_columns   |
+| pma__column_info       |
+| pma__designer_settings |
+| pma__export_templates  |
+| pma__favorite          |
+| pma__history           |
+| pma__navigationhiding  |
+| pma__pdf_pages         |
+| pma__recent            |
+| pma__relation          |
+| pma__savedsearches     |
+| pma__table_coords      |
+| pma__table_info        |
+| pma__table_uiprefs     |
+| pma__tracking          |
+| pma__userconfig        |
+| pma__usergroups        |
+| pma__users             |
+| script                 |
+| script_rch             |
+| server                 |
+| server_category        |
+| server_group           |
+| server_network         |
++------------------------+
+
+
+Category Table:
++-------------+-------------+----+-----+---------------------+-------------------------------+
+| cat_id      | int(11)     | NO | PRI | NULL                | auto_increment                |
+| cat_code    | varchar(10) | NO | UNI | NULL                |                               |
+| cat_desc    | varchar(25) | NO |     | NULL                |                               |
+| cat_active  | tinyint(1)  | NO |     | 1                   |                               |
+| cat_date    | timestamp   | NO |     | 0000-00-00 00:00:00 | on update current_timestamp() |
+| cat_default | tinyint(1)  | NO |     | 0                   |                               |
++-------------+-------------+----+-----+---------------------+-------------------------------+
++----+---------+--------------------+---+---------------------+---+
+| 13 | Laptop  | Laptop Workstation | 1 | 2023-10-26 12:58:43 | 0 |
+| 15 | SBC     | Raspberry Pi SBC   | 1 | 2023-10-21 11:25:49 | 0 |
+| 17 | Desktop | Workstation        | 1 | 2023-10-21 11:23:25 | 0 |
+| 25 | VM      | Virtualize Systems | 1 | 2023-12-31 11:21:58 | 0 |
+| 28 | Dell    | Dell Systems       | 1 | 2023-10-26 12:59:19 | 0 |
+| 29 | HP      | HP Systems         | 1 | 2023-10-26 12:59:38 | 0 |
+| 30 | IBM     | IBM  Systems       | 1 | 2023-10-26 12:59:05 | 0 |
+| 31 | Lenovo  | Lenovo Systems     | 1 | 2023-10-26 12:59:54 | 0 |
+| 32 | Server  | Home Server        | 1 | 2023-12-31 11:21:35 | 1 |
++----+---------+--------------------+---+---------------------+---+
++-----------------+---+--------------+---+----------+------+------+------+------+--+-------+------+--+
+| server_category | 0 | PRIMARY      | 1 | cat_id   | A    |    8 | NULL | NULL |  | BTREE |      |  |
+| server_category | 0 | key_cat_code | 1 | cat_code | A    |    8 | NULL | NULL |  | BTREE |      |  |
++-----------------+---+--------------+---+----------+------+------+------+------+--+-------+------+--+
+
+
+Group Table:
++-------------+-------------+----+-----+---------------------+-------------------------------+
+| grp_id      | int(11)     | NO | PRI | NULL                | auto_increment                |
+| grp_code    | varchar(10) | NO | UNI | NULL                |                               |
+| grp_desc    | varchar(25) | NO |     | NULL                |                               |
+| grp_active  | tinyint(1)  | NO |     | 1                   |                               |
+| grp_date    | timestamp   | NO |     | current_timestamp() | on update current_timestamp() |
+| grp_default | tinyint(1)  | NO |     | 0                   |                               |
++-------------+-------------+----+-----+---------------------+-------------------------------+
++----+---------+---------------------------+---+---------------------+---+
+|  4 | Retired | System not in use         | 1 | 2023-04-05 11:26:50 | 0 |
+|  6 | Regular | Application system        | 1 | 2023-10-21 11:15:00 | 0 |
+|  9 | Dev     | Development Systems Group | 1 | 2023-10-21 11:16:20 | 0 |
+| 10 | Prod    | Production Systems Group  | 1 | 2023-10-21 11:16:34 | 1 |
+| 13 | Int     | Integration Systems Group | 1 | 2023-10-21 11:20:19 | 0 |
+| 16 | Acc     | Acceptance Systems Group  | 1 | 2023-10-22 16:38:23 | 0 |
+| 17 | Poc     | Proof of concept Systems  | 1 | 2023-10-21 15:06:48 | 0 |
+| 19 | PreProd | Pre-Production Group      | 1 | 2023-10-22 16:39:19 | 0 |
+| 20 | Temp    | Temporary Systems Group   | 1 | 2023-10-26 11:44:28 | 0 |
++----+---------+---------------------------+---+---------------------+---+
++--------------+---+--------------+---+----------+------+------+------+------+--+-------+------+--+
+| server_group | 0 | PRIMARY      | 1 | grp_id   | A    |    9 | NULL | NULL |  | BTREE |      |  |
+| server_group | 0 | idx_grp_code | 1 | grp_code | A    |    9 | NULL | NULL |  | BTREE |      |  |
++--------------+---+--------------+---+----------+------+------+------+------+--+-------+------+--+
+
+
+Server Table:
++----------------------+---------------+-----+-----+----------------------------------+----------------+
+| srv_id               | int(11)       | NO  | PRI | NULL                             | auto_increment |
+| srv_name             | varchar(15)   | NO  | UNI | NULL                             |                |
+| srv_domain           | varchar(30)   | NO  |     | NULL                             |                |
+| srv_desc             | varchar(30)   | NO  |     | NULL                             |                |
+| srv_tag              | varchar(15)   | YES |     | NULL                             |                |
+| srv_note             | varchar(30)   | YES |     | NULL                             |                |
+| srv_active           | tinyint(1)    | NO  |     | 1                                |                |
+| srv_sporadic         | tinyint(1)    | NO  |     | 0                                |                |
+| srv_monitor          | tinyint(1)    | NO  |     | 1                                |                |
+| srv_alert_group      | varchar(15)   | NO  |     | default                          |                |
+| srv_graph            | tinyint(1)    | NO  |     | 1                                |                |
+| srv_cat              | varchar(10)   | NO  |     | NULL                             |                |
+| srv_group            | varchar(10)   | NO  |     | NULL                             |                |
+| srv_vm               | tinyint(1)    | NO  |     | 0                                |                |
+| srv_osname           | varchar(15)   | YES |     | NULL                             |                |
+| srv_ostype           | varchar(10)   | NO  |     | linux                            |                |
+| srv_oscodename       | varchar(15)   | YES |     | NULL                             |                |
+| srv_osversion        | varchar(12)   | YES |     | NULL                             |                |
+| srv_osver_major      | varchar(10)   | YES |     | NULL                             |                |
+| srv_date_creation    | datetime      | YES |     | 0000-00-00 00:00:00              |                |
+| srv_date_edit        | datetime      | YES |     | 0000-00-00 00:00:00              |                |
+| srv_date_update      | datetime      | YES |     | 0000-00-00 00:00:00              |                |
+| srv_date_osupdate    | datetime      | YES |     | 0000-00-00 00:00:00              |                |
+| srv_kernel_version   | varchar(40)   | YES |     | NULL                             |                |
+| srv_kernel_bitmode   | smallint(11)  | NO  |     | 64                               |                |
+| srv_hwd_bitmode      | smallint(11)  | NO  |     | 64                               |                |
+| srv_model            | varchar(40)   | YES |     | NULL                             |                |
+| srv_serial           | varchar(25)   | YES |     | NULL                             |                |
+| srv_memory           | int(11)       | YES |     | NULL                             |                |
+| srv_nb_cpu           | smallint(6)   | NO  |     | 1                                |                |
+| srv_cpu_speed        | int(11)       | YES |     | NULL                             |                |
+| srv_nb_socket        | smallint(6)   | NO  |     | 1                                |                |
+| srv_core_per_socket  | smallint(6)   | NO  |     | 1                                |                |
+| srv_thread_per_core  | smallint(6)   | NO  |     | 0                                |                |
+| srv_ip               | varchar(15)   | YES |     | NULL                             |                |
+| srv_ips_info         | varchar(1024) | YES |     | NULL                             |                |
+| srv_disks_info       | varchar(1024) | YES |     | NULL                             |                |
+| srv_vgs_info         | varchar(1024) | YES |     | NULL                             |                |
+| srv_backup           | tinyint(1)    | NO  |     | 0                                |                |
+| srv_backup_compress  | tinyint(1)    | NO  |     | 1                                |                |
+| srv_backup_month     | varchar(13)   | NO  |     | YNNNNNNNNNNNN                    |                |
+| srv_backup_dom       | varchar(32)   | NO  |     | YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN |                |
+| srv_backup_dow       | varchar(8)    | NO  |     | YNNNNNNN                         |                |
+| srv_backup_hour      | smallint(6)   | NO  |     | 1                                |                |
+| srv_backup_minute    | smallint(6)   | NO  |     | 0                                |                |
+| srv_update_auto      | tinyint(1)    | NO  |     | 0                                |                |
+| srv_update_status    | varchar(1)    | YES |     | NULL                             |                |
+| srv_update_reboot    | tinyint(1)    | NO  |     | 0                                |                |
+| srv_update_month     | varchar(13)   | NO  |     | YNNNNNNNNNNNN                    |                |
+| srv_update_dom       | varchar(32)   | NO  |     | YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN |                |
+| srv_update_dow       | varchar(8)    | NO  |     | YNNNNNNN                         |                |
+| srv_update_hour      | smallint(6)   | NO  |     | 1                                |                |
+| srv_update_minute    | smallint(6)   | NO  |     | 0                                |                |
+| srv_update_kept_back | tinyint(1)    | NO  |     | 1                                |                |
+| srv_maint            | tinyint(1)    | NO  |     | 0                                |                |
+| srv_maint_date_start | datetime      | YES |     | NULL                             |                |
+| srv_maint_date_end   | datetime      | YES |     | NULL                             |                |
+| srv_sadmin_dir       | varchar(45)   | NO  |     | /opt/sadmin                      |                |
+| srv_ssh_port         | int(11)       | NO  |     | 22                               |                |
+| ssh_sudo_user        | varchar(10)   | NO  |     | sadmin                           |                |
+| srv_img_backup       | tinyint(1)    | NO  |     | 0                                |                |
+| srv_img_month        | varchar(13)   | NO  |     | YNNNNNNNNNNNN                    |                |
+| srv_img_dom          | varchar(32)   | NO  |     | YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN |                |
+| srv_img_dow          | varchar(8)    | NO  |     | YNNNNNNN                         |                |
+| srv_img_hour         | smallint(6)   | NO  |     | 4                                |                |
+| srv_img_minute       | smallint(6)   | NO  |     | 0                                |                |
+| srv_img_last         | datetime      | YES |     | NULL                             |                |
+| srv_uptime           | varchar(25)   | YES |     | NULL                             |                |
+| srv_rear_ver         | varchar(7)    | NO  |     | unknown                          |                |
+| srv_arch             | varchar(12)   | YES |     | NULL                             |                |
+| srv_boot_date        | datetime      | YES |     | NULL                             |                |
+| srv_reboot_time      | int(11)       | NO  |     | 600                              |                |
+| srv_lock             | tinyint(4)    | NO  |     | 0                                |                |
+| srv_vm_type          | varchar(15)   | YES |     | NULL                             |                |
+| srv_flatpak          | tinyint(1)    | NO  |     | 0                                |                |
+| srv_snap             | tinyint(1)    | NO  |     | 0                                |                |
+| srv_export_last      | datetime      | YES |     | NULL                             |                |
+| srv_export_sched     | tinyint(4)    | NO  |     | 0                                |                |
+| srv_export_ova       | float         | NO  |     | 1                                |                |
+| srv_export_status    | int(11)       | NO  |     | 0                                |                |
+| srv_export_mth       | varchar(13)   | NO  |     | YNNNNNNNNNNNN                    |                |
+| srv_export_dom       | varchar(32)   | NO  |     | YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN |                |
+| srv_export_dow       | varchar(8)    | NO  |     | YNNNNNNN                         |                |
+| srv_export_hrs       | smallint(6)   | NO  |     | 3                                |                |
+| srv_export_min       | smallint(6)   | NO  |     | 15                               |                |
+| srv_vm_version       | varchar(15)   | NO  |     | NULL                             |                |
+| srv_vm_host          | varchar(25)   | YES |     | NULL                             |                |
+| srv_vm_start_seq     | smallint(11)  | NO  |     | 0                                |                |
+| srv_update_date      | date          | NO  |     | current_timestamp()              |                |
+| srv_update_autorm    | tinyint(1)    | NO  |     | 0                                |                |
+| srv_update_flatpak   | tinyint(1)    | NO  |     | 0                                |                |
+| srv_update_snap      | tinyint(1)    | NO  |     | 0                                |                |
+| srv_update_seq       | mediumint(9)  | NO  |     | 0                                |                |
+| srv_update_maxdays   | smallint(6)   | YES |     | 0                                |                |
+| srv_update_block     | varchar(1)    | NO  |     | N                                |                |
+| srv_backup_date      | date          | YES |     | NULL                             |                |
+| srv_backup_nostat    | tinyint(1)    | NO  |     | 0                                |                |
+| srv_backup_seq       | int(9)        | NO  |     | 0                                |                |
+| srv_backup_block     | varchar(1)    | NO  |     | N                                |                |
+| srv_export_seq       | mediumint(9)  | NO  |     | 0                                |                |
+| srv_export_block     | varchar(1)    | NO  |     | N                                |                |
+| srv_export_compaq    | tinyint(1)    | NO  |     | 0                                |                |
+| srv_img_seq          | mediumint(9)  | NO  |     | 0                                |                |
+| srv_img_rmfail       | tinyint(1)    | NO  |     | 0                                |                |
+| srv_img_block        | varchar(1)    | NO  |     | N                                |                |
+| srv_system_lock      | tinyint(4)    | NO  |     | 0                                |                |
+| srv_warning_group    | varchar(15)   | NO  |     | default                          |                |
+| srv_info_group       | varchar(15)   | NO  |     | default                          |                |
++----------------------+---------------+-----+-----+----------------------------------+----------------+
++--------+---+--------------+---+----------+------+------+------+------+--+-------+------+--+
+| server | 0 | PRIMARY      | 1 | srv_id   | A    |   29 | NULL | NULL |  | BTREE |      |  |
+| server | 0 | idx_srv_name | 1 | srv_name | A    |   29 | NULL | NULL |  | BTREE |      |  |
++--------+---+--------------+---+----------+------+------+------+------+--+-------+------+--+
+
+
+Script Table:
++-----------------------+-----------------------+-----+-----+---------------------+----------------+
+| scr_id                | mediumint(8) unsigned | NO  | PRI | NULL                | auto_increment |
+| scr_name              | varchar(40)           | YES | UNI | NULL                |                |
+| scr_desc              | varchar(80)           | YES |     | NULL                |                |
+| scr_version           | varchar(10)           | NO  |     | NULL                |                |
+| scr_alert_grp         | varchar(15)           | YES |     | NULL                |                |
+| scr_alert_type        | smallint(6)           | NO  |     | 1                   |                |
+| scr_sysadm_email      | varchar(50)           | NO  |     | NULL                |                |
+| scr_multiple_exec     | tinyint(1)            | NO  |     | 0                   |                |
+| scr_use_rch           | tinyint(1)            | NO  |     | 1                   |                |
+| scr_log_type          | varchar(1)            | NO  |     | B                   |                |
+| scr_log_append        | tinyint(1)            | NO  |     | 0                   |                |
+| scr_log_header        | tinyint(1)            | NO  |     | 1                   |                |
+| scr_log_footer        | tinyint(1)            | NO  |     | 1                   |                |
+| scr_active            | tinyint(1)            | NO  |     | 1                   |                |
+| scr_max_logline       | int(11)               | NO  |     | 500                 |                |
+| scr_max_rchline       | int(11)               | NO  |     | 35                  |                |
+| scr_pid_timeout       | int(11)               | NO  |     | 7200                |                |
+| src_max_inactive_days | int(3)                | NO  |     | 31                  |                |
+| scr_root_exec         | tinyint(4)            | NO  |     | 0                   |                |
+| scr_run_sadmin        | tinyint(4)            | NO  |     | 0                   |                |
+| scr_os                | varchar(10)           | NO  |     | any                 |                |
+| scr_last_activity     | datetime              | NO  |     | current_timestamp() |                |
+| scr_severity          | smallint(6)           | NO  |     | 1                   |                |
+| scr_exclude           | set('0','1')          | NO  |     | 0                   |                |
+| scr_log_keepdays      | smallint(6)           | NO  |     | 0                   |                |
+| scr_rch_keepdays      | smallint(6)           | NO  |     | 0                   |                |
+| scr_avg_exec          | int(11)               | YES |     | 0                   |                |
+| scr_debug             | tinyint(1)            | NO  |     | 0                   |                |
+| scr_grp_warning       | varchar(15)           | NO  |     | NULL                |                |
+| scr_grp_info          | varchar(15)           | NO  |     | NULL                |                |
+| scr_grp_error         | varchar(15)           | NO  |     | NULL                |                |
+| scr_lock_timeout      | int(11)               | NO  |     | 3600                |                |
++-----------------------+-----------------------+-----+-----+---------------------+----------------+
++--------+---+--------------+---+----------+------+------+------+------+-----+-------+------+--+
+| script | 0 | PRIMARY      | 1 | scr_id   | A    |    0 | NULL | NULL |     | BTREE |      |  |
+| script | 0 | scr_name_key | 1 | scr_name | A    |    0 | NULL | NULL | YES | BTREE |      |  |
++--------+---+--------------+---+----------+------+------+------+------+-----+-------+------+--+
+
+
+Script Details:
++-------------------+---------------------+-----+-----+---------------------+--+
+| scrdet_host       | varchar(15)         | NO  | PRI | NULL                |  |
+| scrdet_name       | varchar(40)         | NO  | PRI | NULL                |  |
+| srcdet_start      | timestamp           | NO  | PRI | 0000-00-00 00:00:00 |  |
+| srcdet_end        | timestamp           | YES |     | NULL                |  |
+| scrdet_status     | tinyint(2)          | NO  |     | 0                   |  |
+| scrdet_active     | int(1)              | NO  |     | 1                   |  |
+| srcdet_elapse     | time                | YES |     | NULL                |  |
+| scrdet_alertcode  | tinyint(3) unsigned | YES |     | NULL                |  |
+| scrdet_alertgroup | varchar(30)         | YES |     | NULL                |  |
++-------------------+---------------------+-----+-----+---------------------+--+
++------------+---+---------+---+--------------+------+------+------+------+--+-------+------+--+
+| script_rch | 0 | PRIMARY | 1 | scrdet_host  | A    |    0 | NULL | NULL |  | BTREE |      |  |
+| script_rch | 0 | PRIMARY | 2 | scrdet_name  | A    |    0 | NULL | NULL |  | BTREE |      |  |
+| script_rch | 0 | PRIMARY | 3 | srcdet_start | A    |    0 | NULL | NULL |  | BTREE |      |  |
++------------+---+---------+---+--------------+------+------+------+------+--+-------+------+--+
+
+
  
 ==================================================
-Script exit code is 0 (Success) and execution time was 00:00:03.
+Script exit code is 0 (Success) and execution time was 00:00:02.
 Script is set to only send an alert when it terminate with error.
 Script succeeded, no alert will be send ($SADM_ALERT_TYPE=1).
-New log created '$SADMIN/log/bilbo_sadmlib_std_demo.log'.
-End of sadmlib_std_demo.sh - Fri 12 Jun 2026 11:43:25 AM EDT
+New log created '$SADMIN/log/sherlock_sadmlib_std_demo.log'.
+End of sadmlib_std_demo.sh - Sat Jun 20 03:20:54 PM EDT 2026
 ================================================================================
  
  
