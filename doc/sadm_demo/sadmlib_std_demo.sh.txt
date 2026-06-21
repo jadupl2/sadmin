@@ -1,5 +1,5 @@
 ================================================================================
-Sat 20 Jun 2026 18:06:53 - sadmlib_std_demo.sh v3.30 - Library v4.90.3
+Sun 21 Jun 2026 11:04:00 - sadmlib_std_demo.sh v3.30 - Library v4.90.3
 Desc: Demonstrate functions & variables available to developers using SADMIN Tools
 bilbo - User: root - Umask : 0022 - Arch: x86_64
 Fedora Linux v43 - Kernel 7.0.12-101.fc43.x86_64 - SADMIN(C): /opt/sadmin
@@ -14,7 +14,7 @@ User Var. that affect SADMIN behavior  Description                           Thi
 [002] $SADM_PN                         Script Name                         : sadmlib_std_demo.sh            
 [003] $SADM_INST                       Script Name Without Extension       : sadmlib_std_demo               
 [004] $SADM_USERNAME                   Current User Name                   : root                           
-[005] $SADM_TPID                       Current Process ID                  : 1603423                        
+[005] $SADM_TPID                       Current Process ID                  : 151050                         
 [006] $SADM_MULTIPLE_EXEC              Allow running multiple copy [Y/N]   : Y                              
 [007] $SADM_USE_RCH                    Generate entry in '*.rch' file      : N                              
 [008] $SADM_LOG_TYPE                   Set Output to [S]creen [L]og [B]oth : B                              
@@ -42,10 +42,10 @@ Calling Functions                      Description                           Thi
 [012] $(sadm_get_domainname)           Current Host Domain Name            : maison.ca                      
 [013] $(sadm_get_fqdn)                 Fully Qualified Domain Host Name    : bilbo                          
 [014] $(sadm_server_serial)            Server serial number (Ex: 4S7GYF1)  : E537F839                       
-[015] $(sadm_get_epoch_time)           Get Current Epoch Time              : 1781993213                     
-[016] $(sadm_epoch_to_date 1781993213) Convert epoch time to date          : 2026.06.20 18:06:53            
-      WDATE='2026.06.20 18:06:53'
-[017] $(sadm_date_to_epoch "$WDATE")   Convert Date to epoch time          : 1781993213                     
+[015] $(sadm_get_epoch_time)           Get Current Epoch Time              : 1782054240                     
+[016] $(sadm_epoch_to_date 1782054240) Convert epoch time to date          : 2026.06.21 11:04:00            
+      WDATE='2026.06.21 11:04:00'
+[017] $(sadm_date_to_epoch "$WDATE")   Convert Date to epoch time          : 1782054240                     
       DATE1='2016.01.30 10:00:44'
       DATE2='2016.01.30 10:00:03'
 [018] $(sadm_elapse "$DATE1" "$DATE2") Elapse Time between two timestamps  : 00:00:41                       
@@ -248,9 +248,9 @@ SADMIN FILES VARIABLES AVAIL.          Description                           Thi
 [005] $SADM_ALERT_INIT                 SADMIN Initial Alert Group File     : /opt/sadmin/cfg/.alert_group.cfg
 [006] $SADM_ALERT_HIST                 SADMIN Alert History File           : /opt/sadmin/cfg/alert_history.txt
 [007] $SADM_ALERT_HINI                 SADMIN Initial Alert History File   : /opt/sadmin/cfg/.alert_history.txt
-[008] $SADM_TMP_FILE1                  User usable Temp Work File 1        : /opt/sadmin/tmp/sadmlib_std_demo1_EjW
-[009] $SADM_TMP_FILE2                  User usable Temp Work File 2        : /opt/sadmin/tmp/sadmlib_std_demo2_9u0
-[010] $SADM_TMP_FILE3                  User usable Temp Work File 3        : /opt/sadmin/tmp/sadmlib_std_demo3_fT0
+[008] $SADM_TMP_FILE1                  User usable Temp Work File 1        : /opt/sadmin/tmp/sadmlib_std_demo1_Xdb
+[009] $SADM_TMP_FILE2                  User usable Temp Work File 2        : /opt/sadmin/tmp/sadmlib_std_demo2_Cn9
+[010] $SADM_TMP_FILE3                  User usable Temp Work File 3        : /opt/sadmin/tmp/sadmlib_std_demo3_8JV
 [011] $SADM_LOG                        Script Log File                     : /opt/sadmin/log/bilbo_sadmlib_std_demo.log
 [012] $SADM_RCH_FILE                   Script Return Code History File     : /opt/sadmin/dat/rch/bilbo_sadmlib_std_demo.rch
 [013] $DBPASSFILE                      SADMIN Database User Password File  : *Hidden*                       
@@ -284,11 +284,11 @@ COMMAND PATH USE BY SADMIN STD. LIBR.  Description                           Thi
 
  
 ==================================================
-Script exit code is 0 (Success) and execution time was 00:00:03.
+Script exit code is 0 (Success) and execution time was 00:00:02.
 Script is set to only send an alert when it terminate with error.
 Script succeeded, no alert will be send ($SADM_ALERT_TYPE=1).
 New log created '$SADMIN/log/bilbo_sadmlib_std_demo.log'.
-End of sadmlib_std_demo.sh - Sat 20 Jun 2026 06:06:55 PM EDT
+End of sadmlib_std_demo.sh - Sun 21 Jun 2026 11:04:02 AM EDT
 ================================================================================
  
  
