@@ -115,6 +115,7 @@ sa.max_logline        = 500        # Max. number of lines in log file SADM_MAX_L
 sa.max_rchline        = 50         # Max. number of lines in rch file SADM_MAX_RCLINE in sadmin.cfg
 sa.db_name            = "sadmin"   # Database Name (sadmin=default) SADM_DBNAME in sadmin.cfg
 sa.sadm_alert_type    = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
+sa.sadm_alert_repeat  = 0          # 0=Alert only once per alert. 14400=4hrs between alert repeat
 sa.sadm_alert_group   = "default"  # Error Alert   Group defined in $SADMIN/cfg/alert_group.cfg
 sa.sadm_warning_group = "warning"  # Warning Alert Group defined in $SADMIN/cfg/alert_group.cfg
 sa.sadm_info_group    = "info"     # Info Alert    Group defined in $SADMIN/cfg/alert_group.cfg
@@ -294,6 +295,7 @@ def print_user_variables():
     printline ("sa.sadm_max_logline","Trim log to this maximum of lines","%d lines" % sa.sadm_max_logline)
     printline ("sa.sadm_mail_addr","SADMIN Administrator Email(s)",sa.sadm_mail_addr)
     printline ("sa.sadm_alert_type","0=NoMail 1=OnError 3=OnSuccess 4=All",sa.sadm_alert_type) 
+    printline ("sa.sadm_alert_repeat","0=Alert once, 14400=4hrs before alert repeat",sa.sadm_alert_repeat) 
     printline ("sa.sadm_alert_group","Error Group (Default Group)",sa.sadm_alert_group) 
     printline ("sa.sadm_warning_group","Warning Group Name",sa.sadm_warning_group) 
     printline ("sa.sadm_info_group","Info Group Name",sa.sadm_info_group) 
@@ -403,7 +405,6 @@ def print_sadmin_cfg(show_password=False):
     print ("\n----- General Section -----")
     printline ("sa.sadm_server","SADMIN server name (FQDN)",sa.sadm_server) 
     printline ("sa.sadm_host_type","SADMIN [C]lient or [S]erver",sa.sadm_host_type)   
-    printline ("sa.sadm_mail_addr","SADMIN Administrator Email(s)",sa.sadm_mail_addr)
     printline ("sa.sadm_cie_name","Your Company name",sa.sadm_cie_name) 
     printline ("sa.sadm_domain","Server creation default domain",sa.sadm_domain)
     printline ("sa.sadm_user","SADMIN User Name",sa.sadm_user) 
