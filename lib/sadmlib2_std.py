@@ -148,15 +148,12 @@ start_time          = ""                                    # Script Start Date 
 start_epoch         = ""                                    # Script Start EPoch Time
 stop_time           = ""                                    # Script Stop Date & Time
 delete_pid          = ""                                    # Del pid file from 2nd Inst
-dict_alert          = {}                                    # Define empty alert Dict.
-dict_sadmin         = {}                                    # Define SADMIN Dict. for config file
 
 
 # Shared Variables between SADMIN Python Library and your program 
 # --------------------------------------------------------------------------------------------------
-# Variables shared with SADMIN Python Library.
 ver                = "3.27"     # Your Program VERSION number
-desc               = "Describe '%s' here." % (sa.pn)
+desc               = "Describe what your program is doing."
 root_only          = False      # Can Only be run by 'root'(True/False)
 server_only        = False      # Run Only on SADMIN server(True/False) SADM_SERVER in sadmin.cfg
 sadmgrp_only       = False      # Run if part of SADMIN Group 'SADM_GROUP' in sadmin.cfg or root
@@ -179,6 +176,8 @@ sadm_alert_type    = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSucc
 sadm_alert_group   = "default"  # Error Alert   Group defined in $SADMIN/cfg/alert_group.cfg
 sadm_warning_group = "warning"  # Warning Alert Group defined in $SADMIN/cfg/alert_group.cfg
 sadm_info_group    = "info"     # Info Alert    Group defined in $SADMIN/cfg/alert_group.cfg
+dict_alert         = {}         # Define empty alert Dict.
+dict_sadmin        = {}         # Define SADMIN Dict. for config file
 
 # Fields used by sa.start(),sa.stop() & DB functions that influence execution of SADMIN library
 # Thwse are default values, they can be changed by the script that use this library.
@@ -195,7 +194,7 @@ db_name   = "sadmin"                # Database Name (sadmin=default) define in $
 debug     = 0                       # Debug Level 0-9 (Increase Verbose)
 exit_code = 0                       # Default Return Code (0=Success 1-Error)
 current_time = datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S") # Format current Date and Time 
-cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh,sa.sadm_ssh_port) # /usr/bin/ssh with sadmin.cfg port
+#cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh,sa.sadm_ssh_port) # /usr/bin/ssh with sadmin.cfg port
 
 
 #---------------------------------------------------------------------------------------------------
@@ -438,7 +437,60 @@ tmp_file2          = "%s_2.%s" % (tmp_file_prefix,pid)                 # Temp2 F
 tmp_file3          = "%s_3.%s" % (tmp_file_prefix,pid)                 # Temp3 Filename
 
 
+# --------------------------------------------------------------------------------------------------
+class sadmin:
+    def __init__(self):
+        self.ver                = "1.2.1"    # Your Program VERSION number
+        self.desc               = "Description of program" # Your Program DESCRIPTION 
+        self.root_only          = False      # Can Only be run by 'root'(True/False)
+        self.server_only        = False      # Run Only on SADMIN server(True/False) SADM_SERVER in sadmin.cfg
+        self.sadmgrp_only       = False      # Run if part of SADMIN Group 'SADM_GROUP' in sadmin.cfg or root
+        self.use_rch            = True       # Write exec info to RCH file(True/False)
+        self.db_used            = False      # Want to access Database ? Auto connect DB(True)
+        self.log_type           = "B"        # S=Screen L=Log B=Both
+        self.log_append         = False      # Append to previous log (True/False)
+        self.log_header         = True       # Produce Log Header (True/False)
+        self.log_footer         = True       # Produce Log Footer (True/False)
+        self.multiple_exec      = False      # Allow running multiple Instance ?
+        self.pid_timeout        = 14400      # PID File TTL (14400=4hrs) is SADM_PID_TIMEOUT in sadmin.cfg
+        self.lock_timeout       = 7200       # Sec. before unlock (7200=2hrs) SADM_LOCK_TIMEOUT in sadmin.cfg
+        self.max_logline        = 500        # Max. number of lines in log file SADM_MAX_LOGLINE in sadmin.cfg
+        self.max_rchline        = 50         # Max. number of lines in rch file SADM_MAX_RCLINE in sadmin.cfg
+        self.db_name            = "sadmin"   # Database Name (sadmin=default) SADM_DBNAME in sadmin.cfg
+        self.sadm_alert_type    = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
+        self.sadm_alert_group   = "default"  # Error Alert   Group defined in $SADMIN/cfg/alert_group.cfg
+        self.sadm_warning_group = "warning"  # Warning Alert Group defined in $SADMIN/cfg/alert_group.cfg
+        self.sadm_info_group    = "info"     # Info Alert    Group defined in $SADMIN/cfg/alert_group.cfg
+        self.quiet              = False      # If error in a function & quiet is: (give you ctrl of message)
+                                             # False: Show error message and return the error number. 
+                                             # True : Omly returm error number, but don't show error message.
+        self.pn=os.path.basename(sys.argv[0])# [P]rogram [N]ame with extension
+        self.inst = self.pn.split('.')[0]    # INSTance Name = Pgm Name Without Ext
+        self.pid                = os.getpid()# Get Current Process ID.
+        self.errno              = 0          # Error No. set by function called (0=OK Else error/warning)
+        self.errmsg             = ""         # Error Mess. set by function you call (blank or error msg)
+        self.db_conn            = None       # Database Connector when using DB,  set by sa.start()
+        self.db_cur             = None       # Database Cursor if you use the DB, set by sa.start()
+        self.exit_code          = 0           # Default Return Code (0=Success 1-Error)
 
+
+    #def set_ver(self,ver)      : self.ver = ver     # Set Program VERSION number
+    #def get_ver(self)          : return self.ver    # Get Program VERSION number
+
+    #def set_log_header(self,head)   : self.log_header = head
+    #def get_log_header(self)        : return(self.log_header)
+
+    #def set_max_rch_line(self,max_rch_line) : self.max_rch_line = max_rch_line
+
+  #
+## Variables that are share with the Library available to Developer
+#
+## Variable local to script (not share with the library) you can use at your ease.
+#debug        = 0                   # Debug Level 0-9 (Increase Verbose)
+#hostname     = sa.get_hostname()   # Get Current hostname
+#username     = sa.get_username()   # Get Current User Name
+#cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh,sa.sadm_ssh_port) # /usr/bin/ssh with sadmin.cfg port
+#current_time = datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S") # Format current Date and Time 
 
 
 #---------------------------------------------------------------------------------------------------
@@ -727,37 +779,139 @@ def load_sadmin_config(cfg_file):
         try: 
             shutil.copy2(cfg_hidden,cfg_file)                       # Copy template to Live cfg file
         except Exception as e:
-            print ("[ ERROR ] Copying template file %s to %s" % (cfg_hidden,cfg_file))
+            print ("\n[ ERROR ] Copying template file %s to %s" % (cfg_hidden,cfg_file))
             print ("\nCould not copy %s to %s" % (cfg_hidden,cfg_file))
             print ("Restore the file from a backup & review the file content.\n")
-            print ("Program need a valid %s to run - Program aborted\n" % (cfg_file))
+            print ("Program need a valid %s to run\nProgram aborted\n" % (cfg_file))
             sys.exit(1)
                 
 
     # Open Configuration file
-    try:
-        cfg_file_fh= open(cfg_file,'r')                                 # Open Config File
-    except (IOError, FileNotFoundError) as e:                           # If Can't open cfg file
-        print ("Error opening file %s." % (cfg_file))                   # write_log Log FileName
-        print ("Error Line No. : %d" % (inspect.currentframe().f_back.f_lineno)) # Print LineNo
-        print ("Function Name  : %s" % (sys._getframe().f_code.co_name)) # Get cur function Name
-        print ("Error Number   : %d" % (e.errno))                       # write_log Error Number
-        print ("Error Text     : %s" % (e.strerror))                    # write_log Error Message
-        sys.exit(1)                                                     # Exit to O/S with Error
-    except Exception as e:                                              # If Can't open cfg file
-        print(e)                                                        # Print Error Message
-        sys.exit(1)                                                     # Exit to O/S with Error
 
-    # Read Configuration file and Save Options values
-    for cfg_line in cfg_file_fh:                                        # Loop until on all servers
-        wline        = cfg_line.strip()                                 # Strip CR/LF & Trail spaces
-        if (wline[0:1] == '#' or len(wline) == 0) :continue             # If comment or blank line
-        split_line   = wline.split('=')                                 # Split based on equal sign
-        CFG_NAME   = split_line[0].upper().strip()                      # Param Name Uppercase Trim
-        CFG_VALUE  = str(split_line[1]).strip()                         # Get Param Value Trimmed
+    with open(cfg_file, "r", encoding="utf-8") as cfglines:
+        for cfgline in cfglines:
+            wline        = cfgline.strip()                              # Strip CR/LF & Trail spaces
+            if (wline[0:1] == '#' or len(wline) == 0) :continue         # If comment or blank line
+            split_line   = wline.split('=')                             # Split based on equal sign
+            CFG_NAME   = split_line[0].upper().strip()                  # Param Name Uppercase Trim
+            CFG_VALUE  = str(split_line[1]).strip()                     # Get Param Value Trimmed
 
-        # General Variables found in SADMIN configuration File
-        if "SADM_MAIL_ADDR"                in cfg_dict: cfg_dict['SADM_MAIL_ADDR'] = CFG_VALUE
+            # General Variables found in SADMIN configuration File
+            if "SADM_MAIL_ADDR"            in cfg_dict: cfg_dict['SADM_MAIL_ADDR']     = CFG_VALUE
+            if "SADM_CIE_NAME"             in cfg_dict: cfg_dict['SADM_CIE_NAME']      = CFG_VALUE
+            if "SADM_ALERT_TYPE"           in cfg_dict: cfg_dict["SADM_ALERT_TYPE"]    = int(CFG_VALUE)
+            if "SADM_ALERT_GROUP"          in cfg_dict: cfg_dict["SADM_ALERT_GROUP"]   = CFG_VALUE
+            if "SADM_WARNING_GROUP"        in cfg_dict: cfg_dict["SADM_WARNING_GROUP"] = CFG_VALUE
+            if "SADM_INFO_GROUP"           in cfg_dict: cfg_dict["SADM_INFO_GROUP"]    = CFG_VALUE
+            if "SADM_ALERT_REPEAT"         in cfg_dict: cfg_dict["SADM_ALERT_REPEAT"]  = int(CFG_VALUE)
+            if "SADM_TEXTBELT_KEY"         in cfg_dict: cfg_dict["SADM_TEXTBELT_KEY"]  = CFG_VALUE
+            if "SADM_TEXTBELT_URL"         in cfg_dict: cfg_dict["SADM_TEXTBELT_URL"]  = CFG_VALUE
+            if "SADM_HOST_TYPE"            in cfg_dict: cfg_dict["SADM_HOST_TYPE"]     = CFG_VALUE.upper()
+            if "SADM_SERVER"               in cfg_dict: cfg_dict["SADM_SERVER"]        = CFG_VALUE
+            if "SADM_DOMAIN"               in cfg_dict: cfg_dict["SADM_DOMAIN"]        = CFG_VALUE
+            if "SADM_USER"                 in cfg_dict: cfg_dict["SADM_USER"]          = CFG_VALUE
+
+            if "SADM_GROUP"                    in cfg_dict: cfg_dict["SADM_GROUP"] = CFG_VALUE
+            if "SADM_PWD_RANDOM"               in cfg_dict: cfg_dict["SADM_PWD_RANDOM"] = CFG_VALUE.upper()
+            if "SADM_WWW_USER"                 in cfg_dict: cfg_dict["SADM_WWW_USER"] = CFG_VALUE
+            if "SADM_WWW_GROUP"                in cfg_dict: cfg_dict["SADM_WWW_GROUP"] = CFG_VALUE
+            if "SADM_SSH_PORT"                 in cfg_dict: cfg_dict["SADM_SSH_PORT"] = int(CFG_VALUE)
+            if "SADM_MAX_LOGLINE"              in cfg_dict: cfg_dict["SADM_MAX_LOGLINE"] = int(CFG_VALUE)
+            if "SADM_MAX_RCHLINE"              in cfg_dict: cfg_dict["SADM_MAX_RCHLINE"] = int(CFG_VALUE)
+            if "SADM_NMON_KEEPDAYS"            in cfg_dict: cfg_dict["SADM_NMON_KEEPDAYS"] = int(CFG_VALUE)
+            if "SADM_RCH_KEEPDAYS"             in cfg_dict: cfg_dict["SADM_RCH_KEEPDAYS"] = int(CFG_VALUE)
+            if "SADM_LOG_KEEPDAYS"             in cfg_dict: cfg_dict["SADM_LOG_KEEPDAYS"] = int(CFG_VALUE)
+            if "SADM_PID_TIMEOUT"              in cfg_dict: cfg_dict["SADM_PID_TIMEOUT"] = int(CFG_VALUE)
+            if "SADM_LOCK_TIMEOUT"             in cfg_dict: cfg_dict["SADM_LOCK_TIMEOUT"] = int(CFG_VALUE)
+            if "SADM_LOCK_TIMEOUT"             in cfg_dict: cfg_dict["LOCK_TIMEOUT"] = int(CFG_VALUE)
+            if "SADM_MONITOR_UPDATE_INTERVAL"  in cfg_dict: cfg_dict["SADM_MONITOR_UPDATE_INTERVAL"] = int(CFG_VALUE)
+            if "SADM_MONITOR_RECENT_COUNT"     in cfg_dict: cfg_dict["SADM_MONITOR_RECENT_COUNT"] = int(CFG_VALUE)
+            if "SADM_MONITOR_RECENT_EXCLUDE"   in cfg_dict: cfg_dict["SADM_MONITOR_RECENT_EXCLUDE"] = CFG_VALUE
+            if "SADM_SMTP_SERVER"              in cfg_dict: cfg_dict["SADM_SMTP_SERVER"] = CFG_VALUE
+            if "SADM_SMTP_PORT"                in cfg_dict: cfg_dict["SADM_SMTP_PORT"] = int(CFG_VALUE)
+            if "SADM_SMTP_SENDER"              in cfg_dict: cfg_dict["SADM_SMTP_SENDER"] = CFG_VALUE
+            if "SADM_DAYS_HISTORY"             in cfg_dict: cfg_dict["SADM_DAYS_HISTORY"] = int(CFG_VALUE)
+            if "SADM_MAX_ARC_LINE"             in cfg_dict: cfg_dict["SADM_MAX_ARC_LINE"] = int(CFG_VALUE)
+            if "SADM_EMAIL_STARTUP"            in cfg_dict: cfg_dict["SADM_EMAIL_STARTUP"] = CFG_VALUE
+            if "SADM_EMAIL_SHUTDOWN"           in cfg_dict: cfg_dict["SADM_EMAIL_SHUTDOWN"] = CFG_VALUE
+
+        # Database Connection Information
+        if "SADM_DBNAME"                   in CFG_NAME: sadm_dbname                  = CFG_VALUE
+        if "SADM_DBHOST"                   in CFG_NAME: sadm_dbhost                  = CFG_VALUE
+        if "SADM_DBPORT"                   in CFG_NAME: sadm_dbport                  = int(CFG_VALUE)
+        if "SADM_RW_DBUSER"                in CFG_NAME: sadm_rw_dbuser               = CFG_VALUE
+        if "SADM_RO_DBUSER"                in CFG_NAME: sadm_ro_dbuser               = CFG_VALUE
+
+        # Daily Backup 
+        if "SADM_BACKUP_NFS_SERVER"        == CFG_NAME: sadm_backup_nfs_server       = CFG_VALUE
+        if "SADM_BACKUP_NFS_SERVER_VER"    == CFG_NAME: sadm_backup_nfs_server_ver   = int(CFG_VALUE)
+        if "SADM_BACKUP_NFS_MOUNT_POINT"   in CFG_NAME: sadm_backup_nfs_mount_point  = CFG_VALUE
+        if "SADM_BACKUP_DIF"               in CFG_NAME: sadm_backup_dif              = int(CFG_VALUE)
+        if "SADM_BACKUP_INTERVAL"          in CFG_NAME: sadm_backup_interval         = int(CFG_VALUE)
+        if "SADM_DAILY_BACKUP_TO_KEEP"     in CFG_NAME: sadm_daily_backup_to_keep    = int(CFG_VALUE)
+        if "SADM_WEEKLY_BACKUP_TO_KEEP"    in CFG_NAME: sadm_weekly_backup_to_keep   = int(CFG_VALUE)
+        if "SADM_MONTHLY_BACKUP_TO_KEEP"   in CFG_NAME: sadm_monthly_backup_to_keep  = int(CFG_VALUE)
+        if "SADM_YEARLY_BACKUP_TO_KEEP"    in CFG_NAME: sadm_yearly_backup_to_keep   = int(CFG_VALUE)
+        if "SADM_WEEKLY_BACKUP_DAY"        in CFG_NAME: sadm_weekly_backup_day       = int(CFG_VALUE)
+        if "SADM_MONTHLY_BACKUP_DATE"      in CFG_NAME: sadm_monthly_backup_date     = int(CFG_VALUE)
+        if "SADM_YEARLY_BACKUP_MONTH"      in CFG_NAME: sadm_yearly_backup_month     = int(CFG_VALUE)
+        if "SADM_YEARLY_BACKUP_DATE"       in CFG_NAME: sadm_yearly_backup_date      = int(CFG_VALUE)
+        if "SADM_BACKUP_BATCH_CONCURRENT"  in CFG_NAME: sadm_backup_batch_concurrent = int(CFG_VALUE)
+        if "SADM_BACKUP_SCRIPT"            in CFG_NAME: sadm_backup_script           = CFG_VALUE
+        if "SADM_BACKUP_BATCH_MODE"        in CFG_NAME: sadm_backup_batch_mode       = CFG_VALUE.upper()
+        if "SADM_BACKUP_BATCH_START_TIME"  in CFG_NAME: sadm_backup_batch_start_time = CFG_VALUE
+
+
+        # ReaR Backup
+        if "SADM_REAR_NFS_SERVER"          == CFG_NAME: sadm_rear_nfs_server         = CFG_VALUE
+        if "SADM_REAR_NFS_SERVER_VER"      == CFG_NAME: sadm_rear_nfs_server_ver     = int(CFG_VALUE)
+        if "SADM_REAR_NFS_MOUNT_POINT"     in CFG_NAME: sadm_rear_nfs_mount_point    = CFG_VALUE
+        if "SADM_REAR_BACKUP_TO_KEEP"      in CFG_NAME: sadm_rear_backup_to_keep     = int(CFG_VALUE)
+        if "SADM_REAR_BACKUP_DIFF"         in CFG_NAME: sadm_rear_backup_dif         = int(CFG_VALUE)
+        if "SADM_REAR_BACKUP_INTERVAL"     in CFG_NAME: sadm_rear_backup_interval    = int(CFG_VALUE)
+        if "SADM_REAR_BACKUP_SCRIPT"       in CFG_NAME: sadm_rear_backup_script      = CFG_VALUE
+        if "SADM_REAR_DEL_FAILED_BACKUP"   in CFG_NAME: sadm_rear_del_failed_backup  = CFG_VALUE.upper()
+        if "SADM_REAR_BATCH_MODE"          in CFG_NAME: sadm_rear_batch_mode         = CFG_VALUE.upper()
+        if "SADM_REAR_BATCH_STARTUP_TIME"  in CFG_NAME: sadm_rear_batch_startup_time = CFG_VALUE
+        if "SADM_REAR_BACKUP_CONCURRENT"   in CFG_NAME: sadm_rear_backup_concurrent  = int(CFG_VALUE)
+
+        # Network Scan  
+        if "SADM_NETWORK1"                 in CFG_NAME: sadm_network1                = CFG_VALUE
+        if "SADM_NETWORK2"                 in CFG_NAME: sadm_network2                = CFG_VALUE
+        if "SADM_NETWORK3"                 in CFG_NAME: sadm_network3                = CFG_VALUE
+        if "SADM_NETWORK4"                 in CFG_NAME: sadm_network4                = CFG_VALUE
+        if "SADM_NETWORK5"                 in CFG_NAME: sadm_network5                = CFG_VALUE
+
+        # Virtual machines exportinformation
+        if "SADM_VM_EXPORT_NFS_SERVER"     == CFG_NAME: sadm_vm_export_nfs_server    = CFG_VALUE
+        if "SADM_VM_EXPORT_NFS_SERVER_VER" == CFG_NAME: sadm_vm_export_nfs_server_ver = int(CFG_VALUE)
+        if "SADM_VM_EXPORT_MOUNT_POINT"    in CFG_NAME: sadm_vm_export_mount_point   = CFG_VALUE
+        if "SADM_VM_EXPORT_TO_KEEP"        in CFG_NAME: sadm_vm_export_to_keep       = int(CFG_VALUE)
+        if "SADM_VM_EXPORT_INTERVAL"       in CFG_NAME: sadm_vm_export_interval      = int(CFG_VALUE)
+        if "SADM_VM_EXPORT_ALERT"          in CFG_NAME: sadm_vm_export_alert         = CFG_VALUE
+        if "SADM_VM_USER"                  in CFG_NAME: sadm_vm_user                 = CFG_VALUE
+        if "SADM_VM_STOP_TIMEOUT"          in CFG_NAME: sadm_vm_stop_timeout         = int(CFG_VALUE)
+        if "SADM_VM_START_INTERVAL"        in CFG_NAME: sadm_vm_start_interval       = int(CFG_VALUE)
+        if "SADM_VM_EXPORT_DIF"            in CFG_NAME: sadm_vm_export_dif           = int(CFG_VALUE)
+        if "SADM_VM_EXPORT_SCRIPT"         in CFG_NAME: sadm_vm_export_script        = CFG_VALUE
+        if "SADM_VM_EXPORT_SCRIPT"         in CFG_NAME: sadm_vm_export_script        = CFG_VALUE
+        if "SADM_VM_EXPORT_BATCH_MODE"     in CFG_NAME: sadm_vm_export_batch_mode    = CFG_VALUE
+        if "SADM_VM_EXPORT_BATCH_START_TIME" in CFG_NAME: sadm_vm_export_batch_start_time = CFG_VALUE
+        if "SADM_VM_EXPORT_BATCH_CONCURRENT" in CFG_NAME: sadm_vm_export_batch_concurrent = int(CFG_VALUE)
+        if "SADM_VM_EXPORT_CONCURRENT"     in CFG_NAME: sadm_vm_export_concurrent    = int(CFG_VALUE)  
+
+        # O/S Update
+        if "SADM_OSUPDATE_INTERVAL"        in CFG_NAME: sadm_osupdate_interval       = int(CFG_VALUE)
+        if "SADM_OSUPDATE_SCRIPT"          in CFG_NAME: sadm_osupdate_script         = CFG_VALUE
+        if "SADM_OSUPDATE_AUTOREMOVE"      in CFG_NAME: sadm_osupdate_autoremove     = CFG_VALUE.upper()
+        if "SADM_OSUPDATE_FLATPAK"         in CFG_NAME: sadm_osupdate_flatpak        = CFG_VALUE.upper()
+        if "SADM_OSUPDATE_SNAP"            in CFG_NAME: sadm_osupdate_snap           = CFG_VALUE.upper()
+        if "SADM_OSUPDATE_REBOOT_NEEDED"   in CFG_NAME: sadm_osupdate_reboot_needed  = CFG_VALUE.upper()
+        if "SADM_OSUPDATE_REBOOT_TIME"     in CFG_NAME: sadm_osupdate_reboot_time    = CFG_VALUE.upper()
+        if "SADM_OSUPDATE_LOCK"            in CFG_NAME: sadm_osupdate_lock           = CFG_VALUE.upper()
+        if "SADM_OSUPDATE_BATCH_MODE"      in CFG_NAME: sadm_osupdate_batch_mode     = CFG_VALUE.upper()
+        if "SADM_OSUPDATE_BATCH_START_TIME" in CFG_NAME: sadm_osupdate_batch_start_time = CFG_VALUE.upper()
+        if "SADM_OSUPDATE_CONCURRENT"      in CFG_NAME: sadm_osupdate_concurrent     = int(CFG_VALUE)
 
     # Return Dictionnary loaded with sadmin.cfg content
     return(cfg_dict)                                                    
@@ -830,7 +984,8 @@ def load_config_file(cfg_file):
             print("\nSADMIN Configuration file %s can't be found" % (cfg_file))
             print("Even the template file %s can't be found" % (cfg_hidden))
             print("Copy both files from another system to this server")
-            print("Or restore the files from a backup & review the file content.\n")
+            print("Or restore the files from a backup & review the file content.")
+            print("Program aborted\n")
         else :
             print("\nThe configuration file %s doesn't exist." % (cfg_file))
             print("Will continue using template configuration file %s" % (cfg_hidden))
@@ -862,7 +1017,8 @@ def load_config_file(cfg_file):
     for cfg_line in cfg_file_fh:                                        # Loop until on all servers
         wline        = cfg_line.strip()                                 # Strip CR/LF & Trail spaces
         if (wline[0:1] == '#' or len(wline) == 0) :continue             # If comment or blank line
-        split_line   = wline.split('=')                                 # Split based on equal sign
+        cleanline = wline.split('#')[0].rstrip()                        # if any # comment remove it
+        split_line   = cleanline.split('=')                             # Split based on equal sign
         CFG_NAME   = split_line[0].upper().strip()                      # Param Name Uppercase Trim
         CFG_VALUE  = str(split_line[1]).strip()                         # Get Param Value Trimmed
         if lib_debug > 6 :                                              # Debug = write_log Line
@@ -1059,6 +1215,9 @@ def load_config_file(cfg_file):
         print("Error Text     : %s" % (e.strerror))                     # write_log Error Message
         sys.exit(1)   
     return 
+
+
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -2127,7 +2286,6 @@ def load_cmd_path():
             if lib_debug > 4 : print ("Command '%s' not found on system." % (cmd))
             requisites_status=False                                     # Requirement not Met
             print ("\n[ WARNING ] Command '%s' not found." % (cmd))     # is not available
-            print ("              Command '%s'needed by the SADMIN tools library." % (cmd)) 
             print ("              Please install it to insure full functionality.\n")
     return(requisites_status)                                           # Requirement Met True/False
 
@@ -2779,55 +2937,46 @@ def load_alert_file():
     if lib_debug > 4 : print ("Load Alert Group Configuration file %s" % (cfg_file))
 
     # Make sure the Alert Group File exist ($SADMIN/cfg/alert_group.cfg).
-    # If it doesn't exist, create one using alert initial file ($SADMIN/cfg/.alert_group.cfg)
+    # If it doesn't exist, create one using alert group template ($SADMIN/cfg/.alert_group.cfg)
     if not os.path.exists(alert_file):                                  # alert_group.cfg not Exist
         if not os.path.exists(alert_init):                              # .alert_group.cfg not Exist
-          print ("SADMIN Alert Group file not found - " + alert_file)
+          print ("\nSADMIN Alert Group file not found - " + alert_file)
           print ("Even Alert Group Template file is missing - " + alert_init)
           print ("Copy both files from another system to this server")
           print ("Or restore them from a backup")
-          stop(1)                                                       
+          print ("Program aborted\n")
           sys.exit(1)                                                   # Exit to O/S with Error
         else:
-            print ("cp %s %s " % (alert_init,alert_file))           # Install Default alert file
+            print ("cp %s %s " % (alert_init,alert_file))               
             try:
-                shutil.copy(alert_init,alert_file)
+                shutil.copy(alert_init,alert_file)                      # copy template to alert Grp
             except:
                 print ("Could not copy %s to %s" % (alert_init,alert_file))
-                stop(1)   
+                print ("Program aborted\n")
                 sys.exit(1)                                             # Exit to O/S with Error
+
+    # Set owner, group and permission of alert group file
     if os.getuid() == 0:                                                # If running as root
         uid = pwd.getpwnam(sadm_user).pw_uid                            # Get UID User in sadmin.cfg
         gid = grp.getgrnam(sadm_group).gr_gid                           # Get GID User in sadmin.cfg
         os.chown(alert_file,uid,gid)                                    # Change alert File Owner
         os.chmod(alert_file,0o0664)                                     # Change alert File Perm.
 
-    # Open Alert Group file
-    try:
-        alert_file_fh= open(alert_file,'r')                             # Open Config File
-    except IOError as e:                                                # If Can't open cfg file
-        print ("Error opening file %s" % (alert_file))              # Print Log FileName
-        print ("Error Line No.: %d" % (inspect.currentframe().f_back.f_lineno)) # Print Line No.
-        print ("Function Name : %s" % (sys._getframe().f_code.co_name)) # Get function Name
-        print ("Error Number  : %d" % (e.errno))                    # print Error Number
-        print ("Error Text    : %s" % (e.strerror))                 # Print Error Message
-        print ("Script aborted\n")
-        sys.exit(1)                     
+    with open(alert_file, "r", encoding="utf-8") as file:
+        for aline in file:
+            wline        = aline.strip()                                # Strip CR/LF & Trail spaces
+            if (wline[0:1] == '#' or len(wline) == 0) :                 # If comment or blank line
+                continue                                                # Go read the next line
+            split_line = wline.split()                                  # Split based on space
+            grp_name   = str(split_line[0]).lower().strip()             # Group Name Lowercase Trim
+            grp_type   = str(split_line[1]).lower().strip()             # Group Type Lowercase Trim
+            grp_dest   = str(split_line[2]).lower().strip()             # Grp Destination Lowercase
+            try:                                                        # May have 4th, Slack Hook
+                grp_slhook = str(split_line[3]).strip()                 # Group Slack Hook
+            except IndexError:                                          # If no Slack Hook on Line
+                grp_slhook = ""                                         # Blank Hook if no 4th field
+            dict_alert[grp_name] = (grp_name,grp_type,grp_dest,grp_slhook)  # Insert Grp Data in Dict
 
-    # Read Configuration file and Save Options values
-    for aline in alert_file_fh:                                         # Loop until on all servers
-        wline        = aline.strip()                                    # Strip CR/LF & Trail spaces
-        if (wline[0:1] == '#' or len(wline) == 0) :                     # If comment or blank line
-            continue                                                    # Go read the next line
-        split_line = wline.split()                                      # Split based on space
-        grp_name   = str(split_line[0]).lower().strip()                 # Group Name Lowercase Trim
-        grp_type   = str(split_line[1]).lower().strip()                 # Group Type Lowercase Trim
-        grp_dest   = str(split_line[2]).lower().strip()                 # Grp Destination Lowercase
-        try:                                                            # May have 4th, Slack Hook
-            grp_slhook = str(split_line[3]).strip()                     # Group Slack Hook
-        except IndexError:                                              # If no Slack Hook on Line
-            grp_slhook = ""                                             # Blank Hook if no 4th field
-        dict_alert[grp_name] = (grp_name,grp_type,grp_dest,grp_slhook)  # Insert Grp Data in Dict
     return (dict_alert)
 
 
@@ -3155,59 +3304,7 @@ def get_ip_addresses(family):
                 yield (interface, snic.address)
 
 
-# --------------------------------------------------------------------------------------------------
-class sadmin:
-    def __init__(self):
-        self.ver                = "1.2.1"    # Your Program VERSION number
-        self.desc               = "Description of program" # Your Program DESCRIPTION 
-        self.root_only          = False      # Can Only be run by 'root'(True/False)
-        self.server_only        = False      # Run Only on SADMIN server(True/False) SADM_SERVER in sadmin.cfg
-        self.sadmgrp_only       = False      # Run if part of SADMIN Group 'SADM_GROUP' in sadmin.cfg or root
-        self.use_rch            = True       # Write exec info to RCH file(True/False)
-        self.db_used            = False      # Want to access Database ? Auto connect DB(True)
-        self.log_type           = "B"        # S=Screen L=Log B=Both
-        self.log_append         = False      # Append to previous log (True/False)
-        self.log_header         = True       # Produce Log Header (True/False)
-        self.log_footer         = True       # Produce Log Footer (True/False)
-        self.multiple_exec      = False      # Allow running multiple Instance ?
-        self.pid_timeout        = 14400      # PID File TTL (14400=4hrs) is SADM_PID_TIMEOUT in sadmin.cfg
-        self.lock_timeout       = 7200       # Sec. before unlock (7200=2hrs) SADM_LOCK_TIMEOUT in sadmin.cfg
-        self.max_logline        = 500        # Max. number of lines in log file SADM_MAX_LOGLINE in sadmin.cfg
-        self.max_rchline        = 50         # Max. number of lines in rch file SADM_MAX_RCLINE in sadmin.cfg
-        self.db_name            = "sadmin"   # Database Name (sadmin=default) SADM_DBNAME in sadmin.cfg
-        self.sadm_alert_type    = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
-        self.sadm_alert_group   = "default"  # Error Alert   Group defined in $SADMIN/cfg/alert_group.cfg
-        self.sadm_warning_group = "warning"  # Warning Alert Group defined in $SADMIN/cfg/alert_group.cfg
-        self.sadm_info_group    = "info"     # Info Alert    Group defined in $SADMIN/cfg/alert_group.cfg
-        self.quiet              = False      # If error in a function & quiet is: (give you ctrl of message)
-                                             # False: Show error message and return the error number. 
-                                             # True : Omly returm error number, but don't show error message.
-        self.pn=os.path.basename(sys.argv[0])# [P]rogram [N]ame with extension
-        self.inst = self.pn.split('.')[0]    # INSTance Name = Pgm Name Without Ext
 
-    def set_ver(self,ver)      : self.ver = ver     # Set Program VERSION number
-    def get_ver(self)          : return self.ver    # Get Program VERSION number
-
-    def set_log_header(self,head)   : self.log_header = head
-    def get_log_header(self)        : return(self.log_header)
-
-    def set_max_rch_line(self,max_rch_line) : self.max_rch_line = max_rch_line
-
-  #
-## Variables that are share with the Library available to Developer
-pid          = os.getpid()         # Get Current Process ID.
-errno     = 0                   # Error No. set by function called (0=OK Else error/warning)
-errmsg    = ""                  # Error Mess. set by function you call (blank or error msg)
-db_conn   = None                # Database Connector when using DB,  set by sa.start()
-db_cur    = None                # Database Cursor if you use the DB, set by sa.start()
-exit_code    = 0                   # Default Return Code (0=Success 1-Error)
-#
-## Variable local to this script (not share with the library) you can use at your ease.
-#debug        = 0                   # Debug Level 0-9 (Increase Verbose)
-#hostname     = sa.get_hostname()   # Get Current hostname
-#username     = sa.get_username()   # Get Current User Name
-#cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh,sa.sadm_ssh_port) # /usr/bin/ssh with sadmin.cfg port
-#current_time = datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S") # Format current Date and Time 
 
 
 
@@ -3216,18 +3313,8 @@ exit_code    = 0                   # Default Return Code (0=Success 1-Error)
 # Things to do when the module is loaded
 # --------------------------------------------------------------------------------------------------
 
-# Making sure the 'SADMIN' environment variable is defined, abort if it isn't.
-if (os.getenv("SADMIN",default="X") == "X"):                            # SADMIN Env.Var. Not Define
-    print("\n'SADMIN' environment variable isn't defined.")             # SADMIN Var MUST be defined
-    print("\nIt specify the directory where you installed the SADMIN Tools.")
-    print("\nAdd this line at the end of /etc/environment file")        # Show Where to Add Env. Var
-    print("\nSADMIN='/[dir-where-you-install-sadmin]'")                 # Show What to Add.
-    print("\nThen logout and log back in and run the script again.")    # Show what to do 
-    sys.exit(1)  
-
 load_cmd_path()                                                         # Get Secure Path to cmd.
 load_config_file(cfg_file)                                              # Load sadmin.cfg in Dict.
-
 dict_alert = load_alert_file()                                          # Load Alert group in dict
 if (lib_debug > 4) : print_dict_alert()                                 # Print Alert Group Dict
 
