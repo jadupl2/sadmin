@@ -78,7 +78,7 @@ db_cur      = None                # Database Cursor (if used)
 
 # Fields used by sa.start(),sa.stop() & DB functions that influence execution of SADMIN library
 sa.db_used           = False      # Open/Use DB(True), No DB needed (False), sa.start() auto connect
-sa.db_silent         = False      # True=ReturnErrorNo & No ErrMsg, False=ReturnErrorNo & ShowErrMsg
+sa.quiet         = False      # True=ReturnErrorNo & No ErrMsg, False=ReturnErrorNo & ShowErrMsg
 sa.db_name           = "sadmin"   # Database Name default to name define in $SADMIN/cfg/sadmin.cfg
 sa.errno          = 0          # Database Error Number
 sa.errmsg        = ""         # Database Error Message

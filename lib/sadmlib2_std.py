@@ -143,9 +143,10 @@ except ImportError as e:
 # --------------------------------------------------------------------------------------------------
 lib_ver             = "4.69.1"                              # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
+
 start_time          = ""                                    # Script Start Date & Time
-stop_time           = ""                                    # Script Stop Date & Time
 start_epoch         = ""                                    # Script Start EPoch Time
+stop_time           = ""                                    # Script Stop Date & Time
 delete_pid          = ""                                    # Del pid file from 2nd Inst
 dict_alert          = {}                                    # Define empty alert Dict.
 dict_sadmin         = {}                                    # Define SADMIN Dict. for config file
@@ -153,48 +154,52 @@ dict_sadmin         = {}                                    # Define SADMIN Dict
 
 # Shared Variables between SADMIN Python Library and your program 
 # --------------------------------------------------------------------------------------------------
-pn                 = os.path.basename(sys.argv[0])         # [P]rogram [N]ame with extension
-ver                = "1.0.0"                               # Your Program VERSION number
-desc               = "Description of script '%s'" % (pn)   # Your Program DESCRIPTION 
-inst               = pn.split('.')[0]                      # INSTANCEName = Program Name Without Ext
-pid                = os.getpid()                           # Get Current Process ID.
-hostname           = platform.node().split('.')[0].strip() # Get Current hostname
-username           = pwd.getpwuid(os.getuid()).pw_name     # Get Current User Name
-root_only          = False       # True = Script can only be run by 'root' user only else 'False'.
-server_only        = False       # True = Script can only be run on SADMIN server else 'False'.
-sadmgrp_only       = False       # True = Script can only be run by 'root' or user part of SADMIN Grp
-                                                           # SADMIN Group = SADM_GROUP in sadmin.cfg
-use_rch            = True                                  # Write exec info to RCH file(True/False)
-db_used            = False                                 # Connect to DB (True), No DB (False) 
-quiet              = False                                 # If error in a function & quiet is :
-                                                           # False: Show error msg & return error no 
-                                                           # True : Only returm error no. but no mess
-debug              = 0                                     # Debug Level 0-9 (Increase Verbose)
-exit_code          = 0                                     # Default Return Code (0=Success 1-Error)
-log_type           = "B"                                   # S=Screen L=Log B=Both
-log_append         = False                                 # Append to previous log (True/False)
-log_header         = True                                  # Produce Log Header (True/False)
-log_footer         = True                                  # Produce Log Footer (True/False)
-multiple_exec      = False                                 # Allow running multiple Instance ?
-pid_timeout        = 7200                                  # PID File TimeToLive default
-lock_timeout       = 3600                                  # Sec. (TTL) before automatically unlock 
-max_logline        = 500                                   # Maximum number of lines in log file.
-max_rchline        = 35                                    # Maximum number of lines in rch file.
-mail_addr          = ""                                    # Default use email(s) in sadmin.cfg
+# Variables shared with SADMIN Python Library.
+ver                = "3.27"     # Your Program VERSION number
+desc               = "Describe '%s' here." % (sa.pn)
+root_only          = False      # Can Only be run by 'root'(True/False)
+server_only        = False      # Run Only on SADMIN server(True/False) SADM_SERVER in sadmin.cfg
+sadmgrp_only       = False      # Run if part of SADMIN Group 'SADM_GROUP' in sadmin.cfg or root
+multiple_exec      = False      # Allow running multiple Instance ?
+quiet              = False      # If error in a function & quiet is: (give you ctrl of message)
+                                # False: Show error message and return the error number. 
+                                # True : Omly returm error number, but don't show error message.
+use_rch            = False      # Write exec info to RCH file(True/False)
+log_type           = "B"        # S=Screen L=Log B=Both
+log_append         = False      # Append to previous log (True/False)
+log_header         = True       # Produce Log Header (True/False)
+log_footer         = True       # Produce Log Footer (True/False)
+pid_timeout        = 14400       # PID File TimeToLive default is SADM_PID_TIMEOUT in sadmin.cfg
+lock_timeout       = 7200       # Sec. before unlock default is SADM_LOCK_TIMEOUT in sadmin.cfg
+max_logline        = 500        # Max. number of lines in log file SADM_MAX_LOGLINE in sadmin.cfg
+max_rchline        = 50         # Max. number of lines in rch file SADM_MAX_RCLINE in sadmin.cfg
+db_used            = False      # Open/Use auto connect DB(True)
+db_name            = "sadmin"   # Database Name (sadmin=default) SADM_DBNAME in sadmin.cfg
+sadm_alert_type    = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
+sadm_alert_group   = "default"  # Error Alert   Group defined in $SADMIN/cfg/alert_group.cfg
+sadm_warning_group = "warning"  # Warning Alert Group defined in $SADMIN/cfg/alert_group.cfg
+sadm_info_group    = "info"     # Info Alert    Group defined in $SADMIN/cfg/alert_group.cfg
 
 # Fields used by sa.start(),sa.stop() & DB functions that influence execution of SADMIN library
 # Thwse are default values, they can be changed by the script that use this library.
-db_conn        = None           # Use this Database Connector when using DB,  set by sa.start()
-db_cur         = None           # Use this Database cursor if you use the DB, set by sa.start()
-db_name        = "sadmin"       # Database Name (sadmin=default) define in $SADMIN/cfg/sadmin.cfg
-errno          = 0              # PyMysql Database Error Number
-errmsg         = ""             # Database Error Message
-
-
+pn        = os.path.basename(sys.argv[0])  # [P]rogram [N]ame with extension
+inst      = pn.split('.')[0]        # INSTance Name = Pgm Name Without Ext
+username  = pwd.getpwuid(os.getuid()).pw_name       # Get Current User Name
+hostname  = platform.node().split('.')[0].strip()   # Get Current hostname
+pid       = os.getpid()             # Get Current Process ID.
+errno     = 0                       # Error No. set by function called (0=OK Else error/warning)
+errmsg    = ""                      # Error Mess. set by function you call (blank or error msg)
+db_conn   = None                    # Database Connector when using DB,  set by sa.start() & stop()
+db_cur    = None                    # Database Cursor if you use the DB, set by sa.start() & stop()
+db_name   = "sadmin"                # Database Name (sadmin=default) define in $SADMIN/cfg/sadmin.cfg
+debug     = 0                       # Debug Level 0-9 (Increase Verbose)
+exit_code = 0                       # Default Return Code (0=Success 1-Error)
+current_time = datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S") # Format current Date and Time 
+cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh,sa.sadm_ssh_port) # /usr/bin/ssh with sadmin.cfg port
 
 
 #---------------------------------------------------------------------------------------------------
-# Definition of SADMIN configuration file (sadmin.cfg) default value.
+# Content of SADMIN configuration file (sadmin.cfg) default value.
 # The value below, will be overridden by configuration file ($SADMIN/cfg/sadmin.cfg)
 #---------------------------------------------------------------------------------------------------
 sadm_alert_type               = 1                           # 0=No 1=Err 2=Succes 3=All
@@ -2074,7 +2079,6 @@ def get_serial():
 
 # --------------------------------------------------------------------------------------------------
 def load_cmd_path(): 
-
     """ 
         Function tries to locate every command that the SADMIN tools library or scripts may used.  
         If some of them are not present, some of the functions may not work correctly.
@@ -2085,121 +2089,92 @@ def load_cmd_path():
 
         Returns:
             Boolean :   True if all requirements are met.
-                        False if one or more requirements are missing.
+                        False if one or more commands require are missing.
     """ 
 
-    global \
-        cmd_ssh         ,   cmd_lsb_release ,   cmd_dmidecode                       ,\
-        cmd_fdisk       ,   cmd_perl        ,   cmd_nmon        ,   cmd_lscpu       ,\
-        cmd_inxi        ,   cmd_parted      ,   cmd_ethtool     ,   cmd_curl        ,\
-        cmd_mutt        ,   cmd_rrdtool     ,   cmd_bc 
-
+    global  cmd_fdisk , cmd_dmidecode , cmd_parted , cmd_lscpu , cmd_inxi , cmd_lsb_release ,\
+            cmd_bc , cmd_ssh , cmd_perl , cmd_nmon , cmd_ethtool , cmd_mutt , cmd_curl , cmd_rrdtool
+   
     if get_ostype() == "WINDOWS" : return(False)                        # Not valid on Windows
 
-    cmd_list = ['fdisk','dmidecode','parted','lscpu','inxi',            # List of command to locate
-                'lsb_release','bc','ssh','perl','nmon','ethtool','mutt','curl','rrdtool']    
+    # Making sure initially the Path to these commands is blank
+    cmd_fdisk = cmd_dmidecode = cmd_parted = cmd_lscpu = cmd_inxi = cmd_lsb_release = ""
+    cmd_bc    = cmd_ssh = cmd_perl = cmd_nmon = cmd_ethtool = cmd_mutt = cmd_curl = cmd_rrdtool = ""
+
+     # List of command to locate
+    cmd_list = ['fdisk','dmidecode','parted','lscpu','inxi','lsb_release','bc','ssh','perl',
+                'nmon','ethtool','mutt','curl','rrdtool']    
     
-
-    # Making sure the Path to these commands are blank
-    cmd_fdisk=""
-    cmd_dmidecode=""
-    cmd_parted=""
-    cmd_lscpu=""
-    cmd_inxi=""
-    cmd_lsb_release=""
-    cmd_bc=""
-    cmd_ssh=""
-    cmd_perl=""
-    cmd_nmon=""
-    cmd_ethtool=""
-    cmd_mutt=""
-    cmd_curl=""
-    cmd_rrdtool=""
-
     requisites_status=True                                              # Assume Requirements all OK
     for cmd in cmd_list:
         if shutil.which(cmd) != None : 
             if lib_debug > 4 : print ("Command '%s' found at '%s'." % (cmd,shutil.which(cmd)))
-            if (cmd == 'fdisk') : cmd_fdisk = shutil.which(cmd)
-            if (cmd == 'dmidecode') : cmd_dmidecode = shutil.which(cmd)
-            if (cmd == 'parted') : cmd_parted = shutil.which(cmd)
-            if (cmd == 'lscpu') : cmd_lscpu = shutil.which(cmd)
-            if (cmd == 'inxi') : cmd_inxi = shutil.which(cmd)
-            if (cmd == 'lsb_release') : cmd_lsb_release = shutil.which(cmd)
-            if (cmd == 'bc') : cmd_bc = shutil.which(cmd)
-            if (cmd == 'ssh') : cmd_ssh = shutil.which(cmd)
-            if (cmd == 'perl') : cmd_perl = shutil.which(cmd)
-            if (cmd == 'nmon') : cmd_nmon = shutil.which(cmd)
-            if (cmd == 'ethtool') : cmd_ethtool = shutil.which(cmd)
-            if (cmd == 'mutt') : cmd_mutt = shutil.which(cmd)
-            if (cmd == 'curl') : cmd_curl = shutil.which(cmd)
-            if (cmd == 'rrdtool') : cmd_rrdtool = shutil.which(cmd)
+            if (cmd == 'fdisk')         : cmd_fdisk         = shutil.which(cmd)
+            if (cmd == 'dmidecode')     : cmd_dmidecode     = shutil.which(cmd)
+            if (cmd == 'parted')        : cmd_parted        = shutil.which(cmd)
+            if (cmd == 'lscpu')         : cmd_lscpu         = shutil.which(cmd)
+            if (cmd == 'inxi')          : cmd_inxi          = shutil.which(cmd)
+            if (cmd == 'lsb_release')   : cmd_lsb_release   = shutil.which(cmd)
+            if (cmd == 'bc')            : cmd_bc            = shutil.which(cmd)
+            if (cmd == 'ssh')           : cmd_ssh           = shutil.which(cmd)
+            if (cmd == 'perl')          : cmd_perl          = shutil.which(cmd)
+            if (cmd == 'nmon')          : cmd_nmon          = shutil.which(cmd)
+            if (cmd == 'ethtool')       : cmd_ethtool       = shutil.which(cmd)
+            if (cmd == 'mutt')          : cmd_mutt          = shutil.which(cmd)
+            if (cmd == 'curl')          : cmd_curl          = shutil.which(cmd)
+            if (cmd == 'rrdtool')       : cmd_rrdtool       = shutil.which(cmd)
         else : 
             if lib_debug > 4 : print ("Command '%s' not found on system." % (cmd))
             requisites_status=False                                     # Requirement not Met
             print ("\n[ WARNING ] Command '%s' not found." % (cmd))     # is not available
             print ("              Command '%s'needed by the SADMIN tools library." % (cmd)) 
             print ("              Please install it to insure full functionality.\n")
-
     return(requisites_status)                                           # Requirement Met True/False
 
  
 
 # --------------------------------------------------------------------------------------------------
-def db_close(db_conn):
+def db_close(db_conn,db_cur):
 
     """ 
-        Close the Database of the connector receive.
+        Safely closes the database cursor and connection using parameters received.
         
         Args:            
-            db_conn         : Database connection
-            db_cur          : Database Cursor
+            db_conn         : Database connection object
+            db_cur          : Database Cursor object 
     
         Returns: (db_err)
-            db_err (int)    : Return 0 mean database is closed (Default).
-                              Return the error number returned by PyMySQL.
+            errno (int)     : Return 0 mean database was closed successfully.
+                              Return the number of error that occurred.
     """    
 
-    errno = 0                                                        # Set default return value
-    #if db_conn:         db_conn.close()
-    # Connection.open field will be 1 if the connection is open and 0 otherwise.
-    #if db_conn.closed != 0 :
-    #   errmsg= "Error: %d, database '%s' already close."  % (errno, db_name) 
-    #   return(errno)                                                 # No need to close
+    errno  = 0
 
-#    # Close Database cursor 
-#    try:
-#        db_cur.close()
-#    except Exception as e:
-#        if len(e.args) > 1 : 
-#            errno  = e.args[0]
-#            errmsg= "[ ERROR ] On 'db_cur.close' %d %s"  % (errno, e.args[1])
-#        else: 
-#            errno = 1 
-#            errmsg= str(e.args)
-#        if not quiet : write_err (db_errmsg)
-#        return(errno)                                                 
+    # 1. Always close the cursor first if it exists
+    if db_cur is not None:
+        try:
+            db_cur.close()
+            if not quiet : write_log ("Cursor closed successfully.")
+        except Exception as e:
+            if not quiet : write_err (f"Error closing cursor: {e}")
+            errno += 1
+            
+    # 2. Close the connection second
+    if db_conn is not None:
+        try:
+            db_conn.close()
+            if not quiet : write_log ("Successfully closed database connection.")
+        except Exception as e:
+            if not quiet : write_err (f"Error closing connection: {e}")
+            errno += 1
 
-
-    # Close Database connecton
-    try: 
-        db_conn.close()
-        if not quiet : write_log ("[ OK ] Database connection to %s is close." % db_name)
-        errno  = 0
-
-    except Exception as e:
-        if len(e.args) > 1 : 
-            errno  = e.args[0]
-            errmsg= "[ ERROR ] (%d) On 'db_conn.close' %s"  % (errno, e.args[1])
-        else: 
-            errno  = 1 
-            errmsg= "[ ERROR ] On 'db_close' %s " % (e)
-        if not quiet : write_err (db_errmsg)
     return(errno)
 
 
 
+
 # Check the user is part of the group 
+# --------------------------------------------------------------------------------------------------
 def user_in_group(user_name,group_name):
     try:
         group_data = grp.getgrnam(group_name)                           # Get Group Data Member
@@ -2313,7 +2288,7 @@ def stop(pexit_code : int) -> None:
 
 
     # Close Database if was used
-    if sadm_host_type == "S" and db_used : db_close(db_conn)            # Close Database if Used
+    if sadm_host_type == "S" and db_used : db_close(db_conn,db_cur)     # Close Database if Used
 
     # If the Last line of RCH file have a code 2 as the last field (Running).
     # We want to delete this line and add a line with the real exit code of the script 
@@ -2578,14 +2553,15 @@ def start(db_name="sadmin") :
             err_log_fh=open(err_file,'w')                               # Open New Error Log 
     except PermissionError as e:                                        
         print("\nPermission error when trying to open the error log '%s'." % (err_file))
+        print("%s" % e)
         print("\nCheck & change permission on the file or run this script with 'sudo'.")
         print("\nScript aborted\n") 
         sys.exit(1)                                                     # Back to O/S 
     except IOError as e:                                                # If Can't Create or open
         print("Error opening error log file %s" % (err_file))           # write_log Error Log File
+        print("%s" % e)
         print("Error Line No.: %d" % (inspect.currentframe().f_back.f_lineno)) # Line Number
         print("Function Name : %s" % (sys._getframe().f_code.co_name))  # Current function Name
-        print("Error No. %d - %s" % (e.errno,e.strerror))               # Print Error Number
         print("\nScript aborted\n")     
         sys.exit(1)                                                     # Back to O/S 
     if os.getuid() == 0:                                                # If root user
@@ -2621,7 +2597,7 @@ def start(db_name="sadmin") :
 
     # Write SADM Header to Script Log
     if (log_header) :                                                   # User Want a log Header
-        write_log ('='*80)                                              # 80 '=' Lines
+        write_log ('=' * 80)                                            # 80 '=' Lines
         wmess = "%s - %s " % (header_date,pn)                           # 1st line Date/Time & Name
         wmess += "v%s " % (ver)                                         # 1st line Script Version
         wmess += "- Library v%s" % (lib_ver)                            # 1st line SADM Library Ver.
@@ -2637,7 +2613,7 @@ def start(db_name="sadmin") :
         wmess += "v%s " % (get_osversion())                             # 4th Line O/S Version
         wmess += "- Kernel %s - SADMIN(%s): %s" % (get_kernel_version(),sadm_host_type,dir_base)
         write_log (wmess)                                               # Write 4th Line to Log
-        write_log ('='*50)                                              # 50 '=' Lines
+        write_log ('=' * 50)                                            # 50 '=' Lines
         write_log (" ")                                                 # Space Line in the LOG
 
     # If this script can only be run by 'root' 
@@ -3206,8 +3182,8 @@ class sadmin:
         self.quiet              = False      # If error in a function & quiet is: (give you ctrl of message)
                                              # False: Show error message and return the error number. 
                                              # True : Omly returm error number, but don't show error message.
-        self.pn        = os.path.basename(sys.argv[0])   # [P]rogram [N]ame with extension
-        self.inst      = self.pn.split('.')[0] # INSTance Name = Pgm Name Without Ext
+        self.pn=os.path.basename(sys.argv[0])# [P]rogram [N]ame with extension
+        self.inst = self.pn.split('.')[0]    # INSTance Name = Pgm Name Without Ext
 
     def set_ver(self,ver)      : self.ver = ver     # Set Program VERSION number
     def get_ver(self)          : return self.ver    # Get Program VERSION number
@@ -3219,17 +3195,17 @@ class sadmin:
 
   #
 ## Variables that are share with the Library available to Developer
-#sa.errno     = 0                   # Error No. set by function called (0=OK Else error/warning)
-#sa.errmsg    = ""                  # Error Mess. set by function you call (blank or error msg)
-#sa.db_conn   = None                # Database Connector when using DB,  set by sa.start()
-#sa.db_cur    = None                # Database Cursor if you use the DB, set by sa.start()
+pid          = os.getpid()         # Get Current Process ID.
+errno     = 0                   # Error No. set by function called (0=OK Else error/warning)
+errmsg    = ""                  # Error Mess. set by function you call (blank or error msg)
+db_conn   = None                # Database Connector when using DB,  set by sa.start()
+db_cur    = None                # Database Cursor if you use the DB, set by sa.start()
+exit_code    = 0                   # Default Return Code (0=Success 1-Error)
 #
 ## Variable local to this script (not share with the library) you can use at your ease.
-#exit_code    = 0                   # Default Return Code (0=Success 1-Error)
 #debug        = 0                   # Debug Level 0-9 (Increase Verbose)
 #hostname     = sa.get_hostname()   # Get Current hostname
 #username     = sa.get_username()   # Get Current User Name
-#pid          = os.getpid()         # Get Current Process ID.
 #cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh,sa.sadm_ssh_port) # /usr/bin/ssh with sadmin.cfg port
 #current_time = datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S") # Format current Date and Time 
 

@@ -287,7 +287,7 @@ check_sadmin_account()
         then sadm_write_error "  - Account '$SADM_USER' password is expired."          
              ((error_counter++))                                        # Increment Error by 1
              return $error_counter                                      # Return to caller
-        else sadm_write_err "  - Account '$SADM_USER' password is not expired."
+        else sadm_write_log "  - Account '$SADM_USER' password is not expired."
     fi
 
     # Check if account is inactive

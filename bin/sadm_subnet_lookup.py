@@ -159,26 +159,26 @@ def db_readkey(tbkey,tbname,tbcol,db_conn,db_cur):
             number_of_rows = db_cur.execute(sql)                            # Execute the Select Stat.
         except (AttributeError, TypeError) as e:                            # Mismatch Between Num & Str
             emsg = "No row found with matching key '%s'" % (tbkey)
-            if not sa.db_silent :                                           # If not in Silent Mode
+            if not sa.quiet :                                           # If not in Silent Mode
                 sa.write_log(">>>>>>>>>>>>> %d %s" % (1,emsg))          # Show Error No. & Message
             return(1,None)  
         
         
         if (number_of_rows == 0):                                       # If IP Not found
-            if not sa.db_silent :                                       # If not in Silent Mode
+            if not sa.quiet :                                       # If not in Silent Mode
                 emsg = "Key '%s' not found in %s table" % (tbkey,tbname)# Build Error Message
                 sa.write_log(">>>>>>>>>>>>> %d %s" % (1,emsg))          # Show Error No. & Message
             return(1,None)                                              # Return Error No. & No Data
 
         dbrow = db_cur.fetchone()                                         # Get one row base on key
         if (dbrow == None) :                                            # If not row returned
-            if not sa.db_silent :                                           # If not in Silent Mode
+            if not sa.quiet :                                           # If not in Silent Mode
                 emsg = "No row found with matching key '%s'" % (tbkey)
                 sa.write_log(">>>>>>>>>>>>> %d %s" % (1,emsg))          # Show Error No. & Message
             return(1,None)                                              # Return Error No. & No Data
 
     except (pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as e:
-        if not sa.db_silent :                                               # If not in Silent Mode
+        if not sa.quiet :                                               # If not in Silent Mode
             enum, emsg = e.args                                         # Get Error No. & Message
             sa.write_log(">>>>>>>>>>>>> %d %s" % (enum,emsg))           # Show Error No. & Message
             return(1,None)                                              # Return Error No. & No Data
@@ -199,7 +199,7 @@ def db_readkey(tbkey,tbname,tbcol,db_conn,db_cur):
 #       Example of tbdata received
 #       ['192.168.1.1','192.168.001.001','Router','b8:27:eb:9e:77:81','Y',\
 #       '2018-04-18 21:09:58','2018-04-18 21:09:58']
-#   - sa.db_silent = if True, return error code and no error message.
+#   - sa.quiet = if True, return error code and no error message.
 #                if False (Default) return error code and if Error show Error message returned I/O.
 #
 # Return parameter :
@@ -229,7 +229,7 @@ def db_insert(tbkey,tbdata,db_conn,db_cur):
     except (TypeError, ValueError, IndexError) as e:                    # Mismatch Between Num & Str
         enum=1                                                          # Set Class Error Number
         emsg=e                                                          # Get Error Message
-        if not sa.db_silent:                                            # If not in Silent Mode
+        if not sa.quiet:                                            # If not in Silent Mode
             sa.write_log("[ ERROR ] (%d) %s" % (enum,e))                # Print Error No. & Message
             sa.errmsg= e
             sa.errno  = enum
@@ -242,7 +242,7 @@ def db_insert(tbkey,tbdata,db_conn,db_cur):
     except (pymysql.err.InternalError, pymysql.err.IntegrityError) as e:
         enum=1                                                          # Set Class Error Number
         emsg=e   
-        if not sa.db_silent :                                           # If not in Silent Mode
+        if not sa.quiet :                                           # If not in Silent Mode
             enum, emsg = e                                              # Get Error No. & Message
             if enum == 0 : enum = 1
             sa.write_log("[ ERROR ] (%d) %s" % (enum,emsg))             # Print Error No. & Message

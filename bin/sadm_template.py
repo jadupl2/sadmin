@@ -92,23 +92,22 @@ sa.sadm_info_group    = "info"     # Info Alert    Group defined in $SADMIN/cfg/
 sa.quiet              = False      # If error in a function & quiet is: (give you ctrl of message)
                                    # False: Show error message and return the error number. 
                                    # True : Omly returm error number, but don't show error message.
-
-# Variables that are share with the Library available to Developer
-sa.pn        = os.path.basename(sys.argv[0])   # [P]rogram [N]ame with extension
-sa.inst      = sa.pn.split('.')[0] # INSTance Name = Pgm Name Without Ext
 sa.errno     = 0                   # Error No. set by function called (0=OK Else error/warning)
 sa.errmsg    = ""                  # Error Mess. set by function you call (blank or error msg)
 sa.db_conn   = None                # Database Connector when using DB,  set by sa.start()
 sa.db_cur    = None                # Database Cursor if you use the DB, set by sa.start()
+sa.pn        = os.path.basename(sys.argv[0])   # [P]rogram [N]ame with extension
+sa.inst      = sa.pn.split('.')[0] # INSTance Name = Pgm Name Without Ext
 
-# Variable local to this script (not share with the library) you can use at your ease.
+# Variables that are share with the Library available to Developer
+username     = sa.get_username()   # Get Current User Name
+hostname     = sa.get_hostname()   # Get Current hostname
+pid          = os.getpid()         # Get Current Process ID.
 exit_code    = 0                   # Default Return Code (0=Success 1-Error)
 debug        = 0                   # Debug Level 0-9 (Increase Verbose)
-hostname     = sa.get_hostname()   # Get Current hostname
-username     = sa.get_username()   # Get Current User Name
-pid          = os.getpid()         # Get Current Process ID.
-cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh,sa.sadm_ssh_port) # /usr/bin/ssh with sadmin.cfg port
-current_time = datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S") # Format current Date and Time 
+current_time = datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S") # Formatted current Date & Time 
+cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh,sa.sadm_ssh_port)         # SSH Command with default port
+
 # --------------------------------------------------------------------------------------------------
 
 
