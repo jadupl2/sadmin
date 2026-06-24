@@ -25,10 +25,11 @@
 #
 # VERSION CHANGE LOG
 # ------------------
-# 2025_08_25 lib v1.00 Initial Version
-#@2025_09_04 lib v1.1.1 Now ONE template for Python & remove the need of importing pymysql.
-#@2026_05_30 lib v1.2.1 Added 'quiet' parameter to 'db_connect()' function in SADMIN Python Library.
-# --------------------------------------------------------------------------------------------------
+# 2025_08_25 lib v01.00.00 Initial Version
+#@2025_09_04 lib v01.01.01 Now ONE template for Python & remove the need of importing pymysql.
+#@2026_05_30 lib v01.02.01 Added 'quiet' parameter to 'db_connect()' function in SADMIN Python Library.
+#@2026_06_24 lib v01.02.02 Trap Keybord control-C and stop grancefully.
+
 #
 
 
@@ -67,7 +68,7 @@ except ImportError as e:                                             # If Error 
     sys.exit(1)                                                      # Go Back to O/S with Error
 
 # Variables shared with SADMIN Python Library.
-sa.ver                = "1.2.1"    # Your Program VERSION number
+sa.ver                = "01.02.02" # Your Program VERSION number
 sa.desc               = "Description of program '%s'" % (sa.pn) # Your Program DESCRIPTION 
 sa.root_only          = False      # Can Only be run by 'root'(True/False)
 sa.server_only        = False      # Run Only on SADMIN server(True/False) SADM_SERVER in sadmin.cfg
@@ -258,9 +259,8 @@ def cmd_options(argv):
     
     if args.delpid:                                                     # If -X specified
         if os.path.exists(sa.pid_file):                                 # If PID file exist
-            os.remove(sa.pid_file)                                      # Delete the PID file.
-            print("The PID File (" + sa.pid_file + ") is now removed.") 
-
+            os.remove (sa.pid_file)                                     # Delete the PID file.
+            print (f"The PID File {sa.pid_file} is now removed.")       # Advise user
     return()                                             
                                                          
 
@@ -286,4 +286,16 @@ def main(argv):
 # Python assigns the string "__main__" to __name__. 
 # If the file is imported elsewhere (import script), __name__ matches the actual filename instead.
 # This condition guards your code against accidental execution during imports.
-if __name__ == "__main__": main(sys.argv)
+if __name__ == "__main__": 
+    try:
+        main(sys.argv)
+    except KeyboardInterrupt as e: 
+        print(f"[ ERROR ] A Keyboard interrupt as occurred: {e}")
+        sa.stop(1)                                                      # Exit Gracefully & Close DB
+        sys.exit(1)
+    
+    except Exception as e:
+        print(f"[ ERROR ] An unexpected error occurred: {e}")
+        sa.stop(1)                                                      # Exit Gracefully & Close DB
+        sys.exit(1)
+        
