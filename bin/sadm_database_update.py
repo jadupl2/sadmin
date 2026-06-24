@@ -53,6 +53,7 @@
 #@2025_08_25 server v3.24 Updated to align to change to Python library
 #@2025_09_04 server v3.25 Remove the need to import pymysql in the script, now done in SADMIN lib.
 #@2026_05_27 server v3.26.0 Added more exception handling to database update function.
+#@2026_06_24 server v3.26.1 Add a chown 664 to $SADMIN/dat/dr/$hostanme_sysinfo.txt.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -89,7 +90,7 @@ except ImportError as e:                                             # If Error 
 
 # Local variables local to this script.
 sa.pn                 = os.path.basename(sys.argv[0])         # [P]rogram [N]ame with extension
-sa.ver                = "3.26.0"                              # Your Program VERSION number
+sa.ver                = "3.26.01"                             # Your Program VERSION number
 sa.desc               = "Update SADMIN database with information collected from each system."
 sa.inst               = sa.pn.split('.')[0]                   # INSTance Name = Pgm Name Without Ext
 sa.pid                = os.getpid()                           # Get Current Process ID.
@@ -485,6 +486,7 @@ def process_servers(db_conn,db_cur):
         
         if sa.debug > 4: sa.write_log("[ DEBUG %03d ] Closing %s" % (sa.debug, sysfile))
         FH.close()                                                      # Close the Sysinfo File
+        os.chmod(sysfile,0o0664)                                        # Change Log File Permission
 
         if (NO_ERROR_OCCUR) :                                           # No Error assigning value 
             rc = update_row(wdict,db_conn,db_cur)                       # Go Update Row
@@ -574,4 +576,11 @@ def main(argv):
     sys.exit(sa.exit_code)                                              # Back to O/S with Exit Code
 
 # This idiom means the below code only runs when executed from command line
-if __name__ == "__main__": main(sys.argv)
+if __name__ == "__main__": 
+    try:
+        main(sys.argv)
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        sa.stop(sa.exit_code)                                           # Exit Gracefully & Close DB
+        sys.exit(1)
+        
