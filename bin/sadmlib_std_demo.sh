@@ -1314,7 +1314,7 @@ function print_start_stop()
     echo ""
     echo "  Here is a summary of the different things it does :"
     echo "    1) Make sure all \$SADMIN directories & sub-dir. exist and have proper permissions."
-    echo "    2) If \$SADN_LOG_APPEND='N', create new log & error log, else append to actual log."
+    echo "    2) If \$SADM_LOG_APPEND='N', create new log & error log, else append to actual log."
     echo "    3) If \$SADM_LOG_HEADER='Y', write the log header."
     echo "    4) if \$SADM_ROOT_ONLY='Y', and current user is not root, show error message and exit(1)."
     echo "    5) If \$SADM_SERVER_ONLY='Y', and not on the SADMIN server, show error message and exit(1)."
