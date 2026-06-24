@@ -1,1 +1,372 @@
-Import Error : No module named 'email_validator' 
+================================================================================
+Tue 23 Jun 2026 07:22:50 - sadmlib_std_demo.py v3.27 - Library v4.69.1
+Describe 'sadmlib_std_demo.py' here.
+bilbo.maison.ca - User: root - Umask: 0018 - Arch: x86_64 
+Fedora Linux v43 - Kernel 7.0.12-101.fc43.x86_64 - SADMIN(C): /opt/sadmin
+==================================================
+ 
+----------------------------------------------------------------------------------------------------
+01) SADMIN Python Library functions available to developer
+----------------------------------------------------------------------------------------------------
+[001] sa.get_release()                    SADMIN Release Number (XX.XX)           2.1.2                   
+[002] sa.get_ostype()                     OS Type (In Uppercase,LINUX,AIX,MACOS)  LINUX                   
+[003] sa.get_osversion()                  Return O/S Version (Ex: 7.2, 6.5)       43                      
+[004] sa.get_osmajorversion()             Return O/S Major Version (Ex 7, 6)      43                      
+[005] sa.get_osminorversion()             Return O/S Minor Version (Ex 2, 3)                              
+[006] sa.get_osname()                     O/S Distribution (In uppercase)         FEDORA                  
+[007] sa.get_oscodename()                 O/S Project Code Name                   N/A                     
+[008] sa.get_username()                   Current User Name                       root                    
+[009] sa.get_kernel_version()             Return O/S Running Kernel Version       7.0.12-101.fc43.x86_64  
+[010] sa.get_kernel_bitmode()             Return O/S Kernel Bit Mode (32 or 64)   64                      
+[011] sa.phostname                        Return Host Name                        bilbo                   
+[012] sa.get_host_ip()                    Return Host Main IP Address             192.168.1.23            
+[013] sa.get_domainname()                 Return Host Domain Name                 maison.ca               
+[014] sa.get_fqdn()                       Return Fully Qualified Domain Name      bilbo.maison.ca         
+[015] sa.get_serial()                     Return System serial Number             L2HF78K0045             
+[016] sa.get_epoch_time()                 Return Current Epoch Time               1782213770              
+[017] sa.epoch_to_date(1782213770)        Convert epoch time to date              2026.06.23 07:22:50     
+[018] sa.date_to_epoch(wsdate)            Convert Date to epoch time              1782213770              
+      DATE1 (End): 2026.06.30 10:00:44    DATE2 (Start): 2026.06.30 09:50:03
+[019] sa.elapse_time(DATE1,DATE2)         Elapse Time between two timestamps      00:10:41                
+[020] sa.get_packagetype()                Return package type (rpm,deb,lpp,dmg)   rpm                     
+[021] sa.get_arch()                       Get system architecture                 x86_64                  
+[022] sa.lock_system(hostname)            Lock the specified hostname (Not FQDN)  True                    
+[023] sa.lock_status(hostname)            Check if host specified is lock         True                    
+[024] sa.unlock_system(hostname)          Unlock host specified, monitoring on    True                    
+[025] sa.lock_status(hostname)            Check if host specified is lock         False                   
+[026] sa.write_log('message'[,lf=true])   Write message to Screen,Log or Both     message                 
+[027] sa.write_err('message'[,lf=true])   Write message to Error and Std Log      message                 
+[028] sa.sendmail(mail,sub,body,attach)   sadm_sendmail(email,"subject","body_file","file1,file2")                        
+[029] sa.show_version(sa.ver)             Show Program & Library version & Desc.  script -v               
+[030] sa.sleep(60,15)                     Sleep 60 sec & update every 15 sec.     60...45...30...15...0   
+[031] sa.trimfile(filename,nlines=500)    Keep last 500 lines of filename.        0=Success  1=Error      
+[032] sa.get_nb_cpu                       Return number of CPUs                   4                       
+[033] sa.get_nb_core_per_socket()         Return number of core per socket        2                       
+[034] sa.get_nb_thread_per_core()         Return number of threads per core       2                       
+[035] sa.get_nb_socket()                  Return number of socket                 1                       
+[036] sa.silentremove('file')             Silent file delete (no msg, no err)     0                       
+[037] sa.touch_file('filename')           Create an empty file                    0=Success 1=Error       
+[038] sa.db_connect('sadmin')             Open connection to database             0=Success 1=Error       
+[039] sa.db_close(conn,cur)               Close connection to database            0=Success 1=Error       
+
+
+
+----------------------------------------------------------------------------------------------------
+02) Variables that influence library behavior, in SADMIN Code Section of your code 
+    We recommend, to set these variables prior to calling 'sa.sadm_start()'.
+----------------------------------------------------------------------------------------------------
+[001] sa.ver                              Program version number                  3.27                    
+[002] sa.desc                             Program description                     Describe 'sadmlib_std_demo.py' here.
+[003] sa.root_only                        Program can only be run by 'root'       False                   
+[004] sa.server_only                      Program can only run on SADMIN server   False                   
+[005] sa.sadmgrp_only                     Run only if part of SADMIN Grp or root  False                   
+[006] sa.multiple_exec                    Can run more than 1 copy simultaneously False                   
+[007] sa.quiet                            Quiet False=ErrNo+Mess True=OnlyErrNo   False                   
+[008] sa.use_rch                          Save execution data to '.rch' file      False                   
+[009] sa.log_type                         Set Output to [S]creen [L]og [B]oth     B                       
+[010] sa.log_append                       True=Append to log, False=New log       False                   
+[011] sa.log_header                       Generate header in log                  True                    
+[012] sa.log_footer                       Generate footer in log                  True                    
+[013] sa.db_used                          Need Access to SADMIN Database ?        False                   
+[014] sa.db_name                          Database Name (Defaut:'sadmin')         sadmin                  
+[015] sa.sadm_pid_timeout                 PID file default TimeToLive (Sec)       14400                   
+[016] sa.sadm_lock_timeout                Maximun nb. sec. a host can be lock     3600                    
+[017] sa.sadm_max_rchline                 Trim rch file to this max. of lines     50 lines                
+[018] sa.sadm_max_logline                 Trim log to this maximum of lines       500 lines               
+[019] sa.sadm_mail_addr                   SADMIN Administrator Email(s)           brucetalbot95@gmail.com 
+[020] sa.sadm_alert_type                  0=NoMail 1=OnError 3=OnSuccess 4=All    1                       
+[021] sa.sadm_alert_repeat                0=Alert once, 14400=4hrs before alert repeat0                       
+[022] sa.sadm_alert_group                 Error Group (Default Group)             default                 
+[023] sa.sadm_warning_group               Warning Group Name                      warning                 
+[024] sa.sadm_info_group                  Info Group Name                         info                    
+
+
+----------------------------------------------------------------------------------------------------
+02) These variables are set in the Library and are available for you to use.
+    But shouldn't have to change.
+----------------------------------------------------------------------------------------------------
+[025] sa.pn                               Pgm. name with extension                sadmlib_std_demo.py     
+[026] sa.inst                             Pgm. name without extension             sadmlib_std_demo        
+[027] sa.username                         Current user name                       root                    
+[028] sa.hostname                         Current Host Name                       bilbo                   
+[029] sa.pid                              Current Process ID                      344762                  
+[030] sa.errno                            Error No. returned by function called   0                       
+[031] sa.errmsg                           Error Mess. returned by function called                         
+[032] sa.db_conn                          Database connector                      None                    
+[033] sa.db_cur                           Database cursor                         None                    
+[034] sa.db_name                          Database name                           sadmin                  
+[035] debug                               Debug Level 0-9 (Incr. Verbose)         0                       
+[036] exit_code                           Script Exit Return Code                 0                       
+[037] current_time                        Current date & Time                     2026.06.23 07:22:50     
+[038] cmd_ssh_full                        SSH cmd to client                       /usr/bin/ssh -qnp 32    
+
+
+
+----------------------------------------------------------------------------------------------------
+03) Python Library - Overview of the 'start()' and 'stop()' functions.
+----------------------------------------------------------------------------------------------------
+
+Function 'start()'
+------------------
+   The 'start()' function basically initialize the SADMIN environment.
+   When you call 'start()', it will only come back to caller, only if everything went OK,
+   Otherwise, it will advise the user of the error and exit(1).
+
+   - If 'db_used' is True, it will create a connection to the Database and return 
+     a connection (db_conn) and cursor (db_cur) objects.
+        Example: '(db_conn,db_cur) = sa.start()' 
+   - If 'sa.db_used' is False, then it will return None for both 'sa_conn' and 'sadb_cur'.
+
+  Here a summary of the different things the 'start()' function does :
+    1) Make sure $SADMIN directories and sub-dirrectories exist and have proper permissions.
+    2) If 'log_append' is True, it open standard/error log in append mode, else write mode.
+    3) If 'log_header' is True, write the log header.
+    4) If 'root_only' is True and the current user is not root, show error message and exit(1).
+    5) If 'server_only' is True and you are not on the SADMIN server, show error message and exit(1).
+    6) If 'sadmgrp_only' is 'True', then current user must be part of the SADMIN group (unless root)
+    7) If 'db_used' is True, but you are not on the SADMIN Server, show error message and exit(1).
+    8) If lock_status() is True and running on the SADMIN server, issue message and exit(1)
+       If the creation of the lock was done more than 'lock_timeout' seconds, the lock file is remove.
+    9) If PID file 'pid_file' exist and 'sa.multiple_exec' is True, continue normal execution
+       If PID file exist and execution time (sec) is less than the 'pid_timeout', show error mess. and exit(1).
+       If PID file exist and execution time (sec) exceed the 'pid_timeout' a new 'pid_file' is created
+       and execution is resume.
+   10) If 'use_rch' is True, add line in 'rch' file with code '2' and starting time of your program.
+   11) If 'db_used' is True, open connection to database and return connection and cursor objects.
+       If not on SADMIN system, show error message and exit(1).
+
+
+
+Function 'stop()'
+--------------------
+  This function accept one parameter, either a 0 for Success or a 1 for Error.
+  This should be the one of the last function called at the end of your program.
+
+  What this function does:
+    1) Calculate execution Time.
+    2) If 'use_rch = True', update the rch file (End Time & Elapse Time ...).
+    3) Validate & determine the alert group name (sadm_alert_group) use in rch file.
+    4) If 'db_used' is True and we are on the SADMIN server, close the database connection.
+    5) If the error log file (.elog) is empty, delete it.
+    6) Delete the PID file of the script (pid_file).
+    7) If 'log_footer'is True, write the log footer.
+    8) Close log and error log files.
+    9) If 'sa.max_logline' is not zero, trim the log according to user choice in 'sa.max_logline'.
+   10) If 'sa.max_rchline' is not zero, trim the 'rch' according to user choice in 'sa.max_rchline'.
+   11) Set permission and owner/group to log and rch files.
+   12) If on the SADMIN server, then rch and log are immediatly web central directory.
+
+
+
+----------------------------------------------------------------------------------------------------
+4) SADMIN configuration file - List of variables available to developers.
+----------------------------------------------------------------------------------------------------
+
+----- General Section -----
+[001] sa.sadm_server                      SADMIN server name (FQDN)               sherlock.maison.ca      
+[002] sa.sadm_host_type                   SADMIN [C]lient or [S]erver             C                       
+[003] sa.sadm_cie_name                    Your Company name                       The Batcave             
+[004] sa.sadm_domain                      Server creation default domain          maison.ca               
+[005] sa.sadm_user                        SADMIN User Name                        sadmin                  
+[006] sa.sadm_group                       SADMIN Group Name                       sadmin                  
+[007] sa.sadm_pwd_random                  Daily change password of '$SADM_USER'   N                       
+[008] sa.sadm_pid_timeout                 PID file default TimeToLive (Sec)       14400                   
+[009] sa.sadm_lock_timeout                Maximun nb. sec. a host can be lock     3600                    
+
+----- Database Section -----
+[010] sa.sadm_dbname                      SADMIN Database Name                    sadmin                  
+[011] sa.sadm_dbhost                      SADMIN Database Host                    localhost               
+[012] sa.sadm_dbport                      SADMIN Database Host TCP Port           3306                    
+[013] sa.sadm_rw_dbuser                   SADMIN Database Read/Write User         sadmin                  
+[014] sa.sadm_rw_dbpwd                    SADMIN Database Read/Write User Pwd     *Hidden*                
+[015] sa.sadm_ro_dbuser                   SADMIN Database Read Only User          squery                  
+[016] sa.sadm_ro_dbpwd                    SADMIN Database Read Only User Pwd      *Hidden*                
+
+----- Web Interface Section -----
+[017] sa.sadm_www_user                    User that Run the Web Server            apache                  
+[018] sa.sadm_www_group                   Group that Run the Web Server           apache                  
+
+----- Email Section -----
+[019] sa.sadm_mail_addr                   SADMIN SysAdmin Email(s)                brucetalbot95@gmail.com 
+[020] sa.sadm_smtp_server                 Your internet smtp server               smtp.gmail.com          
+[021] sa.sadm_smtp_port                   Your internet smtp server port          587                     
+[022] sa.sadm_smtp_sender                 Your internet smtp email address        brucetalbot95@gmail.com 
+[023] sa.sadm_gmpw                        Your internet smtp email password       *Hidden*                
+
+----- Monitoring Section -----
+[024] sa.sadm_alert_type                  0=NoMail 1=OnError 3=OnSuccess 4=All    1                       
+[025] sa.sadm_alert_group                 Error Group (Default Group)             default                 
+[026] sa.sadm_warning_group               Warning Group Name                      warning                 
+[027] sa.sadm_info_group                  Info Group Name                         info                    
+[028] sa.sadm_ssh_port                    Default SSH Port to talk with client    32                      
+[029] sa.sadm_monitor_update_interval     Monitor web page refresh rate (Sec)     60 Seconds              
+[030] sa.sadm_monitor_recent_count        Monitor web page nb. recent scripts     5                       
+[031] sa.sadm_monitor_recent_exclude      Monitor web page exclude list           sadm_nmon_watcher       
+[032] sa.sadm_email_startup               Send email to SysAdmin on startup       N                       
+[033] sa.sadm_email_shutdown              Send email to SysAdmin on shutdown      N                       
+[034] sa.sadm_textbelt_key                TextBelt.com API Key                    *Hidden*                
+[035] sa.sadm_textbelt_url                TextBelt.com API URL                    https://textbelt.com/text
+
+----- Files and Logs pruning Section -----
+[036] sa.sadm_nmon_keepdays               Nb. of days to keep .nmon perf. file    10 days                 
+[037] sa.sadm_rch_keepdays                Nb. days to keep unmodified .rch file   35 days                 
+[038] sa.sadm_log_keepdays                Nb. days to keep unmodified .log file   35 days                 
+[039] sa.sadm_max_rchline                 Trim rch file to this max. of lines     50 lines                
+[040] sa.sadm_max_logline                 Trim log to this maximum of lines       500 lines               
+[041] sa.sadm_days_history                Days to keep alert in History file      14 lines                
+[042] sa.sadm_max_arc_line                Max. lines in alert in History file     1000 lines              
+
+----- Subnet Network Scanner Section -----
+[043] sa.sadm_network1                    Network/Netmask 1 inv. IP/Name/Mac      192.168.1.0/24          
+[044] sa.sadm_network2                    Network/Netmask 2 inv. IP/Name/Mac      None                    
+[045] sa.sadm_network3                    Network/Netmask 3 inv. IP/Name/Mac      None                    
+[046] sa.sadm_network4                    Network/Netmask 4 inv. IP/Name/Mac      None                    
+[047] sa.sadm_network5                    Network/Netmask 5 inv. IP/Name/Mac      None                    
+
+----- ReaR Backup Section -----
+[048] sa.sadm_rear_nfs_server             ReaR NFS Server IP or Name              lestrade.maison.ca      
+[049] sa.sadm_rear_nfs_server_ver         ReaR NFS Server Version                 3                       
+[050] sa.sadm_rear_nfs_mount_point        ReaR NFS Mount Point                    /backup/backup_rear     
+[051] sa.sadm_rear_backup_to_keep         ReaR NFS Backup - Nb. to keep           2 copies                
+[052] sa.sadm_rear_backup_dif             ReaR alert cur vs prev size differ      25 %                    
+[053] sa.sadm_rear_backup_interval        ReaR alert if no backup for X days      14 days                 
+[054] sa.sadm_rear_backup_script          ReaR backup script name                 sadm_rear_backup.sh     
+[055] sa.sadm_rear_del_failed_backup      Delete failed backup                    Y                       
+[056] sa.sadm_rear_batch_mode             Run backup in batch mode                N                       
+[057] sa.sadm_rear_batch_startup_time     Batch startup time                      00:00                   
+[058] sa.sadm_rear_backup_concurrent      Concurrent rear backup process          1                       
+
+----- Backup Section -----
+[059] sa.sadm_backup_nfs_server           NFS Backup IP or Server Name            batnas.maison.ca        
+[060] sa.sadm_backup_nfs_server_ver       NFS Backup Server Version               3                       
+[061] sa.sadm_backup_nfs_mount_point      NFS Backup Mount Point                  /volume1/backup/backup_sadmin
+[062] sa.sadm_backup_dif                  Backup alert cur vs prev size differ    40 %                    
+[063] sa.sadm_backup_interval             Backup alert if older than X days       1 days                  
+[064] sa.sadm_daily_backup_to_keep        Daily Backup to Keep                    2 copies                
+[065] sa.sadm_weekly_backup_to_keep       Weekly Backup to Keep                   1 copies                
+[066] sa.sadm_monthly_backup_to_keep      Monthly Backup to Keep                  1 copies                
+[067] sa.sadm_yearly_backup_to_keep       Yearly Backup to keep                   1 copies                
+[068] sa.sadm_weekly_backup_day           Weekly Backup Day (1=Mon,7=Sun)         5                       
+[069] sa.sadm_monthly_backup_date         Monthly Backup Date (1-28)              1                       
+[070] sa.sadm_yearly_backup_month         Yearly Backup Month (1-12)              12                      
+[071] sa.sadm_yearly_backup_date          Yearly Backup Date (1-31)               31                      
+[072] sa.sadm_backup_concurrent           Concurrent Backup Processes             1                       
+[073] sa.sadm_backup_batch_mode           Run backup in batch mode                N                       
+[074] sa.sadm_backup_batch_startup_time   Batch startup time                      00:01                   
+
+----- Virtual Machines Export Section -----
+[075] sa.sadm_vm_export_nfs_server        NFS Export Server                       batnas.maison.ca        
+[076] sa.sadm_vm_export_nfs_server_ver    NFS Export Server Version               3                       
+[077] sa.sadm_vm_export_mount_point       NFS Export Mount Point                  /volume1/backup/backup_vm/virtualbox_exports
+[078] sa.sadm_vm_export_dif               Export alert cur vs prev size differ    25 %                    
+[079] sa.sadm_vm_export_to_keep           Nb. of export to keep                   2 copies                
+[080] sa.sadm_vm_export_interval          Days without export before alert        21 days                 
+[081] sa.sadm_vm_export_alert             Issue an alert if interval reached      Y                       
+[082] sa.sadm_vm_user                     User part of 'vboxusers' user group     jacques                 
+[083] sa.sadm_vm_stop_timeout             Max. seconds given for acpi shutdown    60 seconds              
+[084] sa.sadm_vm_start_interval           Sec. to sleep between each VM start     30 seconds              
+[085] sa.sadm_vm_export_batch_mode        Run start script in batch mode (Y/N)    N                       
+[086] sa.sadm_vm_export_batch_start_time  Start time for launch batch export      00:01                   
+[087] sa.sadm_vm_export_concurrent        Concurrent export process               1                       
+
+----- System Update Section -----
+[088] sa.sadm_osupdate_interval           System Update Interval                  15 days                 
+[089] sa.sadm_osupdate_script             System Update Script                    sadm_osupdate.sh        
+[090] sa.sadm_osupdate_autoremove         Auto Remove Updates                     N                       
+[091] sa.sadm_osupdate_flatpak            Flatpak Updates                         N                       
+[092] sa.sadm_osupdate_snap               Snap Updates                            N                       
+[093] sa.sadm_osupdate_reboot_needed      Reboot Needed                           N                       
+[094] sa.sadm_osupdate_reboot_time        Reboot Time                             240                     
+[095] sa.sadm_osupdate_lock               Lock Updates                            Y                       
+[096] sa.sadm_osupdate_batch_mode         Batch Mode                              N                       
+[097] sa.sadm_osupdate_batch_start_time   Batch Start Time                        00:01                   
+[098] sa.sadm_osupdate_concurrent         Concurrent Update Process               1                       
+
+
+
+----------------------------------------------------------------------------------------------------
+5) Directories variables available to Developers
+----------------------------------------------------------------------------------------------------
+[001] sa.dir_base                         SADMIN Root Directory                   /opt/sadmin             
+[002] sa.dir_bin                          SADMIN Scripts Directory                /opt/sadmin/bin         
+[003] sa.dir_tmp                          SADMIN Temporary file(s) Directory      /opt/sadmin/tmp         
+[004] sa.dir_lib                          SADMIN Shell & Python Library Dir.      /opt/sadmin/lib         
+[005] sa.dir_log                          SADMIN Script Log Directory             /opt/sadmin/log         
+[006] sa.dir_cfg                          SADMIN Configuration Directory          /opt/sadmin/cfg         
+[007] sa.dir_sys                          Server Startup/Shutdown Script Dir.     /opt/sadmin/sys         
+[008] sa.dir_doc                          SADMIN Documentation Directory          /opt/sadmin/doc         
+[009] sa.dir_pkg                          SADMIN Packages Directory               /opt/sadmin/pkg         
+[010] sa.dir_dat                          Server Data Directory                   /opt/sadmin/dat         
+[011] sa.dir_nmon                         Server NMON - Data Collected Dir.       /opt/sadmin/dat/nmon    
+[012] sa.dir_dr                           Server Disaster Recovery Info Dir.      /opt/sadmin/dat/dr      
+[013] sa.dir_rch                          Server Return Code History Dir.         /opt/sadmin/dat/rch     
+[014] sa.dir_net                          Server Network Information Dir.         /opt/sadmin/dat/net     
+[015] sa.dir_rpt                          SYStem MONitor Report Directory         /opt/sadmin/dat/rpt     
+[016] sa.dir_dbb                          Database Backup Directory               /opt/sadmin/dat/dbb     
+[017] sa.dir_setup                        SADMIN Setup Directory.                 /opt/sadmin/setup       
+[018] sa.dir_usr                          User/System specific directory          /opt/sadmin/usr         
+[019] sa.dir_usr_bin                      User/System specific bin/script Dir.    /opt/sadmin/usr/bin     
+[020] sa.dir_usr_lib                      User/System specific library Dir.       /opt/sadmin/usr/lib     
+[021] sa.dir_usr_doc                      User/System specific documentation      /opt/sadmin/usr/doc     
+[022] sa.dir_usr_mon                      User/System specific SysMon Scripts     /opt/sadmin/usr/mon     
+[023] sa.dir_www                          SADMIN Web Site Root Directory          /opt/sadmin/www         
+[024] sa.dir_www_doc                      SADMIN Web Site Root Directory          /opt/sadmin/www/doc     
+[025] sa.dir_www_dat                      SADMIN Web Site Systems Data Dir.       /opt/sadmin/www/dat     
+[026] sa.dir_www_lib                      SADMIN Web Site PHP Library Dir.        /opt/sadmin/www/lib     
+[027] sa.dir_www_tmp                      SADMIN Web Temp Working Directory       /opt/sadmin/www/tmp     
+[028] sa.dir_www_perf                     Web system performance Graph Dir.       /opt/sadmin/www/tmp/perf
+
+
+
+----------------------------------------------------------------------------------------------------
+6) SADMIN File names use and set by the Python library, for you to use
+----------------------------------------------------------------------------------------------------
+----- File Name Aliases Variables -----
+[001] sa.pid_file                         Current script PID file                 /opt/sadmin/tmp/sadmlib_std_demo.pid
+[002] sa.cfg_file                         SADMIN configuration file               /opt/sadmin/cfg/sadmin.cfg
+[003] sa.cfg_hidden                       SADMIN configuration template           /opt/sadmin/cfg/.sadmin.cfg
+[004] sa.alert_file                       Alert group definition file             /opt/sadmin/cfg/alert_group.cfg
+[005] sa.alert_init                       Alert group template file               /opt/sadmin/cfg/.alert_group.cfg
+[006] sa.alert_hist                       Alert History file                      /opt/sadmin/cfg/alert_history.txt
+[007] sa.alert_hini                       Alert History template file             /opt/sadmin/cfg/.alert_history.txt
+[008] sa.tmp_file1                        User usable Temp Work File 1            /opt/sadmin/tmp/sadmlib_std_demo_1.344762
+[009] sa.tmp_file2                        User usable Temp Work File 2            /opt/sadmin/tmp/sadmlib_std_demo_2.344762
+[010] sa.tmp_file3                        User usable Temp Work File 3            /opt/sadmin/tmp/sadmlib_std_demo_3.344762
+[011] sa.log_file                         Script Log File                         /opt/sadmin/log/bilbo_sadmlib_std_demo.log
+[012] sa.rch_file                         Script Return Code History File         /opt/sadmin/dat/rch/bilbo_sadmlib_std_demo.rch
+[013] sa.dbpass_file                      SADMIN Database User Password File      /opt/sadmin/cfg/.dbpass 
+[014] sa.rpt_file                         [SYS]tem [MON]itor report file          /opt/sadmin/dat/rpt/bilbo.rpt
+[015] sa.backup_list                      Backup list file name                   /opt/sadmin/cfg/backup_list.txt
+[016] sa.backup_list_init                 Backup list template file               /opt/sadmin/cfg/.backup_list.txt
+[017] sa.backup_exclude                   Backup exclude list file name           /opt/sadmin/cfg/backup_exclude.txt
+[018] sa.backup_exclude_init              Backup exclude template file            /opt/sadmin/cfg/.backup_exclude.txt
+
+
+
+----------------------------------------------------------------------------------------------------
+7) Command Path set and use by SADMIN Python Library for more security.
+----------------------------------------------------------------------------------------------------
+[001] sa.cmd_dmidecode                    Cmd. 'dmidecode', Get model & type      /usr/sbin/dmidecode     
+[002] sa.cmd_bc                           Cmd. 'bc', Do some Math.                /usr/bin/bc             
+[003] sa.cmd_fdisk                        Cmd. 'fdisk', Get Partition Info        /usr/sbin/fdisk         
+[004] sa.cmd_which                        Cmd. 'which', Get Command location      /usr/bin/which          
+[005] sa.cmd_perl                         Cmd. 'perl', epoch time Calc.           /usr/bin/perl           
+[006] sa.cmd_mutt                         Cmd. 'mutt', Used to Send Email         /usr/bin/mutt           
+[007] sa.cmd_curl                         Cmd. 'curl', To send alert to Slack     /usr/bin/curl           
+[008] sa.cmd_lscpu                        Cmd. 'lscpu', Socket & thread info      /usr/bin/lscpu          
+[009] sa.cmd_nmon                         Cmd. 'nmon', Collect Perf Statistic     /usr/bin/nmon           
+[010] sa.cmd_parted                       Cmd. 'parted', Get Disk Real Size       /usr/sbin/parted        
+[011] sa.cmd_ethtool                      Cmd. 'ethtool', Get System IP Info      /usr/sbin/ethtool       
+[012] sa.cmd_rrdtool                      Cmd. 'rrdtool' to produce graph         /usr/bin/rrdtool        
+[013] sa.cmd_lsb_release                  Cmd. 'lsb_release' to get dist. info    /usr/bin/lsb_release    
+[014] sa.cmd_inxi                         Cmd. 'inxi' binary location             /usr/bin/inxi           
+[015] sa.cmd_ssh                          Cmd. 'ssh', SSH to SADMIN client        /usr/bin/ssh            
+ 
+==================================================
+Script exit code is 0 (Success) and execution time is 00:00:00
+History file $SADMIN/dat/rch/bilbo_sadmlib_std_demo.rch trim to 50 lines.
+Send alert only when it terminate with error.
+Log file $SADMIN/log/bilbo_sadmlib_std_demo.log trim to 500 lines.
+Tue 23 Jun 2026 07:22:50 - End of sadmlib_std_demo.py
+================================================================================
+ 
