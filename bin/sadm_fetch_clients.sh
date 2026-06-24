@@ -115,6 +115,7 @@
 #@2025_11_30 server v3.61 Added -X to delete PID file, then run script.
 #@2026_04_13 server v3.62 Change PID Time out to 600 seconds (10 Min) to prevent false lock.
 #@2026_04_27 server v3.63 Fix "sadm_vm" crontab, chamge the way it call the export script.
+#@2026_06_24 server v3.64.00 Was still creating entry in crontab, when 'VM export schedule' was 'no'.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT the ^C
@@ -145,7 +146,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAN USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.63'                                     # Script version number
+export SADM_VER='3.64.00'                                  # Script version number
 export SADM_PDESC="Collect scripts results & SysMon status from all systems and send alert if needed." 
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -1147,7 +1148,7 @@ update_rpt_file()
 # --------------------------------------------------------------------------------------------------
 # build_server_list()
 #
-# Build a system list of the O/S type (aix/linux,darwin) received in parameter.
+# Build a system list of the O/S type.
 #
 # Input Parameters :
 #   None
@@ -1259,6 +1260,7 @@ process_servers()
     create_crontab_files_header 
     if [ "$SADM_DEBUG" -gt 1 ] ; then sadm_write_log "Returning from create_crontab_file_header" ;fi 
 
+
     # Process each servers included in $SADM_TMP_FILE1 created previously by build_server_list()
     xcount=0; ERROR_COUNT=0; WARNING_COUNT=0                            # Initialize Counters 
     while read wline                                                    # Read Server Data from DB
@@ -1355,7 +1357,7 @@ process_servers()
         fi
         
 
-        # Check if system is lock 
+        # Check if system is lock, cosider it as a warning and process the next system.
         sadm_lock_status "$server_name"                                 # Check if system is locked 
         if [ $? -eq 1 ]                                                 #If system is lock
             then sadm_write_err WARNING ] System '$server_name' is locked, skipping it."
@@ -1379,25 +1381,25 @@ process_servers()
 
         SYSTEM_ONLINE="N"                                               # Default, system not online
         case $connectivity_rc in
-            0)  SYSTEM_ONLINE="Y"                                       # Able to connect to system
+            0)  SYSTEM_ONLINE="Y"                                       # Able to ssh to system
                 ;;
             1)  ((ERROR_COUNT++))                                       # Error, Can't connect
-                SYSTEM_ONLINE="N"                                       # Not able to connect 
+                SYSTEM_ONLINE="N"                                       # Not able to ssh to system 
                 sadm_write_log "Total error(s) is now $ERROR_COUNT"
-                #continue
+                continue
                 ;;
             2)  ((WARNING_COUNT++))                                     # Warn. sporadic,monitor off
-                SYSTEM_ONLINE="N"                                       # Not able to connect 
+                SYSTEM_ONLINE="N"                                       # Not able to ssh  
                 sadm_write_log "Total warning is now $WARNING_COUNT"
-                #continue
+                continue
                 ;;
-            *)  ((ERROR_COUNT++))                                       # Error, Can't connect
-                SYSTEM_ONLINE="N"                                       # Not able to connect 
+            *)  ((ERROR_COUNT++))                                       # Misc. Error, Can't ssh 
+                SYSTEM_ONLINE="N"                                       # Not able to ssh to system 
                 sadm_write_err "[ ERROR ] Host Connectivity RC unknown '$RC'."
                 ;;
         esac 
-        if [ "$connectivity_rc" -eq 1 ] ; then continue ; fi            # System Down, return back
-        if [ "$connectivity_rc" -eq 2 ] ; then continue ; fi            # Sporadic Sys,return back
+        #if [ "$connectivity_rc" -eq 1 ] ; then continue ; fi            # System Down, return back
+        #if [ "$connectivity_rc" -eq 2 ] ; then continue ; fi            # Sporadic Sys,return back
         
 
         # O/S UPDATE
@@ -1413,7 +1415,7 @@ process_servers()
         fi
 
         # REAR BACKUP 
-        # Generate Crontab Entry for this server in ReaR crontab work file
+        # Generate Crontab Entry for this server in ReaR crontab work file, if Shedule is active
         if [ $rear_auto -eq 1 ] && [ "$SYSTEM_ONLINE" = "Y" ]           # If Rear Backup set to Yes 
             then update_rear_crontab "$server_name" "${server_dir}/bin/$REAR_SCRIPT" "$rear_min" "$rear_hrs" "$rear_mth" "$rear_dom" "$rear_dow" "$ssh_port"
         fi
@@ -1422,7 +1424,7 @@ process_servers()
         # Generate Crontab Entry for this VirtualBox VM export, if it's a VM & schedule is active.
         # System Don't need to be UP to do an export of the VM, will stay down after export.
         # The SADMIN dir. on VM Host = $(grep anemone ./vm_list.txt |tail -1 |awk -F, '{print $3}' 
-        if [ "$server_vm" -eq 1 ]                                       # 1-Virtual System, 0=Hardw
+        if [ "$server_vm" -eq 1 ] && [ "$export_sched" -eq 1 ]          # 1-Virtual System, 0=Hardw
             then find $SADM_WWW_DAT_DIR -name "vm_list.txt" -exec cat {} \; > $SADM_TMP_FILE2
                  #sadm_write_log "VMHOST_SADMIN_DIR=grep '$export_host' $SADM_TMP_FILE2 |tail -1 |awk -F, '{print $3}"
                  VMHOST_SADMIN_DIR=$(grep "$export_host" $SADM_TMP_FILE2 |tail -1 |awk -F, '{print $3}')
@@ -2400,7 +2402,7 @@ main_process()
 {   
     PROCESS_ERROR=0                                                     # Init. Error count to 0
     
-    # Create an empty global rpt file $SADMIN/www/dat/HOSTNAME/rpt/HOSTNAME_fetch.rpt
+    # Create empty global fetch report file (.rpt) in $SADMIN/www/dat/HOSTNAME/rpt/HOSTNAME_fetch.rpt
     if [ -f "$FETCH_RPT_GLOBAL" ] ;then rm -f "$FETCH_RPT_GLOBAL" ;fi   # rm global RPT file if exist
     touch "$FETCH_RPT_GLOBAL"                                           # Create global RPT file
     chown "$SADM_WWW_USER:$SADM_GROUP"  "$FETCH_RPT_GLOBAL"  
@@ -2414,7 +2416,7 @@ main_process()
 
 
     # Process All Active Linux systems.
-    process_servers "linux"                                             # Process Active Linux
+    process_servers                                                     # Process Active Linux
     PROCESS_ERROR=$?                                                    # Save Nb. Errors in process
 
     # Print Total Scripts Errors
