@@ -342,7 +342,7 @@ function cmd_options()
                exit 0                                                   # Back to shell
                ;;
             X) /usr/bin/rm -f "${SADMIN}/tmp/${SADM_INST}.pid" >/dev/null 2>&1
-               printf "\n${BOLD}${BLINK}${YELLOW}The PID File ("${SADMIN}/tmp/${SADM_INST}.pid") is now removed.${NORMAL}\n" 
+               printf "\n${YELLOW}The PID File '${SADMIN}/tmp/${SADM_INST}.pid' is now removed.${NORMAL}\n" 
                ;;
            \?) printf "\nInvalid option: ${OPTARG}.\n"                  # Invalid Option Message
                show_usage                                               # Display Help Usage
