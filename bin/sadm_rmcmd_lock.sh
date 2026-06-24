@@ -275,7 +275,7 @@ rmcmd_start()
     fi 
 
 
-    # Construct the SQL to get info about remote system in Database
+    # Construct the SQL to get information about remote system in Database
     SQL1="SELECT srv_name, srv_domain, srv_sporadic, "
     SQL2="srv_active, srv_sadmin_dir, srv_ssh_port, srv_vm_host, srv_ostype "
     SQL3="from server where srv_name = '$REM_SERVER' and srv_active = True ;"       
@@ -300,16 +300,16 @@ rmcmd_start()
         do
         server_name=$(          echo $wline|awk -F\; '{ print $1 }')    # Extract system host name
         server_domain=$(        echo $wline|awk -F\; '{ print $2 }')    # Extract system domain
-        server_sporadic=$(      echo $wline|awk -F\; '{ print $3 }')
+        server_sporadic=$(      echo $wline|awk -F\; '{ print $3 }')    # Extract if Sporadic system
         server_sadmin_dir=$(    echo $wline|awk -F\; '{ print $5 }')    # Extract $SADMIN on remote
         server_ssh_port=$(      echo $wline|awk -F\; '{ print $6 }')    # Extract SSH port of remote
-        server_vm_host=$(       echo $wline|awk -F\; '{ print $7 }')    # Extract SSH port of remote
+        server_vm_host=$(       echo $wline|awk -F\; '{ print $7 }')    # System Hosting the VM
         server_ostype=$(        echo $wline|awk -F\; '{ print $8 }')    # LINUX,AIX,DARWIN,SUNOS
         fqdn_server=$(echo $server_name.$server_domain)                 # Create FQN System Name
 
         # Determine the server name used to create the lock file.
-        #  - If cmdline '-l' system name specified, use that name to create the lock file.
-        #  - If cmdline '-l' IS NOT USE, system name specified by the (-n) is use in lock file name.
+        #  - If cmdline '-l' system name specified, use that name used to create the lock file.
+        #  - If cmdline '-l' IS NOT USE, system name specified by the (-n) is used in lock file name
         if [ "$REM_LOCK" = "Y" ]                                        # When cmdline '-l' used
            then LOCK_FILENAME="$REM_LOCK_SYSTEM"                        # Used '-l' system to lock
            else LOCK_FILENAME="$REM_SERVER"                             # Used '-n' system to lock
@@ -317,12 +317,8 @@ rmcmd_start()
 
 
         # Ping the remote system - Test if it is alive
-        ping -c2 -W2 $REM_SERVER >> /dev/null 2>&1                      # Ping 2 times,timeout 2 Sec
-        if [ $? -ne 0 ]
-            then sadm_write_err "[ ERROR ] System '$REM_SERVER' don't respond to ping."
-                 return 1                                              
-            else sadm_write_log "[ OK ] Remote system '$REM_SERVER' is alive."
-        fi
+        sadm_ping $REM_SERVER >> /dev/null 2>&1                         # Ping 2 times,timeout 2 Sec
+        if [ $? -ne 0 ] ; then return 1 ; fi                            # Return error to caller
 
 
         # Lock the remote system while the script is executed (-l) 
@@ -332,8 +328,8 @@ rmcmd_start()
                 return 1
         fi
         
-        # Get reason of the lock (in the lock file) and update sherlock_rmcmd_lock.rpt 
-        RPT_MSG="$(sadm_show_lock "$LOCK_FILENAME")"                    # Get the lock file content  
+        # Get reason of the lock (in the lock file) and update hostname_rmcmd_lock.rpt 
+        RPT_MSG="$(sadm_show_lock "$LOCK_FILENAME")"                    # Show lock file content  
         RPT_OS="$server_ostype"                                         # Get the O/S type of remote
 
         # Update SADMIN server Global RPT File.
