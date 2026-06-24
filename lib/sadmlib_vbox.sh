@@ -631,37 +631,36 @@ sadm_backup_vm()
 #   sadm_export_vm "$VMNAME"
 #
 ### Description:
-#   Do an export of the specified VM on the NFS server mentionned in $SADMIN/cfg/sadmin.cfg
-#   
+#   Do an export of the specified VM on the NFS server info in in $SADMIN/cfg/sadmin.cfg
+#       SADM_VM_EXPORT_NFS_SERVER           = batnas.maison.ca
+#       SADM_VM_EXPORT_NFS_SERVER_VER       = 3 
+#       SADM_VM_EXPORT_MOUNT_POINT          = /volume1/backup/backup_vm/virtualbox_exports
+#       SADM_VM_EXPORT_TO_KEEP              = 2
+# 
 ### Arguments: 
 #   String:     The name of the VM to export.
 #
 ### Return: 
-#   Integer: #  1 = Error producing the export of the VM.
-#               0 = The export was produced successfully 
+#   Integer: #  0 = The export was produced successfully 
+#               1 = Error producing the export of the VM.
+#               
 #
 ### Example: 
 # ```bash
 #    sadm_export_vm "$VMNAME"
 #    if [ $? -eq 0 ] ; then echo "Success" ; else echo "Failed" ; fi 
 #```
-
+#
 #"""
 # 
 #===================================================================================================
 sadm_export_vm()
 {
     VM="$1"                                                             # Name of VM to export 
-    export MOUNT_POINT="/mnt/export_${VM}.$$"                           # Name of NFS mount point
-
-    EXPORT_DIR="${MOUNT_POINT}/${VM}"                                   # VM Export Directory
-    EXP_CUR_PWD=$(pwd)                                                  # Save Current Working Dir.
-    EXPDIR="${MOUNT_POINT}/${VM}/$(date "+%C%y_%m_%d")"                 # Today Export Directory
-    EXPOVA="${EXPDIR}/${VM}_$(date +%Y_%m_%d_%H_%M_%S).ova"             # Export OVA File Name
 
     # Check if the VM exist
-    sadm_vm_exist "$VM"                                                 # Does the VM exist ?                                 
-    if [ $? -ne 0 ]                                                     
+    sadm_vm_exist "$VM"                                                 # Go Check in VBox if exist
+    if [ $? -ne 0 ]                                                     # Does the VM exist ?    
        then sadm_write_err "[ ERROR ] The VM '$VM' doesn't exist in Virtual Box on '$SADM_HOSTNAME'."
             return 1                                                    # Return Error to Caller
     fi    
@@ -673,6 +672,11 @@ sadm_export_vm()
              return 1                                                   # Return Error to caller
     fi 
 
+    export MOUNT_POINT="/mnt/export_${VM}.$$"                           # Name of NFS mount point
+    EXPORT_DIR="${MOUNT_POINT}/${VM}"                                   # VM Export Directory
+    EXP_CUR_PWD=$(pwd)                                                  # Save Current Working Dir.
+    EXPDIR="${MOUNT_POINT}/${VM}/$(date "+%C%y_%m_%d")"                 # Today Export Directory
+    EXPOVA="${EXPDIR}/${VM}_$(date +%Y_%m_%d_%H_%M_%S).ova"             # Export OVA File Name
 
     # If VM is running then shutdown the VM and save the current state (Running or Power Off)
     sadm_vm_running "$VM"                                               # Check if it is running
@@ -725,7 +729,7 @@ sadm_export_vm()
                 then sadm_write_err "[ ERROR ] Wasn't able to create directory '$EXPDIR'."
                      sudo umount ${MOUNT_POINT} >>$SADM_LOG 2>&1        # Mkae sure unlock
                      sadm_unlock_system "$VM"                           # Go remove the lock file
-                     return 1                                           Return error to caller
+                     return 1                                           # Return error to caller
                 else sadm_write_log "[ OK ] New export directory is created '$EXPDIR'."
              fi 
     fi       
@@ -761,7 +765,7 @@ sadm_export_vm()
 
 
     # Delete old exports, according to the number of export to keep.
-    sadm_vm_export_housekeeping "$VM" "${MOUNT_POINT}/${VM}"                # VMName & Dir. to Purge
+    sadm_vm_export_housekeeping "$VM" "${MOUNT_POINT}/${VM}"            # VMName & Dir. to Purge
     if [ "$?" -ne 0 ]                                                   # If Error during mount 
         then sadm_write_log " "
              sadm_write_err "[ ERROR ] Some error occurred while doing the export cleanup."      

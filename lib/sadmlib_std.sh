@@ -929,7 +929,6 @@ sadm_ping()
     if [ $RC -ne 0 ]                                                    # Ping did not work
         then if [ "$SADM_QUIET" = "N" ]                                 # If Quiest mode is OFF
                 then sadm_write_err "[ ERROR ] No.$RC - System '$WSERVER' doesn't respond to ping."
-                     sadm_write_err "[ ERROR ] Can't Ping the NFS Server ${WSERVER}"
              fi                                                         # Then show user error msg.
              RC=1                                                       # Return error to caller
         else if [ "$SADM_QUIET" = "N" ] 
@@ -3063,7 +3062,7 @@ sadm_sendmail() {
 # --------------------------------------------------------------------------------------------------
 sadm_lock_system()
 {    
-    ERROR_COUNT=0                                                   # Default Error Count
+    ERROR_COUNT=0                                                       # Default Error Count
     if [ $# -lt 1 ] || [ $# -gt 2 ] 
         then sadm_write_err "[ ERROR ] Function '$FUNCNAME' invalid number of argument."
              sadm_write_err "Should be 1 or 2 but we received $# : $* " # Show what received
@@ -3074,17 +3073,15 @@ sadm_lock_system()
     SNAME="$1"                                                          # Name of system to lock
     if [ $# -eq 2 ]                                                     # Second parameter specified
         then SCRIPT_NAME="$2"                                           # Desc. or Remote ScriptName
-             LOCK_MESS="System '$SNAME' lock: '"${SCRIPT_NAME/$SADMIN\/bin\//}"'" 
+             LOCK_MESS="System '$SNAME' lock by '"${SCRIPT_NAME/$SADMIN\/bin\//}"'" 
         else SCRIPT_NAME="$SADM_INST"                                   # Use current script name
-             LOCK_MESS="Lock system '${SNAME}' while '$SADM_INST' is running"
+             LOCK_MESS="Lock system '$SNAME' while '$SADM_INST' is running."
     fi 
-    LOCK_FILE="${SADM_BASE_DIR}/${SNAME}.lock"                          # System Lock file name
-    RC=0                                                                # Default Return Code
-    ERROR_COUNT=0                                                       # Default Error Count
 
     # Refuse to lock if already lock or create the system lock file
-    if [ -f "$LOCK_FILE" ]
-        then sadm_write_log "[ ERROR ] System '$SNAME' is already lock by another script."
+    LOCK_FILE="${SADM_BASE_DIR}/${SNAME}.lock"                          # System Lock file name
+    if [ -f "$LOCK_FILE" ]                                              # If lock file present
+        then sadm_write_log "[ ERROR ] System '$SNAME' is already lock."
              sadm_write_log "  - Lock file already exist '$LOCK_FILE'."
              sadm_write_log "  - Lock file content : $(sadm_show_lock "$SNAME")."
              return 1
@@ -3100,30 +3097,6 @@ sadm_lock_system()
              chmod 0664 "$LOCK_FILE" 
     fi
 
-
-
-#    # Create RPT line to inform user that the system is lock
-#    RPT_OS="$(sadm_get_ostype)"                                         # Get the O/S type of remote
-#    RPT_DATE=$(date "+%Y.%m.%d")                                        # Report Date in YYYY.MM.DD                              
-#    RPT_TIME=$(date "+%H:%M:%S")                                        # Report Time in HH:MM
-#    RPTLINE="Info;${SNAME};${RPT_DATE};${RPT_TIME};${RPT_OSNAME}"       # Build Report Line
-#    RPTLINE="${RPTLINE};"SCRIPT";${LOCK_MESS};${SADM_WARNING_GROUP};${SADM_INFO_GROUP};"  
-#
-#    # Update the Local & Global (www) RPT files.
-#    RPT_LOCAL="${SADM_RPT_DIR}/${SNAME}_${SADM_INST}.rpt"               # SADMIN Server Local RPT
-#    echo "$RPTLINE" > "$RPT_LOCAL"                                      # Local $SADMIN/dat/rpt rpt
-#    if [ $? -ne 0 ]                                                     # Error writing to file
-#       then sadm_write_err "[ ERROR ] Couldn't write description to '$RPT_LOCAL'."
-#            SADM_EXIT_CODE=1                                        # Return Error to caller
-#    fi
-#
-#    RPT_GLOBAL="${SADM_WWW_RPT_DIR}/${SNAME}_${SADM_INST}.rpt" 
-#    echo "$RPTLINE" > "$RPT_GLOBAL"                                    # $SADMIN/www/dat/hostname/rpt
-#    if [ $? -ne 0 ]                                            # Error while writing to file
-#       then sadm_write_err "[ ERROR ] Couldn't write description to '$RPT_GLOBAL'."
-#            SADM_EXIT_CODE=1                                        # Return Error to caller
-#    fi
-#
     return $SADM_EXIT_CODE
 } 
 
@@ -3206,7 +3179,7 @@ sadm_unlock_system() {
                 else sadm_write_err "[ ERROR ] Unlocking '${SNAME}' - Can't remove '${LOCK_FILE}'" 
                      return 1                                            # Set Return Value (Error)
              fi
-        else sadm_write_log "[ OK ] System '$SNAME' unlock (wasn't lock)."
+        else sadm_write_log "[ OK ] System '$SNAME' unlocked (wasn't lock)."
     fi 
 
 
@@ -3264,6 +3237,55 @@ sadm_lock_status() {
     fi 
     return $RC                                                            # Return no lockfile
 }  
+
+
+# --------------------------------------------------------------------------------------------------
+#
+# sadm_upd_rpt(hostname,rpt_file)
+#
+#   String=$(sadm_show_lock "hostname") 
+#
+# Show the content of the system lock file for the received system name.
+#
+# Input Parameter :
+#   1) Name of the system locked.
+#
+# Return Value : 
+#  The content of the log file is echo to standard output
+#   0) Show system Lock file content was successfully
+#   1) Lock file is not present or could not be shown.
+# --------------------------------------------------------------------------------------------------
+sadm_upd_rpt()
+{
+
+
+
+#    # Create RPT line to inform user that the system is lock
+#    RPT_OS="$(sadm_get_ostype)"                                        # Get the O/S type of remote
+#    RPT_DATE=$(date "+%Y.%m.%d")                                       # Report Date in YYYY.MM.DD                              
+#    RPT_TIME=$(date "+%H:%M:%S")                                       # Report Time in HH:MM
+#    RPTLINE="Info;${SNAME};${RPT_DATE};${RPT_TIME};${RPT_OSNAME}"      # Build Report Line
+#    RPTLINE="${RPTLINE};"SCRIPT";${LOCK_MESS};${SADM_WARNING_GROUP};${SADM_INFO_GROUP};"  
+#
+#    # Update the Local & Global (www) RPT files.
+#    RPT_LOCAL="${SADM_RPT_DIR}/${SNAME}_${SADM_INST}.rpt"              # SADMIN Server Local RPT
+#    echo "$RPTLINE" > "$RPT_LOCAL"                                     # Local $SADMIN/dat/rpt rpt
+#    if [ $? -ne 0 ]                                                    # Error writing to file
+#       then sadm_write_err "[ ERROR ] Couldn't write description to '$RPT_LOCAL'."
+#            SADM_EXIT_CODE=1                                           # Return Error to caller
+#    fi
+#
+#    RPT_GLOBAL="${SADM_WWW_RPT_DIR}/${SNAME}_${SADM_INST}.rpt" 
+#    echo "$RPTLINE" > "$RPT_GLOBAL"                                    # $SADMIN/www/dat/hostname/rpt
+#    if [ $? -ne 0 ]                                                    # Error while writing to file
+#       then sadm_write_err "[ ERROR ] Couldn't write description to '$RPT_GLOBAL'."
+#            SADM_EXIT_CODE=1                                        # Return Error to caller
+#    fi
+#
+    return 0 
+
+}
+
 
 
 
