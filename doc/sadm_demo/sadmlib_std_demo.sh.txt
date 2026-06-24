@@ -1,5 +1,5 @@
 ================================================================================
-Sun 21 Jun 2026 11:04:00 - sadmlib_std_demo.sh v3.30 - Library v4.90.3
+Tue 23 Jun 2026 07:22:51 - sadmlib_std_demo.sh v3.30 - Library v4.90.3
 Desc: Demonstrate functions & variables available to developers using SADMIN Tools
 bilbo - User: root - Umask : 0022 - Arch: x86_64
 Fedora Linux v43 - Kernel 7.0.12-101.fc43.x86_64 - SADMIN(C): /opt/sadmin
@@ -14,7 +14,7 @@ User Var. that affect SADMIN behavior  Description                           Thi
 [002] $SADM_PN                         Script Name                         : sadmlib_std_demo.sh            
 [003] $SADM_INST                       Script Name Without Extension       : sadmlib_std_demo               
 [004] $SADM_USERNAME                   Current User Name                   : root                           
-[005] $SADM_TPID                       Current Process ID                  : 151050                         
+[005] $SADM_TPID                       Current Process ID                  : 344822                         
 [006] $SADM_MULTIPLE_EXEC              Allow running multiple copy [Y/N]   : Y                              
 [007] $SADM_USE_RCH                    Generate entry in '*.rch' file      : N                              
 [008] $SADM_LOG_TYPE                   Set Output to [S]creen [L]og [B]oth : B                              
@@ -42,10 +42,10 @@ Calling Functions                      Description                           Thi
 [012] $(sadm_get_domainname)           Current Host Domain Name            : maison.ca                      
 [013] $(sadm_get_fqdn)                 Fully Qualified Domain Host Name    : bilbo                          
 [014] $(sadm_server_serial)            Server serial number (Ex: 4S7GYF1)  : E537F839                       
-[015] $(sadm_get_epoch_time)           Get Current Epoch Time              : 1782054240                     
-[016] $(sadm_epoch_to_date 1782054240) Convert epoch time to date          : 2026.06.21 11:04:00            
-      WDATE='2026.06.21 11:04:00'
-[017] $(sadm_date_to_epoch "$WDATE")   Convert Date to epoch time          : 1782054240                     
+[015] $(sadm_get_epoch_time)           Get Current Epoch Time              : 1782213772                     
+[016] $(sadm_epoch_to_date 1782213772) Convert epoch time to date          : 2026.06.23 07:22:52            
+      WDATE='2026.06.23 07:22:52'
+[017] $(sadm_date_to_epoch "$WDATE")   Convert Date to epoch time          : 1782213772                     
       DATE1='2016.01.30 10:00:44'
       DATE2='2016.01.30 10:00:03'
 [018] $(sadm_elapse "$DATE1" "$DATE2") Elapse Time between two timestamps  : 00:00:41                       
@@ -75,9 +75,9 @@ FUNCTIONS AVAIl. ONLY IN BASH LIBRARY  Description                           Thi
 [008] $(sadm_server_core_per_socket)   Number of Core per Socket           : 2                              
 [009] $(sadm_server_thread_per_core)   Number of Thread per Core           : 2                              
 [010] $(sadm_server_cpu_speed)         Server CPU Speed in MHz             : 3000                           
-[011] $(sadm_server_disks)             Disks list(MB) (DISKNAME|SIZE,...)  : nvme0n1|524288                 
+[011] $(sadm_server_disks)             Disks list(MB) (DISKNAME|SIZE,...)  : sdb|1024000,nvme0n1|524288     
 [012] $(sadm_server_vg)                VG list(MB) (VGNAME|SIZE|USED|FREE) : No VG                          
-[013] $(sadm_server_ips)               Network IP(Name|IP|Netmask|MAC)     : enp0s31f6|192.168.1.23|255.255.255.0|54:e1:ad:75:8e:0e,wlp4s0|192.168.1.22|255.255.255.0|b6:4a:99:49:bb:bf,virbr0|192.168.124.1|255.255.255.0|52:54:00:0c:03:dd
+[013] $(sadm_server_ips)               Network IP(Name|IP|Netmask|MAC)     : enp0s31f6|192.168.1.23|255.255.255.0|54:e1:ad:75:8e:0e,virbr0|192.168.124.1|255.255.255.0|52:54:00:0c:03:dd
 [014] sadm_toupper string              Return string uppercase             : STRING                         
 [015] sadm_tolower STRING              Return string lowercase             : string                         
 [016] sadm_capitalize STRING           Return string capitalize            : String                         
@@ -95,7 +95,7 @@ Overview of the 'sa.start' and 'sa.stop' functions in Bash Library.             
 
   Here is a summary of the different things it does :
     1) Make sure all $SADMIN directories & sub-dir. exist and have proper permissions.
-    2) If $SADN_LOG_APPEND='N', create new log & error log, else append to actual log.
+    2) If $SADM_LOG_APPEND='N', create new log & error log, else append to actual log.
     3) If $SADM_LOG_HEADER='Y', write the log header.
     4) if $SADM_ROOT_ONLY='Y', and current user is not root, show error message and exit(1).
     5) If $SADM_SERVER_ONLY='Y', and not on the SADMIN server, show error message and exit(1).
@@ -248,9 +248,9 @@ SADMIN FILES VARIABLES AVAIL.          Description                           Thi
 [005] $SADM_ALERT_INIT                 SADMIN Initial Alert Group File     : /opt/sadmin/cfg/.alert_group.cfg
 [006] $SADM_ALERT_HIST                 SADMIN Alert History File           : /opt/sadmin/cfg/alert_history.txt
 [007] $SADM_ALERT_HINI                 SADMIN Initial Alert History File   : /opt/sadmin/cfg/.alert_history.txt
-[008] $SADM_TMP_FILE1                  User usable Temp Work File 1        : /opt/sadmin/tmp/sadmlib_std_demo1_Xdb
-[009] $SADM_TMP_FILE2                  User usable Temp Work File 2        : /opt/sadmin/tmp/sadmlib_std_demo2_Cn9
-[010] $SADM_TMP_FILE3                  User usable Temp Work File 3        : /opt/sadmin/tmp/sadmlib_std_demo3_8JV
+[008] $SADM_TMP_FILE1                  User usable Temp Work File 1        : /opt/sadmin/tmp/sadmlib_std_demo1_FMj
+[009] $SADM_TMP_FILE2                  User usable Temp Work File 2        : /opt/sadmin/tmp/sadmlib_std_demo2_fnt
+[010] $SADM_TMP_FILE3                  User usable Temp Work File 3        : /opt/sadmin/tmp/sadmlib_std_demo3_RJi
 [011] $SADM_LOG                        Script Log File                     : /opt/sadmin/log/bilbo_sadmlib_std_demo.log
 [012] $SADM_RCH_FILE                   Script Return Code History File     : /opt/sadmin/dat/rch/bilbo_sadmlib_std_demo.rch
 [013] $DBPASSFILE                      SADMIN Database User Password File  : *Hidden*                       
@@ -288,7 +288,7 @@ Script exit code is 0 (Success) and execution time was 00:00:02.
 Script is set to only send an alert when it terminate with error.
 Script succeeded, no alert will be send ($SADM_ALERT_TYPE=1).
 New log created '$SADMIN/log/bilbo_sadmlib_std_demo.log'.
-End of sadmlib_std_demo.sh - Sun 21 Jun 2026 11:04:02 AM EDT
+End of sadmlib_std_demo.sh - Tue 23 Jun 2026 07:22:53 AM EDT
 ================================================================================
  
  

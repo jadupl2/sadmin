@@ -950,7 +950,6 @@ sadm_ping()
 #
 sadm_abort()
 {
-    # Call stop(1) ? if start() was executed before ?
     sadm_write_err "[ ERROR ] Aborting execution of script '${SADM_PN}'."
     exit 1
 
