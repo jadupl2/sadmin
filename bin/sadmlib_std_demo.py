@@ -65,7 +65,7 @@
 #
 try :
     import os, time, sys, pdb, socket, pdb, datetime, glob, argparse, pymysql, platform
-    from email_validator import validate_email, EmailNotValidError
+    #from email_validator import validate_email EmailNotValidError
 
 except ImportError as e:                                            
     print ("Import Error : %s " % e)
