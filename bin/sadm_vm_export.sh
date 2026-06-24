@@ -34,6 +34,7 @@
 #@2024_10_31 vmtools v2.3 Fix some minor issues and command line option.
 #@2024_11_26 vmtools v2.4 If system is lock, then export of the VM is not allowed.
 #@2026_04_27 vmtools v2.5 Minor code change.
+#@2026_06_24 vmtools v2.6 Minor code optimization.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -81,7 +82,7 @@ export SADM_PN="${SADM_INST}.${SADM_EXT}"                  # Script name(with ex
 # ---**********************
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.4'                                      # Script version number
+export SADM_VER='2.6'                                      # Script version number
 export SADM_PDESC="Export one virtual machine to a NFS Server."      
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -147,7 +148,6 @@ show_usage()
 main_process()
 {
     sadm_write_log "Starting the export process of virtual system '$VMNAME'."  
-    #sadm_write_log " "
     sadm_export_vm "$VMNAME"                                            # Export function in Library
     if [ $? -eq 0 ] ; then SADM_EXIT_CODE=0 ; else SADM_EXIT_CODE=1 ;fi # Check Status of export
     sadm_list_vm_status                                                 # List Status of ALL VM Libr
@@ -202,15 +202,6 @@ function cmd_options()
 # MAIN CODE START HERE
 #===================================================================================================
     cmd_options "$@"                                                    # Check command-line Options
-    
-    # Validate if the VM name is present in Virtual Box Manager
-    sadm_vm_exist "$VMNAME"                                             # Does the VM exist $1 ? 
-    if [ $? -ne 0 ]                                                     # If VM does not exist                  
-       then printf "\n[ ERROR ] The virtual machine '$VMNAME' is not registered in VirtualBox.\n"
-            exit 1                                                      # Exit script
-    fi 
-
-
     sadm_start                                                          # Create Dir.,PID,log,rch
     main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
