@@ -1,4 +1,4 @@
-     1	SADM_HOST_TYPE = C
+     1	SADM_HOST_TYPE = S
      2	SADM_CIE_NAME = The Batcave
      3	SADM_MAIL_ADDR = brucetalbot95@gmail.com
      4	SADM_SMTP_SERVER = smtp.gmail.com
