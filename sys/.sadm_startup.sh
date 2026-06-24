@@ -43,6 +43,7 @@
 #@2024_09_12 startup/shutdown v3.22 Change default script description 'SADM_PDESC'.
 #@2025_03_25 startup/shutdown v3.23 Change format of Power ON email to sysadmin.
 #@2026_03_06 startup/shutdown v3.24 Correct typo when an error occur.
+#@2026_06_24 startup/shutdown v3.25 now include removal of any .rpt file in $SADMIN/dat/rpt.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x 
@@ -74,7 +75,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.24'                                     # Script version number
+export SADM_VER='3.25'                                     # Script version number
 export SADM_PDESC="Run when the system is started (via sadmin.service)." 
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -155,7 +156,8 @@ normal_startup()
     
     sadm_write_log "  - Remove SADMIN tools system lock file ("${SADMIN}/${SADM_HOSTNAME}.lock")."
     rm -f "${SADMIN}/${SADM_HOSTNAME}.lock" >> $SADM_LOG 2>>$SADM_ELOG
-
+    sadm_write_log "  - Remove any '*.rpt' left in '$SADM_RPT_DIR'."
+    rm -f "$SADM_RPT_DIR}/*.rpt" >> $SADM_LOG 2>>$SADM_ELOG
     sadm_write_log "  - Removing temporary files in '$SADMIN/tmp' directory."
     rm -f ${SADMIN}/tmp/*  >> $SADM_LOG 2>&1
 
