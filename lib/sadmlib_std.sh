@@ -270,6 +270,7 @@
 #@2026_06_01 lib v4.90.1 Added "chmod 0775 $SADMIN".
 #@2026_06_03 lib v4.90.2 Intro. of "SADM_QUIET" var. to ctrl the display of error msg in functions.
 #@2026_06_08 lib v4.90.3 Don't remove the mount point Dir. after the unmount in 'sadm_nfs_unmount()'.
+#@2026_06_26 lib v4.90.4 Add Variable SADM_ERRMSG & SADM_ERRNO
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -280,7 +281,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.90.3"                                            # This Library Version
+export SADM_LIB_VER="4.90.4"                                            # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -294,7 +295,8 @@ export SADMGRP_ONLY='N'                                     # Run only if user i
 # Y = Function will not show error msg, but will return error code (0or1) to caller.
 # N = Function will show error msg and return error code (0or1) to caller.
 export SADM_QUIET="N"
-
+export SADM_ERRMSG=""                                                   # Error Message if any
+export SADM_ERRNO=0                                                     # Error number (0=OK)
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 export SADM_BASE_DIR=${SADMIN:="/opt/sadmin"}                           # Script Root Base Dir.
@@ -739,9 +741,9 @@ sadm_write_log()
 sadm_write_err() {
     SADM_SMSG="$1"                                                      # Screen Mess no Date/Time
     sadm_write_log "$SADM_SMSG"                                         # Go write normal Scr/log
-    ERRMSG="$(date "+%C%y.%m.%d %H:%M:%S") $SADM_SMSG"                  # Prefix Msg by Date & Time
+    SADM_ERRMSG="$(date "+%C%y.%m.%d %H:%M:%S") $SADM_SMSG"                  # Prefix Msg by Date & Time
     case "$SADM_LOG_TYPE" in                                            # Depending of LOG_TYPE
-                l|L|b|B) echo "$ERRMSG" >> $SADM_ELOG                   # Write Msg to Error Log 
+                l|L|b|B) echo "$SADM_ERRMSG" >> $SADM_ELOG                   # Write Msg to Error Log 
                          ;;
     esac
 }
@@ -769,17 +771,19 @@ sadm_write_dbg() {
 #    NFS_SERVER="$1"                              # NFS Server name or IP
 #    NFS_DIR="$2"                                 # NFS Directory to mount
 #    NFS_MOUNT_POINT="$3"                         # Local dir. to create & use to mount nfs
-#    NFS_MOUNT_OPTIONS=$4                         # Optional NFS Mount option (-o)
+#    NFS_MOUNT_OPTIONS=$4                         # Optional NFS Mount option (-o) like 'vers=3'.
 # --------------------------------------------------------------------------------------------------
 sadm_nfs_mount()
 {
     # Validate number of parameters received (3 or 4)
     if [ $# -lt 3 ]                                                     # Less than 3 Parameter ? 
         then if [ "$SADM_QUIET" == "N" ]                                # If not in quiet mode
-                then sadm_write_err "[ ERROR ] $FUNCNAME - Nb. of parameter should be '3' or '4', mot '$#'."
+                then SADM_ERRMSG="[ ERROR ] $FUNCNAME - Nb. of parameter should be '3' or '4', not '$#'."
+                     sadm_write_err "$SADM_ERRMSG"
                      sadm_write_err "  - Parameters received are '$@'."
                      sadm_write_err "  - 'nfs_server' 'nfs_dir' 'local mount point'  'vers=3' (optional)"
-             fi 
+             fi
+             SADM_ERRNO=1
              return 1                                                   # Error back to caller 
     fi 
 
@@ -791,18 +795,21 @@ sadm_nfs_mount()
     if [ $# -gt 3 ] ; then NFS_MOUNT_OPTIONS="$4" ; fi                  # NFS Mount option Specified
   
     # Verify existence of mount point directory, if don't exist create it. 
-    umount  "$NFS_MOUNT_POINT" > /dev/null 2>&1                         # Make sure it's not mounted 
+    umount  "$NFS_MOUNT_POINT" > /dev/null 2>&1                         # In case of re-run.
     if [ ! -d "$NFS_MOUNT_POINT" ]                                      # If mount point not exist
         then sudo mkdir -p "$NFS_MOUNT_POINT" >> $SADM_LOG 2>&1         # Create Dir mount point
              if [ $? -ne 0 ]                                            # Problem creating dir
                 then if [ "$SADM_QUIET" = "N" ]                         # User want message
-                        then errmsg="[ ERROR ] Can't create NFS mount point '$NFS_MOUNT_POINT'." 
-                             sadm_write_err "$errmsg"
+                        then SADM_ERRMSG="[ ERROR ] Can't create NFS mount point '$NFS_MOUNT_POINT'." 
+                             sadm_write_err "$SADM_ERRMSG"
                      fi 
+                     SADM_ERRNO=1
                      return 1 
              fi
     fi
-    if [ "$SADM_QUIET" = "N" ] ;then sadm_write_log "[ OK ] NFS mount point '$NFS_MOUNT_POINT' created." ; fi
+    if [ "$SADM_QUIET" = "N" ]                                          # User don't want Libr. msg
+        then sadm_write_log "[ OK ] NFS mount point '$NFS_MOUNT_POINT' exist." 
+    fi
 
     # Mount the NFS Directory (With and Without options)
     if [ "$NFS_MOUNT_OPTIONS" = "" ] 
@@ -811,10 +818,12 @@ sadm_nfs_mount()
     fi 
     eval "$CMD" >>$SADM_LOG 2>&1
     if [ $? -ne 0 ]                                                     # Problem Mounting NFS Dir.
-        then if [ "$SADM_QUIET" = "N" ] 
-                then sadm_write_err "[ ERROR ] Doing $CMD"              # Show command that failed.
+        then ERRMSG="[ ERROR ] Doing $CMD"                              # Show command that failed.
+             if [ "$SADM_QUIET" = "N" ] 
+                then sadm_write_err "$ERRMSG"                           # Show command that failed.
              fi 
              umount "$NFS_MOUNT_POINT" > /dev/null 2>&1                 # Ensure mount point unmount
+             SADM_ERRNO=1                                               # Set Return Error No.
              return 1
     fi 
 
@@ -841,18 +850,22 @@ sadm_nfs_unmount()
 {
     # Validate number of parameter (1)
     if [ $# -ne 1 ] 
-        then sadm_write_err "[ ERROR ] In $FUNCNAME - Number of parameter expected is 1 and is $#."
+        then SADM_ERRMSG="[ ERROR ] In $FUNCNAME - Number of parameter expected is 1 and is $#."
+             sadm_write_err "$SADM_ERRMSG" 
              sadm_write_err "  - Received : '$@'"
              sadm_write_err "  - Example:   \"sadm_nfs_unmount 'local mount point'\""
+             SADM_ERRNO=1                                               # Set error no.
              return 1                                                   # Error back to caller 
     fi 
     NFS_MOUNT_POINT="$1"                                                # Local dir. to unmount
 
     # Verify existence of directory mount point
     if [ ! -d "$NFS_MOUNT_POINT" ]                                      # Mount point not there
-        then if [ "$SADM_QUIET" = "N" ] 
-                then sadm_write_err "[ ERROR ] NFS mount point '$NFS_MOUNT_POINT' doesn't exist." 
+        then SADM_ERRMSG="[ ERROR ] NFS mount point '$NFS_MOUNT_POINT' doesn't exist." 
+             if [ "$SADM_QUIET" = "N" ] 
+                then sadm_write_err "$SADM_ERRMSG"
              fi 
+             SADM_ERRNO=1                                               # Set error no.
              return 1                                                   # Return error to caller
     fi 
 
@@ -863,9 +876,11 @@ sadm_nfs_unmount()
         then if [ "$SADM_QUIET" = "N" ] 
                 then sadm_write_log "[ OK ] Unmount of '$NFS_MOUNT_POINT' succeeded." 
                 fi 
-        else if [ "$SADM_QUIET" = "N" ] 
-                then sadm_write_err "[ ERROR ] Unmount of '$NFS_MOUNT_POINT' failed." 
+        else SADM_ERRMSG="[ ERROR ] Unmount of '$NFS_MOUNT_POINT' failed."
+             if [ "$SADM_QUIET" = "N" ] 
+                then sadm_write_err "$SADM_ERRMSG" 
              fi 
+             SADM_ERRNO=1                                               # Set error no.
              return 1                                                   # Return error to caller
     fi
     cd "$xpwd"                                                          # Back to previous dir.
@@ -879,6 +894,7 @@ sadm_nfs_unmount()
     #         fi 
     #fi 
 
+    SADM_ERRNO=0                                                        # Set error no.
     return 0 
 } 
 
@@ -987,8 +1003,10 @@ sadm_trimfile() {
     wfile=$1 ; maxline=$2                                               # Save FileName & Trim Num.
     wreturn_code=0                                                      # Default Return Code 
     if [ $# -ne 2 ]                                                     # Should have rcv 1 Param
-        then sadm_write_err "${FUNCNAME}: Should receive 2 Parameters"  # Show User Info on Error
+        then SADM_ERRMSG΅"${FUNCNAME}: Should receive 2 Parameters"  # Show User Info on Err
+             sadm_write_err "$SADM_ERRMSG"
              sadm_write_err "Have received $# parameters ($*)"          # Advise User to Correct
+             SADM_ERRNO=1                                               # Set Error number
              return 1                                                   # Return Error to Caller
     fi
 
