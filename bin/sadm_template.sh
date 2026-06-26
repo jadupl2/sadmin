@@ -81,9 +81,9 @@ export SADM_USE_RCH="Y"                                    # Update RCH History 
 export SADM_USE_DB="N"                                     # Use SADMIN Database (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
-export SADM_TMP_FILE1=$(mktemp -q "$SADMIN/tmp/${SADM_INST}1_XXX") # WorkFile, remove by sadm_stop()
-export SADM_TMP_FILE2=$(mktemp -q "$SADMIN/tmp/${SADM_INST}2_XXX") # WorkFile, remove by sadm_stop()
-export SADM_TMP_FILE3=$(mktemp -q "$SADMIN/tmp/${SADM_INST}3_XXX") # WorkFile, remove by sadm_stop()
+export SADM_TMP_FILE1=$(mktemp -q "$SADMIN/tmp/${SADM_INST}1_XXX") # Make tmpfile,del in sadm_stop()
+export SADM_TMP_FILE2=$(mktemp -q "$SADMIN/tmp/${SADM_INST}2_XXX") # Make tmpfile,del in sadm_stop()
+export SADM_TMP_FILE3=$(mktemp -q "$SADMIN/tmp/${SADM_INST}3_XXX") # Make tmpfile,del in sadm_stop()
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
 . "${SADMIN}/lib/sadmlib_std.sh"                           # Load SADMIN Shell Library
