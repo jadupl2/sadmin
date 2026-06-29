@@ -64,6 +64,7 @@
 #@2026_05_16 mon v2.60 Add some small change to output and log.
 #@2026_05_20 mon v.2.60.1 Fix check service status and optional running script (at end of line)
 #@2026_06_29 mon v.2.60.2 To Minimize false alert on ping test, now ping twice at 2 seconds interval
+#@2026_06_29 mon v.2.60.3 Change ping error message
 #===================================================================================================
 #
 use English;
@@ -78,7 +79,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.60.2";                                     # Version Number
+my $VERSION_NUMBER      = "2.60.3";                                     # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -853,7 +854,7 @@ sub check_for_error {
                 # If number of second since the last error is greater than wanted - Issue Alert
                 if ( $elapse_second >= $max_second ) {                  # Problem Exceed Sec. Wait
                    $wmin = $SADM_RECORD->{SADM_MINUTES};                # min. before issuing alert
-                   $ERR_MESS = "Ping did not work for more than $wmin Min";
+                   $ERR_MESS = "Ping to $WID failed for more than $wmin Min";
                    write_rpt_file($alert_type,"NETWORK","PING",$ERR_MESS);    # Go Reporting Alert
                    $SADM_RECORD->{SADM_DATE} = $SADM_RECORD->{SADM_TIME} = 0; # Reset Last Alert Date
                 }
