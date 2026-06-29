@@ -63,6 +63,7 @@
 #@2026_05_14 mon v2.59 Clearer output layout and remove filesystem increase function, not much used.
 #@2026_05_16 mon v2.60 Add some small change to output and log.
 #@2026_05_20 mon v.2.60.1 Fix check service status and optional running script (at end of line)
+#@2026_06_29 mon v.2.60.2 To Minimize false alert on ping test, now ping twice at 2 seconds interval
 #===================================================================================================
 #
 use English;
@@ -77,7 +78,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.60.1";                                     # Version Number
+my $VERSION_NUMBER      = "2.60.2";                                     # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -1409,7 +1410,8 @@ sub ping_ip  {
 
     print "\n\n-------------------";                                    # Log Separator
     printf "\n%s%sPing $ipname ...%s",YELLOW,BOLD,RESET;
-    $PCMD = "ping -c2 -W2 $ipname >/dev/null 2>&1" ;                    # Build ping command
+    #$PCMD = "ping -i2 -W2 $ipname >/dev/null 2>&1" ;                    # Build ping command
+    $PCMD = "ping -c2 -i2 -w3 -W3 $ipname >/dev/null 2>&1" ;                    # Build ping command
     @args = ("$PCMD"); system(@args) ;                                  # Perform the ping operation
     $src = $? >> 8;                                                     # Get Ping Result
     $SADM_RECORD->{SADM_CURVAL}=$src;                                   # Save Result Code to CurVal
