@@ -33,34 +33,35 @@
 # 2018_05_28 lib v2.7 Add Backup Parameters now in sadmin.cfg
 # 2018_06_04 lib v2.8 Added User Directory Environment Variables in SADMIN Client Section
 # 2018_06_05 lib v2.9 Added setup, www/tmp/perf Directory Environment Variables 
-# 2018_12_03 lib v3.0 Remove dot before and after the result column and minor changes.
-# 2019_01_19 lib v3.1 Added: Added Backup List & Backup Exclude File Name available to User.
-# 2019_01_28 lib v3.2 Database info only show when running on SADMIN Server
-# 2019_03_18 lib v3.3 Add demo call to function get_packagetype()
-# 2019_04_07 lib v3.4 Don't show Database user name if run on client.
-# 2019_04_25 lib v3.5 Add Alert_Repeat, Textbelt API Key and URL Variable in Output
-# 2019_05_17 lib v3.6 Add option -p(Show DB password),-s(Show Storix Info),-t(Show TextBeltKey)
-# 2019_08_19 lib v3.7 Remove printing of sa.alert_seq (not used anymore)
-# 2019_10_14 lib v3.8 Add demo for calling sadm_server_arch function & show result.
-# 2019_10_18 lib v3.9 Print SADMIN Database Tables and columns at the end of report.
-# 2019_10_30 lib v3.10 Remove Utilization of 'facter' (Depreciated).
-# 2022_04_09 lib v3.11 Rewrote Overview of the 'sa.start()' and 'sa.stop()' functions.
-# 2022_04_10 lib v3.12 Remove 'lsb_release' command dependency (Not avail in RHEL 9)
-# 2022_05_15 lib v3.13 Updated to use the new SADMIN Python Library V2.
-# 2022_05_18 lib v3.14 Added print of new fields 'sa.sadm_pid_timeout' & 'sa.sadm_lock_timeout'.
-# 2022_05_21 lib v3.15 Late Adjustment & Minor changes
-# 2022_05_25 lib v3.16 Added fields 'sa.proot_only' & 'sa.psadm_server_only' to output.
-# 2022_08_14 lib v3.17 Output updated with all the latest functions & global variables.
-# 2023_04_13 lib v3.18 Add 'sadm_rear_dif', 'sadm_rear_interval', 'sadm_backup_interval' to output.
-# 2023_04_14 lib v3.19 SADMIN server email account pwd now taken from $SADMIN/cfg/.gmpw.
-# 2023_04_14 lib v3.20 SADMIN client email account pwd now taken from encrypted $SADMIN/cfg/.gmpw64. 
-# 2023_08_19 lib v3.21 start() function auto connect to DB, if on SADMIN server & db_used=True.
-# 2023_12_19 lib v3.22 Fix minor problem
-#@2024_05_10 lib v3.23 Add VM export parameters and alert history/archive purge days limit.
-#@2024_12_17 lib v3.24 Add new global variable 'sadm_pwd_random' to auto-generate 'sadmin user' pwd.
-#@2026_03_06 lib v3.25 Show Database info only on the SADMIN server.
-#@2026_05_20 lib v3.26.1 New Variables and functions available.
-#@2026_05_30 lib v3.27.0 Complete revision of the demo script to show all the latest functions & Variables.
+# 2018_12_03 lib v03.00.00 Remove dot before and after the result column and minor changes.
+# 2019_01_19 lib v03.01.00 Added: Added Backup List & Backup Exclude File Name available to User.
+# 2019_01_28 lib v03.02.00 Database info only show when running on SADMIN Server
+# 2019_03_18 lib v03.03.00 Add demo call to function get_packagetype()
+# 2019_04_07 lib v03.04.00 Don't show Database user name if run on client.
+# 2019_04_25 lib v03.05.00 Add Alert_Repeat, Textbelt API Key and URL Variable in Output
+# 2019_05_17 lib v03.06.00 Add option -p(Show DB password),-s(Show Storix Info),-t(Show TextBeltKey)
+# 2019_08_19 lib v03.07.00 Remove printing of sa.alert_seq (not used anymore)
+# 2019_10_14 lib v03.08.00 Add demo for calling sadm_server_arch function & show result.
+# 2019_10_18 lib v03.09.00 Print SADMIN Database Tables and columns at the end of report.
+# 2019_10_30 lib v03.10.00 Remove Utilization of 'facter' (Depreciated).
+# 2022_04_09 lib v03.11.00 Rewrote Overview of the 'sa.start()' and 'sa.stop()' functions.
+# 2022_04_10 lib v03.12.00 Remove 'lsb_release' command dependency (Not avail in RHEL 9)
+# 2022_05_15 lib v03.13.00 Updated to use the new SADMIN Python Library V2.
+# 2022_05_18 lib v03.14.00 Added print of new fields 'sa.sadm_pid_timeout' & 'sa.sadm_lock_timeout'.
+# 2022_05_21 lib v03.15.00 Late Adjustment & Minor changes
+# 2022_05_25 lib v03.16.00 Added fields 'sa.proot_only' & 'sa.psadm_server_only' to output.
+# 2022_08_14 lib v03.17.00 Output updated with all the latest functions & global variables.
+# 2023_04_13 lib v03.18.00 Add 'sadm_rear_dif', 'sadm_rear_interval', 'sadm_backup_interval' to output.
+# 2023_04_14 lib v03.19.00 SADMIN server email account pwd now taken from $SADMIN/cfg/.gmpw.
+# 2023_04_14 lib v03.20.00 SADMIN client email account pwd now taken from encrypted $SADMIN/cfg/.gmpw64. 
+# 2023_08_19 lib v03.21.00 start() function auto connect to DB, if on SADMIN server & db_used=True.
+# 2023_12_19 lib v03.22.00 Fix minor problem
+#@2024_05_10 lib v03.23.00 Add VM export parameters and alert history/archive purge days limit.
+#@2024_12_17 lib v03.24.00 Add new global variable 'sadm_pwd_random' to auto-generate 'sadmin user' pwd.
+#@2026_03_06 lib v03.25.00 Show Database info only on the SADMIN server.
+#@2026_05_20 lib v03.26.01 New Variables and functions available.
+#@2026_05_30 lib v03.27.00 Complete revision of the demo script to show all the latest functions & Variables.
+#@2026_06_29 lib v03.27.01 Show Database info, if your are on the SADMIN server & db_used set to True.
 # ==================================================================================================
 #
 try :
@@ -96,13 +97,13 @@ except ImportError as e:                                             # If Error 
     sys.exit(1)                                                      # Go Back to O/S with Error
 
 # Variables shared with SADMIN Python Library.
-sa.ver                = "3.27"     # Your Program VERSION number
+sa.ver                = "03.27.01" # Your Program VERSION number
 sa.desc               = "Describe '%s' here." % (sa.pn)
 sa.root_only          = False      # Can Only be run by 'root'(True/False)
 sa.server_only        = False      # Run Only on SADMIN server(True/False) SADM_SERVER in sadmin.cfg
 sa.sadmgrp_only       = False      # Run if part of SADMIN Group 'SADM_GROUP' in sadmin.cfg or root
 sa.use_rch            = False      # Write exec info to RCH file(True/False)
-sa.db_used            = False      # Open/Use auto connect DB(True)
+sa.db_used            = True       # Open/Use auto connect DB(True)
 sa.log_type           = "B"        # S=Screen L=Log B=Both
 sa.log_append         = False      # Append to previous log (True/False)
 sa.log_header         = True       # Produce Log Header (True/False)
@@ -664,110 +665,111 @@ def print_command_path():
 #===================================================================================================
 def print_db_variables():
     global lcount
-    lcount              = 0                                                 # Reset Print Line Count
+    lcount              = 0                                             # Reset Print Line Count
 
-    print ("\n\n\n%s" % ("-" * 100))                                        # Print line of 100 "-" 
+    print ("\n\n\n%s" % ("-" * 100))                                    # Print line of 100 "-" 
     print ("8) Database Information")   
-    print ("%s" % ("-" * 100))                                              # Print line of 100 "-" 
+    print ("%s" % ("-" * 100))                                          # Print line of 100 "-" 
 
     printline ("sa.db_used","Program need to access Database ?",sa.db_used)
     if (sa.sadm_host_type != "S") : return(0)                           # If not on a SADMIN server
+    if ( not sa.db_used ) :                                             # If db_used is set to False
+        sa.write_err ("'db_used'is False, no Database information will be shown.") 
+        return (1)
 
-    # Test Database Connection
-    if (sa.db_used):                                                    # On SADMIN srv & usedb True
-        print ("\n\nShow SADMIN Tables:")
-        sql="show tables;" 
-        cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser,sa.sadm_ro_dbpwd,sa.sadm_dbhost)
-        cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
-        (returncode,stdout,stderr)=sa.oscommand(cmd)
-        print (stdout);
+    print ("\n\nShow SADMIN Tables:")
+    sql="show tables;" 
+    cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser,sa.sadm_ro_dbpwd,sa.sadm_dbhost)
+    cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
+    (returncode,stdout,stderr)=sa.oscommand(cmd)
+    print (stdout);
 
-        print ("\n\nCategory Table:")
-        sql="describe server_category; "                                    # Show Table Format/colums
-        cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
-        cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
-        (returncode,stdout,stderr)=sa.oscommand(cmd)
-        print (stdout)
+    print ("\n\nCategory Table:")
+    sql="describe server_category; "                                    # Show Table Format/colums
+    cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
+    cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
+    (returncode,stdout,stderr)=sa.oscommand(cmd)
+    print (stdout)
         
-        sql="SHOW keys FROM server_category FROM sadmin; "
-        cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
-        cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
-        (returncode,stdout,stderr)=sa.oscommand(cmd)
-        print (stdout);
+    sql="SHOW keys FROM server_category FROM sadmin; "
+    cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
+    cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
+    (returncode,stdout,stderr)=sa.oscommand(cmd)
+    print (stdout);
 
-        sql="select * from server_category; "                              # Show Table Format/columns
-        cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
-        cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
-        (returncode,stdout,stderr)=sa.oscommand(cmd)
-        print (stdout);
+    sql="select * from server_category; "                              # Show Table Format/columns
+    cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
+    cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
+    (returncode,stdout,stderr)=sa.oscommand(cmd)
+    print (stdout);
 
-        print ("\n\nGroup Table:")
-        sql="show columns from server_group; "                              # Show Table Format/columns
-        cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
-        cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
-        (returncode,stdout,stderr)=sa.oscommand(cmd)
-        print (stdout);
+    print ("\n\nGroup Table:")
+    sql="show columns from server_group; "                              # Show Table Format/columns
+    cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
+    cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
+    (returncode,stdout,stderr)=sa.oscommand(cmd)
+    print (stdout);
         
-        sql="SHOW keys FROM server_group FROM sadmin; "
-        cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
-        cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
-        (returncode,stdout,stderr)=sa.oscommand(cmd)
-        print (stdout);
+    sql="SHOW keys FROM server_group FROM sadmin; "
+    cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
+    cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
+    (returncode,stdout,stderr)=sa.oscommand(cmd)
+    print (stdout);
         
-        sql="select * from server_group; "                              # Show Table Format/columns
-        cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
-        cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
-        (returncode,stdout,stderr)=sa.oscommand(cmd)
-        print (stdout);
+    sql="select * from server_group; "                              # Show Table Format/columns
+    cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
+    cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
+    (returncode,stdout,stderr)=sa.oscommand(cmd)
+    print (stdout);
 
-        print ("\n\nServer Table:")
-        sql="describe server; "
-        cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
-        cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
-        (returncode,stdout,stderr)=sa.oscommand(cmd)
-        print (stdout);
+    print ("\n\nServer Table:")
+    sql="describe server; "
+    cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
+    cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
+    (returncode,stdout,stderr)=sa.oscommand(cmd)
+    print (stdout);
         
-        sql="SHOW keys FROM server FROM sadmin; "
-        cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
-        cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
-        (returncode,stdout,stderr)=sa.oscommand(cmd)
-        print (stdout);
+    sql="SHOW keys FROM server FROM sadmin; "
+    cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
+    cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
+    (returncode,stdout,stderr)=sa.oscommand(cmd)
+    print (stdout);
 
-        print ("\n\nScript table:")
-        sql="describe script; "
-        cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
-        cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
-        (returncode,stdout,stderr)=sa.oscommand(cmd)
-        print (stdout);
+    print ("\n\nScript table:")
+    sql="describe script; "
+    cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
+    cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
+    (returncode,stdout,stderr)=sa.oscommand(cmd)
+    print (stdout);
         
-        sql="SHOW keys FROM script FROM sadmin; "
-        cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
-        cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
-        (returncode,stdout,stderr)=sa.oscommand(cmd)
-        print (stdout);
+    sql="SHOW keys FROM script FROM sadmin; "
+    cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
+    cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
+    (returncode,stdout,stderr)=sa.oscommand(cmd)
+    print (stdout);
         
-        sql="select scr_name, scr_desc,scr_version,scr_root_exec,scr_run_sadmin from script; "
-        cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
-        cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
-        (returncode,stdout,stderr)=sa.oscommand(cmd)
-        print (stdout);
+    sql="select scr_name, scr_desc,scr_version,scr_root_exec,scr_run_sadmin from script; "
+    cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
+    cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
+    (returncode,stdout,stderr)=sa.oscommand(cmd)
+    print (stdout);
 
-        print ("\n\nScript_rch:")
-        sql="describe script_rch; "
-        cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
-        cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
-        (returncode,stdout,stderr)=sa.oscommand(cmd)
-        print (stdout);
+    print ("\n\nScript_rch:")
+    sql="describe script_rch; "
+    cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
+    cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
+    (returncode,stdout,stderr)=sa.oscommand(cmd)
+    print (stdout);
         
-        sql="SHOW keys FROM script_rch FROM sadmin; "
-        cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
-        cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
-        (returncode,stdout,stderr)=sa.oscommand(cmd)
-        print (stdout);
+    sql="SHOW keys FROM script_rch FROM sadmin; "
+    cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
+    cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
+    (returncode,stdout,stderr)=sa.oscommand(cmd)
+    print (stdout);
         
-        sa.write_log ("Closing Database db_connection")
-        sa.write_log (" ")
-        return (0)
+    sa.write_log ("Closing Database db_connection")
+    sa.write_log (" ")
+    return (0)
 
 
 
@@ -863,7 +865,6 @@ def cmd_options(argv):
 #===================================================================================================
 #
 def main(argv):
-
     cmd_options(argv)                                                   # Analyse cmdline options
     sa.start()                                                          # Initialize SADMIN env.
     print_functions()                                                   # 1) Functions Available
@@ -873,13 +874,26 @@ def main(argv):
     print_directories()                                                 # 5) Show Client Dir. Variables
     print_file_variable()                                               # 6) Show Files Variables
     print_command_path()                                                # 7) Show Command Path
-    if (sa.sadm_host_type == "S") :                                     # If on a SADMIN server
-       print_db_variables()                                             # 8) Show Database Information
-    #print_env()                                                        # 9) Show Env. Variables
+    if (sa.sadm_host_type == "S") : print_db_variables()                # 8) Show Database Info
+    if (debug > 4) : print_env()                                        # 9) Show Env. Variables
+
     sa.stop(sa.exit_code)                                               # Close SADM Environment
     sys.exit(sa.exit_code)                                              # Exit To O/S
+
 
 # Python assigns the string "__main__" to __name__. 
 # If the file is imported elsewhere (import script), __name__ matches the actual filename instead.
 # This condition guards your code against accidental execution during imports.
-if __name__ == "__main__": main(sys.argv)
+if __name__ == "__main__": 
+    try:
+        main(sys.argv)
+    except KeyboardInterrupt as e: 
+        print(f"[ ERROR ] A Keyboard interrupt as occurred: {e}")
+        sa.stop(1)                                                      # Exit Gracefully & Close DB
+        sys.exit(1)
+    
+    except Exception as e:
+        print(f"[ ERROR ] An unexpected error occurred: {e}")
+        sa.stop(1)                                                      # Exit Gracefully & Close DB
+        sys.exit(1)
+        
