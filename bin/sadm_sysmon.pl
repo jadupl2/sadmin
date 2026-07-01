@@ -65,6 +65,7 @@
 #@2026_05_20 mon v.2.60.1 Fix check service status and optional running script (at end of line)
 #@2026_06_29 mon v.2.60.2 To Minimize false alert on ping test, now ping twice at 2 seconds interval
 #@2026_06_29 mon v.2.60.3 Change ping error message
+#@2026_07_01 mon v.2.60.4 When filesystem usage exceed warning or error, print 'df -h' below it.
 #===================================================================================================
 #
 use English;
@@ -79,7 +80,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.60.3";                                     # Version Number
+my $VERSION_NUMBER      = "2.60.4";                                     # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -1394,6 +1395,16 @@ sub check_filesystems_usage  {
             if ($CVAL >= $EVAL) { $FSTAT = sprintf "%s%s[ ERROR ]%s", BOLD, RED, RESET;   ;} 
             if ($CVAL <  $WVAL) { $FSTAT = sprintf "%s%s[ OK ]%s", BOLD, GREEN, RESET; ;} 
             print "\n$FSTAT Filesystem $fname at ${CVAL}% ... Warning: $WVAL - Error: $EVAL";
+
+            if (($CVAL >= $WVAL) || ($CVAL >= $EVAL)) {
+                open (DF_FILE,"df -h | grep -i $fname | ");             # df filesystem in problem
+                print "\n";                                             # space line
+                while ($dline = <DF_FILE>) {                            # Read Output of cmd.
+                    print "$dline";                                     # print df line
+                }
+                close DF_FILE;                                          # Close stdout
+            }
+
             check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);  # Go Evaluate Error/Alert
             last;
         }
