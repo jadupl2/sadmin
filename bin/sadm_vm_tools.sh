@@ -185,9 +185,9 @@ main_process()
     if [ "$OPT_STOP" = true ]                                           # CmdLine Stop VM
         then if [ "$OPT_CONFIRM" = true ]                               # Did ask for a confirmation
                 then if [ "$OPT_VMNAME" != "" ]                         # If a VM Name Specified
-                        then sadm_ask "Stop $OPT_VMNAME Virtual Machine" # Wait for user Answer(y/n)
+                        then sadm_ask "Stop '$OPT_VMNAME' Virtual Machine" # Wait for Answer(y/n)
                              if [ $? -eq 0 ] ; then return 0 ; fi 
-                        else sadm_ask "Stop ALL Virtual Machine(s)"        # Wait for user Answer (y/n)   
+                        else sadm_ask "Stop ALL Virtual Machine(s)"     # Wait for Answer (y/n)   
                              if [ $? -eq 0 ] ; then return 0 ; fi
                      fi 
              fi 
