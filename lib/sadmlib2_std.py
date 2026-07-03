@@ -85,7 +85,7 @@
 #@2025_05_30 lib v4.69.0 Lot of modification enhance speed and security
 #@2025_06_01 lib v4.69.1 Added "chmod 0775 $SADMIN" to 'freshen_directories_structure()' function.
 #@2026_07_03 lib v4.69.2 Add function to load sadmin.cfg in a dict. 'cfg_dict=load_sadmin_config()'
-#@2026_07_03 lib v4.69.3 Fix minor bugs and add in sadmin.cfg, var. to use 'ntfy' as notification.
+#@2026_07_03 lib v4.69.3 Fix minor bugs and add in sadmin.cfg, var. to use 'ntfy' as notification. 
 # 
 # --------------------------------------------------------------------------------------------------
 
