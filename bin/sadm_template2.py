@@ -291,6 +291,7 @@ def cmd_options(argv):
 def main(argv):
 
     cmd_options(argv)                                                   # Analyze cmdline options
+    sa.print_dict_config(cfg_dict)
     if (sa.db_used == True):                                            # If Use Db, Process Systems
         (sa.db_conn, sa.db_cur) = sa.start()                            # Return DB connector,cursor
         sa.exit_code = process_servers()                                # Use Db Loop Active Systems

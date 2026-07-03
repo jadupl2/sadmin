@@ -271,7 +271,6 @@ def cmd_options(argv):
 # Main Function
 # --------------------------------------------------------------------------------------------------
 def main(argv):
-
     cmd_options(argv)                                                   # Analyze cmdline options
     if (sa.db_used == True):                                            # If Use Db, Process Systems
         (sa.db_conn, sa.db_cur) = sa.start()                            # Return DB connector,cursor
@@ -293,7 +292,6 @@ if __name__ == "__main__":
         print(f"[ ERROR ] A Keyboard interrupt as occurred: {e}")
         sa.stop(1)                                                      # Exit Gracefully & Close DB
         sys.exit(1)
-    
     except Exception as e:
         print(f"[ ERROR ] An unexpected error occurred: {e}")
         sa.stop(1)                                                      # Exit Gracefully & Close DB

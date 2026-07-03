@@ -280,10 +280,10 @@ check_multipath                  1 !=  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 0000
 
 
 # Ping server (Return 0=Ok 1=Error) Line below raise a Warning if site doesn't respond to ping.
-ping_fedoraproject.org           0  =  01  00 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
+#ping_fedoraproject.org           0  =  01  00 002 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
 
 # Ping server (Return 0=Ok 1=Error) Line below raise an Error if site doesn't respond to ping.
-ping_debian.org                 0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
+#ping_debian.org                 0  =  00  01 002 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
 
 # Always ping the SADMIN server every day of the week.
 #   - Ping server (Return 0=Ok 1=Error).
