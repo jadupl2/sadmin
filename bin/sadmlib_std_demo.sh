@@ -23,29 +23,30 @@
 # 2018_09_04    v3.5 Show SMON Alert type, curl, mutt and Alert Group
 # 2018_09_25    v3.6 Show SMON Alert Group, Channel and History Files
 # 2019_01_19    v3.7 Added: Added Backup List & Backup Exclude File Name available to User.
-# 2019_01_28 lib v3.8 Database info only show when running on SADMIN Server
-# 2019_03_18 lib v3.9 Add demo call to function 'sadm_get_packagetype'
-# 2019_04_07 lib v3.10 Don't show Database user name if run on client.
-# 2019_04_11 lib v3.11 Add Database column "active","category" and "group" to server output.
-# 2019_04_25 lib v3.12 Add Alert_Repeat, Textbelt API Key and URL Variables in Output.
-# 2019_05_17 lib v3.13 Add option -p(Show DB password),-s(Show Storix Info),-t(Show TextBeltKey)
-# 2019_10_14 lib v3.14 Add demo for calling sadm_server_arch function & show result.
-# 2019_10_17 lib v3.15 Print Category and Group table content at the end of report.
-# 2019_10_30 lib v3.16 Remove 'facter' utilization (depreciated).
-# 2019_11_25 lib v3.17 Change printing format of Database table at the end of execution.
-# 2020_04_01 lib v3.18 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
-# 2020_11_24 lib v3.19 Don't show DB password file on client.
-# 2020_12_24 lib v3.20 Include output of capitalize function.
-# 2022_04_10 lib v3.21 Remove 'lsb_release' command dependency.
-# 2022_05_10 lib v3.22 Use 'mutt' instead of 'mail'.
-# 2022_06_16 lib v3.23 Added fields 'sa.proot_only' & 'sa.psadm_server_only' to output.
-# 2022_08_14 lib v3.24 Output updated with all the latest functions & global variables.
-# 2023_04_13 lib v3.25 Add 'SADM_REAR_DIF', 'SADM_REAR_INTERVAL', 'SADM_BACKUP_INTERVAL' to output.
-# 2023_11_29 lib v3.26 Change to not update 'rch' file.
-#@2024_06_13 lib v3.27 Add VM export parameters and alert history/archive purge days limit.
-#@2024_11_01 lib v3.28 Change name of Global variable "SADM_RCHLOG" to "RCH_FILE". 
-#@2024_12_17 lib v3.29 Now require 'root' user to run.
-#@2025_01_24 lib v3.30 Added lock functions examples.
+# 2019_01_28 lib v03.8 .00Database info only show when running on SADMIN Server
+# 2019_03_18 lib v03.9 .00Add demo call to function 'sadm_get_packagetype'
+# 2019_04_07 lib v03.10.00 Don't show Database user name if run on client.
+# 2019_04_11 lib v03.11.00 Add Database column "active","category" and "group" to server output.
+# 2019_04_25 lib v03.12.00 Add Alert_Repeat, Textbelt API Key and URL Variables in Output.
+# 2019_05_17 lib v03.13.00 Add option -p(Show DB password),-s(Show Storix Info),-t(Show TextBeltKey)
+# 2019_10_14 lib v03.14.00 Add demo for calling sadm_server_arch function & show result.
+# 2019_10_17 lib v03.15.00 Print Category and Group table content at the end of report.
+# 2019_10_30 lib v03.16.00 Remove 'facter' utilization (depreciated).
+# 2019_11_25 lib v03.17.00 Change printing format of Database table at the end of execution.
+# 2020_04_01 lib v03.18.00 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
+# 2020_11_24 lib v03.19.00 Don't show DB password file on client.
+# 2020_12_24 lib v03.20.00 Include output of capitalize function.
+# 2022_04_10 lib v03.21.00 Remove 'lsb_release' command dependency.
+# 2022_05_10 lib v03.22.00 Use 'mutt' instead of 'mail'.
+# 2022_06_16 lib v03.23.00 Added fields 'sa.proot_only' & 'sa.psadm_server_only' to output.
+# 2022_08_14 lib v03.24.00 Output updated with all the latest functions & global variables.
+# 2023_04_13 lib v03.25.00 Add 'SADM_REAR_DIF', 'SADM_REAR_INTERVAL', 'SADM_BACKUP_INTERVAL' to output.
+# 2023_11_29 lib v03.26.00 Change to not update 'rch' file.
+#@2024_06_13 lib v03.27.00 Add VM export parameters and alert history/archive purge days limit.
+#@2024_11_01 lib v03.28.00 Change name of Global variable "SADM_RCHLOG" to "RCH_FILE". 
+#@2024_12_17 lib v03.29.00 Now require 'root' user to run.
+#@2025_01_24 lib v03.30.00 Added lock functions examples.
+#@2026_07_03 lib v03.30.01 Added NFY notification variables to output.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -74,7 +75,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.30'                                      # Script version number
+export SADM_VER='03.30.01'                                 # Script version number
 export SADM_PDESC="Demonstrate functions & variables available to developers using SADMIN Tools"
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -833,6 +834,13 @@ print_sadmin_cfg()
         then presult="$SADM_TEXTBELT_KEY"                               # TextBelt API Key
     fi
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+
+    printline "\$SADM_NTFY_EMAIL" "NTFY Email Address" "$SADM_NTFY_EMAIL"                
+    printline "\$SADM_NTFY_PWD"   "NTFY Password"      "$SADM_NTFY_PWD"     
+    printline "\$SADM_NTFY_TOKEN" "NTFY Token"         "$SADM_NTFY_TOKEN"      
+    printline "\$SADM_NTFY_TOPIC" "NTFY Topic"         "$SADM_NTFY_TOPIC"        
+    printline "\$SADM_NTFY_URL"   "NTFY URL"           "$SADM_NTFY_URL"
+    printline "\$SADM_NTFY_USER"  "NTFY User"          "$SADM_NTFY_USER"                 
 
     pexample="\$SADM_TEXTBELT_URL"                                      # Variable Name
     pdesc="TextBelt.com API URL"                                        # Description
