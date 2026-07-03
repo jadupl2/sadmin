@@ -176,101 +176,102 @@
 # 2022_05_25 lib v3.97 Added new global variables 'SADM_ROOT_ONLY' and 'SADM_SERVER_ONLY'.
 # 2022_05_25 lib v3.98 Minor text modification related to PID expiration.
 # 2022_06_14 lib v3.99 Fix problem 'sadm_get_oscodename()'.
-# 2022_07_02 lib v4.00 Fix problem with 'sadm_server_core_per_socket()' function under RHEL 9.
-# 2022_07_07 lib v4.01 Add verbosity to 'sadm_sleep()' and fix 'sadm_sendmail()' subject problem.
-# 2022_07_12 lib v4.02 Change group of some web directories to solve web system removal error.
-# 2022_07_20 lib v4.03 Cmd 'lsb_release' depreciated ? not available on Alma9,Rocky9,CentOS9,RHEL9
-# 2022_07_27 lib v4.04 Fix problem related to PID in startup.
-# 2022_07_30 lib v4.05 Update 'sadm_sendmail()' fourth parameter (attachment) is now optional.
-# 2022_08_22 lib v4.06 Update 'sadm_server_type()' better detection if physical or virtual system.
-# 2022_08_24 lib v4.07 Creation of $SADM_TMP_FILE1[1,2,3] done in SADMIN section & remove by stop().
-# 2022_08_25 lib v4.08 Change message of the system lock/unlock function.
-# 2022_08_26 lib v4.09 Lock file move from $SADMIN/tmp to $SADMIN so it's not remove upon startup.
-# 2022_09_04 lib v4.10 Depreciate 'sadm_writelog' to 'sadm_write_log' for standardization.
-# 2022_09_20 lib v4.11 MacOS 'arch' is returning i386, change 'sadm_server_arch' to use 'uname -m'.
-# 2022_09_20 lib v4.12 MacOS change 'sadm_get_osmajorversion' so it return an integer after v10.
-# 2022_09_25 lib v4.13 MacOS architecture was wrong in script header ('arch' command return i386?).
-# 2022_11_16 lib v4.14 Remove initialization of $SADM_DEBUG (Set in SADMIN section of script).
-# 2023_01_06 lib v4.15 Can now add a suffix to script name in RCH file (Use var. SADM_RCH_DESC).
-# 2023_01_27 lib v4.16 Optimize the start function.
-# 2023_02_14 lib v4.17 Remove the usage of SADM_RCH_DESC.
-# 2023_03_03 lib v4.18 sadm_start() now clear error log '*_e.log' even when 'SADM_LOG_APPEND="Y"'
-# 2023_03_04 lib v4.19 Lock file content & owner updated. 
-# 2023_04_13 lib v4.20 Load new variables 'SADM_REAR_DIF' 'SADM_REAR_INTERVAL' from sadmin.cfg.
-# 2023_04_13 lib v4.21 Load new variable 'SADM_BACKUP_INTERVAL' from sadmin.cfg use on backup page.
-# 2023_04_14 lib v4.22 SADMIN server email account pwd now taken from $SADMIN/cfg/.gmpw.
-# 2023_04_14 lib v4.23 SADMIN client email account pwd now taken from encrypted $SADMIN/cfg/.gmpw64.
-# 2023_04_14 lib v4.24 Change email pwd ($SADMIN/cfg/.gmpw) on SADM server to generate new .gmpw64.
-# 2023_05_24 lib v4.25 Umask is now shown in the script header output.
-# 2023_06_06 lib v4.26 Set file permission on email password file to prevent problem.
-# 2023_08_20 lib v4.27 Code optimization, LIBRARY LOAD A LOT FASTER (So scripts run faster).
-# 2023_09_22 lib v4.28 Change default values of SADM_*_KEEPDAYS.
-# 2023_09_26 lib v4.29 Code optimization : To function "sadm_get_command_path()".
-# 2023_12_21 lib v4.31 Fix problem when copying log and rch when initially created and user isn't root.
-# 2023_12_22 lib v4.32 Eliminate 'cp' error message in 'sadm_stop()'' function, when file is missing.
-# 2023_12_22 lib v4.33 Add user message when user is not part if the SADMIN group.
-# 2023_12_26 lib v4.34 Minor fix, file permission verification.
-# 2023_12_29 lib v4.35 Minor bug fix
-# 2024_01_16 lib v4.36 Modify sadm_start() to advise user when permission don't allow user to write to log.
-# 2024_01_18 lib v4.37 Error given when processing an invalid rch file.
-#@2024_03_13 lib v4.38 User assigned to the 'vboxusers' group.
-#@2024_03_20 lib v4.39 Load new Global variables for VM from \$SADMIN/cfg/sadmin.cfg
-#@2024_04_02 lib v4.40 Function 'sadm_write_log' will now print in color for [ OK ], [ ERROR ], ...
-#@2024_04_22 lib v4.41 Alert housekeeping, add 'SADM_DAYS_HISTORY' & ´SADM_MAX_ARC_LINE' to $SADM_CFG_FILE.
-#@2024_04_23 lib v4.42 Add option to send email on startup and on shutdown in sadmin.cfg.
-#@2024_05_15 lib v4.43 function 'sadm_stop()' now delete empty .rch at the end of execution.
-#@2024_05_17 lib v4.44 function 'sadm_stop()' remove last dotted line, before adding result status line.
-#@2024_05_18 lib v4.45 function 'sadm_stop()' remove debugging lines
-#@2024_07_11 lib v4.46 function 'sadm_ask()' added [C] cancel option.
-#@2024_08_12 lib v4.47 Minor changes (perl)
-#@2024_08_26 lib v4.48 When timeout is reach, check if script is still running before starting a new one.
-#@2024_09_01 lib v4.49 Add the 'From:' email in function 'sadm_sendmail()''
-#@2024_10_31 lib v4.50 Add new variable to sadmin.cfg for Virtual Box export new feature.
-#@2024_11_01 lib v4.51 sadm_get_osname() was not returning the right O/S under certain condition.
-#@2024_11_11 lib v4.52 Add two Global var. accessible to any script 'SADM_VMLIST' & 'SADM_VMHOSTS'.
-#@2024_12_16 lib v4.54 On Debian the 'sadm_get_osversion()' did not return the minor version number.
-#@2024_12_27 lib v4.55 Under certain condition, 'sadm_get_host_ip' wasn't returning proper IP.
-#@2025_01_07 lib v4.56 Fix for Debian the 'sadm_get_osversion()' did not return the minor version.
-#@2025_01_23 lib v4.57 Refine locking (Added sadm_show_lock, sadm_unlock sadm_lock, sadm_lock_status 
-#@2025_01_30 lib v4.58 3 New global var. for NFS mount in sadmin.cfg, initialize when loading library
-#@2025_01_30 lib v4.58 SADM_VM_EXPORT_NFS_SERVER_VER,SADM_BACKUP_NFS_SERVER_VER,SADM_REAR_NFS_SERVER_VER
-#@2025_01_30 lib v4.59 Fix some problems these 2 functions 'sadm_get_host_ip() and sadm_get_fqdn()'.
-#@2025_03_05 lib v4.60 Change syntax of some command
-#@2025_03_25 lib v4.61 Add an alternative way the get current host IP.
-#@2025_04_09 lib v4.62 Minor enhancements et fixes. 
-#@2025_04_22 lib v4.63 Refine the sadm_server_model() function to return the right model name.
-#@2025_05_07 lib v4.64 Add SADM_QUIET (Y/N) variable to control the output of error message.
-#@2025_05_19 lib v4.65 Add function 'sadm_nfs_mount' & 'sadm_nfs_unmount', solve PID_TIMEOUT problem.
-#@2025_05_26 lib v4.66 Portability minor code change to 'sadm_get_epoch_time()'.
-#@2025_05_31 lib v4.67 When a lock is created for sa system, an info line is shown on monitor web page.
-#@2025_06_10 lib v4.68 Show the process preventing to run a second copy of a script.
-#@2025_06_20 lib v4.69 Change to work on MacOS : sadm_get_fqdn(), sadm_trim(), sadm_server_serial().
-#@2025_07_01 lib v4.70 sadm_stop(), line with result code 2 were not deleted in the .rch file.
-#@2025_07_09 lib v4.71 Remove the update of rpt file when locking a system (already done).
-#@2025_07_20 lib v4.72 Change log directory permission 775 instead of 755
-#@2025_08_09 lib v4.73 When on sadmin server, update the way we update the global log/rch directory.
-#@2025_08_25 lib v4.74 Change location of 'vm_list.txt' & 'vm_hosts.txt' to '$SADMIN/dat/dr' dir. 
-#@2025_09_04 lib v4.75 SHow Process ID of the script already running of the script.
-#@2025_10_13 lib v4.76 Enhance sadm_stop() to copy .rch/.log to Global Dir. when run on SADMIN master
-#@2025_10_29 lib v4.77 When the PID file epoch time exceed the $SADM_TIMEOUT value.
-#@2025_11_30 lib v4.78 Fix some PID file expiration problems.
-#@2025_11_30 lib v4.79 Add 'sadm_convert_sec2hms()' convert seconds into hours:minutes:seconds.
-#@2026_01_19 lib v4.80 Add global variable "SADM_REAR_DEL_FAILED_BACKUP" with value from sadmin.cfg.
-#@2026_02_07 lib v4.81 Change owner & permission on $SADMIN directories.
-#@2026_02_22 lib v4.82 Add code name for MacOS, sadm_get_osversion() return minor number for debian.
-#@2026_03_03 lib v4.83 New constants: 'SADM_VM_EXPORT_SCRIPT', 'SADM_REAR_BACKUP_SCRIPT'
-#@2026_03_03 lib v4.83 New constants: 'SADM_OSUPDATE_SCRIPT'
-#@2026_03_30 lib v4.84 Add O/S update options: SADM_OSUPDATE_REBOOT_NEEDED SADM_OSUPDATE_REBOOT_TIME 
-#@2026_03_30 lib v4.84 Add O/S update options: SADM_OSUPDATE_LOCK
-#@2026_03_31 lib v4.85 Return value on Ubuntu was not ok on raspberry pi.
-#@2026_04_18 lib v4.86 If value of  global variable 'SADM_LOG_TYPE' is invalid, set to default 'B'.
-#@2026_04_19 lib v4.87 Function 'sadm_write_log' rewrote and now support '\n' in message.
-#@2026_04_26 lib v4.88 Add Function 'sadm_ping hostname' Return 0=OK 1=Error.
-#@2026_04_28 lib v4.89 NFS Mount use sudo to avoid problem with NFS mount is run by non root user.
-#@2026_06_01 lib v4.90.1 Added "chmod 0775 $SADMIN".
-#@2026_06_03 lib v4.90.2 Intro. of "SADM_QUIET" var. to ctrl the display of error msg in functions.
-#@2026_06_08 lib v4.90.3 Don't remove the mount point Dir. after the unmount in 'sadm_nfs_unmount()'.
-#@2026_06_26 lib v4.90.4 Add Variable SADM_ERRMSG & SADM_ERRNO
+# 2022_07_02 lib v04.00 Fix problem with 'sadm_server_core_per_socket()' function under RHEL 9.
+# 2022_07_07 lib v04.01 Add verbosity to 'sadm_sleep()' and fix 'sadm_sendmail()' subject problem.
+# 2022_07_12 lib v04.02 Change group of some web directories to solve web system removal error.
+# 2022_07_20 lib v04.03 Cmd 'lsb_release' depreciated ? not available on Alma9,Rocky9,CentOS9,RHEL9
+# 2022_07_27 lib v04.04 Fix problem related to PID in startup.
+# 2022_07_30 lib v04.05 Update 'sadm_sendmail()' fourth parameter (attachment) is now optional.
+# 2022_08_22 lib v04.06 Update 'sadm_server_type()' better detection if physical or virtual system.
+# 2022_08_24 lib v04.07 Creation of $SADM_TMP_FILE1[1,2,3] done in SADMIN section & remove by stop().
+# 2022_08_25 lib v04.08 Change message of the system lock/unlock function.
+# 2022_08_26 lib v04.09 Lock file move from $SADMIN/tmp to $SADMIN so it's not remove upon startup.
+# 2022_09_04 lib v04.10 Depreciate 'sadm_writelog' to 'sadm_write_log' for standardization.
+# 2022_09_20 lib v04.11 MacOS 'arch' is returning i386, change 'sadm_server_arch' to use 'uname -m'.
+# 2022_09_20 lib v04.12 MacOS change 'sadm_get_osmajorversion' so it return an integer after v10.
+# 2022_09_25 lib v04.13 MacOS architecture was wrong in script header ('arch' command return i386?).
+# 2022_11_16 lib v04.14 Remove initialization of $SADM_DEBUG (Set in SADMIN section of script).
+# 2023_01_06 lib v04.15 Can now add a suffix to script name in RCH file (Use var. SADM_RCH_DESC).
+# 2023_01_27 lib v04.16 Optimize the start function.
+# 2023_02_14 lib v04.17 Remove the usage of SADM_RCH_DESC.
+# 2023_03_03 lib v04.18 sadm_start() now clear error log '*_e.log' even when 'SADM_LOG_APPEND="Y"'
+# 2023_03_04 lib v04.19 Lock file content & owner updated. 
+# 2023_04_13 lib v04.20 Load new variables 'SADM_REAR_DIF' 'SADM_REAR_INTERVAL' from sadmin.cfg.
+# 2023_04_13 lib v04.21 Load new variable 'SADM_BACKUP_INTERVAL' from sadmin.cfg use on backup page.
+# 2023_04_14 lib v04.22 SADMIN server email account pwd now taken from $SADMIN/cfg/.gmpw.
+# 2023_04_14 lib v04.23 SADMIN client email account pwd now taken from encrypted $SADMIN/cfg/.gmpw64.
+# 2023_04_14 lib v04.24 Change email pwd ($SADMIN/cfg/.gmpw) on SADM server to generate new .gmpw64.
+# 2023_05_24 lib v04.25 Umask is now shown in the script header output.
+# 2023_06_06 lib v04.26 Set file permission on email password file to prevent problem.
+# 2023_08_20 lib v04.27 Code optimization, LIBRARY LOAD A LOT FASTER (So scripts run faster).
+# 2023_09_22 lib v04.28 Change default values of SADM_*_KEEPDAYS.
+# 2023_09_26 lib v04.29 Code optimization : To function "sadm_get_command_path()".
+# 2023_12_21 lib v04.31 Fix problem when copying log and rch when initially created and user isn't root.
+# 2023_12_22 lib v04.32 Eliminate 'cp' error message in 'sadm_stop()'' function, when file is missing.
+# 2023_12_22 lib v04.33 Add user message when user is not part if the SADMIN group.
+# 2023_12_26 lib v04.34 Minor fix, file permission verification.
+# 2023_12_29 lib v04.35 Minor bug fix
+# 2024_01_16 lib v04.36 Modify sadm_start() to advise user when permission don't allow user to write to log.
+# 2024_01_18 lib v04.37 Error given when processing an invalid rch file.
+#@2024_03_13 lib v04.38 User assigned to the 'vboxusers' group.
+#@2024_03_20 lib v04.39 Load new Global variables for VM from \$SADMIN/cfg/sadmin.cfg
+#@2024_04_02 lib v04.40 Function 'sadm_write_log' will now print in color for [ OK ], [ ERROR ], ...
+#@2024_04_22 lib v04.41 Alert housekeeping, add 'SADM_DAYS_HISTORY' & ´SADM_MAX_ARC_LINE' to $SADM_CFG_FILE.
+#@2024_04_23 lib v04.42 Add option to send email on startup and on shutdown in sadmin.cfg.
+#@2024_05_15 lib v04.43 function 'sadm_stop()' now delete empty .rch at the end of execution.
+#@2024_05_17 lib v04.44 function 'sadm_stop()' remove last dotted line, before adding result status line.
+#@2024_05_18 lib v04.45 function 'sadm_stop()' remove debugging lines
+#@2024_07_11 lib v04.46 function 'sadm_ask()' added [C] cancel option.
+#@2024_08_12 lib v04.47 Minor changes (perl)
+#@2024_08_26 lib v04.48 When timeout is reach, check if script is still running before starting a new one.
+#@2024_09_01 lib v04.49 Add the 'From:' email in function 'sadm_sendmail()''
+#@2024_10_31 lib v04.50 Add new variable to sadmin.cfg for Virtual Box export new feature.
+#@2024_11_01 lib v04.51 sadm_get_osname() was not returning the right O/S under certain condition.
+#@2024_11_11 lib v04.52 Add two Global var. accessible to any script 'SADM_VMLIST' & 'SADM_VMHOSTS'.
+#@2024_12_16 lib v04.54 On Debian the 'sadm_get_osversion()' did not return the minor version number.
+#@2024_12_27 lib v04.55 Under certain condition, 'sadm_get_host_ip' wasn't returning proper IP.
+#@2025_01_07 lib v04.56 Fix for Debian the 'sadm_get_osversion()' did not return the minor version.
+#@2025_01_23 lib v04.57 Refine locking (Added sadm_show_lock, sadm_unlock sadm_lock, sadm_lock_status 
+#@2025_01_30 lib v04.58 3 New global var. for NFS mount in sadmin.cfg, initialize when loading library
+#@2025_01_30 lib v04.58 SADM_VM_EXPORT_NFS_SERVER_VER,SADM_BACKUP_NFS_SERVER_VER,SADM_REAR_NFS_SERVER_VER
+#@2025_01_30 lib v04.59 Fix some problems these 2 functions 'sadm_get_host_ip() and sadm_get_fqdn()'.
+#@2025_03_05 lib v04.60 Change syntax of some command
+#@2025_03_25 lib v04.61 Add an alternative way the get current host IP.
+#@2025_04_09 lib v04.62 Minor enhancements et fixes. 
+#@2025_04_22 lib v04.63 Refine the sadm_server_model() function to return the right model name.
+#@2025_05_07 lib v04.64 Add SADM_QUIET (Y/N) variable to control the output of error message.
+#@2025_05_19 lib v04.65 Add function 'sadm_nfs_mount' & 'sadm_nfs_unmount', solve PID_TIMEOUT problem.
+#@2025_05_26 lib v04.66 Portability minor code change to 'sadm_get_epoch_time()'.
+#@2025_05_31 lib v04.67 When a lock is created for sa system, an info line is shown on monitor web page.
+#@2025_06_10 lib v04.68 Show the process preventing to run a second copy of a script.
+#@2025_06_20 lib v04.69 Change to work on MacOS : sadm_get_fqdn(), sadm_trim(), sadm_server_serial().
+#@2025_07_01 lib v04.70 sadm_stop(), line with result code 2 were not deleted in the .rch file.
+#@2025_07_09 lib v04.71 Remove the update of rpt file when locking a system (already done).
+#@2025_07_20 lib v04.72 Change log directory permission 775 instead of 755
+#@2025_08_09 lib v04.73 When on sadmin server, update the way we update the global log/rch directory.
+#@2025_08_25 lib v04.74 Change location of 'vm_list.txt' & 'vm_hosts.txt' to '$SADMIN/dat/dr' dir. 
+#@2025_09_04 lib v04.75 SHow Process ID of the script already running of the script.
+#@2025_10_13 lib v04.76 Enhance sadm_stop() to copy .rch/.log to Global Dir. when run on SADMIN master
+#@2025_10_29 lib v04.77 When the PID file epoch time exceed the $SADM_TIMEOUT value.
+#@2025_11_30 lib v04.78 Fix some PID file expiration problems.
+#@2025_11_30 lib v04.79 Add 'sadm_convert_sec2hms()' convert seconds into hours:minutes:seconds.
+#@2026_01_19 lib v04.80 Add global variable "SADM_REAR_DEL_FAILED_BACKUP" with value from sadmin.cfg.
+#@2026_02_07 lib v04.81 Change owner & permission on $SADMIN directories.
+#@2026_02_22 lib v04.82 Add code name for MacOS, sadm_get_osversion() return minor number for debian.
+#@2026_03_03 lib v04.83 New constants: 'SADM_VM_EXPORT_SCRIPT', 'SADM_REAR_BACKUP_SCRIPT'
+#@2026_03_03 lib v04.83 New constants: 'SADM_OSUPDATE_SCRIPT'
+#@2026_03_30 lib v04.84 Add O/S update options: SADM_OSUPDATE_REBOOT_NEEDED SADM_OSUPDATE_REBOOT_TIME 
+#@2026_03_30 lib v04.84 Add O/S update options: SADM_OSUPDATE_LOCK
+#@2026_03_31 lib v04.85 Return value on Ubuntu was not ok on raspberry pi.
+#@2026_04_18 lib v04.86 If value of  global variable 'SADM_LOG_TYPE' is invalid, set to default 'B'.
+#@2026_04_19 lib v04.87 Function 'sadm_write_log' rewrote and now support '\n' in message.
+#@2026_04_26 lib v04.88 Add Function 'sadm_ping hostname' Return 0=OK 1=Error.
+#@2026_04_28 lib v04.89 NFS Mount use sudo to avoid problem with NFS mount is run by non root user.
+#@2026_06_01 lib v04.90.01 Added "chmod 0775 $SADMIN".
+#@2026_06_03 lib v04.90.02 Intro. of "SADM_QUIET" var. to ctrl the display of error msg in functions.
+#@2026_06_08 lib v04.90.03 Don't remove the mount point Dir. after the unmount in 'sadm_nfs_unmount()'.
+#@2026_06_26 lib v04.90.04 Add Variable SADM_ERRMSG & SADM_ERRNO
+#@2026_07_03 lib v04.91.00 Fix minor bugs and add in sadmin.cfg, var. to use 'ntfy' as notification.
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -281,7 +282,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.90.4"                                            # This Library Version
+export SADM_LIB_VER="04.91.00"                                          # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -416,6 +417,12 @@ export SADM_INFO_GROUP="default"                            # Info alert Group (
 export SADM_ALERT_REPEAT=43200                              # Repeat Alarm wait time Sec
 export SADM_TEXTBELT_KEY="textbelt"                         # Textbelt.com API Key
 export SADM_TEXTBELT_URL="https://textbelt.com/text"        # Textbelt.com API URL
+export SADM_NTFY_EMAIL=""                                   # NTFY Email Address
+export SADM_NTFY_PWD=""                                     # NTFY Password
+export SADM_NTFY_TOKEN=""                                   # NTFY Token
+export SADM_NTFY_TOPIC=""                                   # NTFY Topic
+export SADM_NTFY_URL="https://ntfy.sh"                      # NTFY URL
+export SADM_NTFY_USER=""                                    # NTFY User
 export SADM_DAYS_HISTORY=14                                 # Days to move alert to Arch
 export SADM_MAX_ARC_LINE=1000                               # Max Lines in Alert Archive
 export SADM_EMAIL_STARTUP="N"                               # No email on Startup
@@ -2287,6 +2294,18 @@ sadm_load_config_file() {
             "SADM_TEXTBELT_KEY")            SADM_TEXTBELT_KEY=$VALUE
                                             ;;
             "SADM_TEXTBELT_URL")            SADM_TEXTBELT_URL=$VALUE
+                                            ;;
+            "SADM_NTFY_EMAIL")              SADM_NTFY_EMAIL=$VALUE
+                                            ;;
+            "SADM_NTFY_PWD")                SADM_NTFY_PWD=$VALUE
+                                            ;;
+            "SADM_NTFY_TOKEN")              SADM_NTFY_TOKEN=$VALUE
+                                            ;;
+            "SADM_NTFY_TOPIC")              SADM_NTFY_TOPIC=$VALUE
+                                            ;;
+            "SADM_NTFY_URL")                SADM_NTFY_URL=$VALUE
+                                            ;;
+            "SADM_NTFY_USER")               SADM_NTFY_USER=$VALUE
                                             ;;
             "SADM_SERVER")                  SADM_SERVER=$VALUE
                                             ;;
