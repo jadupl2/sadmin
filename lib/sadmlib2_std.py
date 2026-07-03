@@ -84,6 +84,8 @@
 #@2025_05_20 lib v4.68.1 Load new configuratio fields for using with batch mode.
 #@2025_05_30 lib v4.69.0 Lot of modification enhance speed and security
 #@2025_06_01 lib v4.69.1 Added "chmod 0775 $SADMIN" to 'freshen_directories_structure()' function.
+#@2026_07_03 lib v4.69.2 Add function to load sadmin.cfg in a dict. 'cfg_dict=load_sadmin_config()'
+#@2026_07_03 lib v4.69.3 Fix minor bugs and add in sadmin.cfg, var. to use 'ntfy' as notification.
 # 
 # --------------------------------------------------------------------------------------------------
 
@@ -141,7 +143,7 @@ except ImportError as e:
 
 # Global Variables to this script 
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.69.1"                              # This Library Version
+lib_ver             = "4.69.3"                              # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 
 start_time          = ""                                    # Script Start Date & Time
@@ -177,7 +179,7 @@ sadm_alert_group   = "default"  # Error Alert   Group defined in $SADMIN/cfg/ale
 sadm_warning_group = "warning"  # Warning Alert Group defined in $SADMIN/cfg/alert_group.cfg
 sadm_info_group    = "info"     # Info Alert    Group defined in $SADMIN/cfg/alert_group.cfg
 dict_alert         = {}         # Define empty alert Dict.
-dict_sadmin        = {}         # Define SADMIN Dict. for config file
+cfg_dict           = {}         # Define SADMIN Dict. for config file (sadmin.cfg).
 
 # Fields used by sa.start(),sa.stop() & DB functions that influence execution of SADMIN library
 # Thwse are default values, they can be changed by the script that use this library.
@@ -208,6 +210,12 @@ sadm_info_group               = "info"                      # Defined in alert_g
 sadm_alert_repeat             = 43200                       # Alarm Repeat Wait Time Sec
 sadm_textbelt_key             = "textbelt"                  # Textbelt.com Def. API Key
 sadm_textbelt_url             = "https://textbelt.com/text" # Textbelt.com Def. API URL
+sadm_ntfy_email               = " "                         # Email related to NTFY
+sadm_ntfy_pwd                 = " "                         # Password related to NTFY
+sadm_ntfy_token               = " "                         # Token related to NTFY
+sadm_ntfy_topic               = " "                         # Topic use with NTFY
+sadm_ntfy_url                 = "https://ntfy.sh"           # URL to send notification to NTFY
+sadm_ntfy_user                = " "                         # NTFY user name
 sadm_host_type                = ""                          # [C or S] Client or Server
 sadm_server                   = ""                          # SADMIN Server FQDN 
 sadm_domain                   = ""                          # Default Host Domain
@@ -271,6 +279,15 @@ sadm_network2                 = ""                          # Network Subnet 2 t
 sadm_network3                 = ""                          # Network Subnet 3 to report
 sadm_network4                 = ""                          # Network Subnet 4 to report
 sadm_network5                 = ""                          # Network Subnet 5 to report
+
+# NTFY Parameters
+sadm_ntfy_email               = ""
+sadm_ntfy_pwd                 = ""
+sadm_ntfy_token               = ""
+sadm_ntfy_topic               = ""
+sadm_ntfy_url                 = ""
+sadm_ntfy_user                = ""
+
 
 sadm_monitor_update_interval  = 60                          # Sysmon refresh rate
 sadm_monitor_recent_count     = 10                          # SysMon Nb Recent Script
@@ -743,26 +760,24 @@ def trimfile(filename,nlines=500) :
 
 
 # --------------------------------------------------------------------------------------------------
-def load_sadmin_config(cfg_file):
+def load_sadmin_config(cfg_file=f"{dir_cfg}/sadmin.cfg") :
     
     """ 
         Load SADMIN Configuration File ($SADMIN/cfg/sadmin.cfg) into a dictionary (cfg_dict)
         
         Args:
             cfg_file (str)  :   Is the full path of the configuration file.
+                                Normally $SADMIN/cfg/sadmin.cfg this is the default,
 
         Returns:
-            All Global variables are loader with the content of sadmin.cfg
+            The dictionnary containing the keys and values from the configuration file.
     """
-
+    global cfg_dict
     cfg_dict = {}                                                       # Create empty Dictionnary
-    if lib_debug > 4 : print ("Loading Configuration file %s in a dictionnary" % (cfg_file))
+    if lib_debug > 4 : print (f"Loading Configuration file {cfg_file} in dictionnary 'cfg_dict'.")
 
-
-    # If no configuration file (cfg_file) and no configuration template (cfg_hidden) exist.
-    #  - Copy the template ($SADMIN/.sadm_config) to Live file ($SADMIN/sadmin.cfg)
-    #  - If none of these files can be found then exit to O/S.
-    if  not os.path.exists(cfg_file) and not os.path.exists(cfg_hidden) :
+    # If template and config file doesn't exist
+    if not os.path.exists(cfg_file) and not os.path.exists(cfg_hidden): 
         print ("\n[ ERROR ] SADMIN Configuration file '%s' can't be found" % (cfg_file))
         print ("   - Even the template file %s can't be found" % (cfg_hidden))
         print ("   - Copy the template file from another system to this system.")
@@ -771,149 +786,157 @@ def load_sadmin_config(cfg_file):
 
 
     # If no configuration file (cfg_file) exist but configuration template (cfg_hidden) exist.
+    #  - Copy the template ($SADMIN/cfg/.sadm_config) to Live file ($SADMIN/cfg/sadmin.cfg)
     if  not os.path.exists(cfg_file) and os.path.exists(cfg_hidden) :
         print ("\nThe SADMIN configuration file '%s' doesn't exist." % (cfg_file))
         print ("   - Will continue using template configuration file '%s'." % (cfg_hidden))
         print ("   - You may want to review the configuration file.")
-        print ("   - cp %s %s \n" % (cfg_hidden,cfg_file))          # Install template cfg file
+        print ("   - cp %s %s \n" % (cfg_hidden,cfg_file))              # Install template cfg file
         try: 
-            shutil.copy2(cfg_hidden,cfg_file)                       # Copy template to Live cfg file
+            shutil.copy2(cfg_hidden,cfg_file)                           # Copy template to Live cfg
         except Exception as e:
-            print ("\n[ ERROR ] Copying template file %s to %s" % (cfg_hidden,cfg_file))
+            print (f"\n[ ERROR ] {e}")  
             print ("\nCould not copy %s to %s" % (cfg_hidden,cfg_file))
             print ("Restore the file from a backup & review the file content.\n")
             print ("Program need a valid %s to run\nProgram aborted\n" % (cfg_file))
             sys.exit(1)
                 
 
-    # Open Configuration file
-
+    # Open and load Configuration file in the dictionnary 'cfg_dict'.
     with open(cfg_file, "r", encoding="utf-8") as cfglines:
         for cfgline in cfglines:
             wline        = cfgline.strip()                              # Strip CR/LF & Trail spaces
-            if (wline[0:1] == '#' or len(wline) == 0) :continue         # If comment or blank line
+            if (wline[0:1] == '#' or len(wline) == 0)  :continue        # Skip comment or blank line
             split_line   = wline.split('=')                             # Split based on equal sign
             CFG_NAME   = split_line[0].upper().strip()                  # Param Name Uppercase Trim
             CFG_VALUE  = str(split_line[1]).strip()                     # Get Param Value Trimmed
 
-            # General Variables found in SADMIN configuration File
-            if "SADM_MAIL_ADDR"            in cfg_dict: cfg_dict['SADM_MAIL_ADDR']     = CFG_VALUE
-            if "SADM_CIE_NAME"             in cfg_dict: cfg_dict['SADM_CIE_NAME']      = CFG_VALUE
-            if "SADM_ALERT_TYPE"           in cfg_dict: cfg_dict["SADM_ALERT_TYPE"]    = int(CFG_VALUE)
-            if "SADM_ALERT_GROUP"          in cfg_dict: cfg_dict["SADM_ALERT_GROUP"]   = CFG_VALUE
-            if "SADM_WARNING_GROUP"        in cfg_dict: cfg_dict["SADM_WARNING_GROUP"] = CFG_VALUE
-            if "SADM_INFO_GROUP"           in cfg_dict: cfg_dict["SADM_INFO_GROUP"]    = CFG_VALUE
-            if "SADM_ALERT_REPEAT"         in cfg_dict: cfg_dict["SADM_ALERT_REPEAT"]  = int(CFG_VALUE)
-            if "SADM_TEXTBELT_KEY"         in cfg_dict: cfg_dict["SADM_TEXTBELT_KEY"]  = CFG_VALUE
-            if "SADM_TEXTBELT_URL"         in cfg_dict: cfg_dict["SADM_TEXTBELT_URL"]  = CFG_VALUE
-            if "SADM_HOST_TYPE"            in cfg_dict: cfg_dict["SADM_HOST_TYPE"]     = CFG_VALUE.upper()
-            if "SADM_SERVER"               in cfg_dict: cfg_dict["SADM_SERVER"]        = CFG_VALUE
-            if "SADM_DOMAIN"               in cfg_dict: cfg_dict["SADM_DOMAIN"]        = CFG_VALUE
-            if "SADM_USER"                 in cfg_dict: cfg_dict["SADM_USER"]          = CFG_VALUE
+            if "SADM_MAIL_ADDR"                  == CFG_NAME: cfg_dict['SADM_MAIL_ADDR']                 = CFG_VALUE
+            if "SADM_CIE_NAME"                   == CFG_NAME: cfg_dict['SADM_CIE_NAME']                  = CFG_VALUE
+            if "SADM_ALERT_TYPE"                 == CFG_NAME: cfg_dict["SADM_ALERT_TYPE"]                = int(CFG_VALUE)
+            if "SADM_ALERT_GROUP"                == CFG_NAME: cfg_dict["SADM_ALERT_GROUP"]               = CFG_VALUE
+            if "SADM_WARNING_GROUP"              == CFG_NAME: cfg_dict["SADM_WARNING_GROUP"]             = CFG_VALUE
+            if "SADM_INFO_GROUP"                 == CFG_NAME: cfg_dict["SADM_INFO_GROUP"]                = CFG_VALUE
+            if "SADM_ALERT_REPEAT"               == CFG_NAME: cfg_dict["SADM_ALERT_REPEAT"]              = int(CFG_VALUE)
+            if "SADM_TEXTBELT_KEY"               == CFG_NAME: cfg_dict["SADM_TEXTBELT_KEY"]              = CFG_VALUE
+            if "SADM_TEXTBELT_URL"               == CFG_NAME: cfg_dict["SADM_TEXTBELT_URL"]              = CFG_VALUE
+            if "SADM_NTFY_EMAIL"                 == CFG_NAME: cfg_dict["SADM_NTFY_EMAIL"]                = CFG_VALUE
+            if "SADM_NTFY_PWD"                   == CFG_NAME: cfg_dict["SADM_NTFY_PWD"]                  = CFG_VALUE
+            if "SADM_NTFY_TOKEN"                 == CFG_NAME: cfg_dict["SADM_NTFY_TOKEN"]                = CFG_VALUE
+            if "SADM_NTFY_TOPIC"                 == CFG_NAME: cfg_dict["SADM_NTFY_TOPIC"]                = CFG_VALUE
+            if "SADM_NTFY_URL"                   == CFG_NAME: cfg_dict["SADM_NTFY_URL"]                  = CFG_VALUE
+            if "SADM_NTFY_USER"                  == CFG_NAME: cfg_dict["SADM_NTFY_USER"]                 = CFG_VALUE
+            if "SADM_HOST_TYPE"                  == CFG_NAME: cfg_dict["SADM_HOST_TYPE"]                 = CFG_VALUE.upper()
+            if "SADM_SERVER"                     == CFG_NAME: cfg_dict["SADM_SERVER"]                    = CFG_VALUE
+            if "SADM_DOMAIN"                     == CFG_NAME: cfg_dict["SADM_DOMAIN"]                    = CFG_VALUE
+            if "SADM_USER"                       == CFG_NAME: cfg_dict["SADM_USER"]                      = CFG_VALUE
+            if "SADM_GROUP"                      == CFG_NAME: cfg_dict["SADM_GROUP"]                     = CFG_VALUE
+            if "SADM_PWD_RANDOM"                 == CFG_NAME: cfg_dict["SADM_PWD_RANDOM"]                = CFG_VALUE.upper()
+            if "SADM_WWW_USER"                   == CFG_NAME: cfg_dict["SADM_WWW_USER"]                  = CFG_VALUE
+            if "SADM_WWW_GROUP"                  == CFG_NAME: cfg_dict["SADM_WWW_GROUP"]                 = CFG_VALUE
+            if "SADM_SSH_PORT"                   == CFG_NAME: cfg_dict["SADM_SSH_PORT"]                  = int(CFG_VALUE)
+            if "SADM_MAX_LOGLINE"                == CFG_NAME: cfg_dict["SADM_MAX_LOGLINE"]               = int(CFG_VALUE)
+            if "SADM_MAX_RCHLINE"                == CFG_NAME: cfg_dict["SADM_MAX_RCHLINE"]               = int(CFG_VALUE)
+            if "SADM_NMON_KEEPDAYS"              == CFG_NAME: cfg_dict["SADM_NMON_KEEPDAYS"]             = int(CFG_VALUE)
+            if "SADM_RCH_KEEPDAYS"               == CFG_NAME: cfg_dict["SADM_RCH_KEEPDAYS"]              = int(CFG_VALUE)
+            if "SADM_LOG_KEEPDAYS"               == CFG_NAME: cfg_dict["SADM_LOG_KEEPDAYS"]              = int(CFG_VALUE)
+            if "SADM_PID_TIMEOUT"                == CFG_NAME: cfg_dict["SADM_PID_TIMEOUT"]               = int(CFG_VALUE)
+            if "SADM_LOCK_TIMEOUT"               == CFG_NAME: cfg_dict["SADM_LOCK_TIMEOUT"]              = int(CFG_VALUE)
+            if "SADM_MONITOR_UPDATE_INTERVAL"    == CFG_NAME: cfg_dict["SADM_MONITOR_UPDATE_INTERVAL"]   = int(CFG_VALUE)
+            if "SADM_MONITOR_RECENT_COUNT"       == CFG_NAME: cfg_dict["SADM_MONITOR_RECENT_COUNT"]      = int(CFG_VALUE)
+            if "SADM_MONITOR_RECENT_EXCLUDE"     == CFG_NAME: cfg_dict["SADM_MONITOR_RECENT_EXCLUDE"]    = CFG_VALUE
+            if "SADM_SMTP_SERVER"                == CFG_NAME: cfg_dict["SADM_SMTP_SERVER"]               = CFG_VALUE
+            if "SADM_SMTP_PORT"                  == CFG_NAME: cfg_dict["SADM_SMTP_PORT"]                 = int(CFG_VALUE)
+            if "SADM_SMTP_SENDER"                == CFG_NAME: cfg_dict["SADM_SMTP_SENDER"]               = CFG_VALUE
+            if "SADM_DAYS_HISTORY"               == CFG_NAME: cfg_dict["SADM_DAYS_HISTORY"]              = int(CFG_VALUE)
+            if "SADM_MAX_ARC_LINE"               == CFG_NAME: cfg_dict["SADM_MAX_ARC_LINE"]              = int(CFG_VALUE)
+            if "SADM_EMAIL_STARTUP"              == CFG_NAME: cfg_dict["SADM_EMAIL_STARTUP"]             = CFG_VALUE
+            if "SADM_EMAIL_SHUTDOWN"             == CFG_NAME: cfg_dict["SADM_EMAIL_SHUTDOWN"]            = CFG_VALUE
 
-            if "SADM_GROUP"                    in cfg_dict: cfg_dict["SADM_GROUP"] = CFG_VALUE
-            if "SADM_PWD_RANDOM"               in cfg_dict: cfg_dict["SADM_PWD_RANDOM"] = CFG_VALUE.upper()
-            if "SADM_WWW_USER"                 in cfg_dict: cfg_dict["SADM_WWW_USER"] = CFG_VALUE
-            if "SADM_WWW_GROUP"                in cfg_dict: cfg_dict["SADM_WWW_GROUP"] = CFG_VALUE
-            if "SADM_SSH_PORT"                 in cfg_dict: cfg_dict["SADM_SSH_PORT"] = int(CFG_VALUE)
-            if "SADM_MAX_LOGLINE"              in cfg_dict: cfg_dict["SADM_MAX_LOGLINE"] = int(CFG_VALUE)
-            if "SADM_MAX_RCHLINE"              in cfg_dict: cfg_dict["SADM_MAX_RCHLINE"] = int(CFG_VALUE)
-            if "SADM_NMON_KEEPDAYS"            in cfg_dict: cfg_dict["SADM_NMON_KEEPDAYS"] = int(CFG_VALUE)
-            if "SADM_RCH_KEEPDAYS"             in cfg_dict: cfg_dict["SADM_RCH_KEEPDAYS"] = int(CFG_VALUE)
-            if "SADM_LOG_KEEPDAYS"             in cfg_dict: cfg_dict["SADM_LOG_KEEPDAYS"] = int(CFG_VALUE)
-            if "SADM_PID_TIMEOUT"              in cfg_dict: cfg_dict["SADM_PID_TIMEOUT"] = int(CFG_VALUE)
-            if "SADM_LOCK_TIMEOUT"             in cfg_dict: cfg_dict["SADM_LOCK_TIMEOUT"] = int(CFG_VALUE)
-            if "SADM_LOCK_TIMEOUT"             in cfg_dict: cfg_dict["LOCK_TIMEOUT"] = int(CFG_VALUE)
-            if "SADM_MONITOR_UPDATE_INTERVAL"  in cfg_dict: cfg_dict["SADM_MONITOR_UPDATE_INTERVAL"] = int(CFG_VALUE)
-            if "SADM_MONITOR_RECENT_COUNT"     in cfg_dict: cfg_dict["SADM_MONITOR_RECENT_COUNT"] = int(CFG_VALUE)
-            if "SADM_MONITOR_RECENT_EXCLUDE"   in cfg_dict: cfg_dict["SADM_MONITOR_RECENT_EXCLUDE"] = CFG_VALUE
-            if "SADM_SMTP_SERVER"              in cfg_dict: cfg_dict["SADM_SMTP_SERVER"] = CFG_VALUE
-            if "SADM_SMTP_PORT"                in cfg_dict: cfg_dict["SADM_SMTP_PORT"] = int(CFG_VALUE)
-            if "SADM_SMTP_SENDER"              in cfg_dict: cfg_dict["SADM_SMTP_SENDER"] = CFG_VALUE
-            if "SADM_DAYS_HISTORY"             in cfg_dict: cfg_dict["SADM_DAYS_HISTORY"] = int(CFG_VALUE)
-            if "SADM_MAX_ARC_LINE"             in cfg_dict: cfg_dict["SADM_MAX_ARC_LINE"] = int(CFG_VALUE)
-            if "SADM_EMAIL_STARTUP"            in cfg_dict: cfg_dict["SADM_EMAIL_STARTUP"] = CFG_VALUE
-            if "SADM_EMAIL_SHUTDOWN"           in cfg_dict: cfg_dict["SADM_EMAIL_SHUTDOWN"] = CFG_VALUE
+            # Database Connection Information
+            if "SADM_DBNAME"                     == CFG_NAME: cfg_dict["SADM_DBNAME"]                    = CFG_VALUE
+            if "SADM_DBHOST"                     == CFG_NAME: cfg_dict["SADM_DBHOST"]                    = CFG_VALUE
+            if "SADM_DBPORT"                     == CFG_NAME: cfg_dict["SADM_DBPORT"]                    = int(CFG_VALUE)
+            if "SADM_RW_DBUSER"                  == CFG_NAME: cfg_dict["SADM_RW_DBUSER"]                 = CFG_VALUE
+            if "SADM_RO_DBUSER"                  == CFG_NAME: cfg_dict["SADM_RO_DBUSER"]                 = CFG_VALUE
 
-        # Database Connection Information
-        if "SADM_DBNAME"                   in CFG_NAME: sadm_dbname                  = CFG_VALUE
-        if "SADM_DBHOST"                   in CFG_NAME: sadm_dbhost                  = CFG_VALUE
-        if "SADM_DBPORT"                   in CFG_NAME: sadm_dbport                  = int(CFG_VALUE)
-        if "SADM_RW_DBUSER"                in CFG_NAME: sadm_rw_dbuser               = CFG_VALUE
-        if "SADM_RO_DBUSER"                in CFG_NAME: sadm_ro_dbuser               = CFG_VALUE
+            # NTFY Parameters
+            if "SADM_NTFY_EMAIL"                 == CFG_NAME: cfg_dict["SADM_NTFY_EMAIL"]                = CFG_VALUE
+            if "SADM_NTFY_PWD"                   == CFG_NAME: cfg_dict["SADM_NTFY_PWD  "]                = CFG_VALUE
+            if "SADM_NTFY_TOKEN"                 == CFG_NAME: cfg_dict["SADM_NTFY_TOKEN"]                = CFG_VALUE
+            if "SADM_NTFY_TOPIC"                 == CFG_NAME: cfg_dict["SADM_NTFY_TOPIC"]                = CFG_VALUE
+            if "SADM_NTFY_URL"                   == CFG_NAME: cfg_dict["SADM_NTFY_URL  "]                = CFG_VALUE
+            if "SADM_NTFY_USER"                  == CFG_NAME: cfg_dict["SADM_NTFY_USER "]                = CFG_VALUE
 
-        # Daily Backup 
-        if "SADM_BACKUP_NFS_SERVER"        == CFG_NAME: sadm_backup_nfs_server       = CFG_VALUE
-        if "SADM_BACKUP_NFS_SERVER_VER"    == CFG_NAME: sadm_backup_nfs_server_ver   = int(CFG_VALUE)
-        if "SADM_BACKUP_NFS_MOUNT_POINT"   in CFG_NAME: sadm_backup_nfs_mount_point  = CFG_VALUE
-        if "SADM_BACKUP_DIF"               in CFG_NAME: sadm_backup_dif              = int(CFG_VALUE)
-        if "SADM_BACKUP_INTERVAL"          in CFG_NAME: sadm_backup_interval         = int(CFG_VALUE)
-        if "SADM_DAILY_BACKUP_TO_KEEP"     in CFG_NAME: sadm_daily_backup_to_keep    = int(CFG_VALUE)
-        if "SADM_WEEKLY_BACKUP_TO_KEEP"    in CFG_NAME: sadm_weekly_backup_to_keep   = int(CFG_VALUE)
-        if "SADM_MONTHLY_BACKUP_TO_KEEP"   in CFG_NAME: sadm_monthly_backup_to_keep  = int(CFG_VALUE)
-        if "SADM_YEARLY_BACKUP_TO_KEEP"    in CFG_NAME: sadm_yearly_backup_to_keep   = int(CFG_VALUE)
-        if "SADM_WEEKLY_BACKUP_DAY"        in CFG_NAME: sadm_weekly_backup_day       = int(CFG_VALUE)
-        if "SADM_MONTHLY_BACKUP_DATE"      in CFG_NAME: sadm_monthly_backup_date     = int(CFG_VALUE)
-        if "SADM_YEARLY_BACKUP_MONTH"      in CFG_NAME: sadm_yearly_backup_month     = int(CFG_VALUE)
-        if "SADM_YEARLY_BACKUP_DATE"       in CFG_NAME: sadm_yearly_backup_date      = int(CFG_VALUE)
-        if "SADM_BACKUP_BATCH_CONCURRENT"  in CFG_NAME: sadm_backup_batch_concurrent = int(CFG_VALUE)
-        if "SADM_BACKUP_SCRIPT"            in CFG_NAME: sadm_backup_script           = CFG_VALUE
-        if "SADM_BACKUP_BATCH_MODE"        in CFG_NAME: sadm_backup_batch_mode       = CFG_VALUE.upper()
-        if "SADM_BACKUP_BATCH_START_TIME"  in CFG_NAME: sadm_backup_batch_start_time = CFG_VALUE
+            # Daily Backup 
+            if "SADM_BACKUP_NFS_SERVER"          == CFG_NAME: cfg_dict["SADM_BACKUP_NFS_SERVER"]         = CFG_VALUE
+            if "SADM_BACKUP_NFS_SERVER_VER"      == CFG_NAME: cfg_dict["SADM_BACKUP_NFS_SERVER_VER"]     = int(CFG_VALUE)
+            if "SADM_BACKUP_NFS_MOUNT_POINT"     == CFG_NAME: cfg_dict["SADM_BACKUP_NFS_MOUNT_POINT"]    = CFG_VALUE
+            if "SADM_BACKUP_DIF"                 == CFG_NAME: cfg_dict["SADM_BACKUP_DIF"]                = int(CFG_VALUE)
+            if "SADM_BACKUP_INTERVAL"            == CFG_NAME: cfg_dict["SADM_BACKUP_INTERVAL"]           = int(CFG_VALUE)
+            if "SADM_DAILY_BACKUP_TO_KEEP"       == CFG_NAME: cfg_dict["SADM_DAILY_BACKUP_TO_KEEP"]      = int(CFG_VALUE)
+            if "SADM_WEEKLY_BACKUP_TO_KEEP"      == CFG_NAME: cfg_dict["SADM_WEEKLY_BACKUP_TO_KEEP"]     = int(CFG_VALUE)
+            if "SADM_MONTHLY_BACKUP_TO_KEEP"     == CFG_NAME: cfg_dict["SADM_MONTHLY_BACKUP_TO_KEEP"]    = int(CFG_VALUE)
+            if "SADM_YEARLY_BACKUP_TO_KEEP"      == CFG_NAME: cfg_dict["SADM_YEARLY_BACKUP_TO_KEEP"]     = int(CFG_VALUE)
+            if "SADM_WEEKLY_BACKUP_DAY"          == CFG_NAME: cfg_dict["SADM_WEEKLY_BACKUP_DAY"]         = int(CFG_VALUE)
+            if "SADM_MONTHLY_BACKUP_DATE"        == CFG_NAME: cfg_dict["SADM_MONTHLY_BACKUP_DATE"]       = int(CFG_VALUE)
+            if "SADM_YEARLY_BACKUP_MONTH"        == CFG_NAME: cfg_dict["SADM_YEARLY_BACKUP_MONTH"]       = int(CFG_VALUE)
+            if "SADM_YEARLY_BACKUP_DATE"         == CFG_NAME: cfg_dict["SADM_YEARLY_BACKUP_DATE"]        = int(CFG_VALUE)
+            if "SADM_BACKUP_BATCH_CONCURRENT"    == CFG_NAME: cfg_dict["SADM_BACKUP_BATCH_CONCURRENT"]   = int(CFG_VALUE)
+            if "SADM_BACKUP_SCRIPT"              == CFG_NAME: cfg_dict["SADM_BACKUP_SCRIPT"]             = CFG_VALUE
+            if "SADM_BACKUP_BATCH_MODE"          == CFG_NAME: cfg_dict["SADM_BACKUP_BATCH_MODE"]         = CFG_VALUE.upper()
+            if "SADM_BACKUP_BATCH_START_TIME"    == CFG_NAME: cfg_dict["SADM_BACKUP_BATCH_START_TIME"]   = CFG_VALUE
 
+            # ReaR Backup
+            if "SADM_REAR_NFS_SERVER"            == CFG_NAME: cfg_dict["SADM_REAR_NFS_SERVER"]           = CFG_VALUE
+            if "SADM_REAR_NFS_SERVER_VER"        == CFG_NAME: cfg_dict["SADM_REAR_NFS_SERVER_VER"]       = int(CFG_VALUE)
+            if "SADM_REAR_NFS_MOUNT_POINT"       == CFG_NAME: cfg_dict["SADM_REAR_NFS_MOUNT_POINT"]      = CFG_VALUE
+            if "SADM_REAR_BACKUP_TO_KEEP"        == CFG_NAME: cfg_dict["SADM_REAR_BACKUP_TO_KEEP"]       = int(CFG_VALUE)
+            if "SADM_REAR_BACKUP_DIF"            == CFG_NAME: cfg_dict["SADM_REAR_BACKUP_DIF"]           = int(CFG_VALUE)
+            if "SADM_REAR_BACKUP_INTERVAL"       == CFG_NAME: cfg_dict["SADM_REAR_BACKUP_INTERVAL"]      = int(CFG_VALUE)
+            if "SADM_REAR_BACKUP_SCRIPT"         == CFG_NAME: cfg_dict["SADM_REAR_BACKUP_SCRIPT"]        = CFG_VALUE
+            if "SADM_REAR_DEL_FAILED_BACKUP"     == CFG_NAME: cfg_dict["SADM_REAR_DEL_FAILED_BACKUP"]    = CFG_VALUE.upper()
+            if "SADM_REAR_BATCH_MODE"            == CFG_NAME: cfg_dict["SADM_REAR_BATCH_MODE"]           = CFG_VALUE.upper()
+            if "SADM_REAR_BATCH_STARTUP_TIME"    == CFG_NAME: cfg_dict["SADM_REAR_BATCH_STARTUP_TIME"]   = CFG_VALUE
+            if "SADM_REAR_BACKUP_CONCURRENT"     == CFG_NAME: cfg_dict["SADM_REAR_BACKUP_CONCURRENT"]    = int(CFG_VALUE)
 
-        # ReaR Backup
-        if "SADM_REAR_NFS_SERVER"          == CFG_NAME: sadm_rear_nfs_server         = CFG_VALUE
-        if "SADM_REAR_NFS_SERVER_VER"      == CFG_NAME: sadm_rear_nfs_server_ver     = int(CFG_VALUE)
-        if "SADM_REAR_NFS_MOUNT_POINT"     in CFG_NAME: sadm_rear_nfs_mount_point    = CFG_VALUE
-        if "SADM_REAR_BACKUP_TO_KEEP"      in CFG_NAME: sadm_rear_backup_to_keep     = int(CFG_VALUE)
-        if "SADM_REAR_BACKUP_DIFF"         in CFG_NAME: sadm_rear_backup_dif         = int(CFG_VALUE)
-        if "SADM_REAR_BACKUP_INTERVAL"     in CFG_NAME: sadm_rear_backup_interval    = int(CFG_VALUE)
-        if "SADM_REAR_BACKUP_SCRIPT"       in CFG_NAME: sadm_rear_backup_script      = CFG_VALUE
-        if "SADM_REAR_DEL_FAILED_BACKUP"   in CFG_NAME: sadm_rear_del_failed_backup  = CFG_VALUE.upper()
-        if "SADM_REAR_BATCH_MODE"          in CFG_NAME: sadm_rear_batch_mode         = CFG_VALUE.upper()
-        if "SADM_REAR_BATCH_STARTUP_TIME"  in CFG_NAME: sadm_rear_batch_startup_time = CFG_VALUE
-        if "SADM_REAR_BACKUP_CONCURRENT"   in CFG_NAME: sadm_rear_backup_concurrent  = int(CFG_VALUE)
+            # Network Scan  
+            if "SADM_NETWORK1"                   == CFG_NAME: cfg_dict["SADM_NETWORK1"]                  = CFG_VALUE
+            if "SADM_NETWORK2"                   == CFG_NAME: cfg_dict["SADM_NETWORK2"]                  = CFG_VALUE
+            if "SADM_NETWORK3"                   == CFG_NAME: cfg_dict["SADM_NETWORK3"]                  = CFG_VALUE
+            if "SADM_NETWORK4"                   == CFG_NAME: cfg_dict["SADM_NETWORK4"]                  = CFG_VALUE
+            if "SADM_NETWORK5"                   == CFG_NAME: cfg_dict["SADM_NETWORK5"]                  = CFG_VALUE
 
-        # Network Scan  
-        if "SADM_NETWORK1"                 in CFG_NAME: sadm_network1                = CFG_VALUE
-        if "SADM_NETWORK2"                 in CFG_NAME: sadm_network2                = CFG_VALUE
-        if "SADM_NETWORK3"                 in CFG_NAME: sadm_network3                = CFG_VALUE
-        if "SADM_NETWORK4"                 in CFG_NAME: sadm_network4                = CFG_VALUE
-        if "SADM_NETWORK5"                 in CFG_NAME: sadm_network5                = CFG_VALUE
+            # Virtual machines exportinformation
+            if "SADM_VM_EXPORT_NFS_SERVER"       == CFG_NAME: cfg_dict["SADM_VM_EXPORT_NFS_SERVER"]      = CFG_VALUE
+            if "SADM_VM_EXPORT_NFS_SERVER_VER"   == CFG_NAME: cfg_dict["SADM_VM_EXPORT_NFS_SERVER_VER"]  = int(CFG_VALUE)
+            if "SADM_VM_EXPORT_MOUNT_POINT"      == CFG_NAME: cfg_dict["SADM_VM_EXPORT_MOUNT_POINT"]     = CFG_VALUE
+            if "SADM_VM_EXPORT_TO_KEEP"          == CFG_NAME: cfg_dict["SADM_VM_EXPORT_TO_KEEP"]         = int(CFG_VALUE)
+            if "SADM_VM_EXPORT_INTERVAL"         == CFG_NAME: cfg_dict["SADM_VM_EXPORT_INTERVAL"]        = int(CFG_VALUE)
+            if "SADM_VM_EXPORT_ALERT"            == CFG_NAME: cfg_dict["SADM_VM_EXPORT_ALERT"]           = CFG_VALUE
+            if "SADM_VM_USER"                    == CFG_NAME: cfg_dict["SADM_VM_USER"]                   = CFG_VALUE
+            if "SADM_VM_STOP_TIMEOUT"            == CFG_NAME: cfg_dict["SADM_VM_STOP_TIMEOUT"]           = int(CFG_VALUE)
+            if "SADM_VM_START_INTERVAL"          == CFG_NAME: cfg_dict["SADM_VM_START_INTERVAL"]         = int(CFG_VALUE)
+            if "SADM_VM_EXPORT_DIF"              == CFG_NAME: cfg_dict["SADM_VM_EXPORT_DIF"]             = int(CFG_VALUE)
+            if "SADM_VM_EXPORT_SCRIPT"           == CFG_NAME: cfg_dict["SADM_VM_EXPORT_SCRIPT"]          = CFG_VALUE
+            if "SADM_VM_EXPORT_SCRIPT"           == CFG_NAME: cfg_dict["SADM_VM_EXPORT_SCRIPT"]          = CFG_VALUE
+            if "SADM_VM_EXPORT_BATCH_MODE"       == CFG_NAME: cfg_dict["SADM_VM_EXPORT_BATCH_MODE"]      = CFG_VALUE
+            if "SADM_VM_EXPORT_BATCH_START_TIME" == CFG_NAME: cfg_dict["SADM_VM_EXPORT_BATCH_START_TIME"]= CFG_VALUE
+            if "SADM_VM_EXPORT_CONCURRENT"       == CFG_NAME: cfg_dict["SADM_VM_EXPORT_CONCURRENT"]      = int(CFG_VALUE)  
 
-        # Virtual machines exportinformation
-        if "SADM_VM_EXPORT_NFS_SERVER"     == CFG_NAME: sadm_vm_export_nfs_server    = CFG_VALUE
-        if "SADM_VM_EXPORT_NFS_SERVER_VER" == CFG_NAME: sadm_vm_export_nfs_server_ver = int(CFG_VALUE)
-        if "SADM_VM_EXPORT_MOUNT_POINT"    in CFG_NAME: sadm_vm_export_mount_point   = CFG_VALUE
-        if "SADM_VM_EXPORT_TO_KEEP"        in CFG_NAME: sadm_vm_export_to_keep       = int(CFG_VALUE)
-        if "SADM_VM_EXPORT_INTERVAL"       in CFG_NAME: sadm_vm_export_interval      = int(CFG_VALUE)
-        if "SADM_VM_EXPORT_ALERT"          in CFG_NAME: sadm_vm_export_alert         = CFG_VALUE
-        if "SADM_VM_USER"                  in CFG_NAME: sadm_vm_user                 = CFG_VALUE
-        if "SADM_VM_STOP_TIMEOUT"          in CFG_NAME: sadm_vm_stop_timeout         = int(CFG_VALUE)
-        if "SADM_VM_START_INTERVAL"        in CFG_NAME: sadm_vm_start_interval       = int(CFG_VALUE)
-        if "SADM_VM_EXPORT_DIF"            in CFG_NAME: sadm_vm_export_dif           = int(CFG_VALUE)
-        if "SADM_VM_EXPORT_SCRIPT"         in CFG_NAME: sadm_vm_export_script        = CFG_VALUE
-        if "SADM_VM_EXPORT_SCRIPT"         in CFG_NAME: sadm_vm_export_script        = CFG_VALUE
-        if "SADM_VM_EXPORT_BATCH_MODE"     in CFG_NAME: sadm_vm_export_batch_mode    = CFG_VALUE
-        if "SADM_VM_EXPORT_BATCH_START_TIME" in CFG_NAME: sadm_vm_export_batch_start_time = CFG_VALUE
-        if "SADM_VM_EXPORT_BATCH_CONCURRENT" in CFG_NAME: sadm_vm_export_batch_concurrent = int(CFG_VALUE)
-        if "SADM_VM_EXPORT_CONCURRENT"     in CFG_NAME: sadm_vm_export_concurrent    = int(CFG_VALUE)  
+            # O/S Update
+            if "SADM_OSUPDATE_INTERVAL"          == CFG_NAME: cfg_dict["SADM_OSUPDATE_INTERVAL"]         = int(CFG_VALUE)
+            if "SADM_OSUPDATE_SCRIPT"            == CFG_NAME: cfg_dict["SADM_OSUPDATE_SCRIPT"]           = CFG_VALUE
+            if "SADM_OSUPDATE_AUTOREMOVE"        == CFG_NAME: cfg_dict["SADM_OSUPDATE_AUTOREMOVE"]       = CFG_VALUE.upper()
+            if "SADM_OSUPDATE_FLATPAK"           == CFG_NAME: cfg_dict["SADM_OSUPDATE_FLATPAK"]          = CFG_VALUE.upper()
+            if "SADM_OSUPDATE_SNAP"              == CFG_NAME: cfg_dict["SADM_OSUPDATE_SNAP"]             = CFG_VALUE.upper()
+            if "SADM_OSUPDATE_REBOOT_NEEDED"     == CFG_NAME: cfg_dict["SADM_OSUPDATE_REBOOT_NEEDED"]    = CFG_VALUE.upper()
+            if "SADM_OSUPDATE_REBOOT_TIME"       == CFG_NAME: cfg_dict["SADM_OSUPDATE_REBOOT_TIME"]      = CFG_VALUE.upper()
+            if "SADM_OSUPDATE_LOCK"              == CFG_NAME: cfg_dict["SADM_OSUPDATE_LOCK"]             = CFG_VALUE.upper()
+            if "SADM_OSUPDATE_BATCH_MODE"        == CFG_NAME: cfg_dict["SADM_OSUPDATE_BATCH_MODE"]       = CFG_VALUE.upper()
+            if "SADM_OSUPDATE_BATCH_START_TIME"  == CFG_NAME: cfg_dict["SADM_OSUPDATE_BATCH_START_TIME"] = CFG_VALUE.upper()
+            if "SADM_OSUPDATE_CONCURRENT"        == CFG_NAME: cfg_dict["SADM_OSUPDATE_CONCURRENT"]       = int(CFG_VALUE)
 
-        # O/S Update
-        if "SADM_OSUPDATE_INTERVAL"        in CFG_NAME: sadm_osupdate_interval       = int(CFG_VALUE)
-        if "SADM_OSUPDATE_SCRIPT"          in CFG_NAME: sadm_osupdate_script         = CFG_VALUE
-        if "SADM_OSUPDATE_AUTOREMOVE"      in CFG_NAME: sadm_osupdate_autoremove     = CFG_VALUE.upper()
-        if "SADM_OSUPDATE_FLATPAK"         in CFG_NAME: sadm_osupdate_flatpak        = CFG_VALUE.upper()
-        if "SADM_OSUPDATE_SNAP"            in CFG_NAME: sadm_osupdate_snap           = CFG_VALUE.upper()
-        if "SADM_OSUPDATE_REBOOT_NEEDED"   in CFG_NAME: sadm_osupdate_reboot_needed  = CFG_VALUE.upper()
-        if "SADM_OSUPDATE_REBOOT_TIME"     in CFG_NAME: sadm_osupdate_reboot_time    = CFG_VALUE.upper()
-        if "SADM_OSUPDATE_LOCK"            in CFG_NAME: sadm_osupdate_lock           = CFG_VALUE.upper()
-        if "SADM_OSUPDATE_BATCH_MODE"      in CFG_NAME: sadm_osupdate_batch_mode     = CFG_VALUE.upper()
-        if "SADM_OSUPDATE_BATCH_START_TIME" in CFG_NAME: sadm_osupdate_batch_start_time = CFG_VALUE.upper()
-        if "SADM_OSUPDATE_CONCURRENT"      in CFG_NAME: sadm_osupdate_concurrent     = int(CFG_VALUE)
-
-    # Return Dictionnary loaded with sadmin.cfg content
     return(cfg_dict)                                                    
 
 
@@ -973,7 +996,11 @@ def load_config_file(cfg_file):
     sadm_rear_nfs_server         ,sadm_rear_nfs_mount_point     ,sadm_rear_backup_to_keep         ,\
     sadm_rear_batch_mode         ,sadm_rear_batch_startup_time  ,sadm_rear_backup_concurrent      ,\
     sadm_rear_backup_dif         ,sadm_rear_backup_interval     ,sadm_rear_backup_script          ,\
-    sadm_rear_del_failed_backup  ,sadm_rear_nfs_server_ver       
+    sadm_rear_del_failed_backup  ,sadm_rear_nfs_server_ver      ,sadm_ntfy_url                    ,\
+    sadm_textbelt_key            ,sadm_textbelt_url             ,sadm_ntfy_email                  ,\
+    sadm_ntfy_pwd                ,sadm_ntfy_token               ,sadm_ntfy_topic                  ,\
+    sadm_ntfy_user               ,sadm_pwd_random               ,sadm_pid_timeout                 ,\
+    sadm_vm_export_concurrent
     
     if lib_debug > 4 : print ("Loading Configuration file %s" % (cfg_file))
 
@@ -1034,6 +1061,12 @@ def load_config_file(cfg_file):
         if "SADM_ALERT_REPEAT"             in CFG_NAME: sadm_alert_repeat            = int(CFG_VALUE)
         if "SADM_TEXTBELT_KEY"             in CFG_NAME: sadm_textbelt_key            = CFG_VALUE
         if "SADM_TEXTBELT_URL"             in CFG_NAME: sadm_textbelt_url            = CFG_VALUE
+        if "SADM_NTFY_EMAIL"               in CFG_NAME: sadm_ntfy_email              = CFG_VALUE
+        if "SADM_NTFY_PWD"                 in CFG_NAME: sadm_ntfy_pwd                = CFG_VALUE
+        if "SADM_NTFY_TOKEN"               in CFG_NAME: sadm_ntfy_token              = CFG_VALUE
+        if "SADM_NTFY_TOPIC"               in CFG_NAME: sadm_ntfy_topic              = CFG_VALUE
+        if "SADM_NTFY_URL"                 in CFG_NAME: sadm_ntfy_url                = CFG_VALUE
+        if "SADM_NTFY_USER"                in CFG_NAME: sadm_ntfy_user               = CFG_VALUE
         if "SADM_HOST_TYPE"                in CFG_NAME: sadm_host_type               = CFG_VALUE.upper()
         if "SADM_SERVER"                   in CFG_NAME: sadm_server                  = CFG_VALUE
         if "SADM_DOMAIN"                   in CFG_NAME: sadm_domain                  = CFG_VALUE
@@ -1050,7 +1083,6 @@ def load_config_file(cfg_file):
         if "SADM_LOG_KEEPDAYS"             in CFG_NAME: sadm_log_keepdays            = int(CFG_VALUE)
         if "SADM_PID_TIMEOUT"              in CFG_NAME: sadm_pid_timeout             = int(CFG_VALUE)
         if "SADM_LOCK_TIMEOUT"             in CFG_NAME: sadm_lock_timeout            = int(CFG_VALUE)
-        if "SADM_LOCK_TIMEOUT"             in CFG_NAME: lock_timeout                 = int(CFG_VALUE)
         if "SADM_MONITOR_UPDATE_INTERVAL"  in CFG_NAME: sadm_monitor_update_interval = int(CFG_VALUE)
         if "SADM_MONITOR_RECENT_COUNT"     in CFG_NAME: sadm_monitor_recent_count    = int(CFG_VALUE)
         if "SADM_MONITOR_RECENT_EXCLUDE"   in CFG_NAME: sadm_monitor_recent_exclude  = CFG_VALUE
@@ -1088,6 +1120,13 @@ def load_config_file(cfg_file):
         if "SADM_BACKUP_BATCH_MODE"        in CFG_NAME: sadm_backup_batch_mode       = CFG_VALUE.upper()
         if "SADM_BACKUP_BATCH_START_TIME"  in CFG_NAME: sadm_backup_batch_start_time = CFG_VALUE
 
+        # NTFY Parameters
+        if "SADM_NTFY_EMAIL"               in CFG_NAME: sadm_ntfy_email                = CFG_VALUE
+        if "SADM_NTFY_PWD"                 in CFG_NAME: sadm_ntfy_pwd                  = CFG_VALUE
+        if "SADM_NTFY_TOKEN"               in CFG_NAME: sadm_ntfy_token                = CFG_VALUE
+        if "SADM_NTFY_TOPIC"               in CFG_NAME: sadm_ntfy_topic                = CFG_VALUE
+        if "SADM_NTFY_URL"                 in CFG_NAME: sadm_ntfy_url                  = CFG_VALUE
+        if "SADM_NTFY_USER"                in CFG_NAME: sadm_ntfy_user                 = CFG_VALUE
 
         # ReaR Backup
         if "SADM_REAR_NFS_SERVER"          == CFG_NAME: sadm_rear_nfs_server         = CFG_VALUE
@@ -1124,7 +1163,6 @@ def load_config_file(cfg_file):
         if "SADM_VM_EXPORT_SCRIPT"         in CFG_NAME: sadm_vm_export_script        = CFG_VALUE
         if "SADM_VM_EXPORT_BATCH_MODE"     in CFG_NAME: sadm_vm_export_batch_mode    = CFG_VALUE
         if "SADM_VM_EXPORT_BATCH_START_TIME" in CFG_NAME: sadm_vm_export_batch_start_time = CFG_VALUE
-        if "SADM_VM_EXPORT_BATCH_CONCURRENT" in CFG_NAME: sadm_vm_export_batch_concurrent = int(CFG_VALUE)
         if "SADM_VM_EXPORT_CONCURRENT"     in CFG_NAME: sadm_vm_export_concurrent    = int(CFG_VALUE)  
 
         # O/S Update
@@ -3205,6 +3243,9 @@ def sendmail(waddr, wsub, wbody, wattach="") :
 #
 
 
+
+
+
 # --------------------------------------------------------------------------------------------------
 def print_dict_alert():
     
@@ -3225,6 +3266,30 @@ def print_dict_alert():
     sorted_dict_alert = dict(sorted(dict_alert.items(),key=lambda item: item[0]))
     for key, value in sorted_dict_alert.items() :
         print("%-40s : %s" % ("dict_alert['"+str(key)+"']",str(value)))
+
+
+
+
+
+# --------------------------------------------------------------------------------------------------
+def print_dict_config(cfg_dict):
+
+    """ Print Of sadmin config file dictionnay - for debugging purpose
+        
+        Args: (none)
+    
+        Returns:
+            cfg_dict (dict) : Contain the SADMIN config keys and Values.
+    """
+
+    print ("\n\n----- Print Config file Dictionnary (cfg_dict) -----")
+    sorted_cfg_dict = dict(sorted(cfg_dict.items(),key=lambda item: item[0]))
+    count = 0
+    for key, value in sorted_cfg_dict.items() :
+        count += 1
+        print("%03d %-45s : %s" % (count, "cfg_dict['"+str(key)+"']" ,str(value)))
+
+
 
 
 
@@ -3314,7 +3379,11 @@ def get_ip_addresses(family):
 # --------------------------------------------------------------------------------------------------
 
 load_cmd_path()                                                         # Get Secure Path to cmd.
-load_config_file(cfg_file)                                              # Load sadmin.cfg in Dict.
+load_config_file(cfg_file)                                              # Load sadmin.cfg in Variable
+
+cfg_dict = load_sadmin_config(cfg_file)                                 # Load sadmin.cfg in Dict.
+if (lib_debug > 4) : print_dict_config(cfg_dict)                        # Show sadmin.cfg dictionnary
+
 dict_alert = load_alert_file()                                          # Load Alert group in dict
-if (lib_debug > 4) : print_dict_alert()                                 # Print Alert Group Dict
+if (lib_debug > 4) : print_dict_alert()                                 # Show Alert Group Dict
 
