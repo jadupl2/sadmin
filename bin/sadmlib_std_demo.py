@@ -62,6 +62,7 @@
 #@2026_05_20 lib v03.26.01 New Variables and functions available.
 #@2026_05_30 lib v03.27.00 Complete revision of the demo script to show all the latest functions & Variables.
 #@2026_06_29 lib v03.27.01 Show Database info, if your are on the SADMIN server & db_used set to True.
+#@2026_07_03 lib v03.27.02 Add new variables related to NTFY notification system.
 # ==================================================================================================
 #
 try :
@@ -97,7 +98,7 @@ except ImportError as e:                                             # If Error 
     sys.exit(1)                                                      # Go Back to O/S with Error
 
 # Variables shared with SADMIN Python Library.
-sa.ver                = "03.27.01" # Your Program VERSION number
+sa.ver                = "03.27.02" # Your Program VERSION number
 sa.desc               = "Describe '%s' here." % (sa.pn)
 sa.root_only          = False      # Can Only be run by 'root'(True/False)
 sa.server_only        = False      # Run Only on SADMIN server(True/False) SADM_SERVER in sadmin.cfg
@@ -457,6 +458,13 @@ def print_sadmin_cfg(show_password=False):
     if show_password : presult=sa.sadm_textbelt_key                     # Unless requested (-p)
     printline ("sa.sadm_textbelt_key","TextBelt.com API Key",presult)   
     printline ("sa.sadm_textbelt_url","TextBelt.com API URL",sa.sadm_textbelt_url) 
+    printline ("sa.sadm_ntfy_email","Email related to NTFY",sa.sadm_ntfy_email)      
+    printline ("sa.sadm_ntfy_pwd"  ,"Password related to NTFY",sa.sadm_ntfy_pwd)     
+    printline ("sa.sadm_ntfy_token","Token related to NTFY",sa.sadm_ntfy_token)      
+    printline ("sa.sadm_ntfy_topic","Topic use with NTFY",sa.sadm_ntfy_topic)        
+    printline ("sa.sadm_ntfy_url  ","URL to send notification to NTFY",sa.sadm_ntfy_url)
+    printline ("sa.sadm_ntfy_user ","NTFY user name",sa.sadm_ntfy_user)                 
+
 
     print ("\n----- Files and Logs pruning Section -----")
     printline ("sa.sadm_nmon_keepdays","Nb. of days to keep .nmon perf. file","%d days" % sa.sadm_nmon_keepdays) 
