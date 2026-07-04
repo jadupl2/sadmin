@@ -272,6 +272,7 @@
 #@2026_06_08 lib v04.90.03 Don't remove the mount point Dir. after the unmount in 'sadm_nfs_unmount()'.
 #@2026_06_26 lib v04.90.04 Add Variable SADM_ERRMSG & SADM_ERRNO
 #@2026_07_03 lib v04.91.00 Fix minor bugs and add in sadmin.cfg, var. to use 'ntfy' as notification.
+#@2026_07_04 lib v04.91.01 Fix PID file name.
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -282,7 +283,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="04.91.00"                                          # This Library Version
+export SADM_LIB_VER="04.91.01"                                          # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -346,7 +347,7 @@ export SADM_WWW_PERF_DIR="$SADM_WWW_TMP_DIR/perf"                       # web pe
 
 # SADM CONFIG FILES, LOGS AND TEMP FILES USER CAN USE
 export SADM_ETCENV="/etc/environment"                                   # SADMIN define in this file
-export SADM_PID_FILE="${SADM_TMP_DIR}/${SADM_INST}.pid"                 # PID file name
+export SADM_PID_FILE="${SADM_TMP_DIR}/${SADM_INST}.$$"                  # PID file name
 export SADM_CFG_FILE="$SADM_CFG_DIR/sadmin.cfg"                         # Cfg file name
 export SADM_ALERT_FILE="$SADM_CFG_DIR/alert_group.cfg"                  # AlertGrp File
 export SADM_SLACK_FILE="$SADM_CFG_DIR/alert_slack.cfg"                  # Old Slack Alert File
