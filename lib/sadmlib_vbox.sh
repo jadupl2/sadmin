@@ -691,7 +691,7 @@ sadm_export_vm()
     fi 
 
 
-    # Get the location on disk of the VM 
+    # Get the location of the VM on disk 
     VM_DIR=$($VBOXMANAGE showvminfo $VM |grep -i snapshot |awk -F: '{print $2}'|tr -d ' '|xargs dirname |head -1)
     sadm_write_log "[ INFO ] The VM '$VM' is located in '${VM_DIR}' on '${SADM_HOSTNAME}'."
 
@@ -708,7 +708,7 @@ sadm_export_vm()
     if [ "$?" -ne 0 ] ; then return 1 ; fi                               # If Error during mount 
 
 
-    # Make sure the export VM sub-directory with todayś date exist on the NFS server.
+    # Make sure the export VM sub-directory exist on the NFS server.
     if [ ! -d "${MOUNT_POINT}/${VM}" ]                                  # If export Dir. don't exist
         then sudo mkdir -p "${MOUNT_POINT}/${VM}"                       # Create VM export Dir.
              if [ "$?" -ne 0 ]                                          # If Error creating Dir.
@@ -788,11 +788,13 @@ sadm_export_vm()
 
     # If VM was initially running, then power on the VM.
     if [ "$INITIAL_STATE" = "RUNNING" ]                                 # VM Running before export ?
-        then sadm_vm_start "$VMNAME"                                    # Yes, then Restart the VM
+        then sadm_write_log "The vm '$VM' was initially running."
+             sadm_vm_start "$VMNAME"                                    # Yes, then Restart the VM
              if [ $? -ne 0 ] 
                 then sadm_unlock_system "$VM"                           # Go remove the lock file
                      return 1                                           # Error Ocurred Set ExitCode
              fi
+        else sadm_write_log "The vm '$VM' was initially power off."    
     fi             
     sleep 4                                                             # Time For last VM to Start
     #sadm_unlock_system "$VM"                                            # Go remove the lock file
