@@ -62,30 +62,31 @@
 # 2023_12_14 lib v4.48 Correct some type in the header
 # 2024_01_01 lib v4.50 Correct typo and remove need to use 'psutil' python module.
 # 2024_02_22 LIB V4.51 Was removing gmail password file (.gmpw) when on the SADMIN server.
-#@2024_03_20 lib v4.52 Load new Global variables for VM from \$SADMIN/cfg/sadmin.cfg
-#@2024_04_22 lib v4.53 Alert housekeeping, add 'SADM_DAYS_HISTORY' & ´SADM_MAX_ARC_LINE' to $SADM_CFG_FILE.
-#@2024_04_23 lib v4.54 Add option to send email on startup and on shutdown in sadmin.cfg.
-#@2024_11_11 lib v4.55 Add two Global var. accessible to any script 'sa.vm_list' & 'sa.vm_hosts'.
-#@2024_12_17 lib v4.56 Add loading new global variable 'sadm_pwd_random' to generate 'sadmin user' pwd.
-#@2025_01_30 lib v4.57 3 New global var. for NFS mount in sadmin.cfg, initialize when loading library
-#@2025_01_30 lib v4.57 sadm_vm_export_nfs_server_ver,sadm_backup_nfs_server_ver,sadm_rear_nfs_server_ver
-#@2025_02_21 lib v4.58 Fix some seldom error with these 2 functions 'get_host_ip'& 'get_domainname'.
-#@2025_07_09 lib v4.59 Adjust content of variable 'dir_www_arc'.
-#@2025_08_07 lib v4.60 If don't use RCH, (sa.use_rch=False), won't delete (sa,rch_file) script 'rch'.
-#@2025_08_15 lib v4.61 MySQL & Python module 'pymysql' must be present, if db_used is set to true.
-#@2025_08_25 lib v4.62 Database update functions 'db_close' 'db_connect'and 'start' to fix some error.
-#@2025_08_27 lib v4.63 Move the import 'pymysql' module in the start function. 
-#@2025_08_28 lib v4.64 Fix error when 'db_used=True' and 'pymysql' module not installed.    
-#@2025_10_88 lib v4.65 Fix caching problem of script log.
-#@2026_13_03 lib v4.66 Fix caching problem of script log.
-#@2026_03_03 lib v4.67 New variables: 'SADM_VM_EXPORT_SCRIPT', 'SADM_REAR_BACKUP_SCRIPT'
-#@2026_03_03 lib v4.67 New variables: 'SADM_OSUPDATE_SCRIPT'# 
-#@2025_05_18 lib v4.68 NFS Export Server Name was not loaded properly.
-#@2025_05_20 lib v4.68.1 Load new configuratio fields for using with batch mode.
-#@2025_05_30 lib v4.69.0 Lot of modification enhance speed and security
-#@2025_06_01 lib v4.69.1 Added "chmod 0775 $SADMIN" to 'freshen_directories_structure()' function.
-#@2026_07_03 lib v4.69.2 Add function to load sadmin.cfg in a dict. 'cfg_dict=load_sadmin_config()'
-#@2026_07_03 lib v4.69.3 Fix minor bugs and add in sadmin.cfg, var. to use 'ntfy' as notification. 
+#@2024_03_20 lib v04.52 Load new Global variables for VM from \$SADMIN/cfg/sadmin.cfg
+#@2024_04_22 lib v04.53 Alert housekeeping, add 'SADM_DAYS_HISTORY' & ´SADM_MAX_ARC_LINE' to $SADM_CFG_FILE.
+#@2024_04_23 lib v04.54 Add option to send email on startup and on shutdown in sadmin.cfg.
+#@2024_11_11 lib v04.55 Add two Global var. accessible to any script 'sa.vm_list' & 'sa.vm_hosts'.
+#@2024_12_17 lib v04.56 Add loading new global variable 'sadm_pwd_random' to generate 'sadmin user' pwd.
+#@2025_01_30 lib v04.57 3 New global var. for NFS mount in sadmin.cfg, initialize when loading library
+#@2025_01_30 lib v04.57 sadm_vm_export_nfs_server_ver,sadm_backup_nfs_server_ver,sadm_rear_nfs_server_ver
+#@2025_02_21 lib v04.58 Fix some seldom error with these 2 functions 'get_host_ip'& 'get_domainname'.
+#@2025_07_09 lib v04.59 Adjust content of variable 'dir_www_arc'.
+#@2025_08_07 lib v04.60 If don't use RCH, (sa.use_rch=False), won't delete (sa,rch_file) script 'rch'.
+#@2025_08_15 lib v04.61 MySQL & Python module 'pymysql' must be present, if db_used is set to true.
+#@2025_08_25 lib v04.62 Database update functions 'db_close' 'db_connect'and 'start' to fix some error.
+#@2025_08_27 lib v04.63 Move the import 'pymysql' module in the start function. 
+#@2025_08_28 lib v04.64 Fix error when 'db_used=True' and 'pymysql' module not installed.    
+#@2025_10_88 lib v04.65 Fix caching problem of script log.
+#@2026_13_03 lib v04.66 Fix caching problem of script log.
+#@2026_03_03 lib v04.67 New variables: 'SADM_VM_EXPORT_SCRIPT', 'SADM_REAR_BACKUP_SCRIPT'
+#@2026_03_03 lib v04.67 New variables: 'SADM_OSUPDATE_SCRIPT'# 
+#@2025_05_18 lib v04.68 NFS Export Server Name was not loaded properly.
+#@2025_05_20 lib v04.68.01 Load new configuratio fields for using with batch mode.
+#@2025_05_30 lib v04.69.00 Lot of modification enhance speed and security
+#@2025_06_01 lib v04.69.01 Added "chmod 0775 $SADMIN" to 'freshen_directories_structure()' function.
+#@2026_07_03 lib v04.69.02 Add function to load sadmin.cfg in a dict. 'cfg_dict=load_sadmin_config()'
+#@2026_07_03 lib v04.69.03 Fix minor bugs and add in sadmin.cfg, var. to use 'ntfy' as notification. 
+#@2027_07_08 lib v04.69.04 Fix Minor bugs (int Error)
 # 
 # --------------------------------------------------------------------------------------------------
 
@@ -143,7 +144,7 @@ except ImportError as e:
 
 # Global Variables to this script 
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.69.3"                              # This Library Version
+lib_ver             = "4.69.4"                              # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 
 start_time          = ""                                    # Script Start Date & Time
@@ -203,19 +204,6 @@ current_time = datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S") # Format cu
 # Content of SADMIN configuration file (sadmin.cfg) default value.
 # The value below, will be overridden by configuration file ($SADMIN/cfg/sadmin.cfg)
 #---------------------------------------------------------------------------------------------------
-sadm_alert_type               = 1                           # 0=No 1=Err 2=Succes 3=All
-sadm_alert_group              = "default"                   # Defined in alert_group.cfg
-sadm_warning_group            = "warning"                   # Defined in alert_group.cfg
-sadm_info_group               = "info"                      # Defined in alert_group.cfg
-sadm_alert_repeat             = 43200                       # Alarm Repeat Wait Time Sec
-sadm_textbelt_key             = "textbelt"                  # Textbelt.com Def. API Key
-sadm_textbelt_url             = "https://textbelt.com/text" # Textbelt.com Def. API URL
-sadm_ntfy_email               = " "                         # Email related to NTFY
-sadm_ntfy_pwd                 = " "                         # Password related to NTFY
-sadm_ntfy_token               = " "                         # Token related to NTFY
-sadm_ntfy_topic               = " "                         # Topic use with NTFY
-sadm_ntfy_url                 = "https://ntfy.sh"           # URL to send notification to NTFY
-sadm_ntfy_user                = " "                         # NTFY user name
 sadm_host_type                = ""                          # [C or S] Client or Server
 sadm_server                   = ""                          # SADMIN Server FQDN 
 sadm_domain                   = ""                          # Default Host Domain
@@ -237,7 +225,43 @@ sadm_rw_dbpwd                 = ""                          # MySQL Read Write P
 sadm_ro_dbuser                = ""                          # MySQL Read Only User
 sadm_ro_dbpwd                 = ""                          # MySQL Read Only Pwd
 sadm_ssh_port                 = 22                          # SSH Port used in Farm
+sadm_monitor_update_interval  = 60                          # Sysmon refresh rate
+sadm_monitor_recent_count     = 10                          # SysMon Nb Recent Script
+sadm_monitor_recent_exclude   = "sadm_nmon_watcher"         # SysMon Recent list Exclude 
+sadm_pid_timeout              = 14400                       # PID File TTL default (14400=4hrs)
+sadm_lock_timeout             = 7200                        # Host Lock File TTL (7200=2hrs)
+sadm_max_logline              = 500                         # Max Nb. Lines in LOG
+sadm_max_rchline              = 50                          # Max Nb. Lines in RCH file
+sadm_smtp_server              = "smtp.gmail.com"            # smtp host relay name
+sadm_smtp_port                = 587                         # smtp relay host port
+sadm_smtp_sender              = "sender@gmail.com"          # smtp sender account
+sadm_gmpw                     = ""                          # smtp sender password
+sadm_days_history             = 14                          # Days before moving alerts to Archive
+sadm_max_arc_line             = 1000                        # Maximum Nb. of Lines in Alert Archive
+sadm_email_startup            = "N"                         # Send email on startup to sysadmin ?
+sadm_email_shutdown           = "N"                         # Send email on shutdown to sysadmin 
 
+# SADMIN Alert Parameters (See alert_group.cfg for more info)
+sadm_alert_type               = 1                           # 0=No 1=Err 2=Succes 3=All
+sadm_alert_group              = "default"                   # Defined in alert_group.cfg
+sadm_warning_group            = "warning"                   # Defined in alert_group.cfg
+sadm_info_group               = "info"                      # Defined in alert_group.cfg
+sadm_alert_repeat             = 43200                       # Alarm Repeat Wait Time Sec
+sadm_textbelt_key             = "textbelt"                  # Textbelt.com Def. API Key
+sadm_textbelt_url             = "https://textbelt.com/text" # Textbelt.com Def. API URL
+sadm_ntfy_email               = " "                         # Email related to NTFY
+sadm_ntfy_pwd                 = " "                         # Password related to NTFY
+sadm_ntfy_token               = " "                         # Token related to NTFY
+sadm_ntfy_topic               = " "                         # Topic use with NTFY
+sadm_ntfy_url                 = "https://ntfy.sh"           # URL to send notification to NTFY
+sadm_ntfy_user                = " "                         # NTFY user name
+
+# Network to Scan   
+sadm_network1                 = ""                          # Network Subnet 1 to report
+sadm_network2                 = ""                          # Network Subnet 2 to report
+sadm_network3                 = ""                          # Network Subnet 3 to report
+sadm_network4                 = ""                          # Network Subnet 4 to report
+sadm_network5                 = ""                          # Network Subnet 5 to report
 
 # Backup Information
 sadm_backup_nfs_server        = ""                          # Backup NFS Server
@@ -253,11 +277,13 @@ sadm_yearly_backup_month      = 12                          # Yearly Backup Mont
 sadm_yearly_backup_date       = 31                          # Yearly Backup Date(1-31)
 sadm_backup_dif               = 40                          # % Backup Size Diff. Alert
 sadm_backup_interval          = 7                           # Days before yellow alert
-sadm_backup_batch_concurrent  = 1                           # Concurrent backup processes
+sadm_backup_script            = "sadm_backup.sh"            # Name of backup script
 sadm_backup_batch_mode        = "N"                         # Run backup script in batch mode (Y/N) 
 sadm_backup_batch_start_time  = "00:05"                     # Start time for launch batch backup    
-sadm_backup_script            = "sadm_backup.sh"            # Name of backup script
-
+sadm_backup_batch_concurrent  = 1                           # Concurrent backup processes
+sadm_backup_batch_day2run     = "2,7"                       # 0=AnyDay,1=Su,2=Mo,3=We,4=Tu,6=Fr,7=Sa
+sadm_backup_batch_mth2run     = "0"                         # 0=AnyMonth or [1,2,,,12] Month to run
+sadm_backup_batch_date2run    = "0"                         # 0=AnyDate, Date to run [1,2...27,28]
 
 # Rear Parameters
 sadm_rear_nfs_server          = ""                          # Rear NFS Server
@@ -267,40 +293,17 @@ sadm_rear_backup_to_keep      = 3                           # Nb of Rear Backup 
 sadm_rear_backup_dif          = 25                          # % size diff cur. vs prev.
 sadm_rear_backup_interval     = 7                           # Alert when 7 days without backup
 sadm_rear_backup_script       = "sadm_rear_backup.sh"       # Name of rear backup script
-sadm_rear_del_failed_backup   = "N"                         # Del backup if it failed
-sadm_rear_batch_mode          = "N"                         # Run rear backup script in batch mode (Y/N)
+sadm_rear_del_failed_backup   = "N"                         # Del backup if failed integrity check
+sadm_rear_batch_mode          = "N"                         # Run rear backup in batch mode (Y/N)
 sadm_rear_batch_startup_time  = "00:01"                     # Startup time for batch mode
 sadm_rear_backup_concurrent   = 1                           # Concurrent rear backup processes
+sadm_rear_batch_day2run       = "2,7"                       # 0=AnyDay,1=Su,2=Mo,3=We,4=Tu,6=Fr,7=Sa
+sadm_rear_batch_mth2run       = "0"                         # 0=AnyMonth or [1,2,,,12] Month to run
+sadm_rear_batch_date2run      = "0"                         # 0=AnyDate, Date to run [1,2...27,28]
 
 
-# Network to Scan   
-sadm_network1                 = ""                          # Network Subnet 1 to report
-sadm_network2                 = ""                          # Network Subnet 2 to report
-sadm_network3                 = ""                          # Network Subnet 3 to report
-sadm_network4                 = ""                          # Network Subnet 4 to report
-sadm_network5                 = ""                          # Network Subnet 5 to report
 
-# NTFY Parameters
-sadm_ntfy_email               = ""
-sadm_ntfy_pwd                 = ""
-sadm_ntfy_token               = ""
-sadm_ntfy_topic               = ""
-sadm_ntfy_url                 = ""
-sadm_ntfy_user                = ""
-
-
-sadm_monitor_update_interval  = 60                          # Sysmon refresh rate
-sadm_monitor_recent_count     = 10                          # SysMon Nb Recent Script
-sadm_monitor_recent_exclude   = "sadm_nmon_watcher"         # SysMon Recent list Exclude 
-sadm_pid_timeout              = 14400                       # PID File TTL default (14400=4hrs)
-sadm_lock_timeout             = 7200                        # Host Lock File TTL (7200=2hrs)
-sadm_max_logline              = 500                         # Max Nb. Lines in LOG
-sadm_max_rchline              = 50                          # Max Nb. Lines in RCH file
-sadm_smtp_server              = "smtp.gmail.com"            # smtp host relay name
-sadm_smtp_port                = 587                         # smtp relay host port
-sadm_smtp_sender              = "sender@gmail.com"          # smtp sender account
-sadm_gmpw                     = ""                          # smtp sender password
-#
+# VM Exports Parameters
 sadm_vm_export_nfs_server     = ""                          # Default Export NFS server name
 sadm_vm_export_nfs_server_ver = 3                           # Nfs version to use on mount point
 sadm_vm_export_mount_point    = ""                          # VM Export NFS Mount Point
@@ -315,10 +318,9 @@ sadm_vm_export_script         = "sadm_vm_export.sh"         # Default name of th
 sadm_vm_export_batch_mode     = "N"                         # Run export script in batch mode (Y/N)
 sadm_vm_export_batch_start_time = "00:01"                   # Start time for launch batch export
 sadm_vm_export_concurrent     = 1                           # Concurrent export processes
-sadm_days_history             = 14                          # Days before moving alerts to Archive
-sadm_max_arc_line             = 1000                        # Maximum Nb. of Lines in Alert Archive
-sadm_email_startup            = "N"                         # Send email on startup to sysadmin ?
-sadm_email_shutdown           = "N"                         # Send email on shutdown to sysadmin ?
+sadm_vm_export_batch_day2run  = "2,7"                       # 0=AnyDay,1=Su,2=Mo,3=We,4=Tu,6=Fr,7=Sa
+sadm_vm_export_batch_mth2run  = "0"                         # 0=AnyMonth or [1,2,,,12] Month to run
+sadm_vm_export_batch_date2run = "0"                         # 0=AnyDate, Date to run [1,2...27,28]
 
 # O/S Package Update Parameters
 sadm_osupdate_interval        = 15                          # If backup is 15 days old warning page
@@ -327,12 +329,14 @@ sadm_osupdate_autoremove      = "N"                         # Remove non used pa
 sadm_osupdate_flatpak         = "N"                         # Update flatpak , if used
 sadm_osupdate_snap            = "N"                         # Update snap , if used
 sadm_osupdate_reboot_needed   = "N"                         # Reboot needed after update
-sadm_osupdate_reboot_time     = "00:00"                     # Time to reboot after update 2 Start App
+sadm_osupdate_reboot_time     = 240                         # Time to reboot & start applications
 sadm_osupdate_lock            = "N"                         # Lock updates
 sadm_osupdate_batch_mode      = "N"                         # Run update script in batch mode (Y/N)
-sadm_osupdate_batch_start_time = "00:00"                    # Start time for launch batch update
-sadm_osupdate_concurrent       = 1                          # Concurrent execution of osupdate 
-
+sadm_osupdate_batch_start_time= "00:00"                     # Start time for launch batch update
+sadm_osupdate_concurrent      = 1                           # Concurrent execution of osupdate 
+sadm_osupdate_batch_day2run   = "2,7"                       # 0=AnyDay,1=Su,2=Mo,3=We,4=Tu,6=Fr,7=Sa
+sadm_osupdate_batch_mth2run   = "0"                         # 0=AnyMonth or [1,2,,,12] Month to run
+sadm_osupdate_batch_date2run  = "0"                         # 0=AnyDate, Date to run [1,2...27,28]
 
 # Logic to get O/S Distribution Information into Dictionary os_dict
 if platform.system().upper() != "DARWIN":                   # If not on MAc
@@ -448,10 +452,9 @@ backup_exclude     = dir_cfg + '/backup_exclude.txt'                    # Exclud
 backup_exclude_init= dir_cfg + '/.backup_exclude.txt'                   # Initial File/Dir 2 Exclude
 vm_list            = dir_www_dat + '/vm_list.txt'                       # List all VMs & Hosts
 vm_hosts           = dir_www_dat + '/vm_hosts.txt'                      # List all VirtualBox Hosts
-tmp_file_prefix    = dir_tmp + '/' + inst                              # TMP Prefix
-tmp_file1          = "%s_1.%s" % (tmp_file_prefix,pid)                 # Temp1 Filename
-tmp_file2          = "%s_2.%s" % (tmp_file_prefix,pid)                 # Temp2 Filename
-tmp_file3          = "%s_3.%s" % (tmp_file_prefix,pid)                 # Temp3 Filename
+tmp_file1          = "%s_1.%s" % (dir_tmp + "/tmp_file",pid)            # Temp1 Filename
+tmp_file2          = "%s_2.%s" % (dir_tmp + "/tmp_file",pid)            # Temp2 Filename
+tmp_file3          = "%s_3.%s" % (dir_tmp + "/tmp_file",pid)            # Temp3 Filename
 
 
 # --------------------------------------------------------------------------------------------------
@@ -860,14 +863,6 @@ def load_sadmin_config(cfg_file=f"{dir_cfg}/sadmin.cfg") :
             if "SADM_RW_DBUSER"                  == CFG_NAME: cfg_dict["SADM_RW_DBUSER"]                 = CFG_VALUE
             if "SADM_RO_DBUSER"                  == CFG_NAME: cfg_dict["SADM_RO_DBUSER"]                 = CFG_VALUE
 
-            # NTFY Parameters
-            if "SADM_NTFY_EMAIL"                 == CFG_NAME: cfg_dict["SADM_NTFY_EMAIL"]                = CFG_VALUE
-            if "SADM_NTFY_PWD"                   == CFG_NAME: cfg_dict["SADM_NTFY_PWD  "]                = CFG_VALUE
-            if "SADM_NTFY_TOKEN"                 == CFG_NAME: cfg_dict["SADM_NTFY_TOKEN"]                = CFG_VALUE
-            if "SADM_NTFY_TOPIC"                 == CFG_NAME: cfg_dict["SADM_NTFY_TOPIC"]                = CFG_VALUE
-            if "SADM_NTFY_URL"                   == CFG_NAME: cfg_dict["SADM_NTFY_URL  "]                = CFG_VALUE
-            if "SADM_NTFY_USER"                  == CFG_NAME: cfg_dict["SADM_NTFY_USER "]                = CFG_VALUE
-
             # Daily Backup 
             if "SADM_BACKUP_NFS_SERVER"          == CFG_NAME: cfg_dict["SADM_BACKUP_NFS_SERVER"]         = CFG_VALUE
             if "SADM_BACKUP_NFS_SERVER_VER"      == CFG_NAME: cfg_dict["SADM_BACKUP_NFS_SERVER_VER"]     = int(CFG_VALUE)
@@ -886,6 +881,9 @@ def load_sadmin_config(cfg_file=f"{dir_cfg}/sadmin.cfg") :
             if "SADM_BACKUP_SCRIPT"              == CFG_NAME: cfg_dict["SADM_BACKUP_SCRIPT"]             = CFG_VALUE
             if "SADM_BACKUP_BATCH_MODE"          == CFG_NAME: cfg_dict["SADM_BACKUP_BATCH_MODE"]         = CFG_VALUE.upper()
             if "SADM_BACKUP_BATCH_START_TIME"    == CFG_NAME: cfg_dict["SADM_BACKUP_BATCH_START_TIME"]   = CFG_VALUE
+            if "SADM_BACKUP_BATCH_DAY2RUN"       == CFG_NAME: cfg_dict["SADM_BACKUP_BATCH_DAY2RUN"]      = CFG_VALUE
+            if "SADM_BACKUP_BATCH_MTH2RUN"       == CFG_NAME: cfg_dict["SADM_BACKUP_BATCH_MTH2RUN"]      = CFG_VALUE
+            if "SADM_BACKUP_BATCH_DATE2RUN"      == CFG_NAME: cfg_dict["SADM_BACKUP_BATCH_DATE2RUN"]     = CFG_VALUE
 
             # ReaR Backup
             if "SADM_REAR_NFS_SERVER"            == CFG_NAME: cfg_dict["SADM_REAR_NFS_SERVER"]           = CFG_VALUE
@@ -899,6 +897,9 @@ def load_sadmin_config(cfg_file=f"{dir_cfg}/sadmin.cfg") :
             if "SADM_REAR_BATCH_MODE"            == CFG_NAME: cfg_dict["SADM_REAR_BATCH_MODE"]           = CFG_VALUE.upper()
             if "SADM_REAR_BATCH_STARTUP_TIME"    == CFG_NAME: cfg_dict["SADM_REAR_BATCH_STARTUP_TIME"]   = CFG_VALUE
             if "SADM_REAR_BACKUP_CONCURRENT"     == CFG_NAME: cfg_dict["SADM_REAR_BACKUP_CONCURRENT"]    = int(CFG_VALUE)
+            if "SADM_REAR_BATCH_DAY2RUN"         == CFG_NAME: cfg_dict["SADM_REAR_BATCH_DAY2RUN"]        = CFG_VALUE
+            if "SADM_REAR_BATCH_MTH2RUN"         == CFG_NAME: cfg_dict["SADM_REAR_BATCH_MTH2RUN"]        = CFG_VALUE
+            if "SADM_REAR_BATCH_DATE2RUN"        == CFG_NAME: cfg_dict["SADM_REAR_BATCH_DATE2RUN"]       = CFG_VALUE
 
             # Network Scan  
             if "SADM_NETWORK1"                   == CFG_NAME: cfg_dict["SADM_NETWORK1"]                  = CFG_VALUE
@@ -923,6 +924,9 @@ def load_sadmin_config(cfg_file=f"{dir_cfg}/sadmin.cfg") :
             if "SADM_VM_EXPORT_BATCH_MODE"       == CFG_NAME: cfg_dict["SADM_VM_EXPORT_BATCH_MODE"]      = CFG_VALUE
             if "SADM_VM_EXPORT_BATCH_START_TIME" == CFG_NAME: cfg_dict["SADM_VM_EXPORT_BATCH_START_TIME"]= CFG_VALUE
             if "SADM_VM_EXPORT_CONCURRENT"       == CFG_NAME: cfg_dict["SADM_VM_EXPORT_CONCURRENT"]      = int(CFG_VALUE)  
+            if "SADM_VM_EXPORT_BATCH_DAY2RUN"    == CFG_NAME: cfg_dict["SADM_VM_EXPORT_BATCH_DAY2RUN"]   = CFG_VALUE
+            if "SADM_VM_EXPORT_BATCH_MTH2RUN"    == CFG_NAME: cfg_dict["SADM_VM_EXPORT_BATCH_MTH2RUN"]   = CFG_VALUE
+            if "SADM_VM_EXPORT_BATCH_DATE2RUN"   == CFG_NAME: cfg_dict["SADM_VM_EXPORT_BATCH_DATE2RUN"]  = CFG_VALUE
 
             # O/S Update
             if "SADM_OSUPDATE_INTERVAL"          == CFG_NAME: cfg_dict["SADM_OSUPDATE_INTERVAL"]         = int(CFG_VALUE)
@@ -931,12 +935,14 @@ def load_sadmin_config(cfg_file=f"{dir_cfg}/sadmin.cfg") :
             if "SADM_OSUPDATE_FLATPAK"           == CFG_NAME: cfg_dict["SADM_OSUPDATE_FLATPAK"]          = CFG_VALUE.upper()
             if "SADM_OSUPDATE_SNAP"              == CFG_NAME: cfg_dict["SADM_OSUPDATE_SNAP"]             = CFG_VALUE.upper()
             if "SADM_OSUPDATE_REBOOT_NEEDED"     == CFG_NAME: cfg_dict["SADM_OSUPDATE_REBOOT_NEEDED"]    = CFG_VALUE.upper()
-            if "SADM_OSUPDATE_REBOOT_TIME"       == CFG_NAME: cfg_dict["SADM_OSUPDATE_REBOOT_TIME"]      = CFG_VALUE.upper()
+            if "SADM_OSUPDATE_REBOOT_TIME"       == CFG_NAME: cfg_dict["SADM_OSUPDATE_REBOOT_TIME"]      = CFG_VALUE
             if "SADM_OSUPDATE_LOCK"              == CFG_NAME: cfg_dict["SADM_OSUPDATE_LOCK"]             = CFG_VALUE.upper()
             if "SADM_OSUPDATE_BATCH_MODE"        == CFG_NAME: cfg_dict["SADM_OSUPDATE_BATCH_MODE"]       = CFG_VALUE.upper()
             if "SADM_OSUPDATE_BATCH_START_TIME"  == CFG_NAME: cfg_dict["SADM_OSUPDATE_BATCH_START_TIME"] = CFG_VALUE.upper()
             if "SADM_OSUPDATE_CONCURRENT"        == CFG_NAME: cfg_dict["SADM_OSUPDATE_CONCURRENT"]       = int(CFG_VALUE)
-
+            if "SADM_OSUPDATE_BATCH_DAY2RUN"     == CFG_NAME: cfg_dict["SADM_OSUPDATE_BATCH_DAY2RUN"]    = CFG_VALUE
+            if "SADM_OSUPDATE_BATCH_MTH2RUN"     == CFG_NAME: cfg_dict["SADM_OSUPDATE_BATCH_MTH2RUN"]    = CFG_VALUE
+            if "SADM_OSUPDATE_BATCH_DATE2RUN"    == CFG_NAME: cfg_dict["SADM_OSUPDATE_BATCH_DATE2RUN"]   = CFG_VALUE
     return(cfg_dict)                                                    
 
 
@@ -1000,8 +1006,13 @@ def load_config_file(cfg_file):
     sadm_textbelt_key            ,sadm_textbelt_url             ,sadm_ntfy_email                  ,\
     sadm_ntfy_pwd                ,sadm_ntfy_token               ,sadm_ntfy_topic                  ,\
     sadm_ntfy_user               ,sadm_pwd_random               ,sadm_pid_timeout                 ,\
-    sadm_vm_export_concurrent
-    
+    sadm_vm_export_concurrent                                                                     ,\
+    sadm_backup_batch_day2run    ,sadm_backup_batch_mth2run     ,sadm_backup_batch_date2run       ,\
+    sadm_rear_batch_day2run      ,sadm_rear_batch_mth2run       ,sadm_rear_batch_date2run         ,\
+    sadm_vm_export_batch_day2run ,sadm_vm_export_batch_mth2run  ,sadm_vm_export_batch_date2run    ,\
+    sadm_osupdate_batch_day2run  ,sadm_osupdate_batch_mth2run   ,sadm_osupdate_batch_date2run      
+
+
     if lib_debug > 4 : print ("Loading Configuration file %s" % (cfg_file))
 
     # If configuration file can't be found, copy $SADMIN/.sadm_config to $SADMIN/sadmin.cfg
@@ -1119,6 +1130,9 @@ def load_config_file(cfg_file):
         if "SADM_BACKUP_SCRIPT"            in CFG_NAME: sadm_backup_script           = CFG_VALUE
         if "SADM_BACKUP_BATCH_MODE"        in CFG_NAME: sadm_backup_batch_mode       = CFG_VALUE.upper()
         if "SADM_BACKUP_BATCH_START_TIME"  in CFG_NAME: sadm_backup_batch_start_time = CFG_VALUE
+        if "SADM_BACKUP_BATCH_DAY2RUN"     in CFG_NAME: sadm_backup_batch_day2run    = CFG_VALUE
+        if "SADM_BACKUP_BATCH_MTH2RUN"     in CFG_NAME: sadm_backup_batch_mth2run    = CFG_VALUE
+        if "SADM_BACKUP_BATCH_DATE2RUN"    in CFG_NAME: sadm_backup_batch_date2run   = CFG_VALUE
 
         # NTFY Parameters
         if "SADM_NTFY_EMAIL"               in CFG_NAME: sadm_ntfy_email                = CFG_VALUE
@@ -1140,6 +1154,9 @@ def load_config_file(cfg_file):
         if "SADM_REAR_BATCH_MODE"          in CFG_NAME: sadm_rear_batch_mode         = CFG_VALUE.upper()
         if "SADM_REAR_BATCH_STARTUP_TIME"  in CFG_NAME: sadm_rear_batch_startup_time = CFG_VALUE
         if "SADM_REAR_BACKUP_CONCURRENT"   in CFG_NAME: sadm_rear_backup_concurrent  = int(CFG_VALUE)
+        if "SADM_REAR_BATCH_DAY2RUN"       in CFG_NAME: sadm_rear_batch_day2run      = CFG_VALUE
+        if "SADM_REAR_BATCH_MTH2RUN"       in CFG_NAME: sadm_rear_batch_mth2run      = CFG_VALUE
+        if "SADM_REAR_BATCH_DATE2RUN"      in CFG_NAME: sadm_rear_batch_date2run     = CFG_VALUE
 
         # Network Scan  
         if "SADM_NETWORK1"                 in CFG_NAME: sadm_network1                = CFG_VALUE
@@ -1164,6 +1181,9 @@ def load_config_file(cfg_file):
         if "SADM_VM_EXPORT_BATCH_MODE"     in CFG_NAME: sadm_vm_export_batch_mode    = CFG_VALUE
         if "SADM_VM_EXPORT_BATCH_START_TIME" in CFG_NAME: sadm_vm_export_batch_start_time = CFG_VALUE
         if "SADM_VM_EXPORT_CONCURRENT"     in CFG_NAME: sadm_vm_export_concurrent    = int(CFG_VALUE)  
+        if "SADM_VM_EXPORT_BATCH_DAY2RUN"  in CFG_NAME: sadm_vm_export_batch_day2run = CFG_VALUE
+        if "SADM_VM_EXPORT_BATCH_MTH2RUN"  in CFG_NAME: sadm_vm_export_batch_mth2run = CFG_VALUE
+        if "SADM_VM_EXPORT_BATCH_DATE2RUN" in CFG_NAME: sadm_vm_export_batch_date2run= CFG_VALUE
 
         # O/S Update
         if "SADM_OSUPDATE_INTERVAL"        in CFG_NAME: sadm_osupdate_interval       = int(CFG_VALUE)
@@ -1172,11 +1192,14 @@ def load_config_file(cfg_file):
         if "SADM_OSUPDATE_FLATPAK"         in CFG_NAME: sadm_osupdate_flatpak        = CFG_VALUE.upper()
         if "SADM_OSUPDATE_SNAP"            in CFG_NAME: sadm_osupdate_snap           = CFG_VALUE.upper()
         if "SADM_OSUPDATE_REBOOT_NEEDED"   in CFG_NAME: sadm_osupdate_reboot_needed  = CFG_VALUE.upper()
-        if "SADM_OSUPDATE_REBOOT_TIME"     in CFG_NAME: sadm_osupdate_reboot_time    = CFG_VALUE.upper()
+        if "SADM_OSUPDATE_REBOOT_TIME"     in CFG_NAME: sadm_osupdate_reboot_time    = CFG_VALUE
         if "SADM_OSUPDATE_LOCK"            in CFG_NAME: sadm_osupdate_lock           = CFG_VALUE.upper()
         if "SADM_OSUPDATE_BATCH_MODE"      in CFG_NAME: sadm_osupdate_batch_mode     = CFG_VALUE.upper()
         if "SADM_OSUPDATE_BATCH_START_TIME" in CFG_NAME: sadm_osupdate_batch_start_time = CFG_VALUE.upper()
         if "SADM_OSUPDATE_CONCURRENT"      in CFG_NAME: sadm_osupdate_concurrent     = int(CFG_VALUE)
+        if "SADM_OSUPDATE_BATCH_DAY2RUN"   in CFG_NAME: sadm_osupdate_batch_day2run  = CFG_VALUE
+        if "SADM_OSUPDATE_BATCH_MTH2RUN"   in CFG_NAME: sadm_osupdate_batch_mth2run  = CFG_VALUE
+        if "SADM_OSUPDATE_BATCH_DATE2RUN"  in CFG_NAME: sadm_osupdate_batch_date2run = CFG_VALUE
 
     cfg_file_fh.close()
 
