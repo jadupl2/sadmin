@@ -97,12 +97,12 @@ shutdown_mail()
     sadm_write_log "Send shutdown email to $SADM_MAIL_ADDR"
 
     # Create the Body of email in a text file 
-    wb="$SADMIN/tmp/body$$$.txt"                                        # email body file
+    wb="$SADMIN/tmp/body$$$.txt"                                        # Email body txt file
     echo -e "$(date)"  > $wb
-    echo -e "System '${SADM_HOSTNAME}' is back online." >> $wb
-    echo -e "Have a nice day from ${SADM_PN}." >> $wb
+    echo -e "For your information, system '${SADM_HOSTNAME}' is going down." >> $wb
+    echo -e "The program '${SADM_PN}' is reponsable for sending this email." >> $wb
     echo -e "See you soon !" >> $wb
-    
+
     ws="SADM_INFO: System '$SADM_HOSTNAME' going down." 
     we="$SADM_MAIL_ADDR"
     sadm_sendmail "$we" "$ws" "$wb" 
@@ -161,7 +161,6 @@ main_process()
 # --------------------------------------------------------------------------------------------------
 #
     sadm_start                                                          # Won't come back if error
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong 
     main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log

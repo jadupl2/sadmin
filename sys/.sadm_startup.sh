@@ -142,7 +142,7 @@ poweron_mail()
     we="$SADM_MAIL_ADDR"                                                # Send email to SysAdmin
 
     sadm_sendmail "$we" "$ws" "$wb"
-    RC=$?
+    RC=$? 
     if [ $RC -eq 0 ] 
         then sadm_write_log "[ OK ] Mail sent successfully to $we"
         else sadm_write_err "[ ERROR ] Problem sending email to $we" 
