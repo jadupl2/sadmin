@@ -29,12 +29,13 @@
 # --------------------------------------------------------------------------------------------------
 # Version Change Log 
 #
-# 2023_07_19 vmtools v1.0 Initial Version
-#@2024_03_19 vmtools v2.0 Export the 'VMName' received to NFS server define in 'sadmin.cfg'.
-#@2024_10_31 vmtools v2.3 Fix some minor issues and command line option.
-#@2024_11_26 vmtools v2.4 If system is lock, then export of the VM is not allowed.
-#@2026_04_27 vmtools v2.5 Minor code change.
-#@2026_06_24 vmtools v2.6 Minor code optimization.
+# 2023_07_19 vmtools v01.00.00 Initial Version
+#@2024_03_19 vmtools v02.00.00 Export the 'VMName' received to NFS server define in 'sadmin.cfg'.
+#@2024_10_31 vmtools v02.03.00 Fix some minor issues and command line option.
+#@2024_11_26 vmtools v02.04.00 If system is lock, then export of the VM is not allowed.
+#@2026_04_27 vmtools v02.05.00 Minor code change.
+#@2026_06_24 vmtools v02.06.01 Minor code optimization.
+#@2026_07_08 vmtools v02.06.02 Update cmdline options function.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -82,7 +83,7 @@ export SADM_PN="${SADM_INST}.${SADM_EXT}"                  # Script name(with ex
 # ---**********************
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.6'                                      # Script version number
+export SADM_VER='02.06.02'                                 # Script version number
 export SADM_PDESC="Export one virtual machine to a NFS Server."      
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -160,25 +161,23 @@ main_process()
 # --------------------------------------------------------------------------------------------------
 # Command line Options functions
 # Evaluate Command Line Switch Options Upfront
-# By Default 
-# (-h)          Show Help Usage 
-# (-v)          Show Script Version
-# (-d0-9]       Set Debug Level 
-# [-n VNName]   VMName to export
-# [-y]          Don't ask confirmation before starting operation, default ask for configuration.
+#   -d[0-9] Set Debug Level  
+#   -h) Show Help Usage, 
+#   -v) Show Script Version,  
+#   -X) Delete the script PID file before running the script.
 # --------------------------------------------------------------------------------------------------
 function cmd_options()
 {
-    while getopts "d:hv" opt ; do                                       # Loop to process Switch
+    while getopts "d:hvX" opt ; do                                      # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
-               num=$(echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$) # Valid is Level is Numeric
-               if [ "$num" = "" ]                                       # No it's not numeric 
-                  then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
+               num=$(echo "$SADM_DEBUG" |grep -E "^\-?[0-9]?\.?[0-9]+$") # Valid if Level is Numeric
+               if [ "$num" = "" ]                            
+                  then printf "\nInvalid debug level.\n"                # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
                        exit 1                                           # Exit Script with Error
                fi
-               printf "Debug Level set to ${SADM_DEBUG}."               # Display Debug Level
+               printf "Debug level set to ${SADM_DEBUG}.\n"             # Display Debug Level
                ;;                                                       
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
@@ -186,7 +185,10 @@ function cmd_options()
             v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
                ;;
-           \?) printf "\nInvalid option: -${OPTARG}.\n"                 # Invalid Option Message
+            X) /usr/bin/rm -f "${SADMIN}/tmp/${SADM_INST}.pid" >/dev/null 2>&1
+               printf "\n${YELLOW}The PID File '${SADMIN}/tmp/${SADM_INST}.pid' is now removed.${NORMAL}\n" 
+               ;;
+           \?) printf "\nInvalid option: ${OPTARG}.\n"                  # Invalid Option Message
                show_usage                                               # Display Help Usage
                exit 1                                                   # Exit with Error
                ;;
