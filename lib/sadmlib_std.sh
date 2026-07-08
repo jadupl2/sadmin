@@ -273,6 +273,7 @@
 #@2026_06_26 lib v04.90.04 Add Variable SADM_ERRMSG & SADM_ERRNO
 #@2026_07_03 lib v04.91.00 Fix minor bugs and add in sadmin.cfg, var. to use 'ntfy' as notification.
 #@2026_07_04 lib v04.91.01 Fix PID file name.
+#@2026_07_04 lib v04.91.02 Variable name 'SADM_MAX_RCLINE' was wrong, now 'SADM_MAX_RCHLINE'.
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -283,7 +284,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="04.91.01"                                          # This Library Version
+export SADM_LIB_VER="04.91.02"                                          # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -436,7 +437,7 @@ export SADM_PWD_RANDOM="N"                                  # ReGenerate sadmin 
 export SADM_WWW_USER="apache"                               # /sadmin/www owner
 export SADM_WWW_GROUP="apache"                              # /sadmin/www group
 export SADM_MAX_LOGLINE=500                                 # Max Nb. Lines in LOG
-export SADM_MAX_RCLINE=25                                   # Max Nb. Lines in RCH file
+export SADM_MAX_RCHLINE=25                                  # Max Nb. Lines in RCH file
 export SADM_NMON_KEEPDAYS=10                                # Days to keep old *.nmon
 export SADM_RCH_KEEPDAYS=35                                 # Days to keep old *.rch
 export SADM_LOG_KEEPDAYS=35                                 # Days to keep old *.log
@@ -462,15 +463,17 @@ export GMPW_FILE_TXT="${SADM_CFG_DIR}/.gmpw"                # SMTP Unencrypted P
 export GMPW_FILE_B64="${SADM_CFG_DIR}/.gmpw64"              # SMTP Encrypted PasswdFile
 export SADM_RELEASE=$(cat $SADM_REL_FILE)                   # SADM Release Ver. Number
 export SADM_SSH_PORT=""                                     # Default SSH Port
-#
-export SADM_REAR_NFS_SERVER=""                              # ReaR NFS Server
-export SADM_REAR_NFS_SERVER_VER=3                           # NFS mount version (3-4)
-export SADM_REAR_NFS_MOUNT_POINT=""                         # ReaR Mount Point
-export SADM_REAR_BACKUP_TO_KEEP=3                           # Rear Nb.Copy
-export SADM_REAR_BACKUP_DIF=25                              # % size diff cur. vs prev.
-export SADM_REAR_BACKUP_INTERVAL=7                          # Alert when 7 days without 
-export SADM_REAR_DEL_FAILED_BACKUP="Y"                      # Del backup that failed integrity check
-#
+export SADM_PID_TIMEOUT=7200                                # PID File TTL default
+export SADM_LOCK_TIMEOUT=3600                               # Host Lock File TTL           
+export SADM_MONITOR_RECENT_COUNT=10                         # SysMon Nb Recent Script 
+export SADM_MONITOR_RECENT_EXCLUDE="sadm_nmon_watcher"      # SysMon Page Recent Exclude List
+export SADM_SMTP_SERVER="smtp.gmail.com"                    # smtp mail relay host name
+export SADM_SMTP_PORT=587                                   # smtp port(25,465,587,2525)
+export SADM_SMTP_SENDER="sadmin.gmail.com"                  # Email address of sender 
+export SADM_GMPW=""    
+
+
+# O?S Update Variables (Default Values here will be overridden by SADM CONFIG FILE Content)
 export SADM_OSUPDATE_INTERVAL=15                            # Threshold between o/s update in days 
 export SADM_OSUPDATE_SCRIPT="sadm_osupdate.sh"              # Name of O/S update script
 export SADM_OSUPDATE_AUTOREMOVE="N"                         # Remove unused package after update
@@ -479,7 +482,14 @@ export SADM_OSUPDATE_SNAP="N"                               # Also Update the Sn
 export SADM_OSUPDATE_REBOOT_NEEDED=N                        # If reboot is needed after O/S update
 export SADM_OSUPDATE_REBOOT_TIME=240                        # Seconds to wait for starting Apps.
 export SADM_OSUPDATE_LOCK="Y"                               # Lock system during O/S update Y/N
-#
+export SADM_OSUPDATE_BATCH_MODE="N"                         # Run script in batch mode (Y/N) 
+export SADM_OSUPDATE_BATCH_START_TIME="00:05"               # Start time for launch batch backup  
+export SADM_OSUPDATE_CONCURRENT=1                           # Concurrent backup processes
+export SADM_OSUPDATE_BATCH_DAY2RUN="2,7"                    # 0=Any Day,1=Su,2=Mo,3=Tu,4=We,5=Th,6=Fr,7=Sa
+export SADM_OSUPDATE_BATCH_MTH2RUN=0                        # 0=Any Month, [1,2,...12] Month to run
+export SADM_OSUPDATE_BATCH_DATE2RUN=0                       # 0=AnyDateDate to run [1,2...27,28]
+
+# Backup Variables (Default Values here will be overridden by SADM CONFIG FILE Content)
 export SADM_BACKUP_NFS_SERVER=""                            # Backup NFS Server
 export SADM_BACKUP_NFS_SERVER_VER=3                         # NFS mount version (3-4)
 export SADM_BACKUP_NFS_MOUNT_POINT=""                       # Backup Mnt Point
@@ -493,16 +503,29 @@ export SADM_MONTHLY_BACKUP_DATE=1                           # Monthly Back Date
 export SADM_YEARLY_BACKUP_MONTH=12                          # Yearly Backup Mth
 export SADM_YEARLY_BACKUP_DATE=31                           # Yearly Backup Day
 export SADM_BACKUP_DIF=40                                   # % size diff cur. vs prev.
-#
-export SADM_PID_TIMEOUT=7200                                # PID File TTL default
-export SADM_LOCK_TIMEOUT=3600                               # Host Lock File TTL           
-export SADM_MONITOR_RECENT_COUNT=10                         # SysMon Nb Recent Script 
-export SADM_MONITOR_RECENT_EXCLUDE="sadm_nmon_watcher"      # SysMon Page Recent Exclude List
-export SADM_SMTP_SERVER="smtp.gmail.com"                    # smtp mail relay host name
-export SADM_SMTP_PORT=587                                   # smtp port(25,465,587,2525)
-export SADM_SMTP_SENDER="sadmin.gmail.com"                  # Email address of sender 
-export SADM_GMPW=""                                         # smtp sender gmail passwd
-#
+export SADM_BACKUP_BATCH_MODE="N"                           # Run backup script in batch mode (Y/N) 
+export SADM_BACKUP_BATCH_START_TIME="00:05"                 # Start time for launch batch backup  
+export SADM_BACKUP_CONCURRENT=1                             # Concurrent backup processes
+export SADM_BACKUP_BATCH_DAY2RUN="2,7"                      # 0=AnyDay,1=Su,2=Mo,3=We,4=Tu,6=Fr,7=Sa
+export SADM_BACKUP_BATCH_MTH2RUN="0"                        # 0=AnyMonth or [1,2,,,12] Month to run
+export SADM_BACKUP_BATCH_DATE2RUN="0"                       # 0=AnyDate, or Date to run [1,2...27,28]
+
+# Rear Backup Variables (Default Values here will be overridden by SADM CONFIG FILE Content)
+export SADM_REAR_NFS_SERVER=""                              # ReaR NFS Server
+export SADM_REAR_NFS_SERVER_VER=3                           # NFS mount version (3-4)
+export SADM_REAR_NFS_MOUNT_POINT=""                         # ReaR Mount Point
+export SADM_REAR_BACKUP_TO_KEEP=3                           # Rear Nb.Copy
+export SADM_REAR_BACKUP_DIF=25                              # % size diff cur. vs prev.
+export SADM_REAR_BACKUP_INTERVAL=7                          # Alert when 7 days without 
+export SADM_REAR_DEL_FAILED_BACKUP="Y"                      # Del backup that failed integrity check
+export SADM_REAR_BATCH_MODE="N"                             # Run script in batch mode (Y/N) 
+export SADM_REAR_BATCH_START_TIME="00:05"                   # Start time for launch batch backup  
+export SADM_REAR_CONCURRENT=1                               # Concurrent backup processes
+export SADM_REAR_BATCH_DAY2RUN="2,7"                        # 0=AnyDay,1=Su,2=Mo,3=We,4=Tu,6=Fr,7=Sa
+export SADM_REAR_BATCH_MTH2RUN="0"                          # 0=AnyMonth or [1,2,,,12] Month to run
+export SADM_REAR_BATCH_DATE2RUN="0"                         # 0=AnyDate,Date to run [1,2...27,28]
+
+# Virtual Machine Parameters (Default Values here will be overridden by SADM CONFIG FILE Content)
 export SADM_VM_EXPORT_NFS_SERVER=""                         # NFS Server for VM Export
 export SADM_VM_EXPORT_NFS_SERVER_VER=3                      # NFS server ver.(3-4) to use
 export SADM_VM_EXPORT_MOUNT_POINT=""                        # NFS mount port for Export
@@ -514,6 +537,12 @@ export SADM_VM_STOP_TIMEOUT=120                             # Seconds given to s
 export SADM_VM_START_INTERVAL=30                            # Sec before start of next VM
 export SADM_VM_EXPORT_DIF=25                                # When Size 25% greater 
 export SADM_VM_EXPORT_SCRIPT="sadm_vm_export.sh"            # Default path to export script
+export SADM_VM_EXPORT_BATCH_MODE="N"                        # Run backup script in batch mode (Y/N) 
+export SADM_VM_EXPORT_BATCH_START_TIME="00:05"              # Start time for launch batch backup  
+export SADM_VM_EXPORT_CONCURRENT=1                          # Concurrent backup processes
+export SADM_VM_EXPORT_BATCH_DAY2RUN="2,7"                   # 0=AnyDay,1=Su,2=Mo,3=We,4=Tu,6=Fr,7=Sa
+export SADM_VM_EXPORT_BATCH_MTH2RUN="0"                     # 0=AnyMonth or [1,2,,,12] Month to run
+export SADM_VM_EXPORT_BATCH_DATE2RUN="0"                    # 0=AnyDate, Date to run [1,2...27,28]
 
 # Array of O/S Supported & Package Family
 #export SADM_OS_SUPPORTED=(  'REDHAT' 'CENTOS' 'FEDORA' 'ALMA' 'ROCKY'
@@ -2865,15 +2894,11 @@ sadm_stop() {
                         then if [ -w $SADM_RCH_FILE ]                   # If History RCH Writable
                                 then mtmp1="History file '\$SADMIN/dat/rch/${SADM_HOSTNAME}_${SADM_INST}.rch' trim to ${SADM_MAX_RCLINE} lines."
                                      sadm_write_log "${mtmp1}"          # Write rch trim context 
-                                     sadm_trimfile "$SADM_RCH_FILE" "$SADM_MAX_RCLINE" 
                              fi
                         else mtmp="The history file (.rch) will not be trim (\$SADM_MAX_RCLINE=0)."
                              sadm_write_log "${mtmp}." 
                      fi
              fi
-             [ $(id -u) -eq 0 ] && chmod 664 ${SADM_RCH_FILE}             # R/W Owner/Group R by World
-#             [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCH_FILE} # Change RCH Owner
-             [ $(id -u) -eq 0 ] && chgrp ${SADM_GROUP} ${SADM_RCH_FILE} # Change RCH Owner
     fi 
 
     # If log size not at zero and user want to produce a log.
@@ -2934,18 +2959,20 @@ sadm_stop() {
              sadm_write_log " "                                         
              sadm_write_log " "                                         
              cat $SADM_LOG > /dev/null                                  # Force buffer to flush
-             if [ $SADM_MAX_LOGLINE -ne 0 ] && [ "$SADM_LOG_APPEND" = "Y" ] # Max Line in Log Not 0 
-                then sadm_trimfile "$SADM_LOG" "$SADM_MAX_LOGLINE"      # Trim the Log
-             fi                                                         # Else no trim of log made
-             #chmod 666 ${SADM_LOG} >>/dev/null 2>&1                     # Log writable by Nxt Script
-             #chgrp ${SADM_GROUP} ${SADM_LOG} >>/dev/null 2>&1           # Change Log Group
-#             [ $(id -u) -eq 0 ] && chmod 664 ${SADM_LOG}                # R/W Owner/Group R by World
-#             [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_WWW_GROUP} ${SADM_LOG}  # Change Log Owner
-             chmod 664 ${SADM_LOG}                # R/W Owner/Group R by World
-#             chown ${SADM_USER}:${SADM_WWW_GROUP} ${SADM_LOG}  # Change Log O#             
-              chgrp ${SADM_GROUP} ${SADM_LOG}  # Change Log Owner
-    fi
- 
+    fi 
+
+    # Trim the log and RCH file to $SADM_MAX_LOGLINE and $SADM_MAX_RCHLINE lines (0=No Trim)
+    if [ "$SADM_MAX_LOGLINE" -ne 0 ] ; then sadm_trimfile "$SADM_LOG"      "$SADM_MAX_LOGLINE" ; fi 
+    if [ "$SADM_MAX_RCHLINE" -ne 0 ] ; then sadm_trimfile "$SADM_RCH_FILE" "$SADM_MAX_RCHLINE"  ; fi 
+
+    
+    # Make sure the log file is writable and readable by the SADMIN user and group (Ignore error).
+    chmod 664 "$SADM_LOG"                 >/dev/null 2>&1          # R/W Owner/Group R by World
+    chgrp "$SADM_GROUP" "$SADM_LOG"       >/dev/null 2>&1          # Change Log Group to SADMIN Group
+    chmod 664 "$SADM_RCH_FILE"            >/dev/null 2>&1          # R/W Owner/Group R by World
+    chgrp "$SADM_GROUP" "$SADM_RCH_FILE"  >/dev/null 2>&1          # RCH File Group to SADMIN Group
+
+
     # Normally we Delete the PID File when exiting the script.
     # But when script is already running, then we are the second instance of the script
     # we don't want to delete PID file. 
@@ -3102,7 +3129,7 @@ sadm_lock_system()
 {    
     ERROR_COUNT=0                                                       # Default Error Count
     if [ $# -lt 1 ] || [ $# -gt 2 ] 
-        then sadm_write_err "[ ERROR ] Function '$FUNCNAME' invalid number of argument."
+        then sadm_write_err "[ ERROR ] Function '$FUNCNAME' invalid number of argument(s)."
              sadm_write_err "Should be 1 or 2 but we received $# : $* " # Show what received
              return 1                                                   # Return Error to caller
     fi
