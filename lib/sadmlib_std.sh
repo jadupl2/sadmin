@@ -274,6 +274,7 @@
 #@2026_07_03 lib v04.91.00 Fix minor bugs and add in sadmin.cfg, var. to use 'ntfy' as notification.
 #@2026_07_04 lib v04.91.01 Fix PID file name.
 #@2026_07_04 lib v04.91.02 Variable name 'SADM_MAX_RCLINE' was wrong, now 'SADM_MAX_RCHLINE'.
+#@2026_07_08 lib v04.92.01 sadm_sendmail() Email body must be a text file now, no longer a string.
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -284,7 +285,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="04.91.02"                                          # This Library Version
+export SADM_LIB_VER="04.92.01"                                          # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -3025,7 +3026,7 @@ sadm_stop() {
 # Args:            
 #     maddr (str)     : Email Address to which you want to send it
 #     msubject (str)  : Subject of your email
-#     mbody (str)     : Body of your email
+#     mbody (str)     : Filename of the Text file containing the body of the email.
 #     mfile (str)     : (Optional) Name of the files (MUST exist) to attach to the email.
 #                           - If no attachment, leave blank "")
 #                           - If you have multiple attachments, separate each file name with comma.
@@ -3056,6 +3057,12 @@ sadm_sendmail() {
               sadm_write_log "4- Email mfile(s): ${mfile}" 
     fi 
 
+    # Check if Body text file is readable and exist
+    if [[ ! -f "$mbody" || ! -r "$mbody" ]]
+        then sadm_write_err "[ ERROR ] Email body file does not exist or is not readable '$mbody'."
+             return 1                                                   # Return Error to caller    
+    fi 
+
     # Send mail with 1 or no attachment
     if [ $(expr index "$mfile" ,) -eq 0 ]                               # No comma = 1 file attach
        then RC=0
@@ -3063,13 +3070,13 @@ sadm_sendmail() {
                 then if [ ! -r "$mfile" ]                               # Attachment Not Readable ?
                         then emsg="Attachment file $mfile can't be read or doesn't exist."
                              sadm_write_err "[ ERROR ] $emsg"           # Avise user of error
-                             printf "\n$emsg\n" >> $mbody               # Add Err Msg to Body
+                             echo -e  "\n$emsg\n" >> $mbody             # Add Err Msg to Email Body
                              RC=1                                       # Set Error return code
-                             echo "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" "$maddr" >>$SADM_LOG 2>&1
-                        else echo "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" "$maddr" -a "$mfile" >>$SADM_LOG 2>&1 
+                             cat "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" "$maddr" >>$SADM_LOG 2>&1
+                        else cat "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" "$maddr" -a "$mfile" >>$SADM_LOG 2>&1 
                              RC=$?                                      # Save Error Number
                      fi
-                else echo "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" "$maddr" >>$SADM_LOG 2>&1 
+                else cat "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" "$maddr" >>$SADM_LOG 2>&1 
                      RC=$?                                              # Save Error Number
             fi
             if [ $RC -ne 0 ]                                            # Error sending email 
@@ -3086,13 +3093,13 @@ sadm_sendmail() {
                 do if [ ! -r "$file" ]                                  # Attachment Not Readable ?
                         then emsg="Attachment file '$file' can't be read or doesn't exist."
                              sadm_write_err "$emsg"                     # Avise user of error
-                             mbody=$(printf "\n${mbody}\n\n${emsg}\n") 
+                             echo -e "\n\n${emsg}\n" >> $mbody          # Add Err Msg to Email Body
                              RC=1                                       # Set Error return code
                         else opt_a="$opt_a -a $file "                   # Add -a attach Cmd Option
                              #echo "opt_a = $opt_a"
                    fi 
                 done
-            echo "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" $opt_a \-\- "$maddr"
+            cat "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" $opt_a \-\- "$maddr"
             RC=$?                                                       # Save Error Number
             if [ $RC -ne 0 ]                                            # Error sending email 
                 then wstatus="[ ERROR ] Sending email to $maddr"        # Advise Error sending Email
