@@ -14,14 +14,15 @@
 # 2018_01_31 startup/shutdown V2.7  Added execution of /etc/profile.d/sadmin.sh to have SADMIN Var. 
 # 2018_09_19 startup/shutdown V2.8  Added Alert Group Utilization
 # 2018_10_18 startup/shutdown v2.9  Remove execution of /etc/profile.d/sadmin.sh(Don't need anymore)
-# 2019_03_29 startup/shutdown v2.10 Get SADMIN Directory Location from /etc/environment
-# 2020_05_27 startup/shutdown v2.11 Force using bash instead of dash & problem setting SADMIN var.
-# 2020_11_04 startup/shutdown v2.12 Update SADMIN section & use env cmd to use proper bash shell.
-# 2022_09_15 startup/shutdown v2.13 Update SADMIN section 1.52 & minor changes.
-# 2023_07_17 startup/shutdown v2.14 Update with latest SADMIN section(v1.56).
-#@2024_05_02 startup/shutdown v2.15 Send shutdown email if 'SADM_EMAIL_SHUTDOWN' = "Y" in sadmin.cfg.
-#@2025_03_25 startup/shutdown v2.16 Change format of shutdown email sent to sysadmin.
-#@2026_03_10 startup/shutdown v2.17 Not appending the log 'SADM_LOG_APPEND="N"' (Create a new one).
+# 2019_03_29 startup/shutdown v02.10.00 Get SADMIN Directory Location from /etc/environment
+# 2020_05_27 startup/shutdown v02.11.00 Force using bash instead of dash & problem setting SADMIN var.
+# 2020_11_04 startup/shutdown v02.12.00 Update SADMIN section & use env cmd to use proper bash shell.
+# 2022_09_15 startup/shutdown v02.13.00 Update SADMIN section 1.52 & minor changes.
+# 2023_07_17 startup/shutdown v02.14.00 Update with latest SADMIN section(v1.56).
+#@2024_05_02 startup/shutdown v02.15.00 Send shutdown email if 'SADM_EMAIL_SHUTDOWN' = "Y" in sadmin.cfg.
+#@2025_03_25 startup/shutdown v02.16.00 Change format of shutdown email sent to sysadmin.
+#@2026_03_10 startup/shutdown v02.17.00 Not appending the log 'SADM_LOG_APPEND="N"' (Create a new one).
+#@2026_07_08 startup/shutdown v02.17.01 Create Email Body text file to use sendmail 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x
@@ -88,21 +89,32 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 
 
 
-
 # Send email when the system goes offline.
 # --------------------------------------------------------------------------------------------------
 shutdown_mail()
 {
     sadm_write_log " "
     sadm_write_log "Send shutdown email to $SADM_MAIL_ADDR"
+
+    # Create the Body of email in a text file 
+    wb="$SADMIN/tmp/body$$$.txt"                                        # Email body txt file
+    echo -e "$(date)"  > $wb
+    echo -e "For your information, system '${SADM_HOSTNAME}' is going down." >> $wb
+    echo -e "The program '${SADM_PN}' is reponsable for sending this email." >> $wb
+    echo -e "See you soon !" >> $wb
+
     ws="SADM_INFO: System '$SADM_HOSTNAME' going down." 
-    wb=$(echo -e "\n$(date)\nSystem '${SADM_HOSTNAME}' '$(sadm_get_host_ip)' is going offline.\nEmail sent by '${SADM_PN}'.\nSee you soon !\n\n")
     we="$SADM_MAIL_ADDR"
     sadm_sendmail "$we" "$ws" "$wb" 
     RC=$?
-    return $RC
-}
+    if [ $RC -eq 0 ] 
+        then sadm_write_log "[ OK ] Mail sent successfully to $we"
+        else sadm_write_err "[ ERROR ] Problem sending email to $we" 
+    fi 
 
+    if [ -f  "$wb" ] ; then rm -f "$wb" ; fi                            # Remove body file
+    return $RC 
+}
 
 # --------------------------------------------------------------------------------------------------
 #                                S c r i p t    M a i n     P r o c e s s
@@ -149,7 +161,6 @@ main_process()
 # --------------------------------------------------------------------------------------------------
 #
     sadm_start                                                          # Won't come back if error
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong 
     main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log

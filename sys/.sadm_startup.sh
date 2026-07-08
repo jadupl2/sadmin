@@ -11,39 +11,41 @@
 #
 # CHANGE LOG
 # ----------
-# 2017_06_06 startup/shutdown V2.2 Log Enhancement
-# 2017_06_07 startup/shutdown V2.3 Restructure to use the SADM Library and Send email on execution.
-# 2017_06_08 startup/shutdown V2.4 Added removal of files in (pid) /sadmin/tmp at system boot
-# 2017_06_13 startup/shutdown V2.5 Removal of sysmon lock file (/sadmin/sysmon.lock) at system boot.
-# 2017_06_21 startup/shutdown V2.6 Added Clock Synchronization with 0.ca.pool.ntp.org
-# 2017_07_17 startup/shutdown V2.7 Add Section to put command to execute on specified Systems
-# 2017_07_21 startup/shutdown V2.8 Message display when starting Cosmetic Change 
-# 2017_08_03 startup/shutdown V2.9 Bug Fix - Missing Quote
-# 2018_01_27 startup/shutdown V3.0a Start 'nmon' as standard startup procedure 
-# 2018_01_31 startup/shutdown V3.1 Execution of /etc/profile.d/sadmin.sh to set SADMIN Env. Variable
-# 2018_02_02 startup/shutdown V3.2 Redirect output of starting nmon in the log.
-# 2018_02_04 startup/shutdown V3.3 Remove all pid files when starting server
-# 2018_06_22 startup/shutdown V3.4 Add Error Message when error synchronizing change.
-# 2018_09_19 startup/shutdown V3.5 Updated to include the Alert Group
-# 2018_10_16 startup/shutdown V3.6 Suppress Header and footer from the log (Cleaner Status display).
-# 2018_10_18 startup/shutdown V3.7 Only send alert when exit with error.
-# 2018_11_02 startup/shutdown V3.8 Added sleep before updating time clock (Raspbian Problem)
-# 2019_03_27 startup/shutdown v3.9 If 'ntpdate' report an error, show error message.
-# 2020_05_27 startup/shutdown v3.10 Force using bash instead of dash (Problem on Ubuntu).
-# 2019_12_07 startup/shutdown v3.11 Avoid NTP Server name resolution (DNS not up), use IP Addr. now.
-# 2020_11_04 startup/shutdown v3.13 Update SADMIN section & use env cmd to use proper bash shell.
-# 2021_05_13 startup/shutdown v3.14 Check if ntpdate is present before syncing time.
-# 2021_06_11 startup/shutdown v3.15 When syncing time redirect output to script log.
-# 2022_04_06 startup/shutdown v3.16 Remove ip setting for raspi8
-# 2022_07_24 startup/shutdown v3.17 Update SADMIN section to 1.51 and no-ip Client for Dynamic IP
-# 2022_09_15 startup/shutdown v3.18 When error feed error log and fix 'nmon' wasn't starting.
-# 2023_07_17 startup/shutdown v3.19 Updated to use faster python version of 'sadm_nmon_watcher'.
-#@2024_04_17 startup/shutdown v3.20 Minor adjustment when starting 'nmon' performance monitor.
-#@2024_05_02 startup/shutdown v3.21 Send startup email if 'SADM_EMAIL_STARTUP' = "Y" in sadmin.cfg.
-#@2024_09_12 startup/shutdown v3.22 Change default script description 'SADM_PDESC'.
-#@2025_03_25 startup/shutdown v3.23 Change format of Power ON email to sysadmin.
-#@2026_03_06 startup/shutdown v3.24 Correct typo when an error occur.
-#@2026_06_24 startup/shutdown v3.25 now include removal of any .rpt file in $SADMIN/dat/rpt.
+# 2017_06_06 startup/shutdown V02.02.00 Log Enhancement
+# 2017_06_07 startup/shutdown V02.03.00 Restructure to use the SADM Library and Send email on execution.
+# 2017_06_08 startup/shutdown V02.04.00 Added removal of files in (pid) /sadmin/tmp at system boot
+# 2017_06_13 startup/shutdown V02.05.00 Removal of sysmon lock file (/sadmin/sysmon.lock) at system boot.
+# 2017_06_21 startup/shutdown V02.06.00 Added Clock Synchronization with 0.ca.pool.ntp.org
+# 2017_07_17 startup/shutdown V02.07.00 Add Section to put command to execute on specified Systems
+# 2017_07_21 startup/shutdown V02.08.00 Message display when starting Cosmetic Change 
+# 2017_08_03 startup/shutdown V02.09.00 Bug Fix - Missing Quote
+# 2018_01_27 startup/shutdown V03.00.00 Start 'nmon' as standard startup procedure 
+# 2018_01_31 startup/shutdown V03.01.00 Execution of /etc/profile.d/sadmin.sh to set SADMIN Env. Variable
+# 2018_02_02 startup/shutdown V03.02.00 Redirect output of starting nmon in the log.
+# 2018_02_04 startup/shutdown V03.03.00 Remove all pid files when starting server
+# 2018_06_22 startup/shutdown V03.04.00 Add Error Message when error synchronizing change.
+# 2018_09_19 startup/shutdown V03.05.00 Updated to include the Alert Group
+# 2018_10_16 startup/shutdown V03.06.00 Suppress Header and footer from the log (Cleaner Status display).
+# 2018_10_18 startup/shutdown V03.07.00 Only send alert when exit with error.
+# 2018_11_02 startup/shutdown V03.08.00 Added sleep before updating time clock (Raspbian Problem)
+# 2019_03_27 startup/shutdown v03.09.00 If 'ntpdate' report an error, show error message.
+# 2020_05_27 startup/shutdown v03.10.00 Force using bash instead of dash (Problem on Ubuntu).
+# 2019_12_07 startup/shutdown v03.11.00 Avoid NTP Server name resolution (DNS not up), use IP Addr. now.
+# 2020_11_04 startup/shutdown v03.13.00 Update SADMIN section & use env cmd to use proper bash shell.
+# 2021_05_13 startup/shutdown v03.14.00 Check if ntpdate is present before syncing time.
+# 2021_06_11 startup/shutdown v03.15.00 When syncing time redirect output to script log.
+# 2022_04_06 startup/shutdown v03.16.00 Remove ip setting for raspi8
+# 2022_07_24 startup/shutdown v03.17.00 Update SADMIN section to 1.51 and no-ip Client for Dynamic IP
+# 2022_09_15 startup/shutdown v03.18.00 When error feed error log and fix 'nmon' wasn't starting.
+# 2023_07_17 startup/shutdown v03.19.00 Updated to use faster python version of 'sadm_nmon_watcher'.
+#@2024_04_17 startup/shutdown v03.20.00 Minor adjustment when starting 'nmon' performance monitor.
+#@2024_05_02 startup/shutdown v03.21.00 Send startup email if 'SADM_EMAIL_STARTUP' = "Y" in sadmin.cfg.
+#@2024_09_12 startup/shutdown v03.22.00 Change default script description 'SADM_PDESC'.
+#@2025_03_25 startup/shutdown v03.23.00 Change format of Power ON email to sysadmin.
+#@2026_03_06 startup/shutdown v03.24.00 Correct typo when an error occur.
+#@2026_06_24 startup/shutdown v03.25.00 now include removal of any .rpt file in $SADMIN/dat/rpt.
+#@2026_07_08 startup/shutdown v03.25.01 now include removal of any .rpt file in $SADMIN/dat/rpt.
+#@2026_07_08 startup/shutdown v03.26.02 On SADMIN server, remove additionnal .rpt file in $SADMIN/www/dat/HOSTNAME/rpt.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x 
@@ -75,7 +77,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.25'                                     # Script version number
+export SADM_VER='03.26.02'                                 # Script version number
 export SADM_PDESC="Run when the system is started (via sadmin.service)." 
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -120,28 +122,37 @@ export NTP_SERVER="68.69.221.61 162.159.200.1 205.206.70.2"             # Canada
 
 
 
-# Send email when the system is back online
+
+
+# Send email to sysadmin when the system is starting
 # --------------------------------------------------------------------------------------------------
 poweron_mail()
 {
     sadm_write_log " "
     sadm_write_log "Sending 'Startup' email to $SADM_MAIL_ADDR"         # Show what we're doing
 
-    ws="SADM_INFO: System '$SADM_HOSTNAME' has just started."           # Email subject
-    wb0=$(date)
-    wb1="System '${SADM_HOSTNAME}' is back online."
-    wb2="Have a nice day from ${SADM_PN}."
-    wb3="See you soon !"
-    wb=$(printf "$wb0\n$wb1\n$wb2\n$wb3")
+    # Create the Body of email in a text file 
+    wb="$SADMIN/tmp/body$$$.txt"                                        # email body file
+    echo -e "$(date)"  > $wb
+    echo -e "System '${SADM_HOSTNAME}' is back online." >> $wb
+    echo -e "Have a nice day from ${SADM_PN}." >> $wb
+    echo -e "See you soon !" >> $wb
+    
+    ws="SADM_INFO: System '$SADM_HOSTNAME' just started."               # Email subject
     we="$SADM_MAIL_ADDR"                                                # Send email to SysAdmin
+
     sadm_sendmail "$we" "$ws" "$wb"
-    RC=$?
+    RC=$? 
     if [ $RC -eq 0 ] 
         then sadm_write_log "[ OK ] Mail sent successfully to $we"
         else sadm_write_err "[ ERROR ] Problem sending email to $we" 
     fi 
+    
+    if [ -f  "$wb" ] ; then rm -f "$wb" ; fi                            # Remove body file
     return $RC 
 }
+
+
 
 
 
@@ -154,13 +165,20 @@ normal_startup()
     sadm_write_log " "
     sadm_write_log "Running Standard Startup Procedure:"
     
-    sadm_write_log "  - Remove SADMIN tools system lock file ("${SADMIN}/${SADM_HOSTNAME}.lock")."
+    sadm_write_log "  - Remove SADMIN tools system lock file '${SADMIN}/${SADM_HOSTNAME}.lock'."
     rm -f "${SADMIN}/${SADM_HOSTNAME}.lock" >> $SADM_LOG 2>>$SADM_ELOG
+
     sadm_write_log "  - Remove any '*.rpt' left in '$SADM_RPT_DIR'."
-    rm -f "$SADM_RPT_DIR}/*.rpt" >> $SADM_LOG 2>>$SADM_ELOG
+    rm -f "${SADM_RPT_DIR}/*.rpt" >> $SADM_LOG 2>>$SADM_ELOG
+    
+    if [ "$SADM_HOST_TYPE" = "S" ] 
+        then sadm_write_log "  - Remove any '*.rpt' left in '$SADM_WWW_RPT_DIR'."
+             rm -f "${SADM_WWW_RPT_DIR}/*.rpt" >> $SADM_LOG 2>>$SADM_ELOG
+    fi
+    
     sadm_write_log "  - Removing temporary files in '$SADMIN/tmp' directory."
     rm -f ${SADMIN}/tmp/*  >> $SADM_LOG 2>&1
-
+    
     sadm_write_log "  - Removing SADMIN system monitor lock file ${SADMIN}/sysmon.lock."
     rm -f ${SADMIN}/sysmon.lock  >> $SADM_LOG 2>&1
 
@@ -195,7 +213,10 @@ normal_startup()
 
 
     # Start performance monitor 'nmon'.
+    # Use 'sadm_nmon_watcher.py' if Python3 is available, otherwise use 'sadm_nmon_watcher.sh'.
     sadm_write_log "  - Start 'nmon' performance system monitor tool."
+    #[   -x /usr/bin/python3 ] && $SADMIN/bin/sadm_nmon_watcher.py >/dev/null 2>&1 # Start nmon 
+    #[ ! -x /usr/bin/python3 ] && $SADMIN/bin/sadm_nmon_watcher.sh >/dev/null 2>&1 # Start nmon 
     $SADMIN/usr/mon/swatch_nmon.sh >> $SADM_LOG 2>&1
     RC=$?
     if [ $RC -ne 0 ] 
@@ -247,7 +268,6 @@ main_process()
         then poweron_mail    
              if [ $? -ne 0 ] ; then ((ERROR_COUNT++)) ; fi
     fi 
-        
     return $ERROR_COUNT                                                 # Return Default return code
 }
  

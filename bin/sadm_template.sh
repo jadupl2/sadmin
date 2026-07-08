@@ -42,7 +42,7 @@ trap 'sadm_stop 1; exit 1' 2
 
 
 # ------------------- S T A R T  O F   S A D M I N   C O D E    S E C T I O N  ---------------------
-# v1.56 - Setup Global Variables and load the SADMIN standard library $SADMIN/lib/sadmlib_std.sh.
+# v1.59 - Setup Global Variables and load the SADMIN standard library $SADMIN/lib/sadmlib_std.sh.
 #       - To use SADMIN scripting tools, this section MUST be present near the top of your code.    
 
 # Make sure environment variable 'SADMIN' is defined.
@@ -66,8 +66,8 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='4.4'                                      # Script version number
-export SADM_PDESC="SADMIN template shell script"           # Script Optional Desc.(Not use if empty)
+export SADM_VER='00.01.00'                                 # Script version number
+export SADM_PDESC="Put your description HERE."             # Script Optional Desc.(Not use if empty)
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_SADMGRP_ONLY='N'                               # Run only if user is part of SADMIN Grp
@@ -81,9 +81,9 @@ export SADM_USE_RCH="Y"                                    # Update RCH History 
 export SADM_USE_DB="N"                                     # Use SADMIN Database (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
-export SADM_TMP_FILE1=$(mktemp -q "$SADMIN/tmp/${SADM_INST}1_XXX") # Make tmpfile,del in sadm_stop()
-export SADM_TMP_FILE2=$(mktemp -q "$SADMIN/tmp/${SADM_INST}2_XXX") # Make tmpfile,del in sadm_stop()
-export SADM_TMP_FILE3=$(mktemp -q "$SADMIN/tmp/${SADM_INST}3_XXX") # Make tmpfile,del in sadm_stop()
+export SADM_TMP_FILE1=$(mktemp -q "$SADMIN/tmp/sadm_tmp1_XXX") # Make tmpfile,del in sadm_stop()
+export SADM_TMP_FILE2=$(mktemp -q "$SADMIN/tmp/sadm_tmp2_XXX") # Make tmpfile,del in sadm_stop()
+export SADM_TMP_FILE3=$(mktemp -q "$SADMIN/tmp/sadm_tmp3_XXX") # Make tmpfile,del in sadm_stop()
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
 . "${SADMIN}/lib/sadmlib_std.sh"                           # Load SADMIN Shell Library
@@ -93,15 +93,16 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
 # VARIABLES DEFINE BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
-# BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).export SADM_WARNING_GRP="default"
+# BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
+#export SADM_WARNING_GRP="default"
 #export SADM_ALERT_GROUP="default"                          # Error Group Define in alert_group.cfg
 #export SADM_WARNING_GROUP="default"                        # Warning alert Group (alert_group.cfg)   
 #export SADM_INFO_GROUP="default"                           # Info alert Group (in alert_group.cfg)
 #export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
 #export SADM_ALERT_GROUP="default"                          # Alert Group to advise
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
-#export SADM_MAX_LOGLINE=400                                # Nb Lines to trim(0=NoTrim)
-#export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
+#export SADM_MAX_LOGLINE=400                                # Nb Lines to trim (0=NoTrim)
+#export SADM_MAX_RCHLINE=35                                 # Nb Lines to trim (0=NoTrim)
 #export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
 #export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
 # -------------------  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
