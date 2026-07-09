@@ -57,7 +57,7 @@ if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                   # If SADMIN shell lib
 fi 
 
 
-# YOU CAN USE THE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+# You Can Use The Variables Below, But You Shouldn't Have to Change Them (Used By Sadmin Library).
 export SADM_PN=${0##*/}                                    # Script name(with extension)
 export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
 export SADM_TPID="$$"                                      # Script Process ID.
@@ -65,7 +65,7 @@ export SADM_HOSTNAME=$(hostname -s)                        # Host name without D
 export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
-# YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
+# You Can Use & Change Variables Below To Your Needs (They Influence Execution Of Sadmin Library).
 export SADM_VER='00.01.00'                                 # Script version number
 export SADM_PDESC="Put your description HERE."             # Script Optional Desc.(Not use if empty)
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
