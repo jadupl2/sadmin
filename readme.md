@@ -8,8 +8,8 @@ created some scripts to help you keeping your environment stable and under contr
 help you by centralizing your scripts logs in one place, by viewing their results in one place and
 you can even can be notified if something goes wrong. With SADMIN you can be notified, when a 
 script fail or just to let you know that your script ran with success. You can received 
-notification via email, SMS or the Slack application. 
-SADMIN can surely help you improve and standardize the administration of your server farm.
+notification via email, SMS or the Slack application.
+SADMIN can surely help you improve and standardize the administration of your systems farm.
  
 
 [![monitor](https://sadmin.ca/assets/img/sadm_sysmon/sadm_view_sysmon.png)](https://sadmin.ca/assets/img/sadm_sysmon/sadm_view_sysmon.png  "SADMIN monitor page")
