@@ -276,6 +276,7 @@
 #@2026_07_04 lib v04.91.02 Variable name 'SADM_MAX_RCLINE' was wrong, now 'SADM_MAX_RCHLINE'.
 #@2026_07_08 lib v04.92.01 sadm_sendmail() Email body must be a text file now, no longer a string.
 #@2026_07_09 lib v04.92.02 Fix Typo with RCHLINE vs RCLINE
+#@2026_07_09 lib v04.92.03 Fix issue with new variable in code section 1.60.
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -286,7 +287,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="04.92.02"                                          # This Library Version
+export SADM_LIB_VER="04.92.03"                                          # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -2694,8 +2695,10 @@ sadm_start() {
              sadm_write_log " "                                         
     fi
 
+    # Make sure 'SADM_ROOT_ONLY' exist and not empty, if not set to default value "N" NO restriction
     # Check if this script is to be run only by root user
-    if [ ! -z "$SADM_ROOT_ONLY" ] && [ $SADM_ROOT_ONLY == "Y" ] &&  [ $(id -u) -ne 0 ]  
+    if [[ -z "$SADM_ROOT_ONLY" ]]; then SADM_ROOT_ONLY = "N" ; fi       # Default can run everywhere
+    if [ $SADM_ROOT_ONLY == "Y" ] &&  [ $(id -u) -ne 0 ]  
         then sadm_write_err " "
              sadm_write_err "Script can only be run by the 'root' user."
              sadm_write_err "Try 'sudo ${0##*/}'."                      # Suggest using sudo
@@ -2705,8 +2708,10 @@ sadm_start() {
              exit 1                                                     # Exit To O/S with Error
     fi
 
+
     # Check if this script to be run only on the SADMIN server.
-    if [ ! -z "$SADM_SERVER_ONLY" ] && [ "$SADM_SERVER_ONLY" = "Y" ] && [ "$SADM_HOST_TYPE" != "S" ]] 
+    if [[ -z "$SADM_SERVER_ONLY" ]]; then SADM_SERVER_ONLY = "N" ; fi   # Default can run everywhere
+    if [ "$SADM_SERVER_ONLY" = "Y" ] && [ "$SADM_HOST_TYPE" != "S" ]
         then sadm_write_err "[ ERROR ] This script will only run on the SADMIN server '$SADM_SERVER'."
              sadm_write_err "The variable 'SADM_SERVER_ONLY' is set to 'Y'."
              sadm_write_err "Process aborted."                          # Abort advise message
@@ -2888,24 +2893,21 @@ sadm_stop() {
              RCHLINE="$RCHLINE $sadm_elapse $SADM_INST"                 # Format Part2 RCH File
              RCHLINE="$RCHLINE $SADM_ALERT_GROUP $SADM_ALERT_TYPE"      # Format Part3 of RCH File
              RCHLINE="$RCHLINE $SADM_EXIT_CODE"                         # Format Part4 of RCH File
-             if [ -w $SADM_RCH_FILE ] 
-                then echo "$RCHLINE" >>$SADM_RCH_FILE                   # Append to RCH File
-                else sadm_write_log "Permission denied to write to $SADM_RCH_FILE"
-             fi
-             if [ ! -z "$SADM_LOG_FOOTER" ] && [ "$SADM_LOG_FOOTER" = "Y" ] # User want Log Footer
-                then if [ "$SADM_MAX_RCHLINE" -ne 0 ]                    # User want to trim rch file
-                        then if [ -w $SADM_RCH_FILE ]                   # If History RCH Writable
-                                then mtmp1="History file '\$SADMIN/dat/rch/${SADM_HOSTNAME}_${SADM_INST}.rch' trim to ${SADM_MAX_RCHLINE} lines."
-                                     sadm_write_log "${mtmp1}"          # Write rch trim context 
-                             fi
-                        else mtmp="The history file (.rch) will not be trim (\$SADM_MAX_RCHLINE=0)."
-                             sadm_write_log "${mtmp}." 
-                     fi
+             if [ -w "$SADM_RCH_FILE" ] 
+                then echo "$RCHLINE" >> $SADM_RCH_FILE                  # Append to RCH File
+                else sadm_write_err "Permission denied to write to $SADM_RCH_FILE"
              fi
     fi 
 
+    
+    # Make sure SADM_LOG_FOOTER Variable is defined.
+    if [[ -z "$SADM_LOG_FOOTER" ]]                                      # Var. either unset or empty
+        then  "$SADM_LOG_FOOTER" = "Y"                                  # Then default incl. footer
+    fi
+
+
     # If log size not at zero and user want to produce a log.
-    if [ ! -z "$SADM_LOG_FOOTER" ] && [ "$SADM_LOG_FOOTER" = "Y" ]      # User Want the Log Footer
+    if [ "$SADM_LOG_FOOTER" = "Y" ]                                     # User Want the Log Footer
         then GRP_TYPE=$(grep -i "^$SADM_ALERT_GROUP " $SADM_ALERT_FILE |awk '{print$2}' |tr -d ' ')
              GRP_NAME=$(grep -i "^$SADM_ALERT_GROUP " $SADM_ALERT_FILE |awk '{print$3}' |tr -d ' ')
              ORG_NAME=$GRP_NAME                                         # Save Original Group Name
