@@ -101,6 +101,8 @@ shutdown_mail()
     echo -e "$(date)"  > $wb
     echo -e "For your information, system '${SADM_HOSTNAME}' is going down." >> $wb
     echo -e "The program '${SADM_PN}' is reponsable for sending this email." >> $wb
+    echo -e "Uptime : \n$(uptime)\n" >> $wb
+    echo -e "Users on system : \n$(who -u)\n" >> $wb
     echo -e "See you soon !" >> $wb
 
     ws="SADM_INFO: System '$SADM_HOSTNAME' going down." 
