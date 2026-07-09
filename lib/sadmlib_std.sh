@@ -117,7 +117,7 @@
 # 2020_05_23 Fix: v3.38 Fix intermittent problem with 'sadm_write' & alert sent multiples times.
 # 2020_06_09 Update: v3.39 Don't trim the log file, if $SADM_MAX_LOGLINE=0.
 # 2020_06_06 Update: v3.40 When writing to log don't include time when prefix with OK,Warning,Error
-# 2020_06_09 Update: v3.41 Don't trim the RCH file (ResultCodeHistory). if $SADM_MAX_RCLINE=0.
+# 2020_06_09 Update: v3.41 Don't trim the RCH file (ResultCodeHistory). if $SADM_MAX_RCHLINE=0.
 # 2020_07_11 Fixes: v3.42 Date and time was not include in script log.
 # 2020_07_12 Update: v3.43 When virtual system 'wmodel' return (VMWARE,VIRTUALBOX,VM)
 # 2020_07_20 Update: v3.44 Change permission for log and rch to allow normal user to run script.
@@ -275,6 +275,7 @@
 #@2026_07_04 lib v04.91.01 Fix PID file name.
 #@2026_07_04 lib v04.91.02 Variable name 'SADM_MAX_RCLINE' was wrong, now 'SADM_MAX_RCHLINE'.
 #@2026_07_08 lib v04.92.01 sadm_sendmail() Email body must be a text file now, no longer a string.
+#@2026_07_09 lib v04.92.02 Fix Typo with RCHLINE vs RCLINE
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -285,7 +286,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="04.92.01"                                          # This Library Version
+export SADM_LIB_VER="04.92.02"                                          # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -2357,7 +2358,7 @@ sadm_load_config_file() {
                                             ;;
             "SADM_MAX_LOGLINE")             SADM_MAX_LOGLINE=$VALUE
                                             ;;
-            "SADM_MAX_RCLINE")              SADM_MAX_RCLINE=$VALUE
+            "SADM_MAX_RCHLINE")             SADM_MAX_RCHLINE=$VALUE
                                             ;;
             "SADM_NMON_KEEPDAYS")           SADM_NMON_KEEPDAYS=$VALUE
                                             ;;
@@ -2705,7 +2706,7 @@ sadm_start() {
     fi
 
     # Check if this script to be run only on the SADMIN server.
-    if [ "$SADM_SERVER_ONLY" = "Y" ] && [ "$SADM_HOST_TYPE" != "S" ] 
+    if [ ! -z "$SADM_SERVER_ONLY" ] && [ "$SADM_SERVER_ONLY" = "Y" ] && [ "$SADM_HOST_TYPE" != "S" ]] 
         then sadm_write_err "[ ERROR ] This script will only run on the SADMIN server '$SADM_SERVER'."
              sadm_write_err "The variable 'SADM_SERVER_ONLY' is set to 'Y'."
              sadm_write_err "Process aborted."                          # Abort advise message
@@ -2869,7 +2870,7 @@ sadm_stop() {
              sadm_write_log "$foot1 and execution time was ${sadm_elapse}." # Write the Elapse Time
     fi
 
-    # Update RCH File and Trim It to $SADM_MAX_RCLINE lines define in sadmin.cfg
+    # Update RCH File and Trim It to $SADM_MAX_RCHLINE lines define in sadmin.cfg
     if [ "$SADM_USE_RCH" = "Y" ]                                        # User Want to use RCH File
         then if [ -s "$SADM_RCH_FILE" ]                                 # RCH file exist & size > 0
                 then XCODE=`tail -1 "$SADM_RCH_FILE" |awk '{ print $NF }'` # Last Field of last line
@@ -2892,12 +2893,12 @@ sadm_stop() {
                 else sadm_write_log "Permission denied to write to $SADM_RCH_FILE"
              fi
              if [ ! -z "$SADM_LOG_FOOTER" ] && [ "$SADM_LOG_FOOTER" = "Y" ] # User want Log Footer
-                then if [ "$SADM_MAX_RCLINE" -ne 0 ]                    # User want to trim rch file
+                then if [ "$SADM_MAX_RCHLINE" -ne 0 ]                    # User want to trim rch file
                         then if [ -w $SADM_RCH_FILE ]                   # If History RCH Writable
-                                then mtmp1="History file '\$SADMIN/dat/rch/${SADM_HOSTNAME}_${SADM_INST}.rch' trim to ${SADM_MAX_RCLINE} lines."
+                                then mtmp1="History file '\$SADMIN/dat/rch/${SADM_HOSTNAME}_${SADM_INST}.rch' trim to ${SADM_MAX_RCHLINE} lines."
                                      sadm_write_log "${mtmp1}"          # Write rch trim context 
                              fi
-                        else mtmp="The history file (.rch) will not be trim (\$SADM_MAX_RCLINE=0)."
+                        else mtmp="The history file (.rch) will not be trim (\$SADM_MAX_RCHLINE=0)."
                              sadm_write_log "${mtmp}." 
                      fi
              fi
@@ -3049,7 +3050,7 @@ sadm_sendmail() {
     # Save Parameters Received (After Removing leading and trailing spaces).
     maddr=$(echo "$1" |awk '{$1=$1;print}')                             # Send to this email
     msubject="$2"                                                       # Save Alert Subject
-    mbody="$3"                                                          # Save Alert Message Body
+    mbody="$3"                                                          # Save Alert Body Mess file
     if [ $# -eq 3 ] ; then mfile="" ; else mfile="$4" ; fi              # Comma separated FileName(s)
     if [ "$LIB_DEBUG" -gt 4 ] 
          then sadm_write_log "1- Email sent to : ${maddr}" 
@@ -3060,7 +3061,8 @@ sadm_sendmail() {
 
     # Check if Body text file is readable and exist
     if [[ ! -f "$mbody" || ! -r "$mbody" ]]
-        then sadm_write_err "[ ERROR ] Email body file does not exist or is not readable '$mbody'."
+        then sadm_write_err " " 
+             sadm_write_err "[ ERROR ] Email body file does not exist or is not readable."
              return 1                                                   # Return Error to caller    
     fi 
 
