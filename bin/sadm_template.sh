@@ -29,9 +29,11 @@
 #   - "mon"     System Monitor related.         - "backup"   Backup related modification or fixes.
 #   - "config"  Config files modification.      - "server"   Server related modification or fixes.
 #   - "client"  Client related modifications.   - "osupdate" O/S Update modification or fixes.
+#   - "lib"     Library documentation           - "doc"      General Documentation
+#   - "sys"     System (startup and shutdown)   - "nolog"    Minor change, not included in rel. note
 #
-# YYYY-MM-DD GRP      vX.XX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.
-# 2026_01_02 template v0.1  Initial development version.
+# YYYY-MM-DD GRP      vXX.XX.XX ------------------ 69 Characters to describe change ----------------
+#@2026_08_02 template v00.01.00 Initial development version.
 #
 #---------------------------------------------------------------------------------------------------
 # Add trap to catch ^C and stop script gracefully.
@@ -41,19 +43,20 @@ trap 'sadm_stop 1; exit 1' 2
 
 
 
-# ------------------- S T A R T  O F   S A D M I N   C O D E    S E C T I O N  ---------------------
-# v1.59 - Setup Global Variables and load the SADMIN standard library $SADMIN/lib/sadmlib_std.sh.
+                                                                                          
+# ---------   S T A R T   O F   S A D M I N   R E Q U I R E D   C O D E   S E C T I O N  -----------
+# v1.60 - Setup Global Variables and load the SADMIN standard library $SADMIN/lib/sadmlib_std.sh.
 #       - To use SADMIN scripting tools, this section MUST be present near the top of your code.    
-
-# Make sure environment variable 'SADMIN' is defined.
+#
+# Make sure environment variable 'SADMIN' is defined, if it's not, exit with error message.
 if [ -r /etc/environment ] && [ -z "$SADMIN" ] ; then source /etc/environment ; fi 
 if [ -z "$SADMIN" ]                                        # Advise user, SADMIN Env. Var. is a MUST
-   then printf "\nSet 'SADMIN' environment variable to the install directory." 
-        printf "\nAdd a line similar to 'SADMIN=/opt/sadmin' in /etc/environment." 
+   then printf "\n[ ERROR ] Set 'SADMIN' environment variable to the install directory." 
+        printf "\n  - Add a line similar to 'SADMIN=/opt/sadmin' in /etc/environment." 
         exit 1 
 fi 
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                   # If SADMIN shell library doesn't exist 
-   then printf "\nSADMIN library '$SADMIN/lib/sadmlib_std.sh' can't be found.\n" ; exit 1 
+   then printf "\n[ ERROR ] SADMIN library '$SADMIN/lib/sadmlib_std.sh' can't be found.\n" ; exit 1 
 fi 
 
 
@@ -66,46 +69,52 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # You Can Use & Change Variables Below To Your Needs (They Influence Execution Of Sadmin Library).
-export SADM_VER='00.01.00'                                 # Script version number
-export SADM_PDESC="Put your description HERE."             # Script Optional Desc.(Not use if empty)
-export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
-export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
-export SADM_SADMGRP_ONLY='N'                               # Run only if user is part of SADMIN Grp
-export SADM_QUIET="N"                                      # N=Show Err.Msg Y=ReturnErrorCode No Msg
+export SADM_VER='00.01.00'                                 # Pgm. Version Number
+export SADM_PDESC="Put your description HERE."             # Pgm. Description .(Not use if empty)
+export SADM_ROOT_ONLY="N"                                  # Pgm. run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="N"                                # Pgm. run only on SADMIN server? [Y]/[N]
+export SADM_SADMGRP_ONLY='N'                               # Pgm. run only if usr part of SADMIN Grp
 export SADM_LOG_TYPE="B"                                   # Write log to [S]creen, [L]og, [B]oth
-export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
-export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoLogHeader
-export SADM_LOG_FOOTER="Y"                                 # Y=IncludeLogFooter N=NoLogFooter
-export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
-export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
-export SADM_USE_DB="N"                                     # Use SADMIN Database (Y/N)
+export SADM_LOG_APPEND="N"                                 # Append log ? Y=AppendLog,N=CreateNewLog
+export SADM_LOG_HEADER="Y"                                 # Y = ProduceLogHeader, N = NoLogHeader
+export SADM_LOG_FOOTER="Y"                                 # Y = ProduceLogFooter, N = NoLogFooter
+export SADM_MULTIPLE_EXEC="N"                              # Can Run Simultaneous copy of script Y/N
+export SADM_USE_RCH="Y"                                    # Update the RCH History File (Y/N)
+export SADM_USE_DB="N"                                     # Use SADMIN Database ? (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
-export SADM_EXIT_CODE=0                                    # Script Default Exit Code
-export SADM_TMP_FILE1=$(mktemp -q "$SADMIN/tmp/sadm_tmp1_XXX") # Make tmpfile,del in sadm_stop()
-export SADM_TMP_FILE2=$(mktemp -q "$SADMIN/tmp/sadm_tmp2_XXX") # Make tmpfile,del in sadm_stop()
-export SADM_TMP_FILE3=$(mktemp -q "$SADMIN/tmp/sadm_tmp3_XXX") # Make tmpfile,del in sadm_stop()
+export SADM_QUIET="N"                                      # N=Show Err.Msg Y=ReturnErrorCode No Msg
+export SADM_ERRMSG=""                                      # Error Message returned by Library 
+export SADM_ERRNO=0                                        # Error number (0=OK) returned by Library
+export SADM_EXIT_CODE=0                                    # Pgm. Default Exit Code
+export SADM_PID_TIMEOUT=7200                               # Sec. before PID file is remove,7200=2hr
+export SADM_LOCK_TIMEOUT=3600                              # Sec. before System LockFile is Del, 1hr
+export SADM_TMP_FILE1=$(mktemp -q "$SADMIN/tmp/sadm_tmp1_XXX") # Make tmpfile1, rm in sadm_stop()
+export SADM_TMP_FILE2=$(mktemp -q "$SADMIN/tmp/sadm_tmp2_XXX") # Make tmpfile2, rm in sadm_stop()
+export SADM_TMP_FILE3=$(mktemp -q "$SADMIN/tmp/sadm_tmp3_XXX") # Make tmpfile3, rm in sadm_stop()
 
-# LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
-. "${SADMIN}/lib/sadmlib_std.sh"                           # Load SADMIN Shell Library
-export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
+# Load SADMIN Bash Shell Library, ready to  be used.
+. "${SADMIN}/lib/sadmlib_std.sh"                           # Init SADMIN tools, Load SADMIN Library
+
+# Example of some functions and variable you can use.
+export SADM_OS_NAME=$(sadm_get_osname)                     # REDHAT,ROCKY,ALMA,CENTOS,DEBIAN,UBUNTU.
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.5)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
-#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
+export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
-# VARIABLES DEFINE BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
-# BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
-#export SADM_WARNING_GRP="default"
+# Variables Below Are Taken From SADMIN Configuration File (sadmin.cfg) when the Library is loaded.
+# You Can Overridde them On A Per Program Basis (If Needed).
 #export SADM_ALERT_GROUP="default"                          # Error Group Define in alert_group.cfg
-#export SADM_WARNING_GROUP="default"                        # Warning alert Group (alert_group.cfg)   
-#export SADM_INFO_GROUP="default"                           # Info alert Group (in alert_group.cfg)
-#export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
-#export SADM_ALERT_GROUP="default"                          # Alert Group to advise
-#export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
-#export SADM_MAX_LOGLINE=400                                # Nb Lines to trim (0=NoTrim)
-#export SADM_MAX_RCHLINE=35                                 # Nb Lines to trim (0=NoTrim)
-#export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
-#export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
+#export SADM_WARNING_GROUP="default"                        # Warning Alert Group (alert_group.cfg)   
+#export SADM_INFO_GROUP="default"                           # Info Alert Group (in alert_group.cfg)
+#export SADM_ALERT_TYPE=1                                   # 0=NoAlert 1=OnError 2=OnOK 3=Always
+#export SADM_MAIL_ADDR="your_email@domain.com"              # Send email to...default in sadmin.cfg
+#export SADM_MAX_LOGLINE=400                                # Nb of Lines to trim (0=NoTrim)
+#export SADM_MAX_RCHLINE=35                                 # Nb of Lines to trim (0=NoTrim)
+#export SADM_ALERT_REPEAT=0                                 # 0=No Alert Repeat, Sec. between Repeat
+#export SADM_EMAIL_STARTUP='N'                              # Send or Not an email on startup (Y/N)
+#export SADM_EMAIL_SHUTDOWN='N'                             # Send or Not an email on shutdown (Y/N)
 # -------------------  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
+
 
 
 
@@ -124,7 +133,6 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 show_usage()
 {
     byellow="${BOLD}${YELLOW}" ; bcyan="${BOLD}${CYAN}"; bgreen="${BOLD}${GREEN}"; reset="${NORMAL}"
-    
     printf "\n${byellow}${SADM_PN} v${SADM_VER} - Hostname '${SADM_HOSTNAME}'"
     printf "\n${byellow}${SADM_PDESC}${reset}\n"
     printf "\nUsage: %s%s%s%s [options]" "$bcyan" "$(basename "$0")" "${reset}"
@@ -144,7 +152,8 @@ show_usage()
 process_systems()
 {
 
-    # If script is run from command line, ask user if want to continue (To avoid causing problem).
+    # If run from command line, ask user if want to continue (To avoid accidental execution).
+    # Will not ask the question, if not run from a terminal.
     if [ -t 0 ]                                                         # Running from cmdline
         then sadm_write_log "$SADM_PN v${SADM_VER}"                     # Script name & version
              sadm_write_log "$SADM_PDESC"                               # Script description
