@@ -276,7 +276,7 @@
 #@2026_07_04 lib v04.91.02 Variable name 'SADM_MAX_RCLINE' was wrong, now 'SADM_MAX_RCHLINE'.
 #@2026_07_08 lib v04.92.01 sadm_sendmail() Email body must be a text file now, no longer a string.
 #@2026_07_09 lib v04.92.02 Fix Typo with RCHLINE vs RCLINE
-#@2026_07_09 lib v04.92.03 Fix issue with new variable in code section 1.60.
+#@2026_07_09 lib v04.92.03 Fix issue new SADMIN section 1.60 (If using old version use default) 
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -286,7 +286,6 @@ trap 'exit 0' 2
 # --------------------------------------------------------------------------------------------------
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
-export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
 export SADM_LIB_VER="04.92.03"                                          # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
@@ -295,15 +294,7 @@ export SADM_TEN_DASH=$(printf %10s |tr ' ' '-')                         # 10 das
 export SADM_STIME=""                                                    # Script Start Time
 export DELETE_PID="Y"                                                   # Default Delete PID On Exit
 export LIB_DEBUG=0                                                      # This Library Debug Level
-export SADMGRP_ONLY='N'                                     # Run only if user is part of SADMIN Grp
 
-
-# Use inside functions to control the display of error message (Y/N)
-# Y = Function will not show error msg, but will return error code (0or1) to caller.
-# N = Function will show error msg and return error code (0or1) to caller.
-export SADM_QUIET="N"
-export SADM_ERRMSG=""                                                   # Error Message if any
-export SADM_ERRNO=0                                                     # Error number (0=OK)
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 export SADM_BASE_DIR=${SADMIN:="/opt/sadmin"}                           # Script Root Base Dir.
@@ -414,13 +405,14 @@ export SADM_SED=""                                          # Path to sed Comman
 export SADM_RRDTOOL=""                                      # Path to rrdtool
 export SADM_INXI=""                                         # Path to inxi
 
+
 # SADMIN CONFIG FILE VARIABLES (Default Values here will be overridden by SADM CONFIG FILE Content)
 export SADM_MAIL_ADDR="your_email@domain.com"               # Default is in sadmin.cfg
 export SADM_ALERT_TYPE=1                                    # 0=No 1=Err 2=Success 3=All
 export SADM_ALERT_GROUP="default"                           # Error Group Define in alert_group.cfg
 export SADM_WARNING_GROUP="default"                         # Warning alert Group (alert_group.cfg)
 export SADM_INFO_GROUP="default"                            # Info alert Group (in alert_group.cfg)
-export SADM_ALERT_REPEAT=43200                              # Repeat Alarm wait time Sec
+export SADM_ALERT_REPEAT=0                                  # 0=No Alert Repeat, Sec. between Repeat
 export SADM_TEXTBELT_KEY="textbelt"                         # Textbelt.com API Key
 export SADM_TEXTBELT_URL="https://textbelt.com/text"        # Textbelt.com API URL
 export SADM_NTFY_EMAIL=""                                   # NTFY Email Address
@@ -466,9 +458,7 @@ export DBPASSFILE="${SADM_CFG_DIR}/.dbpass"                 # MySQL Passwd File
 export GMPW_FILE_TXT="${SADM_CFG_DIR}/.gmpw"                # SMTP Unencrypted PasswdFile
 export GMPW_FILE_B64="${SADM_CFG_DIR}/.gmpw64"              # SMTP Encrypted PasswdFile
 export SADM_RELEASE=$(cat $SADM_REL_FILE)                   # SADM Release Ver. Number
-export SADM_SSH_PORT=""                                     # Default SSH Port
-export SADM_PID_TIMEOUT=7200                                # PID File TTL default
-export SADM_LOCK_TIMEOUT=3600                               # Host Lock File TTL           
+export SADM_SSH_PORT="22"                                   # Default SSH Port
 export SADM_MONITOR_RECENT_COUNT=10                         # SysMon Nb Recent Script 
 export SADM_MONITOR_RECENT_EXCLUDE="sadm_nmon_watcher"      # SysMon Page Recent Exclude List
 export SADM_SMTP_SERVER="smtp.gmail.com"                    # smtp mail relay host name
@@ -2709,6 +2699,20 @@ sadm_start() {
     fi
 
 
+    # Make sure 'SADM_SADMGRP_ONLY' exist & not empty, if not, set to default value "N".
+    # Check if this script is to be run only by root user or a user part of $SADM_GROUP group
+    if [[ -z "$SADM_SADMGRP_ONLY" ]]; then SADM_SADMGRP_ONLY = "N" ; fi # Default can run everywhere
+    if  [ $(id -u) -ne 0 ] && [ $(groups | grep -q " $SADM_GROUP") -ne 0 ] && [ "$SADM_SADMGRP_ONLY" = "Y" ]
+        then sadm_write_err " "
+             sadm_write_err "Pgm. can only be run by a user part of the '$SADM_GROUP' group or by the 'root'."
+             sadm_write_err "Or you can try sudo ${0##*/}'."            # Suggest using sudo
+             sadm_write_err "Process aborted."                          # Abort advise message
+             sadm_write_err " "
+             sadm_stop 1                                                # clean up before exit
+             exit 1                                                     # Exit To O/S with Error
+    fi        
+
+
     # Check if this script to be run only on the SADMIN server.
     if [[ -z "$SADM_SERVER_ONLY" ]]; then SADM_SERVER_ONLY = "N" ; fi   # Default can run everywhere
     if [ "$SADM_SERVER_ONLY" = "Y" ] && [ "$SADM_HOST_TYPE" != "S" ]
@@ -2792,7 +2796,7 @@ sadm_start() {
                     rm -f "$SADM_PID_FILE" > /dev/null 2>&1
                     sadm_write_err "  - The PID file ('$SADM_PID_FILE') is now removed." 
                     sadm_write_err "  - The script will continue as normal, with a new PID file."                      
-                    echo "SADM_TPID" > ${SADM_PID_FILE} >/dev/null 2>&1  
+                    echo "$SADM_TPID" > ${SADM_PID_FILE} >/dev/null 2>&1  
                     DELETE_PID="Y"                                      # Del PID Since running
             fi
        else echo "$SADM_TPID" > $SADM_PID_FILE                          # Create the PID File
@@ -2853,16 +2857,16 @@ sadm_start() {
 sadm_stop() {
 
     if [ $# -eq 0 ]                                                     # If No status Code Received
-        then SADM_EXIT_CODE=1                                           # Assume Error if none given
-             sadm_write_log "Function '${FUNCNAME[0]}' expect one parameter."
-             sadm_write_log "[ ERROR ] No result code received."        # Advise User
+        then sadm_write_log "'${FUNCNAME[0]}' expected one parameter (exit code)."
+             sadm_write_log "[ ERROR ] No parameter received, assuming received a 1 (Error)."
+             SADM_EXIT_CODE=1                                           # Assume Error if none given
         else SADM_EXIT_CODE=$1                                          # Save Exit Code Received
     fi
     if [ "$SADM_EXIT_CODE" -ne 0 ] ; then SADM_EXIT_CODE=1 ; fi         # Result Code must be 0 or 1
 
     # Get End time and Calculate Elapse Time
     export sadm_end_time=$(date "+%C%y.%m.%d %H:%M:%S")                 # Get & Format End Time
-    sadm_elapse=$(sadm_elapse "$sadm_end_time" "$SADM_STIME")           # Go Calculate Elapse Time
+    sadm_elapse=$(sadm_elapse "$sadm_end_time" "$SADM_STIME")           # Calculate Elapse Time Sec.
 
     # Write script exit code and execution time to log (If user ask for a log footer) 
     if [ -n "$SADM_LOG_FOOTER" ] && [ "$SADM_LOG_FOOTER" = "Y" ]        # Want to Produce Log Footer
@@ -2885,7 +2889,7 @@ sadm_stop() {
                      if [ "$XCODE" == "2" ]                             # last Line code is 2
                         then if [ "$(sadm_get_ostype)" = "DARWIN" ] 
                                 then sed -i '' -e '$ d'  "$SADM_RCH_FILE"
-                                else sed -i '$d' "$SADM_RCH_FILE"               # Delete last line of rch
+                                else sed -i '$d' "$SADM_RCH_FILE"       # Delete last line of rch
                              fi 
                      fi 
              fi 
@@ -2899,12 +2903,9 @@ sadm_stop() {
              fi
     fi 
 
-    
-    # Make sure SADM_LOG_FOOTER Variable is defined.
-    if [[ -z "$SADM_LOG_FOOTER" ]]                                      # Var. either unset or empty
-        then  "$SADM_LOG_FOOTER" = "Y"                                  # Then default incl. footer
-    fi
 
+    # If variable "$SADM_LOG_FOOTER" is either unset or empty, define it & set it to default 'Y'.
+    if [[ -z "$SADM_LOG_FOOTER" ]] ; then  "$SADM_LOG_FOOTER" = "Y" ;fi # Then default incl. footer
 
     # If log size not at zero and user want to produce a log.
     if [ "$SADM_LOG_FOOTER" = "Y" ]                                     # User Want the Log Footer
@@ -3476,8 +3477,8 @@ EOF
 # a system is starting and the shutdown script ($SADMIN/sys/sadm_shutdown.sh)
 # when the system is being brought down.
 #----------------------------------------------------------------------------
-SADM_EMAIL_STARTUP = Y
-SADM_EMAIL_SHUTDOWN = Y 
+SADM_EMAIL_STARTUP = N
+SADM_EMAIL_SHUTDOWN = N 
 
 EOF
 ) >> $SADM_CFG_FILE
