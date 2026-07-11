@@ -277,6 +277,7 @@
 #@2026_07_08 lib v04.92.01 sadm_sendmail() Email body must be a text file now, no longer a string.
 #@2026_07_09 lib v04.92.02 Fix Typo with RCHLINE vs RCLINE
 #@2026_07_09 lib v04.92.03 Fix issue new SADMIN section 1.60 (If using old version use default) 
+#@2026_07_11 liv v04.92.04 Add Code for "SADM_SADMGRP_ONLY", Modify Error Msg. when sendmail failed.
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -286,7 +287,7 @@ trap 'exit 0' 2
 # --------------------------------------------------------------------------------------------------
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
-export SADM_LIB_VER="04.92.03"                                          # This Library Version
+export SADM_LIB_VER="04.92.04"                                          # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -2701,7 +2702,7 @@ sadm_start() {
 
     # Make sure 'SADM_SADMGRP_ONLY' exist & not empty, if not, set to default value "N".
     # Check if this script is to be run only by root user or a user part of $SADM_GROUP group
-    if [[ -z "$SADM_SADMGRP_ONLY" ]]; then SADM_SADMGRP_ONLY = "N" ; fi # Default can run everywhere
+    if [[ -z "$SADM_SADMGRP_ONLY" ]]; then SADM_SADMGRP_ONLY="N" ; fi   # Default can run everywhere
     if  [ $(id -u) -ne 0 ] && [ $(groups | grep -q " $SADM_GROUP") -ne 0 ] && [ "$SADM_SADMGRP_ONLY" = "Y" ]
         then sadm_write_err " "
              sadm_write_err "Pgm. can only be run by a user part of the '$SADM_GROUP' group or by the 'root'."
@@ -3065,7 +3066,7 @@ sadm_sendmail() {
     # Check if Body text file is readable and exist
     if [[ ! -f "$mbody" || ! -r "$mbody" ]]
         then sadm_write_err " " 
-             sadm_write_err "[ ERROR ] Email body file does not exist or is not readable."
+             sadm_write_err "[ ERROR ] Email body file '$mbody' does not exist or is not readable in '$SADM_PN'."
              return 1                                                   # Return Error to caller    
     fi 
 
@@ -3517,7 +3518,7 @@ EOF
 
 
 
-# Things to do when first called - Initialize SADMIN Library
+# Things to do when the Library is source - Initialize SADMIN Library
 # --------------------------------------------------------------------------------------------------
     SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`                            # Save Startup Date & Time
     if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # If invoke from cmdline
@@ -3562,8 +3563,8 @@ EOF
 
 
     # Build SSH command according to Path and Port used
-    export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT}"             # SSH Command to SSH CLient
-    if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
-        then printf "\n$(date "+%C%y.%m.%d %H:%M:%S") Library Loaded ...\n\n"
-    fi
+    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT}"             # SSH Command to SSH CLient
+    #if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
+    #    then printf "\n$(date "+%C%y.%m.%d %H:%M:%S") Library Loaded ...\n\n"
+    #fi
 
