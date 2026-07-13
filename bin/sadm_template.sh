@@ -60,7 +60,7 @@ if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                   # If SADMIN shell lib
 fi 
 
 
-# You Can Use The Variables Below, But You Shouldn't Have to Change Them (Used By Sadmin Library).
+# You can access the variables below, but you shouldn't have to change them (used by sadmin library)
 export SADM_PN=${0##*/}                                    # Script name(with extension)
 export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
 export SADM_TPID="$$"                                      # Script Process ID.
@@ -70,7 +70,7 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # You Can Use & Change Variables Below To Your Needs (They Influence Execution Of Sadmin Library).
 export SADM_VER='00.01.00'                                 # Pgm. Version Number
-export SADM_PDESC="Put your description HERE."             # Pgm. Description .(Not use if empty)
+export SADM_DESC="Describe what your program is doing."
 export SADM_ROOT_ONLY="N"                                  # Pgm. run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Pgm. run only on SADMIN server? [Y]/[N]
 export SADM_SADMGRP_ONLY='N'                               # Pgm. run only if usr part of SADMIN Grp
@@ -80,9 +80,8 @@ export SADM_LOG_HEADER="Y"                                 # Y = ProduceLogHeade
 export SADM_LOG_FOOTER="Y"                                 # Y = ProduceLogFooter, N = NoLogFooter
 export SADM_MULTIPLE_EXEC="N"                              # Can Run Simultaneous copy of script Y/N
 export SADM_USE_RCH="Y"                                    # Update the RCH History File (Y/N)
-export SADM_USE_DB="N"                                     # Use SADMIN Database ? (Y/N)
-export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
-export SADM_QUIET="N"                                      # N=Show Err.Msg Y=ReturnErrorCode No Msg
+export SADM_DEBUG=0                                        # Debug Level(0-9), 0 = NoDebug
+export SADM_QUIET="N"                                      # Y=HideMsg & Error#  N=Show Msg & Error#
 export SADM_ERRMSG=""                                      # Error Message returned by Library 
 export SADM_ERRNO=0                                        # Error number (0=OK) returned by Library
 export SADM_EXIT_CODE=0                                    # Pgm. Default Exit Code
@@ -134,7 +133,7 @@ show_usage()
 {
     byellow="${BOLD}${YELLOW}" ; bcyan="${BOLD}${CYAN}"; bgreen="${BOLD}${GREEN}"; reset="${NORMAL}"
     printf "\n${byellow}${SADM_PN} v${SADM_VER} - Hostname '${SADM_HOSTNAME}'"
-    printf "\n${byellow}${SADM_PDESC}${reset}\n"
+    printf "\n${byellow}${SADM_DESC}${reset}\n"
     printf "\nUsage: %s%s%s%s [options]" "$bcyan" "$(basename "$0")" "${reset}"
     printf "\n\n${bgreen}Options:${reset}"
     printf "\n  ${byellow}[-d 0-9]${reset}\tSet Debug verbose Level."
@@ -156,7 +155,7 @@ process_systems()
     # Will not ask the question, if not run from a terminal.
     if [ -t 0 ]                                                         # Running from cmdline
         then sadm_write_log "$SADM_PN v${SADM_VER}"                     # Script name & version
-             sadm_write_log "$SADM_PDESC"                               # Script description
+             sadm_write_log "$SADM_DESC"                               # Script description
              sadm_ask "Continue"                                        # Ask Continue (y/n) ? 
              if [ $? -eq 0 ] ; then sadm_stop 0 ; exit 0 ; fi           # 0 = Don't want to continue
 #        else sadm_write_log "Script not executed on the command line." 
@@ -306,7 +305,7 @@ main_process()
     # If script is run from command line, ask user if want to continue (To avoid causing damage).
     if [ -t 0 ]                                                         # Running from cmdline
         then sadm_write_log "$SADM_PN v${SADM_VER}"                     # Script name & version
-             sadm_write_log "$SADM_PDESC"                               # Script description
+             sadm_write_log "$SADM_DESC"                               # Script description
              sadm_ask "Continue"                                        # Ask Continue (y/n) ? 
              if [ $? -eq 0 ] ; then sadm_stop 0 ; exit 0 ; fi           # 0 = Don't want to continue
     fi
@@ -352,7 +351,7 @@ function cmd_options()
                exit 0                                                   # Back to shell
                ;;
             X) /usr/bin/rm -f "${SADMIN}/tmp/${SADM_INST}.pid" >/dev/null 2>&1
-               printf "\n${YELLOW}The PID File '${SADMIN}/tmp/${SADM_INST}.pid' is now removed.${NORMAL}\n" 
+               printf "\n$The PID File '${SADMIN}/tmp/${SADM_INST}.pid' is now removed.\n" 
                ;;
            \?) printf "\nInvalid option: ${OPTARG}.\n"                  # Invalid Option Message
                show_usage                                               # Display Help Usage
@@ -371,11 +370,14 @@ function cmd_options()
 # --------------------------------------------------------------------------------------------------
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Won't come back if error
-    if [ "$SADM_USE_DB" = "Y" ]                                         # If want to use database 
-        then process_systems                                            # Code using SADMIN Database
-             SADM_EXIT_CODE=$?                                          # Save Process Return Code 
-        else main_process                                               # Not using SADMIN Database
-             SADM_EXIT_CODE=$?                                          # Save Process Return Code 
-    fi
+
+    process_systems                                            # Code using SADMIN Database
+    SADM_EXIT_CODE=$?                                          # Save Process Return Code 
+
+    main_process                                               # Not using SADMIN Database
+    if [ "$?" -ne 0 ] ; then SADM_EXIT_CODE=((SADM_EXIT_CODE+1)) ; fi 
+    ((i=i+1))
+
+
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)

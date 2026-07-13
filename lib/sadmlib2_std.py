@@ -1557,6 +1557,15 @@ True)  System is lock.
 
 
 
+# --------------------------------------------------------------------------------------------------
+#                                   Return the CPU Speed in Mhz
+# --------------------------------------------------------------------------------------------------
+def get_server_cpu_speed() : 
+    cpu_info = psutil.cpu_freq()        # Return 'scpufreq(current=599.998, min=400.0, max=3000.0)'
+    return (int(cpu_info.max))          # Return 3000 in this example to caller
+
+
+
 
 # --------------------------------------------------------------------------------------------------
 def get_hostname():
@@ -1617,7 +1626,8 @@ def get_host_ip():
 def get_release() :
 
     """ 
-        Return SADMIN Release Version Number from '$SADMIN/cfg/.release' file.
+        Description: 
+            Return SADMIN Release Version Number from '$SADMIN/cfg/.release' file.
 
         Args:
             None    
@@ -1639,23 +1649,27 @@ def get_release() :
 def touch_file (filename : str) :
     
     """ 
-        Create an empty file named using the filename received.
+        Description : 
+            If the file exist, update timestamp, 
+            If the file does not exist, then create it.
     
         Args:
-            filename (str)   :  File to create.
+            filename (str)   :  Full pathname of the file to update its modification timestamp.
+                                Full pathname of the file to create, if it doesn't exist.
 
         Returns:
-            resultCode (int) :  0 When command executed with no error.
-                                1 When error occurred when executing the command
+            resultCode (int) :  0 
     """
 
-    try: 
-        file_obj  = open(filename, "w")
-        file_obj.close()
-        rc = 0
-    except : 
-        rc = 1
-    return(rc)
+    # If the file exist, update timestamp. If not, create it.
+    try:
+        os.utime(filename, None)
+    except OSError:
+        with open(filename, 'a'):
+            pass
+    return (0)
+
+
 
 
 

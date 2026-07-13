@@ -153,8 +153,8 @@
 # 2021_08_17 lib v3.74 Performance improvement.
 # 2021_09_09 lib v3.75 'sadm_write_err $msg' function added to write to log and error log.
 # 2021_09_13 lib v3.76 Enhance script log header to be more concise, yet have more information.
-# 2021_09_14 lib v3.77 If script desc. "SADM_PDESC" v# 2022_08_22 lib v4.06 Update 'sadm_server_type()' better detection if physical or virtual system.
-# 2021_09_15 lib v3.78 Function "sadm_show_version" will show Script Desc. ($SADM_PDESC) if Avail.
+# 2021_09_14 lib v3.77 If script desc. "SADM_DESC" v# 2022_08_22 lib v4.06 Update 'sadm_server_type()' better detection if physical or virtual system.
+# 2021_09_15 lib v3.78 Function "sadm_show_version" will show Script Desc. ($SADM_DESC) if Avail.
 # 2021_09_30 lib v3.79 Various small little corrections.
 # 2021_10_20 lib v3.80 Merge 'slack channel file' with 'alert group' & change log footer.
 # 2021_11_07 lib v3.81 Set new 'SADM_RRDTOOL' variable that contain location of 'rrdtool' command.
@@ -794,6 +794,30 @@ sadm_write_dbg() {
 
 
 
+#@S-------------------------------------------------------------------------------------------------
+# sadm_get_username() {
+#
+# Description: 
+#   Function to get current username.
+#
+# Arguments: 
+#   None
+#
+# Return : 
+#   - Current Username.
+#   - Blank if username could not be obtained.
+#
+# Example of optional second parameter:  wusername = sadm_get_username() 
+#
+#@E
+sadm_get_username() {
+    whoami > /dev/null 2>&1
+    if [ $? -eq 0 ] 
+        then username=$(whoami)
+        else username=""
+    fi
+    echo "$username"
+}
 
 
 # --------------------------------------------------------------------------------------------------
@@ -1010,7 +1034,7 @@ sadm_abort()
 sadm_show_version()
 {
     printf "\n${SADM_PN} v${SADM_VER} - Hostname ${SADM_HOSTNAME}"
-    if [ "$SADM_PDESC" ] ; then printf "\n${SADM_PDESC}" ; fi 
+    if [ "$SADM_DESC" ] ; then printf "\n${SADM_DESC}" ; fi 
     printf "\nSADMIN Shell Library v${SADM_LIB_VER}"
     printf "\n$(sadm_get_osname) v$(sadm_get_osversion)"
     printf " - Kernel $(sadm_get_kernel_version)"
@@ -1634,9 +1658,10 @@ sadm_get_domainname() {
 # --------------------------------------------------------------------------------------------------
 sadm_get_fqdn() {
     case "$(sadm_get_ostype)" in
-        "LINUX")    echo "$(hostname --fqdn)"
+        "LINUX")    echo "${SADM_HOSTNAME}.$(sadm_get_domainname)"
+                    #echo "$(hostname --fqdn)"
                     ;;
-        "DARWIN")   Echo "${SADM_HOSTNAME}.$(sadm_get_domainname)"
+        "DARWIN")   echo "${SADM_HOSTNAME}.$(sadm_get_domainname)"
                     ;;
         "AIX")      echo "${SADM_HOSTNAME}.$(sadm_get_domainname)"
                     ;;
@@ -1762,6 +1787,16 @@ sadm_server_ips() {
     esac
     if [ -f "$xfile" ] ; then rm -f $xfile >/dev/null 2>&1  ; fi        # Del. WorkFile before exit
     echo "$sadm_servers_ips"
+}
+
+
+
+# Delete if file exist, rm -f force
+sadm_silentremove() {
+    if [ "$#" -ne 1 ] ; then return 1 ; fi
+    fn=$1
+    if [ -f "$fn" ] ; then rm -f "$fn" >/dev/null $2>&1 ; fi
+    return 0 
 }
 
 
@@ -2674,8 +2709,8 @@ sadm_start() {
     if [ ! -z "$SADM_LOG_HEADER" ] && [ "$SADM_LOG_HEADER" = "Y" ]      # User Want Log Header
         then sadm_write_log "${SADM_80_DASH}"                           # Write 80 Dashes Line
              sadm_write_log "$(date +"%a %d %b %Y %T") - ${SADM_PN} v${SADM_VER} - Library v${SADM_LIB_VER}"
-             if [ "$SADM_PDESC" ]                                       # If Script Desc. Not empty
-                then sadm_write_log "Desc: $SADM_PDESC"                 # Include it in log Header
+             if [ "$SADM_DESC" ]                                       # If Script Desc. Not empty
+                then sadm_write_log "Desc: $SADM_DESC"                 # Include it in log Header
              fi
              sadm_write_log "$(sadm_get_fqdn) - User: $SADM_USERNAME - Umask : $(umask) - Arch: $(sadm_server_arch)"
              hline3="$(sadm_capitalize $(sadm_get_osname)) $(sadm_capitalize $(sadm_get_ostype))"
