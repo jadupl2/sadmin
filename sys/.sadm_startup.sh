@@ -40,7 +40,7 @@
 # 2023_07_17 startup/shutdown v03.19.00 Updated to use faster python version of 'sadm_nmon_watcher'.
 #@2024_04_17 startup/shutdown v03.20.00 Minor adjustment when starting 'nmon' performance monitor.
 #@2024_05_02 startup/shutdown v03.21.00 Send startup email if 'SADM_EMAIL_STARTUP' = "Y" in sadmin.cfg.
-#@2024_09_12 startup/shutdown v03.22.00 Change default script description 'SADM_PDESC'.
+#@2024_09_12 startup/shutdown v03.22.00 Change default script description 'SADM_DESC'.
 #@2025_03_25 startup/shutdown v03.23.00 Change format of Power ON email to sysadmin.
 #@2026_03_06 startup/shutdown v03.24.00 Correct typo when an error occur.
 #@2026_06_24 startup/shutdown v03.25.00 now include removal of any .rpt file in $SADMIN/dat/rpt.
@@ -78,7 +78,7 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='03.26.02'                                 # Script version number
-export SADM_PDESC="Run when the system is started (via sadmin.service)." 
+export SADM_DESC="Run when the system is started (via sadmin.service)." 
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="Y"                                 # Y=AppendLog, N=CreateNewLog

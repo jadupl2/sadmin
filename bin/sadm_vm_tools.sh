@@ -68,7 +68,7 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='1.7'                                      # Script version number
-export SADM_PDESC="Command line tools to control the VirtualBox vm(s)."
+export SADM_DESC="Command line tools to control the VirtualBox vm(s)."
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_LOG_TYPE="B"                                   # Write log to [S]creen, [L]og, [B]oth

@@ -68,7 +68,7 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='1.0'                                      # Script version number
-export SADM_PDESC="Script called from SADMIN monitor 'sadm_sysmon.pl' for testing purpose"   
+export SADM_DESC="Script called from SADMIN monitor 'sadm_sysmon.pl' for testing purpose"   
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_QUIET="N"                                      # N=Show Err.Msg Y=ReturnErrorCode No Msg

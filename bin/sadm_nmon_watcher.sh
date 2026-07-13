@@ -56,7 +56,7 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='2.8'                                      # Script Version
-export SADM_PDESC="Start 'nmon' performance daemon, if it's not already running (End Day at 23:58:58)"
+export SADM_DESC="Start 'nmon' performance daemon, if it's not already running (End Day at 23:58:58)"
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_QUIET="N"                                      # N=Show Err.Msg Y=ReturnErrorCode No Msg

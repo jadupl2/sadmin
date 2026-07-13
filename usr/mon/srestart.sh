@@ -73,7 +73,7 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='1.05'                                     # Script version number
-export SADM_PDESC="Use to restart a service, it's call by sysmon.pl when a service isn't running." 
+export SADM_DESC="Use to restart a service, it's call by sysmon.pl when a service isn't running." 
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_QUIET="N"                                      # N=Show Err.Msg Y=ReturnErrorCode No Msg
@@ -132,7 +132,7 @@ show_usage()
     byellow="${BOLD}${YELLOW}" ; bcyan="${BOLD}${CYAN}"; bgreen="${BOLD}${GREEN}"; reset="${NORMAL}"
     
     printf "\n${byellow}${SADM_PN} v${SADM_VER} - Hostname '${SADM_HOSTNAME}'"
-    printf "\n${byellow}${SADM_PDESC}${reset}\n"
+    printf "\n${byellow}${SADM_DESC}${reset}\n"
     printf "\nUsage: %s%s%s%s [options] [serviceName]" "$bcyan" "$(basename "$0")" "${reset}"
     printf "\n\n${bgreen}Options:${reset}"
     printf "\n  ${byellow}[-d 0-9]${reset}\tSet Debug verbose Level."

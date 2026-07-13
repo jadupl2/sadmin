@@ -121,7 +121,7 @@ export SADM_PN="${SADM_INST}.${SADM_EXT}"                  # Script name(with ex
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='6.1'                                      # Script version number
-export SADM_PDESC="Run the O/S update script on the selected remote system."
+export SADM_DESC="Run the O/S update script on the selected remote system."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
@@ -175,7 +175,7 @@ export REBOOT_TIME=240                                                  # 240 se
 show_usage()
 {
     printf "\n${BOLD}${YELLOW}${SADM_PN} v${SADM_VER} - Hostname ${SADM_HOSTNAME}"
-    printf "\n${BOLD}${YELLOW}${SADM_PDESC}${NORMAL}\n"
+    printf "\n${BOLD}${YELLOW}${SADM_DESC}${NORMAL}\n"
     printf "\nUsage: %s%s%s%s [options]" "${BOLD}" "${CYAN}" "$(basename "$0")" "${NORMAL}"
     printf "\n\n${BOLD}${GREEN}Options:${NORMAL}"
     printf "\n   ${BOLD}${YELLOW}[-d 0-9]${NORMAL}\t\tSet Debug (verbose) Level"

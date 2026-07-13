@@ -66,7 +66,7 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='2.12'                                     # Script version number
-export SADM_PDESC="SADM Tool Main Menu"                    # Script Optional Desc.(Not use if empty)
+export SADM_DESC="SADM Tool Main Menu"                    # Script Optional Desc.(Not use if empty)
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog

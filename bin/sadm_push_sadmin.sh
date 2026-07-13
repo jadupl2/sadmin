@@ -103,7 +103,7 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='2.55'                                     # Script version number
-export SADM_PDESC="Copy SADMIN version from $SADM_HOSTNAME to all active clients (without overwriting config files)." 
+export SADM_DESC="Copy SADMIN version from $SADM_HOSTNAME to all active clients (without overwriting config files)." 
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_QUIET="N"                                      # N=Show Err.Msg Y=ReturnErrorCode No Msg
@@ -166,7 +166,7 @@ show_usage()
 {
     color="${BOLD}${YELLOW}" ; reset="${NORMAL}"
     printf "\n${color}${SADM_PN} v${SADM_VER} - Hostname '${SADM_HOSTNAME}'"
-    printf "\n${color}${SADM_PDESC}${reset}\n"
+    printf "\n${color}${SADM_DESC}${reset}\n"
     printf "\nUsage: %s%s%s%s [options]" "${BOLD}" "${CYAN}" "$(basename "$0")" "${reset}"
     printf "\n\n${BOLD}${GREEN}Options:${reset}"
     
@@ -194,7 +194,7 @@ process_servers()
     # If script is run from command line, ask user if want to continue (To avoid causing damage).
     if [ -t 0 ]
         then sadm_write_log "$SADM_PN V${SADM_VER}"
-             sadm_write_log "${SADM_PDESC}."
+             sadm_write_log "${SADM_DESC}."
              sadm_ask "Confirmation needed, continue"                   # Continue (y/n) ? 
              if [ $? -eq 0 ] ; then sadm_stop 0 ; exit 0 ; fi           # 0 = Don't want to continue
         else sadm_write_log "Script not executed on the command line." 

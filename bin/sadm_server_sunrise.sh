@@ -77,7 +77,7 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='2.9'                                      # Script Version
-export SADM_PDESC="Early morning script, that retrieve data from active system & Update DB & NetInfo."
+export SADM_DESC="Early morning script, that retrieve data from active system & Update DB & NetInfo."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_LOG_TYPE="B"                                   # Write log to [S]creen, [L]og, [B]oth

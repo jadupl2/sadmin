@@ -126,7 +126,7 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='3.0'                                      # Script version number
-export SADM_PDESC="UI interface, to recreate VG & filesystem with same size than at Office" 
+export SADM_DESC="UI interface, to recreate VG & filesystem with same size than at Office" 
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_QUIET="N"                                      # N=Show Err.Msg Y=ReturnErrorCode No Msg

@@ -70,7 +70,7 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='1.22'                                     # Script version number
-export SADM_PDESC="From the command line show the Result Files (.rch) summary"  # Short description of script
+export SADM_DESC="From the command line show the Result Files (.rch) summary"  # Short description of script
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code

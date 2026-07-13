@@ -96,7 +96,7 @@ export SADM_PN="${SADM_INST}.${SADM_EXT}"                  # Script name(with ex
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='2.5'                                      # Current Script Version
-export SADM_PDESC="Execute a script on a remote system and locking that system." 
+export SADM_DESC="Execute a script on a remote system and locking that system." 
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
@@ -154,7 +154,7 @@ export RPT_GLOBAL=""                                    # SADMIN Server Global R
 show_usage()
 {
     printf "\n${BOLD}${SADM_PN} v$SADM_VER"
-    printf "\n$SADM_PDESC \n"
+    printf "\n$SADM_DESC \n"
     printf "\n$SADM_PN}.sh  [-d level] [-h] [-v] [-l system to lock name] [-s scriptname] [-a script arguments] "
     printf "[-u username] [-n remote_hostname]${NORMAL}" 
     printf "\n\t${BOLD}-d${NORMAL}   (Debug level [0-9])"
