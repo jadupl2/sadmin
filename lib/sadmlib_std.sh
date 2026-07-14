@@ -277,7 +277,8 @@
 #@2026_07_08 lib v04.92.01 sadm_sendmail() Email body must be a text file now, no longer a string.
 #@2026_07_09 lib v04.92.02 Fix Typo with RCHLINE vs RCLINE
 #@2026_07_09 lib v04.92.03 Fix issue new SADMIN section 1.60 (If using old version use default) 
-#@2026_07_11 liv v04.92.04 Add Code for "SADM_SADMGRP_ONLY", Modify Error Msg. when sendmail failed.
+#@2026_07_11 lib v04.92.04 Add Code for "SADM_SADMGRP_ONLY", Modify Error Msg. when sendmail failed.
+#@2026_07_14 lib v04.92.05 Fix problem with the addition of 'SADM_SADMGRP_ONLY' and minor fixes
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -287,7 +288,7 @@ trap 'exit 0' 2
 # --------------------------------------------------------------------------------------------------
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
-export SADM_LIB_VER="04.92.04"                                          # This Library Version
+export SADM_LIB_VER="04.92.05"                                          # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -638,21 +639,21 @@ SADM_SINFO="${BOLD}${MAGENTA}[ ${BLUE}INFO${MAGENTA} ]${NORMAL}"           # INF
 
 # Function return the string received to uppercase
 sadm_toupper() {
-    echo $1 | tr  "[:lower:]" "[:upper:]"
+    echo "$1" | tr  "[:lower:]" "[:upper:]"
 }
 
 
 
 # Function return the string received to uppercase
 sadm_tolower() {
-    echo $1 | tr "[:upper:]" "[:lower:]" 
+    echo "$1" | tr "[:upper:]" "[:lower:]" 
 }
 
 
 
 # Function return the string received to with the first character in uppercase
 sadm_capitalize() {
-    C=$(echo $1 | tr "[:upper:]" "[:lower:]")
+    C=$(echo "$1" | tr "[:upper:]" "[:lower:]")
     premier=$(echo ${C:0:1} | tr  "[:lower:]" "[:upper:]")
     echo "${premier}${C:1}"
     #echo "${C^}"
@@ -2738,14 +2739,17 @@ sadm_start() {
     # Make sure 'SADM_SADMGRP_ONLY' exist & not empty, if not, set to default value "N".
     # Check if this script is to be run only by root user or a user part of $SADM_GROUP group
     if [[ -z "$SADM_SADMGRP_ONLY" ]]; then SADM_SADMGRP_ONLY="N" ; fi   # Default can run everywhere
-    if  [ $(id -u) -ne 0 ] && [ $(groups | grep -q " $SADM_GROUP") -ne 0 ] && [ "$SADM_SADMGRP_ONLY" = "Y" ]
-        then sadm_write_err " "
-             sadm_write_err "Pgm. can only be run by a user part of the '$SADM_GROUP' group or by the 'root'."
-             sadm_write_err "Or you can try sudo ${0##*/}'."            # Suggest using sudo
-             sadm_write_err "Process aborted."                          # Abort advise message
-             sadm_write_err " "
-             sadm_stop 1                                                # clean up before exit
-             exit 1                                                     # Exit To O/S with Error
+    if  [ $(id -u) -ne 0 ] && [ "$SADM_SADMGRP_ONLY" = "Y" ]            # Restricted to $SADM_GROUP
+        then id -nG "$SADM_USERNAME" | grep -qw "$SADM_GROUP"           # User  part of $SADM_GROUP?
+             if [ $? -ne 0 ]                                            # If not part of $SADM_GROUP
+                then sadm_write_err " "
+                     sadm_write_err "Only user part of the '$SADM_GROUP' group can run this program."
+                     sadm_write_err "Or you can try sudo ${0##*/}'."    # Suggest using sudo
+                     sadm_write_err "Process aborted."                  # Abort advise message
+                     sadm_write_err " "
+                     sadm_stop 1                                        # clean up before exit
+                     exit 1                                             # Exit To O/S with Error
+             fi 
     fi        
 
 
