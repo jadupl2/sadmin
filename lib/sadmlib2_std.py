@@ -159,7 +159,7 @@ ver                = "3.27"     # Your Program VERSION number
 desc               = "Describe what your program is doing."
 root_only          = False      # Can Only be run by 'root'(True/False)
 server_only        = False      # Run Only on SADMIN server(True/False) SADM_SERVER in sadmin.cfg
-sadmgrp_only       = False      # Run if part of SADMIN Group 'SADM_GROUP' in sadmin.cfg or root
+sadm_group_only    = False      # Run if part of SADMIN Group 'SADM_GROUP' in sadmin.cfg or root
 multiple_exec      = False      # Allow running multiple Instance ?
 quiet              = False      # If error in a function & quiet is: (give you ctrl of message)
                                 # False: Show error message and return the error number. 
@@ -464,7 +464,7 @@ class sadmin:
         self.desc               = "Description of program" # Your Program DESCRIPTION 
         self.root_only          = False      # Can Only be run by 'root'(True/False)
         self.server_only        = False      # Run Only on SADMIN server(True/False) SADM_SERVER in sadmin.cfg
-        self.sadmgrp_only       = False      # Run if part of SADMIN Group 'SADM_GROUP' in sadmin.cfg or root
+        self.sadm_group_only    = False      # Run if part of SADMIN Group 'SADM_GROUP' in sadmin.cfg or root
         self.use_rch            = True       # Write exec info to RCH file(True/False)
         self.db_used            = False      # Want to access Database ? Auto connect DB(True)
         self.log_type           = "B"        # S=Screen L=Log B=Both
@@ -1910,21 +1910,25 @@ def get_nb_cpu():
         Return: 
             Number of usable CPU on System (Returns None if undetermined).
     """
-
-    #ostype=get_ostype()                                                 # WINDOWS,LINUX,DARWIN,AIX
-    #os.cpu_count()
-    #if ostype == "LINUX" :                                              # Under Linux
-    #    ccode, cstdout, cstderr = oscommand("grep '^physical id' /proc/cpuinfo| wc -l| tr -d ' '")
-    #if ostype == "AIX" :                                                # Under AIX
-    #    ccode, cstdout, cstderr = oscommand("lsdev -C -c processor | wc -l | tr -d ' '")
-    #if ostype == "DARWIN" :                                             # Under MacOS
-    #    ccode, cstdout, cstderr = oscommand("sysctl -n hw.ncpu")
-    #if ostype == "WINDOWS" :     
-    #    cstdout = multiprocessing.cpu_count()                           # Usable Nb. of CPU Windows
-    #nbcpu = cstdout
-    return(os.cpu_count())
+    return psutil.cpu_count(logical=False)
+#    return(os.cpu_count())
         
 
+
+# --------------------------------------------------------------------------------------------------
+def get_nb_logical_cpu():
+    
+    """ 
+        Return The Number Of Logical CPU on the system.
+
+        Args:
+            None
+        Return: 
+            Number of usable CPU on System (Returns None if undetermined).
+    """
+    return psutil.cpu_count(logical=True)
+#    return(os.cpu_count())
+        
 
 
 # --------------------------------------------------------------------------------------------------
@@ -2723,7 +2727,7 @@ def start(db_name="sadmin") :
            If 'True' and current user is not 'root', show error message and abort.
         5) Check if this program can only be run on the SADMIN server (sa.server_only=True).
            If current host is not the SADMIN server, show error message and abort.
-        6) If 'sa.sadmgrp_only' is 'True', then user MUST be part of the SADMIN group 
+        6) If 'sa.sadm_group_only' is 'True', then user MUST be part of the SADMIN group 
            ('sadm_group') for the program to run (Unless you run it as 'root').
         7) Check if user want to use Database (db_used=True) but not on SADMIN Server
            Show error message and abort.
@@ -3344,9 +3348,9 @@ def db_connect(db_name="sadmin",quiet=False):
         Returns: (db_conn,db_cur,errno,db_errmsg)
             db_conn (obj)   :   Connector to database or None if can't connect.
             db_cur (obj)    :   Database cursor or None if can't connect.
-            errno (int)  :   Return 0 when connected to database (Global variable).
+            errno (int)     :   Return 0 when connected to database (Global variable).
                                 Return 1 if error while connecting to database (Global Variable).
-            errmsg(str) :   Return Error message when connecting to DB else return empty string.
+            errmsg(str)     :   Return Error message when connecting to DB else return empty string.
     """
 
     global errno, db_errmsg

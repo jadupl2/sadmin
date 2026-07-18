@@ -17,7 +17,7 @@
            If 'True' and current user is not 'root', show error message and abort.
         5) Check if this program can only be run on the SADMIN server (sa.server_only=True).
            If current host is not the SADMIN server, show error message and abort.
-        6) If 'sa.sadmgrp_only' is 'True', then user MUST be part of the SADMIN group 
+        6) If 'sa.SADM_GROUP_ONLY' is 'True', then user MUST be part of the SADMIN group 
            ('sadm_group') for the program to run (Unless you run it as 'root').
         7) Check if user want to use Database (db_used=True) but not on SADMIN Server
            Show error message and abort.

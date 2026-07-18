@@ -98,50 +98,52 @@ except ImportError as e:                                             # If Error 
     print("Please make sure the 'SADMIN' environment variable is defined.")
     sys.exit(1)                                                      # Go Back to O/S with Error
 
+# Global Variables 
+pid          = os.getpid()         # Get Current Process ID.
+hostname     = sa.get_hostname()   # Get Current hostname
+os_type      = sa.get_ostype()     # OS Type (In Uppercase,LINUX,AIX,MACOS)
+username     = sa.get_username()   # Get Current User Name
+debug        = 0                   # Debug Level 0-9 (Increase Verbose)
+exit_code    = 0                   # Default Return Code (0=Success 1-Error)
+cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh,sa.sadm_ssh_port) # /usr/bin/ssh with sadmin.cfg port
+
 # Variables shared with SADMIN Python Library.
+sa.pn                 = os.path.basename(sys.argv[0])   # [P]rogram [N]ame with extension
+sa.inst               = sa.pn.split('.')[0]             # INSTance Name = Pgm Name Without Extension
 sa.ver                = "03.28.00" # Your Program VERSION number
 sa.desc               = "Short description of program"
 sa.root_only          = False      # Can Only be run by 'root'(True/False)
 sa.server_only        = False      # Run Only on SADMIN server(True/False) SADM_SERVER in sadmin.cfg
-sa.sadmgrp_only       = False      # Run if part of SADMIN Group 'SADM_GROUP' in sadmin.cfg or root
-sa.use_rch            = False      # Write exec info to RCH file(True/False)
-sa.db_used            = True       # Open/Use auto connect DB(True)
+sa.sadm_group_only    = False      # Run if part of SADMIN Group 'SADM_GROUP' in sadmin.cfg or root
+sa.quiet              = False      # If error in a function & quiet is: (give you ctrl of message)
+sa.multiple_exec      = False      # Allow running multiple Instance ?
+sa.quiet              = False      # If error in a function & quiet is: (ctrl show/hide of message)
+                                   # False: Show error message and return the error number. 
+                                   # True : Only returm error number, but don't show error message.
 sa.log_type           = "B"        # S=Screen L=Log B=Both
 sa.log_append         = False      # Append to previous log (True/False)
 sa.log_header         = True       # Produce Log Header (True/False)
 sa.log_footer         = True       # Produce Log Footer (True/False)
-sa.multiple_exec      = False      # Allow running multiple Instance ?
-#
-sa.pid_timeout        = 14400       # PID File TimeToLive default is SADM_PID_TIMEOUT in sadmin.cfg
-sa.lock_timeout       = 7200       # Sec. before unlock default is SADM_LOCK_TIMEOUT in sadmin.cfg
-sa.max_logline        = 500        # Max. number of lines in log file SADM_MAX_LOGLINE in sadmin.cfg
-sa.max_rchline        = 50         # Max. number of lines in rch file SADM_MAX_RCLINE in sadmin.cfg
+sa.use_rch            = True       # Write exec info to RCH file(True/False)
+sa.errno              = 0          # Error No. set by function called (0=OK Else error/warning)
+sa.errmsg             = ""         # Error Mess. set by function you call (blank or error msg)
+sa.pid_timeout        = 14400      # PID File TTL (14400=4hrs) is SADM_PID_TIMEOUT in sadmin.cfg
+sa.lock_timeout       = 7200       # Sec. before unlock (7200=2hrs) SADM_LOCK_TIMEOUT in sadmin.cfg
+sa.db_used            = False      # Open/Use auto connect DB(True)
 sa.db_name            = "sadmin"   # Database Name (sadmin=default) SADM_DBNAME in sadmin.cfg
-sa.sadm_alert_type    = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
-sa.sadm_alert_repeat  = 0          # 0=Alert only once per alert. 14400=4hrs between alert repeat
-sa.sadm_alert_group   = "default"  # Error Alert   Group defined in $SADMIN/cfg/alert_group.cfg
-sa.sadm_warning_group = "warning"  # Warning Alert Group defined in $SADMIN/cfg/alert_group.cfg
-sa.sadm_info_group    = "info"     # Info Alert    Group defined in $SADMIN/cfg/alert_group.cfg
-sa.quiet              = False      # If error in a function & quiet is: (give you ctrl of message)
+sa.db_conn            = None       # Database Connector when using DB,  set by sa.start()
+sa.db_cur             = None       # Database Cursor if you use the DB, set by sa.start()
+
+#sa.max_logline        = 500        # Max. number of lines in log file SADM_MAX_LOGLINE in sadmin.cfg
+#sa.max_rchline        = 50         # Max. number of lines in rch file SADM_MAX_RCLINE in sadmin.cfg
+#sa.sadm_alert_type    = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
+#sa.sadm_alert_repeat  = 0          # 0=Alert only once per alert. 14400=4hrs between alert repeat
+#sa.sadm_alert_group   = "default"  # Error Alert   Group defined in $SADMIN/cfg/alert_group.cfg
+#sa.sadm_warning_group = "warning"  # Warning Alert Group defined in $SADMIN/cfg/alert_group.cfg
+#sa.sadm_info_group    = "info"     # Info Alert    Group defined in $SADMIN/cfg/alert_group.cfg
                                    # False: Show error message and return the error number. 
-                                   # True : Omly returm error number, but don't show error message.
 
-# Variables that are share with the Library available to Developer
-sa.pn        = os.path.basename(sys.argv[0])   # [P]rogram [N]ame with extension
-sa.inst      = sa.pn.split('.')[0] # INSTance Name = Pgm Name Without Ext
-sa.errno     = 0                   # Error No. set by function called (0=OK Else error/warning)
-sa.errmsg    = ""                  # Error Mess. set by function you call (blank or error msg)
-sa.db_conn   = None                # Database Connector when using DB,  set by sa.start()
-sa.db_cur    = None                # Database Cursor if you use the DB, set by sa.start()
 
-# Variable local to this script (not share with the library) you can use at your ease.
-exit_code    = 0                   # Default Return Code (0=Success 1-Error)
-debug        = 0                   # Debug Level 0-9 (Increase Verbose)
-hostname     = sa.get_hostname()   # Get Current hostname
-username     = sa.get_username()   # Get Current User Name
-pid          = os.getpid()         # Get Current Process ID.
-cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh,sa.sadm_ssh_port) # /usr/bin/ssh with sadmin.cfg port
-current_time = datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S") # Format current Date and Time 
 # --------------------------------------------------------------------------------------------------
 
 
@@ -154,6 +156,7 @@ current_time = datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S") # Format cu
 # --------------------------------------------------------------------------------------------------
 lcount              = 0                                          # Print Line Counter
 show_password       = False                                      # Show DB Password
+first_page          = "Y"                                        # No form feed on first page
 
 # Use in printline() function to format output columns
 col1_width          = 30 
@@ -163,6 +166,28 @@ col3_width          = 10
 
 
 
+# Standardize Print Header Function 
+#===================================================================================================
+def printheader(col1=""):
+    global lcount, first_page                                           # Global Line Counter
+
+    lcount = 0                                                          # Reset line counter 
+    if first_page == "Y" : 
+        first_page = "N" 
+        print ("%s" % col1)                                             # No FormFeed & Print title
+    else: 
+        print ("\f%s" % col1)                                           # FormFeed & Print title
+    print ("%s" % ("-" * 100))                                          # Print line of 100 "-" 
+    return(0)
+
+
+
+# Standardize Section name 
+#===================================================================================================
+def print_section_header(section_name: str):
+    print ("\n## %s" % section_name )
+    return(0)
+
 # Standardize Print Line Function 
 #===================================================================================================
 def printline(col1="",col2="",col3=""):
@@ -170,35 +195,9 @@ def printline(col1="",col2="",col3=""):
 
     lcount += 1                                                         # Increase line counter
     print ("[%03d] " % lcount, end='')                                  # Print line counter
-    print ("%-36s" % (col1), end='')                                    # If col1 not empty print it
+    print ("%-35s" % (col1), end='')                                    # If col1 not empty print it
     print ("%-40s" % (col2), end='')                                    # If col2 not empty print it
-    print ("%-24s" % (col3))                                            # If col3 not empty print it
-
-
-
-
-
-# Standardize Print Header Function 
-#===================================================================================================
-def printheader(col1="",col2="",col3=""):
-    global lcount                                                       # Global Line Counter
-
-    lcount = 0                                                          # Reset line counter 
-    print ("\n\n%s" % ("-" * 100))                                      # Print line of 100 "-" 
-    if (col2 == "") : 
-        print ("%-81s%s" % (col1,col3))                                 # Print Header line
-    else: 
-        print ("%-35s%-39s%-25s" % (col1,col2,col3))                    # Print Header line
-    print ("%s" % ("-" * 100))                                          # Print line of 100 "-" 
-    return 0
-
-
-
-# Standardize Section name 
-#===================================================================================================
-def print_section_name(section_name: str):
-    print ("\n%s\n" % section_name )
-
+    print ("%-25s" % (col3))                                            # If col3 not empty print it
 
 
 
@@ -209,19 +208,15 @@ def print_functions():
     global lcount
     lcount              = 0                                                 # Reset Print Line Count
 
-
-    print ("%s" % ("-" * 100))                                            # Print line of 100 "-" 
-    print ("01) SADMIN Python Library functions available to developers")
-    print ("%s" % ("-" * 100))                                              # Print line of 100 "-" 
-
+    printheader ("01) SADMIN Python Library Functions Available To Developers")
     printline ("sa.get_release()","SADMIN Release Number (XX.XX)",sa.get_release())
     printline ("sa.get_ostype()","OS Type (In Uppercase,LINUX,AIX,MACOS)",sa.get_ostype()) 
     printline ("sa.get_osversion()","Return O/S Version (Ex: 7.2, 6.5)",sa.get_osversion())  
     printline ("sa.get_osmajorversion()","Return O/S Major Version (Ex 7, 6)",sa.get_osmajorversion())
     printline ("sa.get_osminorversion()","Return O/S Minor Version (Ex 2, 3)",sa.get_osminorversion())
-    printline ("sa.get_osname()","O/S Distribution (In uppercase)",sa.get_osname())
+    printline ("sa.get_osname()","O/S Name (REDHAT,ROCKY,DEBIAN,...)",sa.get_osname())
     printline ("sa.get_oscodename()","O/S Project Code Name",sa.get_oscodename())
-    printline ("sa.get_username()","Current User Name",sa.get_username())
+    printline ("sa.get_username()","Return Current User Name",sa.get_username())
     printline ("sa.get_kernel_version()","Return O/S Running Kernel Version",sa.get_kernel_version())
     printline ("sa.get_kernel_bitmode()","Return O/S Kernel Bit Mode (32 or 64)",sa.get_kernel_bitmode()) 
     printline ("sa.get_hostname()","Return Host Name",sa.get_hostname())
@@ -229,18 +224,12 @@ def print_functions():
     printline ("sa.get_domainname()","Return Host Domain Name",sa.get_domainname()) 
     printline ("sa.get_fqdn()","Return Fully Qualified Domain Name",sa.get_fqdn())
     printline ("sa.get_serial()","Return System serial Number",sa.get_serial())
-    wepoch=sa.get_epoch_time()
-    printline ("sa.get_epoch_time()","Return Current Epoch Time",sa.get_epoch_time())
-    printline ("sa.epoch_to_date(%d)" % (wepoch),"Convert epoch time to date",sa.epoch_to_date(wepoch))
-    wsdate=sa.epoch_to_date(wepoch) 
-    printline ("sa.date_to_epoch(wsdate)", "Convert Date to epoch time", sa.date_to_epoch(wsdate) )
-
-    DATE1="2026.06.30 10:00:44" ; DATE2="2026.06.30 09:50:03"           # Set Date to Calc Elapse
-    print ("      DATE1 (End): %s" % (DATE1), "   DATE2 (Start): %s" % (DATE2)) # Print Date2 Used for Ex.
-    pexample="sa.elapse_time(DATE1,DATE2)"                              # Example Calling Function
-    pdesc="Elapse Time between two timestamps"                          # Function Description
-    presult=sa.elapse_time(DATE1,DATE2)                                 # Return Value(s)
-    printline ("sa.elapse_time(DATE1,DATE2)","Elapse Time between two timestamps",presult) 
+    printline ("sa.get_server_cpu_speed()","Return Maximum CPU Speed","%d MHz" % sa.get_server_cpu_speed())
+    printline ("sa.get_nb_cpu","Return number of Physical CPUs",sa.get_nb_cpu())
+    printline ("sa.get_nb_logical_cpu()","Return number of Logical CPUs", sa.get_nb_logical_cpu())
+    printline ("sa.get_nb_core_per_socket()","Return number of core per socket",sa.get_nb_core_per_socket())
+    printline ("sa.get_nb_thread_per_core()","Return number of threads per core",sa.get_nb_thread_per_core())
+    printline ("sa.get_nb_socket()","Return number of socket",sa.get_nb_socket())
     printline ("sa.get_packagetype()","Return package type (rpm,deb,lpp,dmg)",sa.get_packagetype())
     printline ("sa.get_arch()","Get system architecture",sa.get_arch())
     printline ("sa.lock_system(hostname)","Lock the specified hostname (Not FQDN)",sa.lock_system(sa.sadm_server,errmsg=False)) 
@@ -249,20 +238,30 @@ def print_functions():
     printline ("sa.write_log('message'[,lf=true])","Write message to Screen,Log or Both","message")
     printline ("sa.write_err('message'[,lf=true])","Write message to Error and Std Log","message")
     printline ("sa.sendmail(addr,sub,body,attach)","Send email (body=textFile) & opt.attach","0=Success  1=Error")
-    printline ("sa.show_version(sa.ver)","Show Program & Library version & Desc.","scriptName -v")
-    printline ("sa.sleep(60,15)","Sleep 60 sec & update every 15 sec.","60...45...30...15...0") 
-    printline ("sa.trimfile(filename,nlines=500)","Keep last 500 lines of filename.","0=Success  1=Error") 
-    #printline ("sa.get_mac_address(wip)","Get MAC address of the system", sa.get_mac_address(wip))
-    printline ("sa.get_nb_cpu","Return number of CPUs",sa.get_nb_cpu())
-    printline ("sa.get_nb_core_per_socket()","Return number of core per socket",sa.get_nb_core_per_socket())
-    printline ("sa.get_nb_thread_per_core()","Return number of threads per core",sa.get_nb_thread_per_core())
-    printline ("sa.get_nb_socket()","Return number of socket",sa.get_nb_socket())
     printline ("sa.silentremove('file')","Silent file delete (no msg, no err)",sa.silentremove('file'))
-    printline ("sa.get_server_cpu_speed()","Get Maximum CPU Speed","%d MHz" % sa.get_server_cpu_speed())
+    printline ("sa.trimfile(filename,nlines=500)","Keep last 500 lines of filename.","0=Success  1=Error") 
+    printline ("sa.sleep(60,15)","Sleep 60 sec & update every 15 sec.","60...45...30...15...0") 
+    #printline ("sa.get_mac_address(wip)","Get MAC address of the system", sa.get_mac_address(wip))
+
+    wepoch=sa.get_epoch_time()
+    printline ("sa.get_epoch_time()","Return Current Epoch Time",sa.get_epoch_time())
+
+    printline ("sa.epoch_to_date(%d)" % (wepoch),"Convert epoch time to date",sa.epoch_to_date(wepoch))
+
+    wsdate=sa.epoch_to_date(wepoch) 
+    printline ("sa.date_to_epoch(wsdate)", "Convert Date to epoch time", sa.date_to_epoch(wsdate) )
+
+    DATE1="2026.06.30 10:00:44" ; DATE2="2026.06.30 09:50:03"           # Set Date to Calc Elapse
+    print ("      DATE1 (End): %s" % (DATE1), "   DATE2 (Start): %s" % (DATE2)) # Print Date2 Used for Ex.
+    printline ("sa.elapse_time(DATE1,DATE2)","Elapse Time between two timestamps",sa.elapse_time(DATE1,DATE2)) 
+
+    printline ("sa.show_version(sa.ver)","Show Program & Library version & Desc.","scriptName -v")
     printline ("sa.touch_file('filename')","Update timestamp or create file","0")
     printline ("sa.db_connect('sadmin')","Open connection to database","0=Success 1=Error") 
     printline ("sa.db_close(conn,cur)","Close connection to database","0=Success 1=Error")
     return (0) 
+
+
 
 
 # 02) Print Variables that affect SADMIN Tools Behavior
@@ -271,18 +270,23 @@ def print_user_variables():
     global lcount
     lcount              = 0                                                 # Reset Print Line Count
 
-    print ("\n\n\n%s" % ("-" * 100))                                    # Print line of 100 "-" 
-    print ("02) Variables that influence library behavior, appears in SADMIN Code Section of your code ")
-    print ("    We recommend, to set these variables prior to calling 'sa.sadm_start()'.")
-    print ("%s" % ("-" * 100))                                          # Print line of 100 "-" 
+    printheader ("02) SADMIN Section of your program that is shared with SADMIN Python Library.")
 
-    printline ("sa.ver","Program version number",sa.ver)
-    printline ("sa.desc","Program description",sa.desc)
+    printline ("pid" , "Current Process ID" ,"%d" % pid)
+    printline ("hostname","Current Host Name",hostname)
+    printline ("os_type","OS Type (In Uppercase,LINUX,AIX,MACOS)",sa.get_ostype()) 
+    printline ("username","Current user name",username)
+    printline ("debug","Debug Level 0-9 (Incr. Verbose)",debug)
+    printline ("exit_code","Program Exit Return Code",exit_code)
+    printline ("cmd_ssh_full","SSH cmd to client",cmd_ssh_full)
+    print     ("\n")
     printline ("sa.pn","Program name with extension",sa.pn)  
     printline ("sa.inst","Program name without extension",sa.inst)
+    printline ("sa.ver","Program version number",sa.ver)
+    printline ("sa.desc","Program description",sa.desc)
     printline ("sa.root_only","Program can only be run by 'root'",sa.root_only)
     printline ("sa.server_only","Program can only run on SADMIN server",sa.server_only)
-    printline ("sa.sadmgrp_only","Run only if part of SADMIN Grp or root",sa.server_only)
+    printline ("sa.sadm_group_only","Run only if part of SADMIN Grp or root",sa.sadm_group_only)
     printline ("sa.multiple_exec","Can run more than 1 copy simultaneously",sa.multiple_exec)
     printline ("sa.quiet","Quiet False=ErrNo+Mess True=OnlyErrNo",sa.quiet)  
     printline ("sa.log_type","Send Output to [S]creen [L]og [B]oth",sa.log_type)
@@ -290,16 +294,16 @@ def print_user_variables():
     printline ("sa.log_header","Generate header in log",sa.log_header)
     printline ("sa.log_footer","Generate footer in log",sa.log_footer)
     printline ("sa.use_rch","Save execution data to '.rch' file",sa.use_rch) 
-    printline ("debug","Debug Level 0-9 (Incr. Verbose)",debug)
-    printline ("username","Current user name",username)
-    printline ("pid" , "Current Process ID" ,"$pid")
-    printline ("exit_code","Program Exit Return Code",exit_code)
     printline ("sa.errno","Error No. returned by function called",sa.errno)
     printline ("sa.errmsg","Error Mess. returned by function called",sa.errmsg)
-    printline ("sa.hostname","Current Host Name",sa.hostname)
     printline ("sa.sadm_pid_timeout","PID file default TimeToLive (Sec)","%d sec" % sa.sadm_pid_timeout)
     printline ("sa.sadm_lock_timeout","Maximun nb. sec. a host can be lock","%d sec" % sa.sadm_lock_timeout)
-    printline ("sa.get_ostype()","OS Type (In Uppercase,LINUX,AIX,MACOS)",sa.get_ostype()) 
+    printline ("sa.db_used","Need Access to SADMIN Database ",sa.db_used)
+    printline ("sa.db_name","Database Name (if not 'sadmin')",sa.db_name)
+    printline ("sa.db_conn","Database connector",sa.db_conn)
+    printline ("sa.db_cur","Database cursor",sa.db_cur)
+
+    print_section_header ("Variables that can override default value taken from $SADMIN/cfg/sadmin.cfg.")
     printline ("sa.sadm_alert_type","0=NoMail 1=OnError 3=OnSuccess 4=All",sa.sadm_alert_type) 
     printline ("sa.sadm_alert_group","Error Group (Default Group)",sa.sadm_alert_group) 
     printline ("sa.sadm_warning_group","Warning Group Name",sa.sadm_warning_group) 
@@ -308,17 +312,6 @@ def print_user_variables():
     printline ("sa.sadm_mail_addr","SADMIN Administrator Email(s)",sa.sadm_mail_addr)
     printline ("sa.sadm_max_logline","Trim log to this maximum of lines","%d lines" % sa.sadm_max_logline)
     printline ("sa.sadm_max_rchline","Trim rch file to this max. of lines","%d lines" % sa.sadm_max_rchline)
-    printline ("sa.sadm_email_startup","Send email to SysAdmin on startup",sa.sadm_email_startup)  
-    printline ("sa.sadm_email_shutdown","Send email to SysAdmin on shutdown",sa.sadm_email_shutdown)  
-    printline ("cmd_ssh_full","SSH cmd to client",cmd_ssh_full)
-    printline ("current_time","Current date & Time",current_time)
-
-    printline ("sa.db_used","Need Access to SADMIN Database ",sa.db_used)
-    printline ("sa.db_name","Database Name (Defaut:'sadmin')",sa.db_name)
-    printline ("sa.db_conn","Database connector",sa.db_conn)
-    printline ("sa.db_cur","Database cursor",sa.db_cur)
-    printline ("sa.db_name","Database name",sa.db_name)
-
     return(0)
 
 
@@ -326,21 +319,19 @@ def print_user_variables():
 
 
 
-# 3) Print Python sa.start() and sa.stop() function Used by SADMIN Tools
+# 03) Python Library - Overview of the 'start()' and 'stop()' functions.
 #===================================================================================================
 def print_python_start_stop():
     global lcount
     lcount              = 0                                                 # Reset Print Line Count
 
-    print ("\n\n\n%s" % ("-" * 100))                                    # Print line of 100 "-" 
-    print ("03) Python Library - Overview of the 'start()' and 'stop()' functions.")
-    print ("%s" % ("-" * 100))   
+    printheader ("03) Python Library - Overview of the 'start()' and 'stop()' functions.")
 
-    print ("") 
+    #print ("") 
     print ("Function 'start()'")
-    print ("------------------")
+    #print ("------------------")
     print ("  The 'start()' function basically initialize the SADMIN environment.") 
-    print ("  When you call 'start()', it will only come back to caller, only if everything went OK,")   
+    print ("  When you call 'start()', it will return only if everything went OK,")   
     print ("  Otherwise, it will advise the user of the error and exit(1).") 
     print ("")     
     print ("    - If 'db_used' is True, it will create a connection to the Database and return ")
@@ -351,12 +342,12 @@ def print_python_start_stop():
     print ("") 
     print ("  Here a summary of the different things the 'start()' function does :") 
     print ("      1) Make sure $SADMIN directories and sub-directories exist and have proper permissions.") 
-    print ("      2) If 'log_append' is True, it open standard/error log in append mode, else in write mode.")
-    print ("      3) If 'log_header' is True, write the log header.") 
-    print ("      4) If 'root_only' is True and the current user is not root, show error message and exit(1).")
-    print ("      5) If 'server_only' is True and you are not on the SADMIN server, show error message and exit(1).")
-    print ("      6) If 'sadmgrp_only' is 'True', then current user must be part of the SADMIN group (unless root).")  
-    print ("      7) If 'db_used' is True, open connection to database and return connection and cursor objects.")     
+    print ("      2) If 'sa.log_append' is True, it open standard/error log in append mode, else in write mode.")
+    print ("      3) If 'sa.log_header' is True, write the log header.") 
+    print ("      4) If 'sa.root_only' is True and the current user is not root, show error message and exit(1).")
+    print ("      5) If 'sa.server_only' is True and you are not on the SADMIN server, show error message and exit(1).")
+    print ("      6) If 'sa.sadm_group_only' is 'True', then current user must be part of the SADMIN group (unless root).")  
+    print ("      7) If 'sa.db_used' is True, open connection to database and return connection and cursor objects.")     
     print ("         If not on SADMIN system, show error message and exit(1).")
     print ("      8) If lock_status() is True and running on the SADMIN server, issue message and exit(1).")
     print ("         If the creation of the lock was done more than 'lock_timeout' seconds, the lock file is remove.")
@@ -365,28 +356,28 @@ def print_python_start_stop():
     print ("         If PID file exist and execution time (sec) exceed the 'pid_timeout' a new 'pid_file' is created")
     print ("         and execution is resume.")
     print ("     10) If 'use_rch' is True, add a line in 'rch' file with code '2' and starting time of your program.")
-    print ("") 
-    print ("") 
+    #print ("") 
+    #print ("") 
     print ("") 
     print ("Function 'stop()'") 
-    print ("--------------------")
+    #print ("--------------------")
     print ("  This function accept one parameter, either a 0 for Success or a 1 for Error.")
     print ("  This should be the one of the last function called at the end of your program.") 
     print ("") 
     print ("  What this function does:") 
     print ("    1) Calculate execution Time.")
-    print ("    2) If 'use_rch = True', update the rch file (End Time & Elapse Time ...).") 
+    print ("    2) If 'sa.use_rch = True', update the rch file (End Time & Elapse Time ...).") 
     print ("    3) Validate & determine the alert group name (sadm_alert_group) use in rch file.")
-    print ("    4) If 'db_used' is True and we are on the SADMIN server, close the database connection.") 
+    print ("    4) If 'sa.db_used' is True and we are on the SADMIN server, close the database connection.") 
     print ("    5) If the error log file (.elog) is empty, delete it.")
     print ("    6) Delete the PID file of the script (pid_file).") 
-    print ("    7) If 'log_footer'is True, write the log footer.") 
+    print ("    7) If 'sa.log_footer'is True, write the log footer.") 
     print ("    8) Close log and error log files.") 
     print ("    9) If 'sa.max_logline' is not zero, trim the log according to user choice in 'sa.max_logline'.") 
     print ("   10) If 'sa.max_rchline' is not zero, trim the 'rch' according to user choice in 'sa.max_rchline'.")  
     print ("   11) Set permission and owner/group to log and rch files.") 
     print ("   12) If on the SADMIN server, then rch and log are immediatly web central directory.")
-
+    return (0)
 
 
 
@@ -398,11 +389,9 @@ def print_sadmin_cfg(show_password=False):
     global lcount
     lcount              = 0                                                 # Reset Print Line Count
 
-    print ("\n\n\n%s" % ("-" * 100))                                        # Print line of 100 "-" 
-    print ("4) SADMIN configuration file content - List of variables available to developers.")
-    print ("%s" % ("-" * 100))                                              # Print line of 100 "-" 
+    printheader ("4) SADMIN configuration file content - List of variables available to developers.")
 
-    print ("\n----- General Section -----")
+    print_section_header ("----- General Section -----")
     printline ("sa.sadm_server","SADMIN server name (FQDN)",sa.sadm_server) 
     printline ("sa.sadm_host_type","SADMIN [C]lient or [S]erver",sa.sadm_host_type)   
     printline ("sa.sadm_cie_name","Your Company name",sa.sadm_cie_name) 
@@ -413,31 +402,34 @@ def print_sadmin_cfg(show_password=False):
     printline ("sa.sadm_pid_timeout","PID file default TimeToLive (Sec)","%d sec." % sa.sadm_pid_timeout)
     printline ("sa.sadm_lock_timeout","Maximun nb. sec. a host can be lock","%d sec." % sa.sadm_lock_timeout)
 
-
-    print ("\n----- Database Section -----")
+    print_section_header ("----- Database Section -----")
     printline ("sa.sadm_dbname","SADMIN Database Name",sa.sadm_dbname)  
     printline ("sa.sadm_dbhost","SADMIN Database Host",sa.sadm_dbhost)  
     printline ("sa.sadm_dbport","SADMIN Database Host TCP Port",sa.sadm_dbport)
-
+    # Read Only User
     printline ("sa.sadm_ro_dbuser","SADMIN Database Read Only User",sa.sadm_ro_dbuser) 
     presult="*Hidden*"                                                  # Default don't show passwd
     if show_password : presult=sa.sadm_ro_dbpwd                         # Selected to Show DB Passwd
     printline ("sa.sadm_ro_dbpwd","SADMIN Database Read Only User Pwd",presult) 
-
+    # Read/Write User
     printline ("sa.sadm_rw_dbuser","SADMIN Database Read/Write User",sa.sadm_rw_dbuser) 
     presult="*Hidden*"                                                  # Default don't show passwd
     if show_password : presult=sa.sadm_rw_dbpwd                         # Selected to Show DB Passwd
     printline ("sa.sadm_rw_dbpwd","SADMIN Database Read/Write User Pwd",presult)
+    
+    presult="*Hidden*"                                                  # Default don't show passwd
+    if show_password : presult=sa.dbpass_file                           # Selected to Show DB Passwd
+    printline ("sa.dbpass_file","SADMIN Database User Password File",presult)
 
 
-    print ("\n----- Web Interface Section -----")
+    print_section_header ("----- Web Interface Section -----")
     printline ("sa.sadm_www_user","User that Run the Web Server",sa.sadm_www_user)   
     printline ("sa.sadm_www_group","Group that Run the Web Server",sa.sadm_www_group)
     printline ("sa.sadm_monitor_update_interval","Monitor web page refresh rate (Sec)","%d Seconds" % sa.sadm_monitor_update_interval)
     printline ("sa.sadm_monitor_recent_count","Monitor web page nb. recent scripts",sa.sadm_monitor_recent_count)
     printline ("sa.sadm_monitor_recent_exclude","Monitor web page exclude list",sa.sadm_monitor_recent_exclude)
 
-    print ("\n----- Email Section -----")
+    print_section_header  ("----- Email Section -----")
     printline ("sa.sadm_mail_addr","SADMIN SysAdmin Email(s)",sa.sadm_mail_addr)
     printline ("sa.sadm_smtp_server","Your internet smtp server",sa.sadm_smtp_server)  
     printline ("sa.sadm_smtp_port","Your internet smtp server port",sa.sadm_smtp_port) 
@@ -448,8 +440,9 @@ def print_sadmin_cfg(show_password=False):
     printline ("sa.sadm_email_startup","Send email to SysAdmin on startup",sa.sadm_email_startup)  
     printline ("sa.sadm_email_shutdown","Send email to SysAdmin on shutdown",sa.sadm_email_shutdown)  
 
-    print ("\n----- Monitoring Section -----")
+    print_section_header  ("----- Monitoring Section -----")
     printline ("sa.sadm_alert_type","0=NoAlert 1=OnError 3=OnSuccess 4=All",sa.sadm_alert_type) 
+    printline ("sa.sadm_alert_repeat","0=AlertOnce or Sec. before alert repeat","%d sec" % sa.sadm_alert_repeat) 
     printline ("sa.sadm_alert_group","Error Group Name (Default Group)",sa.sadm_alert_group) 
     printline ("sa.sadm_warning_group","Warning Group Name",sa.sadm_warning_group) 
     printline ("sa.sadm_info_group","Info Group Name",sa.sadm_info_group) 
@@ -465,15 +458,14 @@ def print_sadmin_cfg(show_password=False):
     printline ("sa.sadm_ntfy_url  ","URL to send notification to NTFY",sa.sadm_ntfy_url)
     printline ("sa.sadm_ntfy_user ","NTFY user name",sa.sadm_ntfy_user)                 
 
-
-    print ("\n----- Files and Logs pruning Section -----")
-    printline ("sa.sadm_nmon_keepdays","Nb. of days to keep .nmon perf. file","%d days" % sa.sadm_nmon_keepdays) 
+    print_section_header ("----- Files and Logs pruning Section -----")
     printline ("sa.sadm_rch_keepdays","Nb. days to keep unmodified .rch file","%d days" % sa.sadm_rch_keepdays)
     printline ("sa.sadm_log_keepdays","Nb. days to keep unmodified .log file","%d days" % sa.sadm_log_keepdays) 
     printline ("sa.sadm_max_rchline","Trim rch file to this max. of lines","%d lines" % sa.sadm_max_rchline)
     printline ("sa.sadm_max_logline","Trim log to this maximum of lines","%d lines" % sa.sadm_max_logline)
     printline ("sa.sadm_days_history","Days to keep alert in History file","%d days" % sa.sadm_days_history)
     printline ("sa.sadm_max_arc_line","Max. lines in alert in History file","%d lines" % sa.sadm_max_arc_line) 
+    printline ("sa.sadm_nmon_keepdays","Nb. of days to keep .nmon perf. file","%d days" % sa.sadm_nmon_keepdays) 
 
     print ("\n----- Subnet Network Scanner Section -----")
     presult=sa.sadm_network1    
@@ -492,24 +484,23 @@ def print_sadmin_cfg(show_password=False):
     if presult == "" : presult="None"
     printline ("sa.sadm_network5","Network/Netmask 5 inv. IP/Name/Mac",presult) 
 
-    print ("\n----- ReaR Backup Section -----")
+    print_section_header  ("----- ReaR Backup Section -----")
+    printline ("sa.sadm_rear_backup_script","ReaR backup script name",sa.sadm_rear_backup_script)
     printline ("sa.sadm_rear_nfs_server","ReaR NFS Server IP or Name",sa.sadm_rear_nfs_server)
     printline ("sa.sadm_rear_nfs_server_ver","ReaR NFS Server Version",sa.sadm_rear_nfs_server_ver)
     printline ("sa.sadm_rear_nfs_mount_point","ReaR NFS Mount Point",sa.sadm_rear_nfs_mount_point) 
     printline ("sa.sadm_rear_backup_to_keep","ReaR NFS Backup - Nb. to keep","%d copies" % sa.sadm_rear_backup_to_keep)
     printline ("sa.sadm_rear_backup_dif","Alert if pct between cur. & prev. size","%s %%" % sa.sadm_rear_backup_dif)
     printline ("sa.sadm_rear_backup_interval","Alert if no backup for more than X days","%d days" % sa.sadm_rear_backup_interval)
-    printline ("sa.sadm_rear_backup_script","ReaR backup script name",sa.sadm_rear_backup_script)
     printline ("sa.sadm_rear_del_failed_backup","Del backup if failed integrity check",sa.sadm_rear_del_failed_backup)
     printline ("sa.sadm_rear_backup_concurrent","Number of Concurrent rear backup",sa.sadm_rear_backup_concurrent)
     printline ("sa.sadm_rear_batch_mode","Run backup in batch mode (y/N)",sa.sadm_rear_batch_mode)
     printline ("sa.sadm_rear_batch_startup_time","Batch startup time",sa.sadm_rear_batch_startup_time)  
-    printline ("sa.sadm_rear_batch_day2run","0=AnyDay,1=Su,2=Mo,3=We,4=Tu,6=Fr,7=Sa",sa.sadm_rear_batch_day2run)
-    printline ("sa.sadm_rear_batch_mth2run","0=AnyMonth or [1,2,,,12] Month to run",sa.sadm_rear_batch_mth2run)
+    printline ("sa.sadm_rear_batch_day2run","0=AnyDay, 1=Su,2=Mo,3=Tu,...7=Sa",sa.sadm_rear_batch_day2run)
+    printline ("sa.sadm_rear_batch_mth2run","0=AnyMth or [1,2,,,12] Month to run",sa.sadm_rear_batch_mth2run)
     printline ("sa.sadm_rear_batch_date2run","0=AnyDate, Date to run [1,2...27,28]",sa.sadm_rear_batch_date2run)
 
-
-    print ("\n----- Backup Section -----")
+    print_section_header ("----- Backup Section -----")
     printline ("sa.sadm_backup_nfs_server","NFS Backup IP or Server Name",sa.sadm_backup_nfs_server)
     printline ("sa.sadm_backup_nfs_server_ver","NFS Backup Server Version",sa.sadm_backup_nfs_server_ver)
     printline ("sa.sadm_backup_nfs_mount_point","NFS Backup Mount Point",sa.sadm_backup_nfs_mount_point) 
@@ -526,13 +517,13 @@ def print_sadmin_cfg(show_password=False):
     printline ("sa.sadm_backup_concurrent","Number of Concurrent Backup",sa.sadm_backup_batch_concurrent)
     printline ("sa.sadm_backup_batch_mode","Run backup in batch mode (y/N)",sa.sadm_backup_batch_mode)
     printline ("sa.sadm_backup_batch_startup_time","Batch startup time",sa.sadm_backup_batch_start_time)  
-    printline ("sa.sadm_backup_batch_day2run","0=AnyDay,1=Su,2=Mo,3=We,4=Tu,6=Fr,7=Sa",sa.sadm_backup_batch_day2run)
-    printline ("sa.sadm_backup_batch_mth2run","0=AnyMonth or [1,2,,,12] Month to run",sa.sadm_backup_batch_mth2run)
+    printline ("sa.sadm_backup_batch_day2run","0=AnyDay, 1=Su,2=Mo,3=Tu,...7=Sa",sa.sadm_backup_batch_day2run)
+    printline ("sa.sadm_backup_batch_mth2run","0=AnyMth or [1,2,,,12] Month to run",sa.sadm_backup_batch_mth2run)
     printline ("sa.sadm_backup_batch_date2run","0=AnyDate, Date to run [1,2...27,28]",sa.sadm_backup_batch_date2run)
 
-
-    print ("\n----- Virtual Machines Export Section -----")
-    printline ("sa.sadm_vm_export_nfs_server","NFS Export Server",sa.sadm_vm_export_nfs_server)
+    print_section_header ("----- Virtual Machines Export Section -----")
+    printline ("sa.sadm_vm_export_script","Virtual Machine Export Script Name",sa.sadm_vm_export_script)
+    printline ("sa.sadm_vm_export_nfs_server","Virtual Machine Export Script Name",sa.sadm_vm_export_nfs_server)
     printline ("sa.sadm_vm_export_nfs_server_ver","NFS Export Server Version",sa.sadm_vm_export_nfs_server_ver)
     printline ("sa.sadm_vm_export_mount_point","NFS Export Mount Point",sa.sadm_vm_export_mount_point)
     printline ("sa.sadm_vm_export_dif","Alert if pct between cur. & prev. size","%s %%" % (sa.sadm_vm_export_dif))
@@ -545,12 +536,11 @@ def print_sadmin_cfg(show_password=False):
     printline ("sa.sadm_vm_export_concurrent","Number of Concurrent Export",sa.sadm_vm_export_concurrent)
     printline ("sa.sadm_vm_export_batch_mode","Run export in batch mode (y/N)",sa.sadm_vm_export_batch_mode)
     printline ("sa.sadm_vm_export_batch_start_time","Start time for launch batch export",sa.sadm_vm_export_batch_start_time)
-    printline ("sa.sadm_vm_export_batch_day2run","0=AnyDay,1=Su,2=Mo,3=We,4=Tu,6=Fr,7=Sa",sa.sadm_vm_export_batch_day2run)
-    printline ("sa.sadm_vm_export_batch_mth2run","0=AnyMonth or [1,2,,,12] Month to run",sa.sadm_vm_export_batch_mth2run)
+    printline ("sa.sadm_vm_export_batch_day2run","0=AnyDay, 1=Su,2=Mo,3=Tu,...7=Sa",sa.sadm_vm_export_batch_day2run)
+    printline ("sa.sadm_vm_export_batch_mth2run","0=AnyMth, Months Numbers 1,2,12",sa.sadm_vm_export_batch_mth2run)
     printline ("sa.sadm_vm_export_batch_date2run","0=AnyDate, Date to run [1,2...27,28]",sa.sadm_vm_export_batch_date2run)
 
-
-    print ("\n----- System Update Section -----")
+    print_section_header ("----- System Update Section -----")
     printline ("sa.sadm_osupdate_script","System Update Script Name",sa.sadm_osupdate_script)
     printline ("sa.sadm_osupdate_interval","Alert if no update for more than X days","%d days" % sa.sadm_osupdate_interval)
     printline ("sa.sadm_osupdate_autoremove","Auto remove 'orphaned' packages.",sa.sadm_osupdate_autoremove)
@@ -562,10 +552,10 @@ def print_sadmin_cfg(show_password=False):
     printline ("sa.sadm_osupdate_concurrent","Number of Concurrent System Updates",sa.sadm_osupdate_concurrent)
     printline ("sa.sadm_osupdate_batch_mode","Run O/S Update in Batch Mode (y/N)",sa.sadm_osupdate_batch_mode)
     printline ("sa.sadm_osupdate_batch_start_time","Batch Update Start Time",sa.sadm_osupdate_batch_start_time)
-    printline ("sa.sadm_osupdate_batch_day2run","0=AnyDay,1=Su,2=Mo,3=We,4=Tu,6=Fr,7=Sa",sa.sadm_osupdate_batch_day2run)
-    printline ("sa.sadm_osupdate_batch_mth2run","0=AnyMonth or [1,2,,,12] Month to run",sa.sadm_osupdate_batch_mth2run)
+    printline ("sa.sadm_osupdate_batch_day2run","0=AnyDay, 1=Su,2=Mo,3=Tu,...7=Sa",sa.sadm_osupdate_batch_day2run)
+    printline ("sa.sadm_osupdate_batch_mth2run","0=AnyMth, Months Numbers 1,2,12",sa.sadm_osupdate_batch_mth2run)
     printline ("sa.sadm_osupdate_batch_date2run","0=AnyDate, Date to run [1,2...27,28]",sa.sadm_osupdate_batch_date2run)
-
+    return(0)
 
 
 
@@ -576,9 +566,7 @@ def print_directories():
     global lcount
     lcount              = 0                                                 # Reset Print Line Count
 
-    print ("\n\n\n%s" % ("-" * 100))                                        # Print line of 100 "-" 
-    print ("5) Directories variables available to Developers")
-    print ("%s" % ("-" * 100))                                              # Print line of 100 "-" 
+    printheader ("5) Directories variables available to Developers")
 
     # SADMIN Directories Aliases Variables.
     printline ("sa.dir_base"  ,"SADMIN Root Directory",sa.dir_base)
@@ -611,7 +599,7 @@ def print_directories():
     printline ("sa.dir_www_lib" ,"SADMIN Web Site PHP Library Dir.",sa.dir_www_lib)    
     printline ("sa.dir_www_tmp" ,"SADMIN Web Temp Working Dir.",sa.dir_www_tmp)   
     printline ("sa.dir_www_perf","SADMIN Web Performance Graph Dir.",sa.dir_www_perf) 
-       
+    return(0)
 
 
 
@@ -621,11 +609,9 @@ def print_file_variable():
     global lcount
     lcount              = 0                                                 # Reset Print Line Count
 
-    print ("\n\n\n%s" % ("-" * 100))                                        # Print line of 100 "-" 
-    print ("6) SADMIN File names use and set by the Python library, for you to use")
-    print ("%s" % ("-" * 100))                                              # Print line of 100 "-" 
+    printheader ("6) SADMIN File names use and set by the Python library, for you to use")
 
-    print ("----- Available File Name Aliases Variables -----")
+    print_section_header ("----- Available File Name Aliases Variables -----")
     printline ("sa.pid_file","Current script PID file",sa.pid_file)  
     printline ("sa.cfg_file","SADMIN Main Configuration file",sa.cfg_file)  
     printline ("sa.cfg_hidden","SADMIN configuration template file",sa.cfg_hidden)
@@ -644,7 +630,7 @@ def print_file_variable():
     printline ("sa.backup_list_init","Backup file template file",sa.backup_list_init)
     printline ("sa.backup_exclude","Backup exclude list file name",sa.backup_exclude)           
     printline ("sa.backup_exclude_init","Backup exclude template file",sa.backup_exclude_init)  
-
+    return(0)
 
 
 
@@ -658,9 +644,7 @@ def print_command_path():
     global lcount
     lcount              = 0                                                 # Reset Print Line Count
 
-    print ("\n\n\n%s" % ("-" * 100))                                        # Print line of 100 "-" 
-    print ("7) Command Path set and use by SADMIN Python Library for more security.")
-    print ("%s" % ("-" * 100))                                              # Print line of 100 "-" 
+    printheader ("7) Command Path set and use by SADMIN Python Library for more security.")
 
     printline ("sa.cmd_dmidecode","Cmd. 'dmidecode', Get model & type",sa.cmd_dmidecode) 
     printline ("sa.cmd_bc","Cmd. 'bc', Do some Math.",sa.cmd_bc) 
@@ -676,9 +660,13 @@ def print_command_path():
     printline ("sa.cmd_rrdtool","Cmd. 'rrdtool' to produce graph",sa.cmd_rrdtool)
     printline ("sa.cmd_lsb_release","Cmd. 'lsb_release' to get dist. info",sa.cmd_lsb_release)
     printline ("sa.cmd_inxi","Cmd. 'inxi' binary location",sa.cmd_inxi)
+    if sa.sadm_host_type == "S" :
+        printline ("sa.cmd_mysql","Cmd. 'mysql' binary location",sa.cmd_mysql)
     printline ("sa.cmd_ssh","Cmd. 'ssh', SSH to SADMIN client",sa.cmd_ssh)
+    sa.write_log (" ")
+    return(0)
 
-        
+
 
 
 
@@ -690,14 +678,12 @@ def print_db_variables():
     global lcount
     lcount              = 0                                             # Reset Print Line Count
 
-    print ("\n\n\n%s" % ("-" * 100))                                    # Print line of 100 "-" 
-    print ("8) Database Information")   
-    print ("%s" % ("-" * 100))                                          # Print line of 100 "-" 
+    printheader ("8) Database Information")
 
     printline ("sa.db_used","Program need to access Database ?",sa.db_used)
     if (sa.sadm_host_type != "S") : return(0)                           # If not on a SADMIN server
     if ( not sa.db_used ) :                                             # If db_used is set to False
-        sa.write_err ("'db_used'is False, no Database information will be shown.") 
+        sa.write_err ("'db_used' is False, no Database information will be shown.") 
         return (1)
 
     print ("\n\nShow SADMIN Tables:")

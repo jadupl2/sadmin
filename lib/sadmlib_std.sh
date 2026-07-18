@@ -277,8 +277,8 @@
 #@2026_07_08 lib v04.92.01 sadm_sendmail() Email body must be a text file now, no longer a string.
 #@2026_07_09 lib v04.92.02 Fix Typo with RCHLINE vs RCLINE
 #@2026_07_09 lib v04.92.03 Fix issue new SADMIN section 1.60 (If using old version use default) 
-#@2026_07_11 lib v04.92.04 Add Code for "SADM_SADMGRP_ONLY", Modify Error Msg. when sendmail failed.
-#@2026_07_14 lib v04.92.05 Fix problem with the addition of 'SADM_SADMGRP_ONLY' and minor fixes
+#@2026_07_11 lib v04.92.04 Add Code for "SADM_GROUP_ONLY", Modify Error Msg. when sendmail failed.
+#@2026_07_14 lib v04.92.05 Fix problem with the addition of 'SADM_GROUP_ONLY' and minor fixes
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -348,9 +348,9 @@ export SADM_ETCENV="/etc/environment"                                   # SADMIN
 export SADM_PID_FILE="${SADM_TMP_DIR}/${SADM_INST}.$$"                  # PID file name
 export SADM_CFG_FILE="$SADM_CFG_DIR/sadmin.cfg"                         # Cfg file name
 export SADM_ALERT_FILE="$SADM_CFG_DIR/alert_group.cfg"                  # AlertGrp File
+export SADM_ALERT_INIT="$SADM_CFG_DIR/.alert_group.cfg"                 # Initial Alert
 export SADM_SLACK_FILE="$SADM_CFG_DIR/alert_slack.cfg"                  # Old Slack Alert File
 export SADM_SLACK_INIT="$SADM_CFG_DIR/.alert_slack.cfg"                 # Old Slack Alert Init File
-export SADM_ALERT_INIT="$SADM_CFG_DIR/.alert_group.cfg"                 # Initial Alert
 export SADM_ALERT_HIST="$SADM_CFG_DIR/alert_history.txt"                # Alert History
 export SADM_ALERT_HINI="$SADM_CFG_DIR/.alert_history.txt"               # History Init
 export SADM_ALERT_ARC="$SADM_CFG_DIR/alert_archive.txt"                 # Alert Archive
@@ -2736,10 +2736,10 @@ sadm_start() {
     fi
 
 
-    # Make sure 'SADM_SADMGRP_ONLY' exist & not empty, if not, set to default value "N".
+    # Make sure 'SADM_GROUP_ONLY' exist & not empty, if not, set to default value "N".
     # Check if this script is to be run only by root user or a user part of $SADM_GROUP group
-    if [[ -z "$SADM_SADMGRP_ONLY" ]]; then SADM_SADMGRP_ONLY="N" ; fi   # Default can run everywhere
-    if  [ $(id -u) -ne 0 ] && [ "$SADM_SADMGRP_ONLY" = "Y" ]            # Restricted to $SADM_GROUP
+    if [[ -z "$SADM_GROUP_ONLY" ]]; then SADM_GROUP_ONLY="N" ; fi   # Default can run everywhere
+    if  [ $(id -u) -ne 0 ] && [ "$SADM_GROUP_ONLY" = "Y" ]            # Restricted to $SADM_GROUP
         then id -nG "$SADM_USERNAME" | grep -qw "$SADM_GROUP"           # User  part of $SADM_GROUP?
              if [ $? -ne 0 ]                                            # If not part of $SADM_GROUP
                 then sadm_write_err " "
@@ -2764,7 +2764,7 @@ sadm_start() {
     fi
 
     # User got to be part of the SADMIN Group specified in $SADMIN/cfg/sadmin.cfg
-    if [ -r $SADMIN/cfg/sadmin.cfg ] && [ "$SADMGRP_ONLY" = "Y" ]
+    if [ -r $SADMIN/cfg/sadmin.cfg ] && [ "$SADM_GROUP_ONLY" = "Y" ]
        then SADM_GROUP=`awk -F= '/^SADM_GROUP/ {print $2}' $SADMIN/cfg/sadmin.cfg | tr -d ' '` 
             if [ $(id -u) -ne 0 ]                                       # If user is not 'root' user
                then usrname=$(id -un)                                   # Get Current User Name
