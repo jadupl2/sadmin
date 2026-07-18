@@ -70,33 +70,34 @@ if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                   # If SADMIN shell lib
 fi 
 
 
-# You can access the variables below, but you shouldn't have to change them (used by sadmin library)
-export SADM_PN=${0##*/}                                    # Script name(with extension)
-export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
+# SADMIN Section of your program that is shared with SADMIN Bash Library.
 export SADM_TPID="$$"                                      # Script Process ID.
 export SADM_HOSTNAME=$(hostname -s)                        # Host name without Domain Name
-export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # O/S Type fir Libr (LINUX,AIX,DARWIN)
+export SADM_OS_TYPE=$(uname -s|tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
 export SADM_USERNAME=$(id -un)                             # Current user name.
+export SADM_DEBUG=0                                        # Debug Level(0-9), 0 = NoDebug
+export SADM_EXIT_CODE=0                                    # Pgm. Default Exit Code
+export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
 # You Can Use & Change Variables Below To Your Needs (They Influence Execution Of Sadmin Library).
 export SADM_VER='03.31.01'                                 # Script version number
 export SADM_DESC="Describe what your program is doing."
 export SADM_ROOT_ONLY="N"                                  # Pgm. run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Pgm. run only on SADMIN server? [Y]/[N]
-export SADM_SADMGRP_ONLY='N'                               # Pgm. run only if usr part of SADMIN Grp
+export SADM_GROUP_ONLY='N'                                 # Pgm. run only if usr part of SADMIN Grp
 export SADM_LOG_TYPE="B"                                   # Write log to [S]creen, [L]og, [B]oth
 export SADM_LOG_APPEND="N"                                 # Append log ? Y=AppendLog,N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y = ProduceLogHeader, N = NoLogHeader
 export SADM_LOG_FOOTER="Y"                                 # Y = ProduceLogFooter, N = NoLogFooter
 export SADM_MULTIPLE_EXEC="N"                              # Can Run Simultaneous copy of script Y/N
 export SADM_USE_RCH="Y"                                    # Update the RCH History File (Y/N)
-export SADM_DEBUG=0                                        # Debug Level(0-9), 0 = NoDebug
 export SADM_QUIET="N"                                      # Y=HideMsg & Error#  N=Show Msg & Error#
 export SADM_ERRMSG=""                                      # Error Message returned by Library 
 export SADM_ERRNO=0                                        # Error number (0=OK) returned by Library
-export SADM_EXIT_CODE=0                                    # Pgm. Default Exit Code
 export SADM_PID_TIMEOUT=7200                               # Sec. before PID file is remove,7200=2hr
 export SADM_LOCK_TIMEOUT=3600                              # Sec. before System LockFile is Del, 1hr
+export SADM_DB_USED="N"             
+export SADM_DB_NAME="sadmin"    
 export SADM_TMP_FILE1=$(mktemp -q "$SADMIN/tmp/sadm_tmp1_XXX") # Make tmpfile1, rm in sadm_stop()
 export SADM_TMP_FILE2=$(mktemp -q "$SADMIN/tmp/sadm_tmp2_XXX") # Make tmpfile2, rm in sadm_stop()
 export SADM_TMP_FILE3=$(mktemp -q "$SADMIN/tmp/sadm_tmp3_XXX") # Make tmpfile3, rm in sadm_stop()
@@ -120,8 +121,6 @@ export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access S
 #export SADM_MAX_LOGLINE=400                                # Nb of Lines to trim (0=NoTrim)
 #export SADM_MAX_RCHLINE=35                                 # Nb of Lines to trim (0=NoTrim)
 #export SADM_ALERT_REPEAT=0                                 # 0=No Alert Repeat, Sec. between Repeat
-#export SADM_EMAIL_STARTUP='N'                              # Send or Not an email on startup (Y/N)
-#export SADM_EMAIL_SHUTDOWN='N'                             # Send or Not an email on shutdown (Y/N)
 # -------------------  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
 
 
@@ -138,7 +137,7 @@ export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access S
 # --------------------------------------------------------------------------------------------------
 #
 lcount=0                                                                # Print Line Counter
-
+first_page="Y"                                                          # No Form Feed on first page
 
 
 
@@ -180,21 +179,28 @@ printline()
 printheader()
 {
     lcount=0 
-    printf "\n\n\n$(printf %100s |tr ' ' '=')"
-    printf "\n$(date) - $SADM_PN v$SADM_VER - Library v$SADM_LIB_VER"
-#    printf "\n-39s%-36s%-33s" "$h1" "$h2" "$h3" 
-    printf "\n$1" 
-    printf "\n$(printf %100s |tr " " "=")"
+    if [ "$first_page" = "Y" ] 
+        then first_page="N" 
+             printf "$1\n" 
+        else printf "\f$1\n"     
+    fi
+    printf %100s |tr " " "="
 }
 
+
+# Print Standardize Section Header
+#===================================================================================================
+print_section_header()
+{
+    printf "\n\n## $1" 
+}
 
 
 # 01) Print SADMIN Functions available to Developers
 #===================================================================================================
 print_dev_functions()
 {
-    printheader "01) Examples of functions availables to Developers"
-    
+    printheader "01) SADMIN Bash Library Functions Available To Developers"
     printline "\$(sadm_get_release)" "SADMIN Release Number (XX.XX)" "$(sadm_get_release)"
     printline "\$(sadm_get_ostype)" "OS Type (Uppercase,LINUX,AIX,DARWIN)" "$(sadm_get_ostype)"
     printline "\$(sadm_get_osversion)" "Return O/S Version (Ex: 7.2, 6.5)"  "$(sadm_get_osversion)"
@@ -210,6 +216,23 @@ print_dev_functions()
     printline "\$(sadm_get_domainname)" "Current Host Domain Name" "$(sadm_get_domainname)"
     printline "\$(sadm_get_fqdn)" "Fully Qualified Domain Host Name" "$(sadm_get_fqdn)"
     printline "\$(sadm_server_serial)" "Server serial number (Ex: 4S7GYF1)" "$(sadm_server_serial)"
+    printline "\$(sadm_server_cpu_speed)" "Server CPU Speed in MHz" "$(sadm_server_cpu_speed) MHz"
+    printline "\$(sadm_server_nb_cpu)" "Number of Physical CPU on system" $(sadm_server_nb_cpu)
+    printline "\$(sadm_server_nb_logical_cpu)" "Number of Logical CPU" $(sadm_server_nb_logical_cpu)
+    printline "\$(sadm_server_core_per_socket)" "Number of Core per Socket" $(sadm_server_core_per_socket) 
+    printline "\$(sadm_server_thread_per_core)" "Number of Thread per Core" $(sadm_server_thread_per_core)
+    printline "\$(sadm_server_nb_socket)" "Number of socket on system" $(sadm_server_nb_socket)
+    printline "\$(sadm_get_packagetype)" "Get package type (rpm,deb,aix,dmg)" "$(sadm_get_packagetype)"
+    printline "\$(sadm_server_arch)" "System Architecture" "$(sadm_server_arch)"
+    printline "sadm_lock_system \"hostname\"" "Lock the specified hostname" "0=Lock 1=Could not lock"
+    printline "sadm_lock_status \"hostname\"" "Check if specified hostname is lock" "0=Not Lock - 1=System Locked"
+    printline "sadm_unlock_system \"hostname\"" "Unlock the specified hostname" "0=Unlocked 1=Error could not unlock"
+    printline "sadm_write_log \"message\"" "Write message to Screen, Log or Both" "message"
+    printline "sadm_write_err \"message\"" "Write message to error log + std log" "message"
+    printline "sadm_sendmail(mail,sub,body,att)" "Send email (attachment optional)" "0=Sent 1=Could not send"
+    printline "sadm_silentremove 'filename'" "Delete a file silently" "0"
+    printline "sadm_trimfile \"filename\" 35" "Keep the last 35 lines of filename." "0=Success  1=Error"  
+    printline "sadm_sleep \"60\" \"15\"" "Sleep 60sec. at interval of 15sec." "60...45...30...15...0"
     printline "\$(sadm_get_epoch_time)" "Get Current Epoch Time" "$(sadm_get_epoch_time)"
 
     EPOCH_TIME=$(sadm_get_epoch_time)                                   # Save Epoch Time
@@ -221,27 +244,10 @@ print_dev_functions()
         
     pexample=""; pdesc=""; presult="";                                  # Clear Result Line
     DATE1="2016.01.30 10:00:44" ; DATE2="2016.01.30 10:00:03"           # Set Date to Calc Elapse
-    printf "\n      DATE1='$DATE1'"                                     # Print Date1 Used for Ex.
-    printf "\n      DATE2='$DATE2'"                                     # Print Date2 Used for Ex.
+    printf "\n      DATE1='$DATE1'  DATE2='$DATE2'"                                     # Print Date2 Used for Ex.
     printline "\$(sadm_elapse \"\$DATE1\" \"\$DATE2\")" "Elapse Time between two timestamps" $(sadm_elapse "$DATE1" "$DATE2") 
-     
-    printline "\$(sadm_get_packagetype)" "Get package type (rpm,deb,aix,dmg)" "$(sadm_get_packagetype)"
-    printline "\$(sadm_server_arch)" "System Architecture" "$(sadm_server_arch)"
-    printline "sadm_lock_system \"hostname\"" "Lock the specified hostname" "0=Lock 1=Could not lock"
-    printline "sadm_lock_status \"hostname\"" "Check if specified hostname is lock" "0=Not Lock - 1=System Locked"
-    printline "sadm_unlock_system \"hostname\"" "Unlock the specified hostname" "0=Unlocked 1=Error could not unlock"
-    printline "sadm_write_log \"message\"" "Write message to Screen, Log or Both" "message"
-    printline "sadm_write_err \"message\"" "Write message to error log + std log" "message"
-    printline "sadm_sendmail(mail,sub,body,att)" "Send email (attachment optional)" "0=Sent 1=Could not send"
+
     printline "sadm_show_version" "Cmdline '-v' this func. is called" ""
-    printline "sadm_sleep \"60\" \"15\"" "Sleep 60sec. at interval of 15sec." "60...45...30...15...0"
-    printline "sadm_trimfile \"filename\" 35" "Keep the last 35 lines of filename." "0=Success  1=Error"  
-    printline "\$(sadm_server_nb_cpu)" "Number of Physical CPU on system" $(sadm_server_nb_cpu)
-    printline "\$(sadm_server_core_per_socket)" "Number of Core per Socket" $(sadm_server_core_per_socket) 
-    printline "\$(sadm_server_thread_per_core)" "Number of Thread per Core" $(sadm_server_thread_per_core)
-    printline "\$(sadm_server_nb_socket)" "Number of socket on system" $(sadm_server_nb_socket)
-    printline "\$(sadm_silentremove 'filename')" "Delete a file silently" "0"
-    printline "\$(sadm_server_cpu_speed)" "Server CPU Speed in MHz" "$(sadm_server_cpu_speed) MHz"
 }
 
 
@@ -251,15 +257,22 @@ print_dev_functions()
 print_user_variables()
 { 
 
-    printheader "02) User Variables that affect SADMIN Library behavior, set them prior to calling start() function"
-
+    printheader "02) SADMIN Section of your program that is shared with SADMIN Bash Library."
+    printline "\$SADM_TPID"  "Script Process ID." "$SADM_TPID" 
+    printline "\$SADM_HOSTNAME" "Host name without Domain Name" "$SADM_HOSTNAME" 
+    printline "\$SADM_OS_TYPE" "Return LINUX,AIX,DARWIN,SUNOS" "$SADM_OS_TYPE" 
+    printline "\$SADM_USERNAME" "Current UserName" "$SADM_USERNAME" #
+    printline "\$SADM_DEBUG" "Debug Level (0-9), 0 = NoDebug" "$SADM_DEBUG" 
+    printline "\$SADM_EXIT_CODE" "Current value of script exit code" "$SADM_EXIT_CODE" 
+    printline "\$SADM_SSH_CMD" "SSH command to access client" "$SADM_SSH_CMD" 
+    printf    "\n" 
+    printline "\$SADM_PN" "Script Name With Extension" "$SADM_PN"
+    printline "\$SADM_INST" "Script name(without extension)" "$SADM_INST" 
     printline "\$SADM_VER" "Program Version Number" "$SADM_VER" 
     printline "\$SADM_DESC" "Program Description" "$SADM_DESC" 
-    printline "\$SADM_PN" "Program Name With Extension" "$SADM_PN"
-    printline "\$SADM_INST" "Program Name Without Extension" "$SADM_INST" 
     printline "\$SADM_ROOT_ONLY" "Can only be run by 'root' user [Y/N]" "$SADM_ROOT_ONLY" 
     printline "\$SADM_SERVER_ONLY" "Can only run on SADMIN server [Y/N]" "$SADM_SERVER_ONLY"   
-    printline "\$SADMGRP_ONLY" "Run only by user part of '$SADM_GROUP'" "$SADM_SERVER_ONLY"
+    printline "\$SADM_GROUP_ONLY" "Run only by user part of '$SADM_GROUP'" "$SADM_GROUP_ONLY"
     printline "\$SADM_MULTIPLE_EXEC" "Run only one instance of Pgm. [Y/N]" "$SADM_MULTIPLE_EXEC"
     printline "\$SADM_QUIET" "Y=HideMsg & Err#  N=Show Msg & Err#" "$SADM_QUIET"
     printline "\$SADM_LOG_TYPE" "Set Output to [S]creen [L]og [B]oth" "$SADM_LOG_TYPE"
@@ -267,29 +280,21 @@ print_user_variables()
     printline "\$SADM_LOG_HEADER" "Generate Header in log [Y,N]" "$SADM_LOG_HEADER" 
     printline "\$SADM_LOG_FOOTER" "Generate Footer in log [Y/N]" "$SADM_LOG_FOOTER" 
     printline "\$SADM_USE_RCH" "Generate entry in '*.rch' file" "$SADM_USE_RCH" 
-    printline "\$SADM_DEBUG" "Debug Level (0-9), 0 = NoDebug" "$SADM_DEBUG" 
-    printline "\$SADM_USERNAME" "Current User Name" "$SADM_USERNAME"
-    printline "\$SADM_TPID" "Current Process ID" "$SADM_TPID" 
-    printline "\$SADM_EXIT_CODE" "Current value of script exit code" "$SADM_EXIT_CODE" 
     printline "\$SADM_ERRNO" "0=OK, Error# returned by function" "$SADM_ERRNO"
     printline "\$SADM_ERRMSG" "Error Msg returned by function" "$SADM_ERRMSG"  
-    printline "\$SADM_HOSTNAME" "Current system hostname" "$SADM_HOSTNAME"     
     printline "\$SADM_PID_TIMEOUT"  "Stop Pgm. if running more than x sec" "$SADM_PID_TIMEOUT Sec."
     printline "\$SADM_LOCK_TIMEOUT" "Remove the system lock after X sec."  "$SADM_LOCK_TIMEOUT Sec."
 
 
-    printf    "\n\n## Override the default from sadmin.cfg in this program."  
+    print_section_header "Override the default values defined in sadmin.cfg for this program of yours."  
     printline "\$SADM_ALERT_TYPE" "0=NoAlert 1=OnError 2=OnOK 3=Always" "$SADM_ALERT_TYPE" 
-    printline "\$SADM_ALERT_GROUP" "Default Error Group Name" "$SADM_ALERT_GROUP"
+    printline "\$SADM_ALERT_GROUP" "Error Group Name (Default)" "$SADM_ALERT_GROUP"
     printline "\$SADM_WARNING_GROUP" "Warning Alert group Name" "$SADM_WARNING_GROUP" 
     printline "\$SADM_INFO_GROUP" "Infor Alert Group Name" "$SADM_INFO_GROUP" 
     printline "\$SADM_ALERT_REPEAT" "0=NoAlertRepeat, Repeat every sec." "$SADM_ALERT_REPEAT Sec."
     printline "\$SADM_MAIL_ADDR" "Email Address of SADMIN SysAdmin " "$SADM_MAIL_ADDR" 
-    printline "\$SADM_MAX_LOGLINE" "Nb of Lines to trim (0=NoTrim)" "$SADM_MAX_LOGLINE" 
-    printline "\$SADM_MAX_RCHLINE" "Nb of Lines to trim (0=NoTrim)" "$SADM_MAX_RCHLINE" 
-    printline "\$SADM_EMAIL_STARTUP" "Send or Not email on startup (Y/N)" "$SADM_EMAIL_STARTUP"
-    printline "\$SADM_EMAIL_SHUTDOWN" "Send or Not email on shutdown (Y/N)" "$SADM_EMAIL_SHUTDOWN" 
-    printline "\$SADM_SSH_CMD" "SSH command to access client" "$SADM_SSH_CMD" 
+    printline "\$SADM_MAX_LOGLINE" "Nb of Lines to trim (0=NoTrim)" "$SADM_MAX_LOGLINE lines." 
+    printline "\$SADM_MAX_RCHLINE" "Nb of Lines to trim (0=NoTrim)" "$SADM_MAX_RCHLINE lines." 
 } 
 
 
@@ -298,15 +303,14 @@ print_user_variables()
 #===================================================================================================
 function print_start_stop()
 {
-    printheader "3) Overview of the 'sa.start' and 'sa.stop' functions in Bash Library"
+    printheader "3) Summary of the 'sadm_start()' and 'sadm_stop()' functions in SADMIN Bash Library"
 
-    echo "Bash Library Functions"
     echo ""
-    echo " 'sadm_start()' - Bash Library Function   "
+    echo "'sadm_start()' - Bash Library Function   "
     echo ""
-    echo "    The 'start()' function basically initialize the SADMIN environment."
+    echo "    The 'sadm_start()' function basically initialize the SADMIN environment."
     echo "    When you call 'sadm_start()', it will only come back to caller if everything went OK."
-    echo "    Otherwise it will advise the user of the error and exit(1)."
+    echo "    Otherwise, it will advise the user of the error and exit(1)."
     echo ""
     echo "  Summary of the parts that 'sadm_start()' perform :"
     echo "    1) Step one, make sure all \$SADMIN directories & sub-dir. exist and have proper permissions."
@@ -315,25 +319,23 @@ function print_start_stop()
     echo "    4) if \$SADM_ROOT_ONLY='Y', The script can only be run by 'root' user [Y/N]."
     echo "       If user is not 'root', we advise the user and exit(1)."
     echo "    5) If \$SADM_SERVER_ONLY='Y', and not on the SADMIN server, show error message and exit(1)."
-    echo "    6) If \$SADM_SADMGRP_ONLY='Y', and the user is not part of the SADM_GROUP (unless 'root'), "
+    echo "    6) If \$SADM_GROUP_ONLY='Y', and the user is not part of the SADM_GROUP (unless 'root'), "
     echo "       show error message and exit(1)."
     echo "    7) If \$SADM_USE_RCH='Y', write starting time to the RCH file (With a code 2=Running)."
-    echo "    8) If system is lock (and running on the SADMIN), issue message and exit(1)"
+    echo "    8) If system is lock and running on the SADMIN server, issue message and exit(1)"
     echo "    9) If PID file '\$SADM_PID_FILE' exist and '\$SADM_MULTIPLE_EXEC='Y'', continue normal execution"
     echo "       If PID file exist and execution time (sec) is less than the '\$SADM_PID_TIMEOUT', show error message and exit(1)."
     echo "       If PID file exist and execution time (sec) exceed the '\$SADM_PID_TIMEOUT' a new '\$SADM_PID_FILE' is created"
     echo "       and execution is resume."
     echo " "
-    echo "   *** If any unrecoverable error occurs while executing this function the program is aborted exit(1). ***"
+    echo "   Notes:  If any unrecoverable error occurs while executing 'sadm_start()', it will advise" 
+    echo "           the user of the error and exit(1). See example in '$SADMIN/bin/sadm_template.sh'."
     echo ""
     echo ""
+    echo "'sadm_stop(exit_code)'"
+    echo "    The sadm_stop(exitcode) basically collect and write information in log and in 'rch' file."
     echo ""
-    echo "    'sadm_stop(exit_code)' Bash Library Function "
-    echo "        - exit_code (0=Success, 1=Error): Variable defined in SADMIN section."
-    echo ""
-    echo "  This should be the one of the last function called at the end of your program."
-    echo ""
-    echo "  What this function does:"
+    echo "  Summary of the parts that 'sadm_stop()' does :"
     echo "    1) Calculate execution Time."
     echo "    2) If $SADM_USE_RCH='Y', update the rch file (End Time & Elapse Time ...)."
     echo "    3) Validate the alert group, "
@@ -346,189 +348,196 @@ function print_start_stop()
     echo "   10) Set permission and owner/group to log and rch files."
     echo "   11) If on the SADMIN server, then rch and log are immediatly web central directory."
     echo " "
+    echo "    Notes: This should be the one of the last function called at the end of your program."
+    echo "           See example in '$SADMIN/bin/sadm_template.sh'."
+    echo ""
 }
 
 
 
 
 
-#===================================================================================================
-# 4) Print SADMIN Functions Available Only in Bash Shell
-#===================================================================================================
-print_bash_functions()
-{
-    printheader "4) Function Available from the SADMIN Bash Library."
-
-    printline "\$(sadm_server_type)" "Host is Physical or Virtual (P/V)" $(sadm_server_type)
-    printline "\$(sadm_server_model)" "Server model (Ex: HP ProLiant DL580)" $(sadm_server_model)
-    printline "\$(sadm_server_memory)" "Server total memory in MB (Ex: 3790)" $(sadm_server_memory)
-    printline "\$(sadm_server_hardware_bitmode)" "CPU Hardware capable of 32/64 bits" $(sadm_server_hardware_bitmode)
-    printline "\$(sadm_server_nb_logical_cpu)" "Number of Logical CPU on system" $(sadm_server_nb_logical_cpu)
-    printline "\$(sadm_server_disks)" "Disks list(MB) (DISKNAME|SIZE,...)" $(sadm_server_disks)
-    printline "\$(sadm_server_vg)" "VG list(MB) (VGNAME|SIZE|USED|FREE)" $(sadm_server_vg)
-    printline "\$(sadm_server_ips)" "Network IP(Name|IP|Netmask|MAC)" $(sadm_server_ips)
-    printline "sadm_toupper string" "Return string uppercase" "$sadm_toupper 'STRING'"
-    printline "sadm_tolower STRING" "Return string lowercase" "$sadm_tolower 'string'"
-    printline "sadm_capitalize String" "Return string capitalize" "$(sadm_capitalize 'STRING')"
-    printline "sadm_ask \"Question\"" "Show message & wait for [Y/y/N/n]" "sadm_ask \"Question\""
-}
-
-
-
-
-
-# 5) Print sadmin.cfg Variables available to users
+# 4) Print sadmin.cfg Variables available to users
 #===================================================================================================
 print_sadmin_cfg()
 {
-    printheader "5) Variables Available reflecting values from SADMIN configuration file."
+    printheader "4) Variables Available reflecting values from SADMIN configuration file."
 
+    print_section_header "----- General Section -----"
     printline "\$SADM_SERVER" "SADMIN SERVER NAME (FQDN)" "$SADM_SERVER" 
     printline "\$SADM_HOST_TYPE" "SADMIN HOST TYPE" "$SADM_HOST_TYPE"
+    printline "\$SADM_CIE_NAME" "Your Company Name" "$SADM_CIE_NAME"
+    printline "\$SADM_DOMAIN" "Server Creation Default Domain" "$SADM_DOMAIN" 
+    printline "\$SADM_USER" "SADMIN User Name" "$SADM_USER"
+    printline "\$SADM_GROUP" "SADMIN Group Name" "$SADM_GROUP"
+    printline "\$SADM_PWD_RANDOM" "Auto generation of '$SADM_USER' password" "$SADM_PWD_RANDOM"
+    printline "\$SADM_PID_TIMEOUT" "PID File Time To Live default in sec" "$SADM_PID_TIMEOUT Sec."
+    printline "\$SADM_LOCK_TIMEOUT" "Maximum of sec. a system can be lock" "$SADM_LOCK_TIMEOUT Sec."
+
+
+    print_section_header "----- Database Section -----"
+    printline "\$SADM_DBNAME" "SADMIN Database Name" "$SADM_DBNAME"
+    printline "\$SADM_DBHOST" "SADMIN Database Host" "$SADM_DBHOST"
+    printline "\$SADM_DBPORT" "SADMIN Database Host TCP Port" "$SADM_DBPORT"
+    # Read Only User (default is 'squery')
+    printline "\$SADM_RO_DBUSER" "SADMIN Database Read Only User" "$SADM_RO_DBUSER"
+    presult="$SADM_RO_DBPWD"                                            # Actual Content of Variable
+    if [ "$show_password" = "N" ] ; then presult="*Hidden*" ;fi         # Don't show DB Password
+    printline "\$SADM_RO_DBPWD" "SADMIN Database Read Only User Pwd" "$presult"
+    # Read & Write User (default is 'sadmin')
+    printline "\$SADM_RW_DBUSER" "SADMIN Database Read/Write User" "$SADM_RW_DBUSER"
+    presult="$SADM_RW_DBPWD"                                            # Actual Content of Variable
+    if [ "$show_password" = "N" ] ; then presult="*Hidden*" ;fi         # Don't show DB Password
+    printline "\$SADM_RW_DBPWD" "SADMIN Database Read/Write User Pwd" "$presult"
+    presult="$DBPASSFILE"
+    if [ "$show_password" = "N" ] ; then presult="*Hidden*" ;fi 
+    printline "\$DBPASSFILE" "SADMIN Database User Password File" "$presult"
+
+
+    print_section_header "----- Web Interface Section -----"
+    printline "\$SADM_WWW_USER" "User that Run Apache Web Server" "$SADM_WWW_USER"
+    printline "\$SADM_WWW_GROUP" "Group that Run Apache Web Server" "$SADM_WWW_GROUP"
+    printline "\$SADM_MONITOR_UPDATE_INTERVAL" "Monitor page update interval in sec." "$SADM_MONITOR_UPDATE_INTERVAL Sec." 
+    printline "\$SADM_MONITOR_RECENT_COUNT" "Monitor page nb. recent scripts" "$SADM_MONITOR_RECENT_COUNT line(s)." 
+    printline "\$SADM_MONITOR_RECENT_EXCLUDE" "Scripts excluded from SysMon Recent" "$SADM_MONITOR_RECENT_EXCLUDE"
+
+
+    print_section_header "----- Email Section -----"
     printline "\$SADM_MAIL_ADDR" "SADMIN Administrator Default Email" "$SADM_MAIL_ADDR"
+    printline "\$SADM_SMTP_SERVER" "Your Internet SMTP Server Name" "$SADM_SMTP_SERVER" 
+    printline "\$SADM_SMTP_PORT" "Your Internet SMTP Server Port" "$SADM_SMTP_PORT"
+    printline "\$SADM_SMTP_SENDER" "Your Internet Sender Email" "$SADM_SMTP_SENDER"
+    presult="$SADM_GMPWD"         
+    if [ "$show_password" = "N" ] ; then presult="*Hidden*" ;fi         # Don't show Mail Password
+    printline "\$SADM_GMPW" "Your Internet Sender Password" "$SADM_GMPW"
+    printline "\$SADM_EMAIL_STARTUP" "Email Administrator on Startup" "$SADM_EMAIL_STARTUP" 
+    printline "\$SADM_EMAIL_SHUTDOWN" "Email Administrator on Shutdown" "$SADM_EMAIL_SHUTDOWN"
+
+
+    print_section_header "----- Monitoring Section -----"
     printline "\$SADM_ALERT_TYPE" "0=NoMail 1=OnError 2=OnSuccess 3=All" "$SADM_ALERT_TYPE"
-    printline "\$SADM_ALERT_GROUP" "Default Alert Group" "$SADM_ALERT_GROUP" 
-
     printline "\$SADM_ALERT_REPEAT" "Seconds to wait before repeat alert" "$SADM_ALERT_REPEAT"
-    printline "\$SADM_DAYS_HISTORY" "Days to keep alert in History file" "$SADM_DAYS_HISTORY"
-    printline "\$SADM_DAYS_ARCHIVE" "Days to keep alert in Archive file" "$SADM_DAYS_ARCHIVE"        
-    printline "\$SADM_MAX_ARC_LINE" "Max lines to keep in alert Archive" "$SADM_MAX_ARC_LINE"
-
-    presult="*Hidden*"                                                  # TextBelt API Key
-    if [ "$show_textbelt" = "Y" ]                                       # If command line switch
-        then presult="$SADM_TEXTBELT_KEY"                               # TextBelt API Key
-    fi
+    printline "\$SADM_ALERT_GROUP" "Error Group Name (Default Group)" "$SADM_ALERT_GROUP" 
+    printline "\$SADM_WARNING_GROUP" "Default Alert Group" "$SADM_WARNING_GROUP" 
+    printline "\$SADM_INFO_GROUP" "Default Alert Group" "$SADM_INFO_GROUP" 
+    printline "\$SADM_SSH_PORT" "SSH Port to communicate with client" "$SADM_SSH_PORT"
+    # Alerting with Textbelt   
+    presult="*Hidden*"                                                      # Default Hidden
+    if [ "$show_textbelt" = "Y" ] ;then presult="$SADM_TEXTBELT_KEY" ;fi    # TextBelt API Key
+    printline "\$SADM_TEXTBELT_URL" "TextBelt.com API URL" "$SADM_TEXTBELT_URL"
     printline "\$SADM_TEXTBELT_KEY" "TextBelt.com API Key" "$SADM_TEXTBELT_KEY"
+    # Alerting with NTFY 
     printline "\$SADM_NTFY_EMAIL" "NTFY Email Address" "$SADM_NTFY_EMAIL"                
     printline "\$SADM_NTFY_PWD"   "NTFY Password"      "$SADM_NTFY_PWD"     
     printline "\$SADM_NTFY_TOKEN" "NTFY Token"         "$SADM_NTFY_TOKEN"      
     printline "\$SADM_NTFY_TOPIC" "NTFY Topic"         "$SADM_NTFY_TOPIC"        
     printline "\$SADM_NTFY_URL"   "NTFY URL"           "$SADM_NTFY_URL"
     printline "\$SADM_NTFY_USER"  "NTFY User"          "$SADM_NTFY_USER"                 
-    printline "\$SADM_TEXTBELT_URL" "TextBelt.com API URL" "$SADM_TEXTBELT_URL"
-    printline "\$SADM_CIE_NAME" "Your Company Name" "$SADM_CIE_NAME"
-    printline "\$SADM_DOMAIN" "Server Creation Default Domain" "$SADM_DOMAIN" 
-    printline "\$SADM_USER" "SADMIN User Name" "$SADM_USER"
-    printline "\$SADM_GROUP" "SADMIN Group Name" "$SADM_GROUP"
-    printline "\$SADM_PWD_RANDOM" "Auto generation of '$SADM_USER' password" "$SADM_PWD_RANDOM"
-    printline "\$SADM_WWW_USER" "User that Run Apache Web Server" "$SADM_WWW_USER"
-    printline "\$SADM_WWW_GROUP" "Group that Run Apache Web Server" "$SADM_WWW_GROUP"
-    printline "\$SADM_DBNAME" "SADMIN Database Name" "$SADM_DBNAME"
-    printline "\$SADM_DBHOST" "SADMIN Database Host" "$SADM_DBHOST"
-    printline "\$SADM_DBPORT" "SADMIN Database Host TCP Port" "$SADM_DBPORT"
-    
-    printline "\$SADM_RW_DBUSER" "SADMIN Database Read/Write User" "$SADM_RW_DBUSER"
-    presult="$SADM_RW_DBPWD"                                            # Actual Content of Variable
-    if [ "$show_password" = "N" ] ; then presult="*Hidden*" ;fi         # Don't show DB Password
-    printline "\$SADM_RW_DBPWD" "SADMIN Database Read/Write User Pwd" "$presult"
 
-    printline "\$SADM_RO_DBUSER" "SADMIN Database Read Only User" "$SADM_RO_DBUSER"
-    presult="$SADM_RO_DBPWD"                                            # Actual Content of Variable
-    if [ "$show_password" = "N" ] ; then presult="*Hidden*" ;fi         # Don't show DB Password
-    printline "\$SADM_RO_DBPWD" "SADMIN Database Read Only User Pwd" "$presult"
 
-    printline "\$SADM_SMTP_SERVER" "Your Internet SMTP Server Name" "$SADM_SMTP_SERVER" 
-    printline "\$SADM_SMTP_PORT" "Your Internet SMTP Server Port" "$SADM_SMTP_PORT"
-    printline "\$SADM_SMTP_SENDER" "Your Internet Sender Email" "$SADM_SMTP_SENDER"
+    print_section_header "----- Files and Logs pruning Section -----" 
+    printline "\$SADM_RCH_KEEPDAYS" "Nb. days to keep unmodified rch file" "$SADM_RCH_KEEPDAYS days"
+    printline "\$SADM_LOG_KEEPDAYS" "Nb. days to keep unmodified log file" "$SADM_LOG_KEEPDAYS days"
+    printline "\$SADM_MAX_RCHLINE" "Trim rch file to this max. of lines" "$SADM_MAX_RCHLINE lines"
+    printline "\$SADM_MAX_LOGLINE" "Trim log to this maximum of lines" "$SADM_MAX_LOGLINE lines"
+    printline "\$SADM_DAYS_HISTORY" "Days to keep alert in History file" "$SADM_DAYS_HISTORY days"
+    printline "\$SADM_MAX_ARC_LINE" "Max lines to keep in alert Archive" "$SADM_MAX_ARC_LINE lines"
+    printline "\$SADM_NMON_KEEPDAYS" "Nb. of days to keep nmon perf. file" "$SADM_NMON_KEEPDAYS days"
 
-    presult="$SADM_GMPWD"         
-    if [ "$show_password" = "N" ] ; then presult="*Hidden*" ;fi         # Don't show Mail Password
-    printline "\$SADM_GMPW" "Your Internet Sender Password" "$SADM_GMPW"
 
-    printline "\$SADM_SSH_PORT" "SSH Port to communicate with client" "$SADM_SSH_PORT"
-    printline "\$SADM_MONITOR_UPDATE_INTERVAL" "Monitor page update interval in sec." "$SADM_MONITOR_UPDATE_INTERVAL" 
-    printline "\$SADM_MONITOR_RECENT_COUNT" "Monitor page nb. recent scripts" "$SADM_MONITOR_RECENT_COUNT" 
-    printline "\$SADM_MONITOR_RECENT_EXCLUDE" "Scripts excluded from SysMon Recent" "$SADM_MONITOR_RECENT_EXCLUDE"
-    printline "\$SADM_NMON_KEEPDAYS" "Nb. of days to keep nmon perf. file" "$SADM_NMON_KEEPDAYS"
-    printline "\$SADM_RCH_KEEPDAYS" "Nb. days to keep unmodified rch file" "$SADM_RCH_KEEPDAYS"
-    printline "\$SADM_LOG_KEEPDAYS" "Nb. days to keep unmodified log file" "$SADM_LOG_KEEPDAYS"
-    printline "\$SADM_MAX_RCHLINE" "Trim rch file to this max. of lines" "$SADM_MAX_RCLINE"
-    printline "\$SADM_MAX_LOGLINE" "Trim log to this maximum of lines" "$SADM_MAX_LOGLINE"
-    printline "\$SADM_PID_TIMEOUT" "PID File Time To Live default in sec" "$SADM_PID_TIMEOUT"
-    printline "\$SADM_LOCK_TIMEOUT" "Maximum of sec. a system can be lock" "$SADM_LOCK_TIMEOUT"
-
+    print_section_header "----- Subnet Network Scanner Section -----"
     printline "\$SADM_NETWORK1" "Network/Netmask 1 inv. IP/Name/Mac" "$SADM_NETWORK1"
     printline "\$SADM_NETWORK2" "Network/Netmask 2 inv. IP/Name/Mac" "$SADM_NETWORK2"
     printline "\$SADM_NETWORK3" "Network/Netmask 3 inv. IP/Name/Mac" "$SADM_NETWORK3"
     printline "\$SADM_NETWORK4" "Network/Netmask 4 inv. IP/Name/Mac" "$SADM_NETWORK4"
     printline "\$SADM_NETWORK5" "Network/Netmask 5 inv. IP/Name/Mac" "$SADM_NETWORK5"
 
+
+    print_section_header "----- ReaR Backup Section -----"
+    printline "\$SADM_REAR_BACKUP_SCRIPT" "Rear Backup Script Name" "$SADM_REAR_BACKUP_SCRIPT"
     printline "\$SADM_REAR_NFS_SERVER" "Rear NFS Server IP or Name" "$SADM_REAR_NFS_SERVER"
+    printline "\$SADM_REAR_NFS_SERVER_VER" "Rear NFS Server Version" "$SADM_REAR_NFS_SERVER_VER"
     printline "\$SADM_REAR_NFS_MOUNT_POINT" "Rear NFS Mount Point" "$SADM_REAR_NFS_MOUNT_POINT" 
-    printline "\$SADM_REAR_BACKUP_TO_KEEP" "Rear NFS Backup - Nb. to keep" "$SADM_REAR_BACKUP_TO_KEEP"
-    printline "\$SADM_REAR_BACKUP_DIF" "Rear NFS Backup - Size Difference" "$SADM_REAR_BACKUP_DIF"
+    printline "\$SADM_REAR_BACKUP_TO_KEEP" "Rear Number of backup to keep" "$SADM_REAR_BACKUP_TO_KEEP copies."
+    printline "\$SADM_REAR_BACKUP_DIF" "Rear Backup - Size Difference Alert" "${SADM_REAR_BACKUP_DIF}%"
     printline "\$SADM_REAR_BACKUP_INTERVAL" "Rear alert if Backup older than" "$SADM_REAR_BACKUP_INTERVAL days"
-    printline "\$SADM_REAR_DEL_FAILED_BACKUP" "Del backup that failed integrity check" "$SADM_REAR_DEL_FAILED_BACKUP"
+    printline "\$SADM_REAR_DEL_FAILED_BACKUP" "Del backup if failed integrity check" "$SADM_REAR_DEL_FAILED_BACKUP"
+    printline "\$SADM_REAR_CONCURRENT" "Concurrent backup processes" "$SADM_REAR_CONCURRENT"
     printline "\$SADM_REAR_BATCH_MODE" "Run script in batch mode (Y/N)" "$SADM_REAR_BATCH_MODE" 
     printline "\$SADM_REAR_BATCH_START_TIME" "Start time for launch batch backup" "$SADM_REAR_BATCH_START_TIME"  
-    printline "\$SADM_REAR_CONCURRENT" "Concurrent backup processes" "$SADM_REAR_CONCURRENT"
-    printline "\$SADM_REAR_BATCH_DAY2RUN" "0=Any Day,1=Su,2=Mo,3=Tu,4=We,5=Th,6=Fr,7=Sa" "$SADM_REAR_BATCH_DAY2RUN"
-    printline "\$SADM_REAR_BATCH_MTH2RUN" "0=Any Month, [1,2,...12] Month to run" "$SADM_REAR_BATCH_MTH2RUN"
-    printline "\$SADM_REAR_BATCH_DATE2RUN" "0=AnyDateDate to run [1,2...27,28]" "$SADM_REAR_BATCH_DATE2RUN"
+    printline "\$SADM_REAR_BATCH_DAY2RUN" "0=AnyDay, 1=Su,2=Mo,3=Tu,...7=Sa" "$SADM_REAR_BATCH_DAY2RUN"
+    printline "\$SADM_REAR_BATCH_MTH2RUN" "0=AnyMth, Months Numbers 1,2,12" "$SADM_REAR_BATCH_MTH2RUN"
+    printline "\$SADM_REAR_BATCH_DATE2RUN" "0=AnyDate, Date to run [1,2...27,28]" "$SADM_REAR_BATCH_DATE2RUN"
 
+
+    print_section_header "----- Backup Section -----"
     printline "\$SADM_BACKUP_NFS_SERVER" "NFS Backup IP or Server Name" "$SADM_BACKUP_NFS_SERVER"   
+    printline "\$SADM_BACKUP_NFS_SERVER_VER" "NFS Backup server Version" "$SADM_BACKUP_NFS_SERVER_VER"
     printline "\$SADM_BACKUP_NFS_MOUNT_POINT" "NFS Backup Mount Point" "$SADM_BACKUP_NFS_MOUNT_POINT"
-    printline "\$SADM_BACKUP_DIF" "Alert if size differ more than" "$SADM_BACKUP_DIF%"
+    printline "\$SADM_BACKUP_DIF" "Alert if cur. vs prev. size differ   " "${SADM_BACKUP_DIF}%"
     printline "\$SADM_BACKUP_INTERVAL" "Alert if Backup older than X days" "$SADM_BACKUP_INTERVAL days"
-    printline "\$SADM_DAILY_BACKUP_TO_KEEP" "Nb. of Daily Backup to keep" "$SADM_DAILY_BACKUP_TO_KEEP"
-    printline "\$SADM_WEEKLY_BACKUP_TO_KEEP" "Nb. of Weekly Backup to keep" "$SADM_WEEKLY_BACKUP_TO_KEEP"
-    printline "\$SADM_MONTHLY_BACKUP_TO_KEEP" "Nb. of Monthly Backup to keep" "$SADM_MONTHLY_BACKUP_TO_KEEP"
-    printline "\$SADM_YEARLY_BACKUP_TO_KEEP" "Nb. of Yearly Backup to keep" "$SADM_YEARLY_BACKUP_TO_KEEP"
+    printline "\$SADM_DAILY_BACKUP_TO_KEEP" "Nb. of Daily Backup to keep" "$SADM_DAILY_BACKUP_TO_KEEP copies"
+    printline "\$SADM_WEEKLY_BACKUP_TO_KEEP" "Nb. of Weekly Backup to keep" "$SADM_WEEKLY_BACKUP_TO_KEEP copies"
+    printline "\$SADM_MONTHLY_BACKUP_TO_KEEP" "Nb. of Monthly Backup to keep" "$SADM_MONTHLY_BACKUP_TO_KEEP copies"
+    printline "\$SADM_YEARLY_BACKUP_TO_KEEP" "Nb. of Yearly Backup to keep" "$SADM_YEARLY_BACKUP_TO_KEEP copies"
     printline "\$SADM_WEEKLY_BACKUP_DAY" "Weekly Backup Day (1=Mon,...,7=Sun)" "$SADM_WEEKLY_BACKUP_DAY"
     printline "\$SADM_MONTHLY_BACKUP_DATE" "Monthly Backup Date (1-28)" "$SADM_MONTHLY_BACKUP_DATE"
     printline "\$SADM_YEARLY_BACKUP_MONTH" "Month to take Yearly Backup (1-12)" "$SADM_YEARLY_BACKUP_MONTH"
     printline "\$SADM_YEARLY_BACKUP_DATE" "Date to do Yearly Backup(1-DayInMth)" "$SADM_YEARLY_BACKUP_DATE"
-    printline "\$SADM_BACKUP_DIF" "Alert if size differ more than" "$SADM_BACKUP_DIF%"
     printline "\$SADM_BACKUP_BATCH_MODE" "Run backup script in batch mode (Y/N)" "$SADM_BACKUP_BATCH_MODE"
     printline "\$SADM_BACKUP_BATCH_START_TIME" "Start time for launch batch backup" "$SADM_BACKUP_BATCH_START_TIME"
     printline "\$SADM_BACKUP_CONCURRENT" "Concurrent backup processes" "$SADM_BACKUP_CONCURRENT"
-    printline "\$SADM_BACKUP_BATCH_DAY2RUN" "Days to run batch backup" "$SADM_BACKUP_BATCH_DAY2RUN"
-    printline "\$SADM_BACKUP_BATCH_MTH2RUN" "Month to run batch backup" "$SADM_BACKUP_BATCH_MTH2RUN"
-    printline "\$SADM_BACKUP_BATCH_DATE2RUN" "Date to run batch backup" "$SADM_BACKUP_BATCH_DATE2RUN"
+    printline "\$SADM_BACKUP_BATCH_DAY2RUN" "0=AnyDay, 1=Su,2=Mo,3=Tu,...7=Sa" "$SADM_BACKUP_BATCH_DAY2RUN"
+    printline "\$SADM_BACKUP_BATCH_MTH2RUN" "0=AnyMth, Months Numbers 1,2,12" "$SADM_BACKUP_BATCH_MTH2RUN"
+    printline "\$SADM_BACKUP_BATCH_DATE2RUN" "0=AnyDate, Date to run [1,2...27,28]" "$SADM_BACKUP_BATCH_DATE2RUN"
 
+
+    print_section_header "----- Virtual Machine Export Section -----"
+    printline "\$SADM_VM_EXPORT_SCRIPT" "Virtual Machine Export Script Name" "$SADM_VM_EXPORT_SCRIPT"
     printline "\$SADM_VM_EXPORT_NFS_SERVER" "NFS Export Server" "$SADM_VM_EXPORT_NFS_SERVER"
+    printline "\$SADM_VM_EXPORT_NFS_SERVER_VER" "Version du server NFS (3,4)" "$SADM_VM_EXPORT_NFS_SERVER_VER"
     printline "\$SADM_VM_EXPORT_MOUNT_POINT" "NFS Export Mount Point" "$SADM_VM_EXPORT_MOUNT_POINT"
-    printline "\$SADM_VM_EXPORT_TO_KEEP" "Nb. of export to keep" "$SADM_VM_EXPORT_TO_KEEP"
-    printline "\$SADM_VM_EXPORT_INTERVAL" "Sec. between each export" "$SADM_VM_EXPORT_INTERVAL"
+    printline "\$SADM_VM_EXPORT_DIF" "Alert if cur. vs prev. size differ" "${SADM_VM_EXPORT_DIF}%"
+    printline "\$SADM_VM_EXPORT_TO_KEEP" "Nb. of export to keep" "$SADM_VM_EXPORT_TO_KEEP copies."
+    printline "\$SADM_VM_EXPORT_INTERVAL" "Alert if export older than X days" "$SADM_VM_EXPORT_INTERVAL days."
     printline "\$SADM_VM_EXPORT_ALERT" "Issue an alert if interval reached" "$SADM_VM_EXPORT_ALERT"
     printline "\$SADM_VM_USER" "User part of 'vboxusers' user group" "$SADM_VM_USER"
-    printline "\$SADM_VM_STOP_TIMEOUT" "Max. seconds given for acpi shutdown" "$SADM_VM_STOP_TIMEOUT" 
-    printline "\$SADM_VM_START_INTERVAL" "Sec. to sleep between each VM start"  "$SADM_VM_START_INTERVAL"
-    printline "\$SADM_VM_EXPORT_DIF" "When Size 25% greater" "$SADM_VM_EXPORT_DIF%"
-    printline "\$SADM_VM_EXPORT_SCRIPT" "Default path to export script" "$SADM_VM_EXPORT_SCRIPT"
-    printline "\$SADM_VM_EXPORT_BATCH_MODE" "Run backup script in batch mode (Y/N)" "$SADM_VM_EXPORT_BATCH_MODE"
-    printline "\$SADM_VM_EXPORT_BATCH_START_TIME" "Start time for launch batch backup" "$SADM_VM_EXPORT_BATCH_START_TIME"
+    printline "\$SADM_VM_STOP_TIMEOUT" "Max. seconds given for acpi shutdown" "$SADM_VM_STOP_TIMEOUT seconds." 
+    printline "\$SADM_VM_START_INTERVAL" "Sec. to sleep between each VM start"  "$SADM_VM_START_INTERVAL seconds."
     printline "\$SADM_VM_EXPORT_CONCURRENT" "Concurrent backup processes" "$SADM_VM_EXPORT_CONCURRENT"
-    printline "\$SADM_VM_EXPORT_BATCH_DAY2RUN" "Days to run batch backup" "$SADM_VM_EXPORT_BATCH_DAY2RUN"
-    printline "\$SADM_VM_EXPORT_BATCH_MTH2RUN" "Month to run batch backup" "$SADM_VM_EXPORT_BATCH_MTH2RUN"
-    printline "\$SADM_VM_EXPORT_BATCH_DATE2RUN" "Date to run batch backup" "$SADM_VM_EXPORT_BATCH_DATE2RUN"
+    printline "\$SADM_VM_EXPORT_BATCH_MODE" "Run export in batch mode (Y/N)" "$SADM_VM_EXPORT_BATCH_MODE"
+    printline "\$SADM_VM_EXPORT_BATCH_START_TIME" "Start time for launch batch backup" "$SADM_VM_EXPORT_BATCH_START_TIME"
+    printline "\$SADM_VM_EXPORT_BATCH_DAY2RUN" "0=AnyDay, 1=Su,2=Mo,3=Tu,...7=Sa" "$SADM_VM_EXPORT_BATCH_DAY2RUN"
+    printline "\$SADM_VM_EXPORT_BATCH_MTH2RUN" "0=AnyMth, Months Numbers 1,2,12" "$SADM_VM_EXPORT_BATCH_MTH2RUN"
+    printline "\$SADM_VM_EXPORT_BATCH_DATE2RUN" "0=AnyDate, Date to run [1,2...27,28]" "$SADM_VM_EXPORT_BATCH_DATE2RUN"
 
-    # O?/ Update Variables (Default Values here will be overridden by SADM CONFIG FILE Content)
-    printline "\$SADM_OSUPDATE_INTERVAL" "Threshold between o/s update in days" "$SADM_OSUPDATE_INTERVAL"
+
+    print_section_header "----- SADMIN Operating System Update Section -----"
     printline "\$SADM_OSUPDATE_SCRIPT" "Name of O/S update script" "$SADM_OSUPDATE_SCRIPT"
+    printline "\$SADM_OSUPDATE_INTERVAL" "Threshold between o/s update in days" "$SADM_OSUPDATE_INTERVAL days"
     printline "\$SADM_OSUPDATE_AUTOREMOVE" "Remove unused package after update" "$SADM_OSUPDATE_AUTOREMOVE"
-    printline "\$SADM_OSUPDATE_FLATPAK" "Also Update the Flatpak package,if any" "$SADM_OSUPDATE_FLATPAK"
-    printline "\$SADM_OSUPDATE_SNAP" "Also Update the Snap package (if any)" "$SADM_OSUPDATE_SNAP"
+    printline "\$SADM_OSUPDATE_FLATPAK" "Also Update the Flatpak package" "$SADM_OSUPDATE_FLATPAK"
+    printline "\$SADM_OSUPDATE_SNAP" "Also Update the Snap package" "$SADM_OSUPDATE_SNAP"
     printline "\$SADM_OSUPDATE_REBOOT_NEEDED" "If reboot is needed after O/S update" "$SADM_OSUPDATE_REBOOT_NEEDED"
-    printline "\$SADM_OSUPDATE_REBOOT_TIME" "Seconds to wait for starting Apps." "$SADM_OSUPDATE_REBOOT_TIME"
+    printline "\$SADM_OSUPDATE_REBOOT_TIME" "Seconds to wait for starting Apps." "$SADM_OSUPDATE_REBOOT_TIME Seconds"
     printline "\$SADM_OSUPDATE_LOCK" "Lock system during O/S update Y/N" "$SADM_OSUPDATE_LOCK"
-    printline "\$SADM_OSUPDATE_BATCH_MODE" "Run script in batch mode (Y/N)" "$SADM_OSUPDATE_BATCH_MODE"
-    printline "\$SADM_OSUPDATE_BATCH_START_TIME" "Start time for launch batch backup" "$SADM_OSUPDATE_BATCH_START_TIME"
     printline "\$SADM_OSUPDATE_CONCURRENT" "Concurrent backup processes" "$SADM_OSUPDATE_CONCURRENT"
-    printline "\$SADM_OSUPDATE_BATCH_DAY2RUN" "Days to run batch backup" "$SADM_OSUPDATE_BATCH_DAY2RUN"
-    printline "\$SADM_OSUPDATE_BATCH_MTH2RUN" "Month to run batch backup" "$SADM_OSUPDATE_BATCH_MTH2RUN"
-    printline "\$SADM_OSUPDATE_BATCH_DATE2RUN" "Date to run batch backup" "$SADM_OSUPDATE_BATCH_DATE2RUN"
+    printline "\$SADM_OSUPDATE_BATCH_MODE" "Run O/S Update in batch mode (Y/N)" "$SADM_OSUPDATE_BATCH_MODE"
+    printline "\$SADM_OSUPDATE_BATCH_START_TIME" "Start time for launch batch update" "$SADM_OSUPDATE_BATCH_START_TIME"
+    printline "\$SADM_OSUPDATE_BATCH_DAY2RUN" "0=AnyDay, 1=Su,2=Mo,3=Tu,...7=Sa" "$SADM_OSUPDATE_BATCH_DAY2RUN"
+    printline "\$SADM_OSUPDATE_BATCH_MTH2RUN" "0=AnyMth, Months Numbers 1,2,12" "$SADM_OSUPDATE_BATCH_MTH2RUN"
+    printline "\$SADM_OSUPDATE_BATCH_DATE2RUN" "0=AnyDate, Date to run [1,2...27,28]" "$SADM_OSUPDATE_BATCH_DATE2RUN"
 
 }
 
 
 
 #===================================================================================================
-# 6) Print Directories Variables Available to Users
+# 5) Print Directories Variables Available to Users
 #===================================================================================================
 print_directory()
 {
-    printheader " 6) Print Directories Variables Available to Users" 
+    printheader " 5) Print Directories Variables Available to Users" 
 
     printline "\$SADM_BASE_DIR" "SADMIN Root Directory" "$SADM_BASE_DIR"
     printline "\$SADM_BIN_DIR" "Programs Directory" "$SADM_BIN_DIR"
@@ -563,15 +572,15 @@ print_directory()
 }
 
 
-# 7) Print Files Variables Available to Users
+# 6) Print Files Variables Available to Users
 #===================================================================================================
 print_file_variable()
 {
-    printheader " 7) Print Files Variables Available to Users" 
+    printheader " 6) Print Files Variables Available to Users" 
 
-    printline "\$SADM_LOG_FILE" "Program Log File" "$SADM_LOG_FILE"
-    printline "\$SADM_ERR_FILE" "Program Error Log file." "$SADM_ERR_FILE"
-    printline "\$SADM_RCH_FILE" "Pgm [R]eturn [C]ode [H]istory File" "$SADM_RCH_FILE"
+    printline "\$SADM_LOG_FILE" "Program Log File" "$SADM_LOG"
+    printline "\$SADM_ERR_FILE" "Program Error Log file." "$SADM_ELOG"
+    printline "\$SADM_RCH_FILE" "Pgm. [R]eturn [C]ode [H]istory File" "$SADM_RCH_FILE"
     printline "\$SADM_PID_FILE" "Program PID Lock File" "$SADM_PID_FILE"
     printline "\$SADM_TMP_FILE1" "Temporary File 1 (avail. to you)" "$SADM_TMP_FILE1"
     printline "\$SADM_TMP_FILE2" "Temporary File 2 (avail. to you)" "$SADM_TMP_FILE2"
@@ -582,15 +591,12 @@ print_file_variable()
     printline "\$SADM_ALERT_INIT" "Template of Alert Group File" "$SADM_ALERT_INIT"  
     printline "\$SADM_ALERT_HIST" "Alert History File" "$SADM_ALERT_HIST"
     printline "\$SADM_ALERT_HINI" "Template of Alert History File" "$SADM_ALERT_HINI"
-    printline "\$SADM_ALERT_ARCH" "SADMIN Alert Archive File" "$SADM_ALERT_ARCH"
-    presult="$DBPASSFILE"
-    if [ "$show_password" = "N" ] ; then presult="*Hidden*" ;fi 
-    printline "\$DBPASSFILE" "SADMIN Database User Password File" "$presult"
     printline "\$SADM_RPT_FILE" "System Monitor Report File" "$SADM_RPT_FILE"
     printline "\$SADM_BACKUP_LIST" "Backup List File Name" "$SADM_BACKUP_LIST"
     printline "\$SADM_BACKUP_LIST_INIT" "Template of Backup List" "$SADM_BACKUP_LIST_INIT"
     printline "\$SADM_BACKUP_EXCLUDE" "Backup Exclude List File Name" "$SADM_BACKUP_EXCLUDE"
     printline "\$SADM_BACKUP_EXCLUDE_INIT" "Template Backup Exclude" "$SADM_BACKUP_EXCLUDE_INIT"
+    return 0
 }
 
 
@@ -599,12 +605,11 @@ print_file_variable()
 
 
 
-# 8) Print Command Path Variables available to users
+# 7) Print Command Path Variables available to users
 #===================================================================================================
 print_command_path()
 {
-    printheader "8) Command Path Variable Available"
-    printline "\$SADM_LSB_RELEASE" "'lsb_release' cmd (get dist. info)" "$SADM_LSB_RELEASE"
+    printheader "7) Alias use to override malicious path changes"
     printline "\$SADM_DMIDECODE" "'dmidecode' use to get model & type" "$SADM_DMIDECODE"
     printline "\$SADM_BC" "'bc' use to do some Math." "$SADM_BC"  
     printline "\$SADM_FDISK" "'fdisk' use to get partition info" "$SADM_FDISK"
@@ -616,57 +621,66 @@ print_command_path()
     printline "\$SADM_NMON" "'nmon' Collect Performance Stat." "$SADM_NMON"
     printline "\$SADM_PARTED" "'parted' use to get disk real size" "$SADM_PARTED"
     printline "\$SADM_ETHTOOL" "'ethtool' use to get system IP" "$SADM_ETHTOOL"
-    printline "\$SADM_SSH" "'ssh' use to SSH on SADMIN client" "$SADM_SSH"
     printline "\$SADM_RRDTOOL" "'rrdtool' binary location" "$SADM_RRDTOOL"
+    printline "\$SADM_LSB_RELEASE" "'lsb_release' cmd (get dist. info)" "$SADM_LSB_RELEASE"
     printline "\$SADM_INXI" "'inxi' binary location" "$SADM_INXI"
-    printline "\$SADM_MYSQL" "'mysql' binary location" "$SADM_MYSQL"
+    if [ "$SADM_HOST_TYPE" = "S" ]                                      # Only on SADMIN Server
+        then printline "\$SADM_MYSQL" "'mysql' binary location" "$SADM_MYSQL"
+    fi 
+    printline "\$SADM_SSH" "'ssh' use to SSH on SADMIN client" "$SADM_SSH"
     printline "\$SADM_SED" "'sed' binary location" "$SADM_SED"
+    sadm_write_log " "
 }
 
 
+
+
 #===================================================================================================
-# Print Database Information
+# 8) Print Database Information
 #===================================================================================================
 print_db_variables()
 {
-    printheader "Database Information" "Description" "  This System Result"
+    printheader "8) Database Information" 
 
     CMDLINE="$SADM_MYSQL -t -u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "      # MySQL Auth/Read Only User
 
-    printf "\n\nShow SADMIN Tables:\n"
-    SQL="show tables; "                                                 # Show Table SQL
-    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
+    #printf "\n\nShow SADMIN Tables:\n"
+    #SQL="show tables; "                                                 # Show Table SQL
+    #$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" | grep -v 'pma__'
 
-    printf "\n\nCategory Table:\n"
-    SQL="describe server_category; "                                    # Show Table Format/colums
-    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
-    SQL="select * from server_category; "                               # Show Table SQL
-    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
-    SQL="SHOW keys FROM server_category FROM sadmin;"
-    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
-
-    printf "\n\nGroup Table:\n"
-    SQL="show columns from server_group; "                              # Show Table Format/columns
-    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
-    SQL="select * from server_group; "                                  # Show Table SQL
-    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
-    SQL="SHOW keys FROM server_group FROM sadmin;"
-    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
-
-    printf "\n\nServer Table:\n"
-    SQL="select srv_name, srv_desc, srv_osname, srv_osversion, srv_active, srv_cat, srv_group from server ; "
+    print_section_header "----- Server Table Section -----"
+    printf "\n"
+    #SQL="select srv_name, srv_desc, srv_osname, srv_osversion, srv_active, srv_cat, srv_group from server ; "
     SQL="describe server; "
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
     SQL="SHOW keys FROM server FROM sadmin;"
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
 
-    printf "\n\nScript Table:\n"
+    print_section_header "----- Category & Group Table Section -----"
+    printf "\n"
+    SQL="describe server_category; "                                    # Show Table Format/colums
+    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
+    #SQL="select * from server_category; "                               # Show Table SQL
+    #$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
+    SQL="SHOW keys FROM server_category FROM sadmin;"
+    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
+
+    #print_section_header "----- Group Table Section -----"
+    SQL="show columns from server_group; "                              # Show Table Format/columns
+    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
+    #SQL="select * from server_group; "                                  # Show Table SQL
+    #$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
+    SQL="SHOW keys FROM server_group FROM sadmin;"
+    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
+
+    print_section_header "----- Script Table Section -----"
     SQL="describe script; "
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
     SQL="SHOW keys FROM script FROM sadmin;"
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
 
-    printf "\n\nScript Details:\n"
+    printf "\n\n"
+    #Script Details:\n"
     SQL="describe script_rch; "
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
     SQL="SHOW keys FROM script_rch FROM sadmin;"
@@ -733,17 +747,15 @@ function cmd_options()
 # --------------------------------------------------------------------------------------------------
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Init Env. Dir. & RCH/Log
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # If Problem during init
+
     print_dev_functions                                                 # 1) Functions of SADMIN
     print_user_variables                                                # 2) Print USer Variables
     print_start_stop                                                    # 3) Start/Stop Function
-    print_bash_functions                                                # 4) List Bash Shell Only Func,
-    print_sadmin_cfg                                                    # 5) List Sadmin Cfg File Var.
-    print_directory                                                     # 6) List Client Dir. Var. 
-    print_file_variable                                                 # 7) List Files Var. of SADMIN
-    print_command_path                                                  # 8) List Command Path
+    print_sadmin_cfg                                                    # 4) List Sadmin Cfg File Var.
+    print_directory                                                     # 5) List Client Dir. Var. 
+    print_file_variable                                                 # 6) List Files Var. of SADMIN
+    print_command_path                                                  # 7) List Command Path
+    if [ "$SADM_HOST_TYPE" = "S" ] ; then print_db_variables ;fi        # 8) SADMIN Server DB Layout 
 
-    if [ "$SADM_HOST_TYPE" = "S" ] ; then print_db_variables ;fi        # 9) SADM Server DB Layout 
-    SDAM_EXIT_CODE=0                                                    # For Test purpose
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)

@@ -46,19 +46,15 @@ except ImportError as e:                                            # Trap Impor
     sys.exit(1)                                                     # Back to O/S With Error Code 1
 
  
-
-
-# --------------------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.58 (Compatible with previous one)
-# Setup some Global Variables and load the SADMIN standard library.
-# To use SADMIN tools, this section MUST be present near the top of your Python code.    
+# ---------   S T A R T   O F   S A D M I N   R E Q U I R E D   C O D E   S E C T I O N  -----------
+# v1.60 - Setup Variables and import SADMIN Python library '$SADMIN/lib/sadmlib2_std.py' as 'sa'.
+#       - To use SADMIN scripting tools, this section MUST be present near the top of your code.  
 # --------------------------------------------------------------------------------------------------
 try:
     SADM = os.environ['SADMIN']                                      # Get 'SADMIN' Environment Var.
 except KeyError as e:                                                # If 'SADMIN' is not defined
     print("Environment variable 'SADMIN' not defined.\n%s\nScript aborted.\n" % e) 
     sys.exit(1)                                                      # Go Back to O/S with Error
-
 try: 
     sys.path.insert(0, os.path.join(SADM, 'lib'))                    # Add SADMIN libdir to sys.path
     import sadmlib2_std as sa                                        # Import SADMIN Python Library
@@ -67,49 +63,56 @@ except ImportError as e:                                             # If Error 
     print("Please make sure the 'SADMIN' environment variable is defined.")
     sys.exit(1)                                                      # Go Back to O/S with Error
 
+# Global Variables for you to use
+pid                   = os.getpid()                     # Get Current Process ID.
+hostname              = sa.get_hostname()               # Get Current hostname
+os_type               = sa.get_ostype()                 # OS Type (In Uppercase,LINUX,AIX,MACOS)
+username              = sa.get_username())              # Return Current User Name
+debug                 = 0                               # Debug Level 0-9 (Increase Verbose)
+exit_code             = 0                               # Default Return Code (0=Success 1-Error)
+cmd_ssh_full          = "%s -qnp %s " % (sa.cmd_ssh,sa.sadm_ssh_port)# SSH Command with default port
+
 # Variables shared with SADMIN Python Library.
+sa.pn                 = os.path.basename(sys.argv[0])   # [P]rogram [N]ame with extension
+sa.inst               = sa.pn.split('.')[0]             # INSTance Name = Pgm Name Without Extension
 sa.ver                = "01.02.02" # Your Program VERSION number
 sa.desc               = "Description of program '%s'" % (sa.pn) # Your Program DESCRIPTION 
 sa.root_only          = False      # Can Only be run by 'root'(True/False)
 sa.server_only        = False      # Run Only on SADMIN server(True/False) SADM_SERVER in sadmin.cfg
-sa.sadmgrp_only       = False      # Run if part of SADMIN Group 'SADM_GROUP' in sadmin.cfg or root
-sa.use_rch            = True       # Write exec info to RCH file(True/False)
-sa.db_used            = False      # Open/Use auto connect DB(True)
+sa.sadm_group_only    = False      # Run if part of SADMIN Group 'SADM_GROUP' in sadmin.cfg or root
+sa.multiple_exec      = False      # Allow running multiple Instance ?
+sa.quiet              = False      # If error in a function & quiet is: (ctrl show/hide of message)
+                                   # False: Show error message and return the error number. 
+                                   # True : Only returm error number, but don't show error message.
 sa.log_type           = "B"        # S=Screen L=Log B=Both
 sa.log_append         = False      # Append to previous log (True/False)
 sa.log_header         = True       # Produce Log Header (True/False)
 sa.log_footer         = True       # Produce Log Footer (True/False)
-sa.multiple_exec      = False      # Allow running multiple Instance ?
-#
+sa.use_rch            = True       # Write exec info to RCH file(True/False)
+sa.errno              = 0          # Error No. set by function called (0=OK Else error/warning)
+sa.errmsg             = ""         # Error Mess. set by function you call (blank or error msg)
 sa.pid_timeout        = 14400      # PID File TTL (14400=4hrs) is SADM_PID_TIMEOUT in sadmin.cfg
 sa.lock_timeout       = 7200       # Sec. before unlock (7200=2hrs) SADM_LOCK_TIMEOUT in sadmin.cfg
-sa.max_logline        = 500        # Max. number of lines in log file SADM_MAX_LOGLINE in sadmin.cfg
-sa.max_rchline        = 50         # Max. number of lines in rch file SADM_MAX_RCLINE in sadmin.cfg
+sa.db_used            = False      # Open/Use auto connect DB(True)
 sa.db_name            = "sadmin"   # Database Name (sadmin=default) SADM_DBNAME in sadmin.cfg
-sa.sadm_alert_type    = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
-sa.sadm_alert_group   = "default"  # Error Alert   Group defined in $SADMIN/cfg/alert_group.cfg
-sa.sadm_warning_group = "warning"  # Warning Alert Group defined in $SADMIN/cfg/alert_group.cfg
-sa.sadm_info_group    = "info"     # Info Alert    Group defined in $SADMIN/cfg/alert_group.cfg
-sa.quiet              = False      # If error in a function & quiet is: (give you ctrl of message)
-                                   # False: Show error message and return the error number. 
-                                   # True : Omly returm error number, but don't show error message.
-sa.errno     = 0                   # Error No. set by function called (0=OK Else error/warning)
-sa.errmsg    = ""                  # Error Mess. set by function you call (blank or error msg)
-sa.db_conn   = None                # Database Connector when using DB,  set by sa.start()
-sa.db_cur    = None                # Database Cursor if you use the DB, set by sa.start()
-sa.pn        = os.path.basename(sys.argv[0])   # [P]rogram [N]ame with extension
-sa.inst      = sa.pn.split('.')[0] # INSTance Name = Pgm Name Without Ext
+sa.db_conn            = None       # Database Connector when using DB,  set by sa.start()
+sa.db_cur             = None       # Database Cursor if you use the DB, set by sa.start()
 
-# Variables that are share with the Library available to Developer
-username     = sa.get_username()   # Get Current User Name
-hostname     = sa.get_hostname()   # Get Current hostname
-pid          = os.getpid()         # Get Current Process ID.
-exit_code    = 0                   # Default Return Code (0=Success 1-Error)
-debug        = 0                   # Debug Level 0-9 (Increase Verbose)
-current_time = datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S") # Formatted current Date & Time 
-cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh,sa.sadm_ssh_port)         # SSH Command with default port
-
+# Variables that can override default value taken from $SADMIN/cfg/sadmin.cfg
+#sa.sadm_alert_type    = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
+#sa.sadm_alert_group   = "default"  # Error Alert   Group defined in $SADMIN/cfg/alert_group.cfg
+#sa.sadm_warning_group = "warning"  # Warning Alert Group defined in $SADMIN/cfg/alert_group.cfg
+#sa.sadm_info_group    = "info"     # Info Alert    Group defined in $SADMIN/cfg/alert_group.cfg
+#sa.sadm_alert_repeat  = 0          # 0=Alert Only Once or Interval in Seconds before alert repeat
+#sa.sadm_mail_addr     = ""         # Send email to ... default in sadmin.cfg 
+#sa.max_logline        = 500        # Max. number of lines in log file SADM_MAX_LOGLINE in sadmin.cfg
+#sa.max_rchline        = 50         # Max. number of lines in rch file SADM_MAX_RCLINE in sadmin.cfg
 # --------------------------------------------------------------------------------------------------
+
+
+
+# Script Variables
+current_time = datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S") # Formatted current Date & Time 
 
 
 
