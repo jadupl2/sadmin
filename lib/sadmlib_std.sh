@@ -280,6 +280,7 @@
 #@2026_07_11 lib v04.92.04 Add Code for "SADM_GROUP_ONLY", Modify Error Msg. when sendmail failed.
 #@2026_07_14 lib v04.92.05 Fix problem with the addition of 'SADM_GROUP_ONLY' and minor fixes
 #@2026_07_22 lib V04.92.06 Add Array of $SADM_OS_SUPPORTED, $SADM_LWEEKDAY, $SADM_LMTH_NAME
+#@2026_07_22 lib V04.92.07 Replace dash '-' with equal sign '=' 
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x
@@ -288,11 +289,11 @@ trap 'exit 0' 2
 # --------------------------------------------------------------------------------------------------
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
-export SADM_LIB_VER="04.92.06"                                          # This Library Version
+export SADM_LIB_VER="04.92.07"                                          # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
-export SADM_TEN_DASH=$(printf %10s |tr ' ' '-')                         # 10 dashes line
+export SADM_TEN_DASH=$(printf %10s |tr ' ' '=')                         # 10 dashes line
 export SADM_STIME=""                                                    # Script Start Time
 export DELETE_PID="Y"                                                   # Default Delete PID On Exit
 export LIB_DEBUG=0                                                      # This Library Debug Level
