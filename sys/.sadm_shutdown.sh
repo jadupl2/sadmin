@@ -24,7 +24,9 @@
 #@2026_03_10 startup/shutdown v02.17.00 Not appending the log 'SADM_LOG_APPEND="N"' (Create a new one).
 #@2026_07_08 startup/shutdown v02.17.01 Create Email Body text file to use sendmail 
 #@2026_07_09 startup/shutdown v02.17.02 Add 'uptime' and 'who-u' in the email sent to SADMIN admin.
-#@2026_07_09 startup/shutdown v02.17.03 Add more info in Email sent to SADMIN admin.
+#@2026_07_10 startup/shutdown v02.17.03 Add more info in Email sent to SADMIN admin.
+#@2026_07_22 startup/shutdown v02.17.04 Reduce info in Email sent to SADMIN admin.
+
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x
@@ -57,7 +59,7 @@ export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access S
 export SADM_PN=${0##*/}                                    # Script name(with extension)
 export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
 
-export SADM_VER='02.17.03'                                 # Script version number
+export SADM_VER='02.17.04'                                 # Script version number
 export SADM_PDESC="Executed when the system is brought down by the 'sadmin.service'."
 export SADM_ROOT_ONLY="Y"                                  # Pgm. run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Pgm. run only on SADMIN server? [Y]/[N]
@@ -110,22 +112,22 @@ shutdown_mail()
     sadm_write_log " "
     sadm_write_log "Send shutdown email to $SADM_MAIL_ADDR"
 
+    ws="SADM_INFO: System '$SADM_HOSTNAME' going down." 
+    we="$SADM_MAIL_ADDR"
+
     # Create the Body of email in a text file 
     wb="$SADMIN/tmp/body$$$.txt"                                        # Email body txt file
     echo -e "$(date)"  > $wb
     echo -e "For your information, system '${SADM_HOSTNAME}' is going down." >> $wb
     echo -e "The program '${SADM_PN}' is reponsable for sending this email." >> $wb
+    echo -e "\n\nUptime         : \n$(uptime)\n" >> $wb
+    echo -e "\nLast Reboot      : \n$(last reboot | head -3)\n" >> $wb
+    echo -e "\nUsers on system  : \n$(w)\n" >> $wb
+    echo -e "\nHardware or kernel errors prior to power down : \n$(dmesg -l err)\n" >> $wb
+    #echo -e "\nlistening ports  : \n$(ss -tnul)\n" >> $wb
+    #echo -e "\nTop 10 processes : \n$(ps -eo pid,ppid,cmd,%cpu,%mem --sort=-%cpu | head -n 11)\n" >> $wb
+    echo -e "\nHave a nice day !" >> $wb
 
-    echo -e "\n\nUptime          : \n$(uptime)\n" >> $wb
-    echo -e "\n\nLast Reboot     :\n$(last reboot | head -3)\n" >> $wb
-    echo -e "\n\Users on system  : \n$(w)\n" >> $wb
-    echo -e "\n\Hardware or kernel errors prior to power down : \n$(dmesg -l err)\n" >> $wb
-    echo -e "\n\listening ports  : \n$(ss -tnul)\n" >> $wb
-    echo -e "\n\Top 10 processes : \n$(ps -eo pid,ppid,cmd,%cpu,%mem --sort=-%cpu | head -n 11)\n" >> $wb
-    
-    echo -e "\nHave a nice day !\n" >> $wb
-    ws="SADM_INFO: System '$SADM_HOSTNAME' going down." 
-    we="$SADM_MAIL_ADDR"
     sadm_sendmail "$we" "$ws" "$wb" 
     RC=$?
     if [ $RC -eq 0 ] 
