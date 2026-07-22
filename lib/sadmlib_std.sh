@@ -279,8 +279,8 @@
 #@2026_07_09 lib v04.92.03 Fix issue new SADMIN section 1.60 (If using old version use default) 
 #@2026_07_11 lib v04.92.04 Add Code for "SADM_GROUP_ONLY", Modify Error Msg. when sendmail failed.
 #@2026_07_14 lib v04.92.05 Fix problem with the addition of 'SADM_GROUP_ONLY' and minor fixes
+#@2026_07_22 lib V04.92.06 Add Array of $SADM_OS_SUPPORTED, $SADM_LWEEKDAY, $SADM_LMTH_NAME
 #===================================================================================================
-
 trap 'exit 0' 2  
 #set -x
 
@@ -288,7 +288,7 @@ trap 'exit 0' 2
 # --------------------------------------------------------------------------------------------------
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
-export SADM_LIB_VER="04.92.05"                                          # This Library Version
+export SADM_LIB_VER="04.92.06"                                          # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -540,16 +540,26 @@ export SADM_VM_EXPORT_BATCH_DAY2RUN="2,7"                   # 0=AnyDay,1=Su,2=Mo
 export SADM_VM_EXPORT_BATCH_MTH2RUN="0"                     # 0=AnyMonth or [1,2,,,12] Month to run
 export SADM_VM_EXPORT_BATCH_DATE2RUN="0"                    # 0=AnyDate, Date to run [1,2...27,28]
 
-# Array of O/S Supported & Package Family
-#export SADM_OS_SUPPORTED=(  'REDHAT' 'CENTOS' 'FEDORA' 'ALMA' 'ROCKY'
-#                            'DEBIAN' 'RASPBIAN' 'UBUNTU' 'MINT' 'AIX' )
-#export SADM_REDHAT_FAMILY=( 'REDHAT' 'CENTOS' 'FEDORA' 'ALMA' 'ROCKY' )
-#export SADM_DEBIAN_FAMILY=( 'DEBIAN' 'RASPBIAN' 'UBUNTU' 'MINT' )
-export OS_REL="/etc/os-release"                                         # O/S Release File
+# Array of O/S Supported & Package Family - ${SADM_OS_SUPPORTED[2]} = "FEDORA" 
+export SADM_OS_SUPPORTED=("REDHAT" "CENTOS" "FEDORA" "ALMA" "ROCKY" "DEBIAN" "RASPBIAN" "UBUNTU" "MINT")
+#echo -e "\nSADM_OS_SUPPORTED[5,6] = ${SADM_OS_SUPPORTED[5]} ${SADM_OS_SUPPORTED[6]}\n"
+
+# OS Release File
+export OS_RELFILE="/etc/os-release"                         # O/S Release File
+
+
+# [L]ong WEEKDAY is from 1="Monday" to "7=Sunday" - [S]short WEEKDAY is from 1="Mon" to 7="Sun"
+export SADM_LWEEKDAY=("index0" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday")
+export SADM_SWEEKDAY=("index0" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat" "Sun")
+
+# [L]ong MTH_NAME return from 1="Monday" to "7=Sunday" - [S]short MTH_NAME is from 1="Jan" to 7="Dec"
+export SADM_LMTH_NAME=("index0" "January" "February" "March" "April" "May" "June" "July" "August" 
+              "September" "October" "November" "December")
+export SADM_SMTH_NAME=("in0" "Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec")
 
 
 # Local to Library Variable - Can't be use elsewhere outside this script
-export LOCAL_TMP="$SADM_TMP_DIR/sadmlib_tmp.$$"                         # Local Temp File
+export LOCAL_TMP="$SADM_TMP_DIR/sadmlib_tmp.$$"             # Local Temp File
 
 # Misc. Screen Attribute
 if [ -z "$TERM" ] || [ "$TERM" = "dumb" ] || [ "$TERM" = "unknown" ]
@@ -730,14 +740,14 @@ sadm_writelog() {
 #
 sadm_write_log()
 {
-    init_msg="$1"                                                       # Initial msg received
-    LINEFEED='Y'                                                        # Add Linefeed at end of msg
+    init_msg="$1"                                                       # Initial message received
+    LINEFEED='Y'                                                        # Add Linefeed (Default)
     dated_msg="$(date "+%C%y.%m.%d %H:%M:%S") $init_msg"                # Insert Date & Time in msg
 
     # If a second parameter 'NOLF' is specified means no LineFeed at the end of the line.
     if [ "$#" -eq 2 ]                                                   # Extra parameter received ?
         then OPTION=$(sadm_toupper "$2")                                # Convert it to UpperCase
-             if [ "$OPTION" = "NOLF" ] ;then LINEFEED='N' ;fi           # No LineFeed at EOL
+             if [ "$OPTION" = "NOLF" ] ;then LINEFEED='N' ;fi           # No LineFeed at EOL now
         else OPTION=""                                                  # Use default, With LineFeed 
     fi  
 
@@ -751,17 +761,23 @@ sadm_write_log()
     SC_MSG="${SC_MSG/"$SADM_SUCCESS"/$SADM_SSUCCESS}"
 
     case "$SADM_LOG_TYPE" in                                            # [S]creen [L]og or [B]oth 
-        S)      if [ "$LINEFEED" = "N" ] ; then echo -en "$SC_MSG" ; else echo -e  "$SC_MSG" ; fi
+        S)      if [ "$LINEFEED" = "N" ] 
+                    then printf "$SC_MSG" 
+                    else printf "${SC_MSG}\n" 
+                fi
                 ;;
-        L)      echo "$dated_msg" >> $SADM_LOG                          # Write dated Msg to LogFile
+        L)      printf "${dated_msg}\n" >> $SADM_LOG                    # Write dated Msg to LogFile
                 ;;
-        B)      if [ "$LINEFEED" = "N" ] ; then echo -en "$SC_MSG" ; else echo -e  "$SC_MSG" ; fi
-                echo "$dated_msg" >> $SADM_LOG                          # Write Msg to Log File
+        B)      if [ "$LINEFEED" = "N" ]
+                    then printf "$SC_MSG" 
+                    else printf "${SC_MSG}\n" 
+                fi
+                printf "${dated_msg}\n" >> $SADM_LOG                    # Write Msg to Log File
                 ;;
-        *)      echo -e "Invalid '$SADM_LOG_TYPE' ($SADM_LOG_TYPE) on line ${LINENO}." 
-                echo -e "Valid values are 'S' for Screen, 'L' for Log and 'B' for Both."
-                echo "Invalid '$SADM_LOG_TYPE' ($SADM_LOG_TYPE) on line ${LINENO}."   >> $SADM_LOG
-                echo "Valid values are 'S' for Screen, 'L' for Log and 'B' for Both." >> $SADM_LOG
+        *)      ERRMSG="Invalid log type '$SADM_LOG_TYPE' on line ${LINENO}." 
+                echo "$ERRMSG" >> $SADM_LOG
+                ERRMSG="Valid values are 'S' for Screen, 'L' for Log and 'B' for Both."
+                echo "$ERRMSG" >> $SADM_LOG
                 return 1                                                # Return Error to Caller       
                 ;;
     esac
@@ -1436,8 +1452,8 @@ sadm_get_osversion() {
                     if [ "$SADM_LSB_RELEASE" != "" ] && [ -x "$SADM_LSB_RELEASE" ]
                        then osver=$($SADM_LSB_RELEASE -rs | tail -1)
                     fi 
-                    if [ "$fos_name" = "UBUNTU" ] && [ -r /etc/os-release ]
-                       then osver=$(grep "^VERSION=" /etc/os-release |cut -d'"' -f2 |cut -d' ' -f 1)
+                    if [ "$fos_name" = "UBUNTU" ] && [ -r "$OS_RELFILE" ]
+                       then osver=$(grep "^VERSION=" $OS_RELFILE |cut -d'"' -f2 |cut -d' ' -f 1)
                     fi
                     if [ "$fos_name" = "DEBIAN" ] && [ -r /etc/debian_version ] 
                        then osver=$(cat /etc/debian_version) 
@@ -2304,6 +2320,7 @@ sadm_server_vg() {
 #            LOAD SADMIN CONFIGURATION FILE AND SET GLOBAL VARIABLES ACCORDINGLY
 # --------------------------------------------------------------------------------------------------
 sadm_load_config_file() {
+
     if [ "$LIB_DEBUG" -gt 4 ] ; then printf "\nIn 'sadm_load_config_file'." ; fi
 
     # SADMIN Configuration file '$SADMIN/cfg/sadmin.cfg' MUST be present.
@@ -2526,7 +2543,7 @@ sadm_load_config_file() {
                                             ;;
 
         esac
-        done < $SADM_CFG_FILE
+        done < "$SADM_CFG_FILE"
 
 
 
