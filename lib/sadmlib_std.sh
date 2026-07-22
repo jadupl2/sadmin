@@ -770,7 +770,7 @@ sadm_write_log()
                 ;;
         B)      if [ "$LINEFEED" = "N" ]
                     then printf "$SC_MSG" 
-                    else printf "${SC_MSG}\n" 
+                    else printf "$SC_MSG\n" 
                 fi
                 printf "${dated_msg}\n" >> $SADM_LOG                    # Write Msg to Log File
                 ;;
