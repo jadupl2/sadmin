@@ -121,7 +121,7 @@ define("SADM_WWW_NET_DIR"  , SADM_WWW_DAT_DIR . "/" .$HOSTNAME. "/net");    # We
 
 # SADMIN FILES DEFINITION
 define("SADM_CFG_FILE"            , SADM_CFG_DIR     . "/sadmin.cfg");          # SADMIN Config File
-define("SADM_PGM2DOC"             , SADM_CFG_DIR     . ".sadm_link_2doc.cfg");  # PGM to Doc link
+define("SADM_PGM2DOC"             , SADM_CFG_DIR     . "/.sadm_link_2doc.cfg"); # PGM to Doc link
 define("SADM_BACKUP_LIST_INIT"    , SADM_CFG_DIR     . "/.backup_list.txt");    # BackupList Init
 define("SADM_BACKUP_EXCLUDE_INIT" , SADM_CFG_DIR     . "/.backup_exclude.txt"); # Backup Exclude Init
 define("SADM_REAR_EXCLUDE_INIT"   , SADM_CFG_DIR     . "/.rear_exclude.txt");   # ReaR Exclude Init
