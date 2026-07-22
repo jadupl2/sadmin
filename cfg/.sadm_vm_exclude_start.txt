@@ -1,0 +1,17 @@
+# ----------------------------------------------------------------------------
+# List of VM to Exclude from Global Startup script (svm).
+# The command below is used to start all defined VMs in Virtual Box.
+#    $ $SADMIN/usr/bin/sadm_vm_start.sh -a 
+#
+# VirtualBox Machine Name defined in this file will be ignored by the script.
+# ----------------------------------------------------------------------------
+#
+nomad
+gumby      
+holmes
+mwindows10 
+#
+centos8
+debian11
+ubuntu2004
+#

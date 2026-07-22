@@ -31,7 +31,7 @@
 # 2021_09_15 web v3.10 Load new Var. SADM_MONITOR_RECENT_COUNT,SADM_MONITOR_RECENT_EXCLUDE
 # 2022_07_26 web v3.11 Set the TimeZone to America/Toronto
 # 2023_03_11 web v3.12 Load Rear backup diff & Interval at start, used on Rear Backup status page.
-#@2025_08_25 web v3.13 Change constant 'SADM_PGM2DOC' to '$SADMIN/doc//sadm_commands/sadm_link_2doc.cfg'
+#@2025_08_25 web v3.13 Change constant 'SADM_PGM2DOC' to '$SADMIN/cfg/.sadm_link_2doc.cfg'
 #@2026_03_03 lib v3.14 New constant: 'SADM_VM_EXPORT_SCRIPT', 'SADM_REAR_BACKUP_SCRIPT'
 #@2026_03_03 lib v3.14 New constant: 'SADM_OSUPDATE_SCRIPT'
 
@@ -121,7 +121,7 @@ define("SADM_WWW_NET_DIR"  , SADM_WWW_DAT_DIR . "/" .$HOSTNAME. "/net");    # We
 
 # SADMIN FILES DEFINITION
 define("SADM_CFG_FILE"            , SADM_CFG_DIR     . "/sadmin.cfg");          # SADMIN Config File
-define("SADM_PGM2DOC"  ,SADM_WWW_DOC_DIR . "/sadm_commands/sadm_link_2doc.cfg");    # PGM to Doc link
+define("SADM_PGM2DOC"             , SADM_CFG_DIR     . ".sadm_link_2doc.cfg");  # PGM to Doc link
 define("SADM_BACKUP_LIST_INIT"    , SADM_CFG_DIR     . "/.backup_list.txt");    # BackupList Init
 define("SADM_BACKUP_EXCLUDE_INIT" , SADM_CFG_DIR     . "/.backup_exclude.txt"); # Backup Exclude Init
 define("SADM_REAR_EXCLUDE_INIT"   , SADM_CFG_DIR     . "/.rear_exclude.txt");   # ReaR Exclude Init
