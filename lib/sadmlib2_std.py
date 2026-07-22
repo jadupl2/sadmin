@@ -2330,18 +2330,18 @@ def load_cmd_path():
                         False if one or more commands require are missing.
     """ 
 
-    global  cmd_fdisk , cmd_dmidecode , cmd_parted , cmd_lscpu , cmd_inxi , cmd_lsb_release ,\
-            cmd_bc , cmd_ssh , cmd_perl , cmd_nmon , cmd_ethtool , cmd_mutt , cmd_curl , cmd_rrdtool
+    global  cmd_fdisk, cmd_dmidecode, cmd_parted, cmd_lscpu, cmd_inxi, cmd_lsb_release, cmd_mysql,\
+            cmd_bc, cmd_ssh, cmd_perl, cmd_nmon, cmd_ethtool, cmd_mutt, cmd_curl, cmd_rrdtool
    
     if get_ostype() == "WINDOWS" : return(False)                        # Not valid on Windows
 
     # Making sure initially the Path to these commands is blank
-    cmd_fdisk = cmd_dmidecode = cmd_parted = cmd_lscpu = cmd_inxi = cmd_lsb_release = ""
+    cmd_fdisk = cmd_dmidecode = cmd_parted = cmd_lscpu = cmd_inxi = cmd_lsb_release = cmd_mysql = ""
     cmd_bc    = cmd_ssh = cmd_perl = cmd_nmon = cmd_ethtool = cmd_mutt = cmd_curl = cmd_rrdtool = ""
 
      # List of command to locate
     cmd_list = ['fdisk','dmidecode','parted','lscpu','inxi','lsb_release','bc','ssh','perl',
-                'nmon','ethtool','mutt','curl','rrdtool']    
+                'nmon','ethtool','mutt','curl','rrdtool','mysql']    
     
     requisites_status=True                                              # Assume Requirements all OK
     for cmd in cmd_list:
@@ -2361,6 +2361,8 @@ def load_cmd_path():
             if (cmd == 'mutt')          : cmd_mutt          = shutil.which(cmd)
             if (cmd == 'curl')          : cmd_curl          = shutil.which(cmd)
             if (cmd == 'rrdtool')       : cmd_rrdtool       = shutil.which(cmd)
+            if sadm_host_type == "S" : 
+                if (cmd == 'mysql')     : cmd_mysql         = shutil.which(cmd) 
         else : 
             if lib_debug > 4 : print ("Command '%s' not found on system." % (cmd))
             requisites_status=False                                     # Requirement not Met

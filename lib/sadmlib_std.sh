@@ -554,7 +554,7 @@ export SADM_SWEEKDAY=("index0" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat" "Sun")
 
 # [L]ong MTH_NAME return from 1="Monday" to "7=Sunday" - [S]short MTH_NAME is from 1="Jan" to 7="Dec"
 export SADM_LMTH_NAME=("index0" "January" "February" "March" "April" "May" "June" "July" "August" 
-              "September" "October" "November" "December")
+                        "September" "October" "November" "December")
 export SADM_SMTH_NAME=("in0" "Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec")
 
 

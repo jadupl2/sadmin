@@ -76,7 +76,7 @@ export SADM_VER='00.01.00'                                 # Pgm. Version Number
 export SADM_DESC="Describe what your program is doing."    # Short Desc. of your script.
 export SADM_ROOT_ONLY="N"                                  # Pgm. run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Pgm. run only on SADMIN server? [Y]/[N]
-export SADM_GROUP_ONLY='N'                            # Pgm. run only if usr part of SADMIN Grp
+export SADM_GROUP_ONLY='N'                                 # Pgm. run only if usr part of SADMIN Grp
 export SADM_MULTIPLE_EXEC="N"                              # Can Run Simultaneous copy of script Y/N
 export SADM_LOG_TYPE="B"                                   # Write log to [S]creen, [L]og, [B]oth
 export SADM_LOG_APPEND="N"                                 # Append log ? Y=AppendLog,N=CreateNewLog
