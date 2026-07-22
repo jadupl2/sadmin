@@ -42,67 +42,85 @@
 # 2022_08_17 backup v2.4 Updated with SADMIN section 1.52
 #@2024_04_17 backup v2.5 Replace 'sadm_write' with 'sadm_write_log' and 'sadm_write_err'.
 #@2024_12_17 backup v2.6 Updated with SADMIN section 1.56
-#@2025_-6_06 backup v2.7 Show a tree view of Database Backup directory.
-
+#@2026_07_22 backup v2.7 Update to section 1.60 
+#@2026_07_22 backup v2.8 Remove Array of month & weekday now in library.
+# --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
 
 
 
-# --------------------------  S A D M I N   C O D E    S E C T I O N  ------------------------------
-# v1.56 - Setup for Global variables and load the SADMIN standard library.
-#       - To use SADMIN tools, this section MUST be present near the top of your code.
 
-# Make Sure Environment Variable 'SADMIN' Is Defined.
-if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADMIN defined? Libr.exist
-    then if [ -r /etc/environment ] ; then source /etc/environment ; fi # LastChance defining SADMIN
-         if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]   # Still not define = Error
-            then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
-                 exit 1                                                 # No SADMIN Env. Var. Exit
-         fi
+
+
+                                                                                          
+# ---------   S T A R T   O F   S A D M I N   R E Q U I R E D   C O D E   S E C T I O N  -----------
+# v1.60 - Setup Global Variables and load the SADMIN standard library $SADMIN/lib/sadmlib_std.sh.
+#       - To use SADMIN scripting tools, this section MUST be present near the top of your code.    
+#
+# Make sure environment variable 'SADMIN' is defined, if it's not, exit with error message.
+if [ -r /etc/environment ] && [ -z "$SADMIN" ] ; then source /etc/environment ; fi 
+if [ -z "$SADMIN" ]                                        # Advise user, SADMIN Env. Var. is a MUST
+   then printf "\n[ ERROR ] Set 'SADMIN' environment variable to the install directory." 
+        printf "\n  - Add a line similar to 'SADMIN=/opt/sadmin' in /etc/environment." 
+        exit 1 
+fi 
+if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                   # If SADMIN shell library doesn't exist 
+   then printf "\n[ ERROR ] SADMIN library '$SADMIN/lib/sadmlib_std.sh' can't be found.\n" ; exit 1 
 fi 
 
-# YOU CAN USE THE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
-export SADM_PN=${0##*/}                                    # Script name(with extension)
-export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
+
+# SADMIN Section of your program that is shared with SADMIN Bash Library.
 export SADM_TPID="$$"                                      # Script Process ID.
 export SADM_HOSTNAME=$(hostname -s)                        # Host name without Domain Name
-export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_OS_TYPE=$(uname -s|tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
 export SADM_USERNAME=$(id -un)                             # Current user name.
+export SADM_DEBUG=0                                        # Debug Level(0-9), 0 = NoDebug
+export SADM_EXIT_CODE=0                                    # Pgm. Default Exit Code
+export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
+export SADM_PN=${0##*/}                                    # Script name(with extension)
+export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
 
-# YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='2.7'                                      # Script version number
 export SADM_DESC="Take a backup of all (Default) or selected (sadmin) database."
-export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
-export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
+export SADM_ROOT_ONLY="Y"                                  # Pgm. run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="Y"                                # Pgm. run only on SADMIN server? [Y]/[N]
+export SADM_GROUP_ONLY='N'                                 # Pgm. run only if usr part of SADMIN Grp
+export SADM_MULTIPLE_EXEC="N"                              # Can Run Simultaneous copy of script Y/N
 export SADM_LOG_TYPE="B"                                   # Write log to [S]creen, [L]og, [B]oth
-export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
-export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
-export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
-export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
-export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
-export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
-export SADM_EXIT_CODE=0                                    # Script Default Exit Code
-export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
-export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") 
-export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX") 
+export SADM_LOG_APPEND="N"                                 # Append log ? Y=AppendLog,N=CreateNewLog
+export SADM_LOG_HEADER="Y"                                 # Y = ProduceLogHeader, N = NoLogHeader
+export SADM_LOG_FOOTER="Y"                                 # Y = ProduceLogFooter, N = NoLogFooter
+export SADM_USE_RCH="Y"                                    # Update the RCH History File (Y/N)
+export SADM_QUIET="N"                                      # Y=HideMsg & Error#  N=Show Msg & Error#
+export SADM_ERRMSG=""                                      # Error Message returned by Library 
+export SADM_ERRNO=0                                        # Error number (0=OK) returned by Library
+export SADM_PID_TIMEOUT=7200                               # Sec. before PID file is remove,7200=2hr
+export SADM_LOCK_TIMEOUT=3600                              # Sec. before System LockFile is Del, 1hr
+export SADM_DB_USED="N"                                    # Use or Not, Got to be on SADMIN server
+export SADM_DB_NAME="sadmin"                               # Database Name SADM_DBNAME in sadmin.cfg
+export SADM_TMP_FILE1=$(mktemp -q "$SADMIN/tmp/sadm_tmp1_XXX") # Make tmpfile1, rm in sadm_stop()
+export SADM_TMP_FILE2=$(mktemp -q "$SADMIN/tmp/sadm_tmp2_XXX") # Make tmpfile2, rm in sadm_stop()
+export SADM_TMP_FILE3=$(mktemp -q "$SADMIN/tmp/sadm_tmp3_XXX") # Make tmpfile3, rm in sadm_stop()
 
-# LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
-. "${SADMIN}/lib/sadmlib_std.sh"                           # Load SADMIN Shell Library
-export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
+# Load SADMIN Bash Shell Library, ready to  be used.
+. "${SADMIN}/lib/sadmlib_std.sh"                           # Init SADMIN tools, load cfg files
+
+# Example of some functions and variable you can use.
+export SADM_OS_NAME=$(sadm_get_osname)                     # REDHAT,ROCKY,ALMA,CENTOS,DEBIAN,UBUNTU.
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.5)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
-#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
-# VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
-# BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
-#export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
-#export SADM_ALERT_GROUP="default"                          # Alert Group to advise
-#export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
-#export SADM_MAX_LOGLINE=400                                # Nb Lines to trim(0=NoTrim)
-#export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
-#export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
-#export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
+# Variables Below Are Taken From SADMIN Configuration File (sadmin.cfg) when the Library is loaded.
+# You Can Overridde them On A Per Program Basis (If Needed).
+#export SADM_ALERT_TYPE=1                                   # 0=NoAlert 1=OnError 2=OnOK 3=Always
+#export SADM_ALERT_GROUP="default"                          # Error Group Define in alert_group.cfg
+#export SADM_WARNING_GROUP="default"                        # Warning Alert Group (alert_group.cfg)   
+#export SADM_INFO_GROUP="default"                           # Info Alert Group (in alert_group.cfg)
+#export SADM_ALERT_REPEAT=0                                 # 0=No Alert Repeat, Sec. between Repeat
+#export SADM_MAIL_ADDR="your_email@domain.com"              # Send email to...default in sadmin.cfg
+#export SADM_MAX_LOGLINE=400                                # Nb of Lines to trim (0=NoTrim)
+#export SADM_MAX_RCHLINE=35                                 # Nb of Lines to trim (0=NoTrim)
 # -------------------  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
 
 
@@ -122,13 +140,17 @@ export BACKUP_NAME="all"                                                # DB Nam
 export ERROR_COUNT=0                                                    # Total Backup Error Counter
 export COMPRESS_BACKUP="Y"                                              # Default Compress Backup
 
+# [L]ong WEEKDAY is from 1="Monday" to "7=Sunday" - [S]short WEEKDAY is from 1="Mon" to 7="Sun"
+export SADM_LWEEKDAY=("index0" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday")
+export SADM_SWEEKDAY=("index0" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat" "Sun")
 
-WEEKDAY=("index0" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday")
-MTH_NAME=("index0" "January" "February" "March" "April" "May" "June" "July" "August" "September"
-"October" "November" "December")
+# [L]ong MTH_NAME return from 1="Monday" to "7=Sunday" - [S]short MTH_NAME is from 1="Jan" to 7="Dec"
+export SADM_LMTH_NAME=("index0" "January" "February" "March" "April" "May" "June" "July" "August" 
+              "September" "October" "November" "December")
+export SADM_SMTH_NAME=("in0" "Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec")
 
 # MySQL Connections Credential (Default Take Read/Write User in $SADMIN/cfg/sadmin.cfg)
-CREDENTIAL="-u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD -h $SADM_DBHOST" ; export CREDENTIAL # for MySQL
+export CREDENTIAL="-u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD -h $SADM_DBHOST" # Credential For Mysql
 
 # Database Name to exclude from backup, separate each name by the pipe symbol '|'.
 #export DBEXCLUDE="information_schema|performance_schema"
@@ -267,9 +289,9 @@ backup_setup()
     sadm_write_log " - Keep $WEEKLY_BACKUP_TO_KEEP weekly backups."
     sadm_write_log " - Keep $MONTHLY_BACKUP_TO_KEEP monthly backups."
     sadm_write_log " - Keep $YEARLY_BACKUP_TO_KEEP yearly backups."
-    sadm_write_log " - Do the weekly backup on ${WEEKDAY[$WEEKLY_BACKUP_DAY]}."
+    sadm_write_log " - Do the weekly backup on ${SADM_LWEEKDAY[$WEEKLY_BACKUP_DAY]}."
     sadm_write_log " - Do the monthly backup on the $MONTHLY_BACKUP_DATE of every month."
-    sadm_write_log " - Do the yearly backup on the $YEARLY_BACKUP_DATE of ${MTH_NAME[$YEARLY_BACKUP_MONTH]} every year."
+    sadm_write_log " - Do the yearly backup on the $YEARLY_BACKUP_DATE of ${SADM_LMTH_NAME[$YEARLY_BACKUP_MONTH]} every year."
 }
 
 #===================================================================================================
