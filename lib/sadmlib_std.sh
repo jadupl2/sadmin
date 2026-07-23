@@ -281,6 +281,7 @@
 #@2026_07_14 lib v04.92.05 Fix problem with the addition of 'SADM_GROUP_ONLY' and minor fixes
 #@2026_07_22 lib V04.92.06 Add Array of $SADM_OS_SUPPORTED, $SADM_LWEEKDAY, $SADM_LMTH_NAME
 #@2026_07_22 lib V04.92.07 Replace dash '-' with equal sign '=' 
+#@2026_07_23 lib V04.92.08 Change to sadm_write_log() to deal with special characters
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x
@@ -289,7 +290,7 @@ trap 'exit 0' 2
 # --------------------------------------------------------------------------------------------------
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
-export SADM_LIB_VER="04.92.07"                                          # This Library Version
+export SADM_LIB_VER="04.92.08"                                          # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -763,22 +764,24 @@ sadm_write_log()
 
     case "$SADM_LOG_TYPE" in                                            # [S]creen [L]og or [B]oth 
         S)      if [ "$LINEFEED" = "N" ] 
-                    then printf "$SC_MSG" 
-                    else printf "${SC_MSG}\n" 
+                    then echo -en "$SC_MSG" 
+                    else echo -e  "$SC_MSG" 
                 fi
                 ;;
-        L)      printf "${dated_msg}\n" >> $SADM_LOG                    # Write dated Msg to LogFile
+        L)      echo -e "${dated_msg}\n" >> $SADM_LOG                   # Write dated Msg to LogFile
                 ;;
         B)      if [ "$LINEFEED" = "N" ]
-                    then printf "$SC_MSG" 
-                    else printf "$SC_MSG\n" 
+                    then echo -en "$SC_MSG" 
+                    else echo -e  "$SC_MSG" 
                 fi
-                printf "${dated_msg}\n" >> $SADM_LOG                    # Write Msg to Log File
+                echo -e "${dated_msg}" >> $SADM_LOG                     # Write Msg to Log File
                 ;;
         *)      ERRMSG="Invalid log type '$SADM_LOG_TYPE' on line ${LINENO}." 
-                echo "$ERRMSG" >> $SADM_LOG
+                echo -e "$ERRMSG" 
+                echo -e "$ERRMSG" >> $SADM_LOG
                 ERRMSG="Valid values are 'S' for Screen, 'L' for Log and 'B' for Both."
-                echo "$ERRMSG" >> $SADM_LOG
+                echo -e "$ERRMSG" 
+                echo -e "$ERRMSG" >> $SADM_LOG
                 return 1                                                # Return Error to Caller       
                 ;;
     esac
