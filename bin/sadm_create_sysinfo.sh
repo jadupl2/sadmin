@@ -506,7 +506,6 @@ create_linux_config_files()
     # Collect Disk Information ---------------------------------------------------------------------
     write_file_header "Disks Information" "$DISKS_FILE"
     sadm_write_log "Creating $DISKS_FILE ..."
-
     if [ "$INXI" != "" ]
         then CMD="$INXI -dc"
              execute_command "$CMD" "$DISKS_FILE" 
@@ -553,10 +552,10 @@ create_linux_config_files()
     fi
 
     # List Disks Name, Size, Manufacturer, Serial, Model, ...
-    if [ "$LSHW" != "" ]
-        then CMD="$LSHW -C disk | grep -Ei 'product|vendor|physical|logical name|size:'"
-             execute_command "$CMD" "$DISKS_FILE" 
-    fi
+    #if [ "$LSHW" != "" ]
+    #    then CMD="$LSHW -C disk | grep -Ei 'product|vendor|physical|logical name|size:'"
+    #         execute_command "$CMD" "$DISKS_FILE" 
+    #fi
 
 
     # Collect LVM Information ----------------------------------------------------------------------
@@ -652,10 +651,10 @@ create_linux_config_files()
     fi
 
     # Linux Network Device Info (Speed,Mac,IPAddr,Vendor,...)
-    if [ "$LSHW" != "" ]                            
-        then CMD="$LSHW -C network"
-             execute_command "$CMD" "$NET_FILE" 
-    fi
+    #if [ "$LSHW" != "" ]                            
+    #    then CMD="$LSHW -C network"
+    #         execute_command "$CMD" "$NET_FILE" 
+    #fi
 
     # Networdk Card Information 
     if [ "$HWINFO" != "" ]
