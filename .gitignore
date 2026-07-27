@@ -122,7 +122,6 @@ www/test/*
 # Files in cfg directory that are part of SADMIN package
 cfg/*
 !cfg/.sadmin.cfg
-!cfg/sadmin_client.cfg
 !cfg/.alert_group.cfg
 !cfg/.alert_slack.cfg
 !cfg/.alert_history.txt
