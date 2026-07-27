@@ -609,7 +609,7 @@ print_file_variable()
 #===================================================================================================
 print_command_path()
 {
-    printheader "7) Alias use to override malicious path changes"
+    printheader "7) Alias used to override malicious path change"
     printline "\$SADM_DMIDECODE" "'dmidecode' use to get model & type" "$SADM_DMIDECODE"
     printline "\$SADM_BC" "'bc' use to do some Math." "$SADM_BC"  
     printline "\$SADM_FDISK" "'fdisk' use to get partition info" "$SADM_FDISK"
@@ -626,6 +626,7 @@ print_command_path()
     printline "\$SADM_INXI" "'inxi' binary location" "$SADM_INXI"
     if [ "$SADM_HOST_TYPE" = "S" ]                                      # Only on SADMIN Server
         then printline "\$SADM_MYSQL" "'mysql' binary location" "$SADM_MYSQL"
+        else SADM_MYSQL=""
     fi 
     printline "\$SADM_SSH" "'ssh' use to SSH on SADMIN client" "$SADM_SSH"
     printline "\$SADM_SED" "'sed' binary location" "$SADM_SED"
@@ -640,7 +641,7 @@ print_command_path()
 #===================================================================================================
 print_db_variables()
 {
-    printheader "8) Database Information" 
+    printheader "8) Database Information - 'server' table:" 
 
     CMDLINE="$SADM_MYSQL -t -u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "      # MySQL Auth/Read Only User
 
@@ -649,15 +650,13 @@ print_db_variables()
     #$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" | grep -v 'pma__'
 
     print_section_header "----- Server Table Section -----"
-    printf "\n"
     #SQL="select srv_name, srv_desc, srv_osname, srv_osversion, srv_active, srv_cat, srv_group from server ; "
     SQL="describe server; "
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
     SQL="SHOW keys FROM server FROM sadmin;"
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
 
-    print_section_header "----- Category & Group Table Section -----"
-    printf "\n"
+    printheader "8) Database Information - Category Table:"
     SQL="describe server_category; "                                    # Show Table Format/colums
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
     #SQL="select * from server_category; "                               # Show Table SQL
@@ -665,7 +664,7 @@ print_db_variables()
     SQL="SHOW keys FROM server_category FROM sadmin;"
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
 
-    #print_section_header "----- Group Table Section -----"
+    printheader "8) Database Information - Alert Group Table:"
     SQL="show columns from server_group; "                              # Show Table Format/columns
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
     #SQL="select * from server_group; "                                  # Show Table SQL
@@ -673,14 +672,13 @@ print_db_variables()
     SQL="SHOW keys FROM server_group FROM sadmin;"
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
 
-    print_section_header "----- Script Table Section -----"
-    SQL="describe script; "
+    printheader "8) Database Information - Script information Table :"
+    SQL="describe script: "
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
     SQL="SHOW keys FROM script FROM sadmin;"
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
 
-    printf "\n\n"
-    #Script Details:\n"
+    printheader "8) Database Information - Script execution log Table: "
     SQL="describe script_rch; "
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
     SQL="SHOW keys FROM script_rch FROM sadmin;"
