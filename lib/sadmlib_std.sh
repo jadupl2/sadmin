@@ -282,6 +282,7 @@
 #@2026_07_22 lib V04.92.06 Add Array of $SADM_OS_SUPPORTED, $SADM_LWEEKDAY, $SADM_LMTH_NAME
 #@2026_07_22 lib V04.92.07 Replace dash '-' with equal sign '=' 
 #@2026_07_23 lib V04.92.08 Change to sadm_write_log() to deal with special characters
+#@2026_07_27 lib V04.92.09 Fix error "SADM_ROOT_ONLY" and "SADM_SERVER_ONLY" command not found.
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x
@@ -290,7 +291,7 @@ trap 'exit 0' 2
 # --------------------------------------------------------------------------------------------------
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
-export SADM_LIB_VER="04.92.08"                                          # This Library Version
+export SADM_LIB_VER="04.92.09"                                          # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -2745,8 +2746,8 @@ sadm_start() {
 
     # Make sure 'SADM_ROOT_ONLY' exist and not empty, if not set to default value "N" NO restriction
     # Check if this script is to be run only by root user
-    if [[ -z "$SADM_ROOT_ONLY" ]]; then SADM_ROOT_ONLY = "N" ; fi       # Default can run everywhere
-    if [ $SADM_ROOT_ONLY == "Y" ] &&  [ $(id -u) -ne 0 ]  
+    if [[ -z "$SADM_ROOT_ONLY" ]] ; then export SADM_ROOT_ONLY="N" ; fi       # Default can run everywhere
+    if [ "$SADM_ROOT_ONLY" == "Y" ] &&  [ $(id -u) -ne 0 ]  
         then sadm_write_err " "
              sadm_write_err "Script can only be run by the 'root' user."
              sadm_write_err "Try 'sudo ${0##*/}'."                      # Suggest using sudo
@@ -2775,7 +2776,7 @@ sadm_start() {
 
 
     # Check if this script to be run only on the SADMIN server.
-    if [[ -z "$SADM_SERVER_ONLY" ]]; then SADM_SERVER_ONLY = "N" ; fi   # Default can run everywhere
+    if [[ -z "$SADM_SERVER_ONLY" ]] ; then SADM_SERVER_ONLY="N" ; fi    # Default can run everywhere
     if [ "$SADM_SERVER_ONLY" = "Y" ] && [ "$SADM_HOST_TYPE" != "S" ]
         then sadm_write_err "[ ERROR ] This script will only run on the SADMIN server '$SADM_SERVER'."
              sadm_write_err "The variable 'SADM_SERVER_ONLY' is set to 'Y'."
