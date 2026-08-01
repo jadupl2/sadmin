@@ -74,6 +74,7 @@
 #@2026_04_27 client v3.44 Fix problem with creating VM list, under VBox 7.2.6, is ok in 7.2.8
 #@2026_04_27 client v3.45 Adjustment for Virtual Box 7.2.8, VBoxManage list vms output format change
 #@2026_06_01 client v3.46 chmod 664 $SADMIN/dat/dr/HOSTNAME_sysinfo.txt
+#@2026_08_01 client v3.47 lshw stuck when VMware network interface are present.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 0' 2                                            # Intercept the ^C
 #set -x
@@ -103,7 +104,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.46'                                     # Script version number
+export SADM_VER='3.47'                                     # Script version number
 export SADM_DESC="Collect hardware & software info of system" # Script Description
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -708,10 +709,10 @@ create_linux_config_files()
 
     
     # Create List of Hardware in HTML
-    if [ "$LSHW" != "" ]
-        then sadm_write_log "Creating $LSHW_FILE .."
-             $LSHW -html > $LSHW_FILE                                   # Create Hardware HTML File
-    fi
+    #if [ "$LSHW" != "" ]
+    #    then sadm_write_log "Creating $LSHW_FILE .."
+    #         $LSHW -html > $LSHW_FILE                                   # Create Hardware HTML File
+    #fi
 
 }
 
@@ -769,10 +770,11 @@ create_system_file()
              execute_command "$CMD" "$SYSTEM_FILE" 
     fi
 
-    if [ "$LSHW" != "" ]
-        then CMD="$LSHW -C system"
-             execute_command "$CMD" "$SYSTEM_FILE" 
-    fi
+    # Problem when vm Interface are present, it stuck
+    #if [ "$LSHW" != "" ]
+    #    then CMD="$LSHW -C system"
+    #         execute_command "$CMD" "$SYSTEM_FILE" 
+    #fi
 
     if [ -f "$OSRELEASE"  ]
         then CMD="cat $OSRELEASE"
@@ -789,10 +791,11 @@ create_system_file()
              execute_command "$CMD" "$SYSTEM_FILE" 
     fi
 
-    if [ "$LSHW" != "" ]
-        then CMD="$LSHW -short"
-             execute_command "$CMD" "$SYSTEM_FILE" 
-    fi
+        # Problem when vm Interface are present, it stuck
+    #if [ "$LSHW" != "" ]
+    #    then CMD="$LSHW -short"
+    #         execute_command "$CMD" "$SYSTEM_FILE" 
+    #fi
 
     if [ "$LSPCI" != "" ]
         then CMD="$LSPCI -k 2>/dev/null"
