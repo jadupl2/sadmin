@@ -45,6 +45,10 @@ except ImportError as e:                                            # Trap Impor
     print("Import Error : %s " % e)                                 # Print Import Error Message
     sys.exit(1)                                                     # Back to O/S With Error Code 1
 
+
+
+
+
  
 # ---------   S T A R T   O F   S A D M I N   R E Q U I R E D   C O D E   S E C T I O N  -----------
 # v1.60 - Setup Variables and import SADMIN Python library '$SADMIN/lib/sadmlib2_std.py' as 'sa'.
@@ -67,14 +71,14 @@ except ImportError as e:                                             # If Error 
 pid                   = os.getpid()                     # Get Current Process ID.
 hostname              = sa.get_hostname()               # Get Current hostname
 os_type               = sa.get_ostype()                 # OS Type (In Uppercase,LINUX,AIX,MACOS)
-username              = sa.get_username())              # Return Current User Name
+username              = sa.get_username()               # Return Current User Name
 debug                 = 0                               # Debug Level 0-9 (Increase Verbose)
 exit_code             = 0                               # Default Return Code (0=Success 1-Error)
 cmd_ssh_full          = "%s -qnp %s " % (sa.cmd_ssh,sa.sadm_ssh_port)# SSH Command with default port
-
-# Variables shared with SADMIN Python Library.
 sa.pn                 = os.path.basename(sys.argv[0])   # [P]rogram [N]ame with extension
 sa.inst               = sa.pn.split('.')[0]             # INSTance Name = Pgm Name Without Extension
+
+# Variables shared with SADMIN Python Library.
 sa.ver                = "01.02.02" # Your Program VERSION number
 sa.desc               = "Description of program '%s'" % (sa.pn) # Your Program DESCRIPTION 
 sa.root_only          = False      # Can Only be run by 'root'(True/False)
