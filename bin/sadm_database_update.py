@@ -54,6 +54,7 @@
 #@2025_09_04 server v3.25 Remove the need to import pymysql in the script, now done in SADMIN lib.
 #@2026_05_27 server v3.26.0 Added more exception handling to database update function.
 #@2026_06_24 server v3.26.1 Add a chown 664 to $SADMIN/dat/dr/$hostanme_sysinfo.txt.
+#@2026_08_03 server v3.26.2 If note column is empty, fill it with manufacturer,model & firmware version.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -69,69 +70,71 @@ except ImportError as e:
 
 
 
-# --------------------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.56
-# Setup for Global Variables and load the SADMIN standard library.
-# To use SADMIN tools, this section MUST be present near the top of your Python code.    
+ 
+# ---------   S T A R T   O F   S A D M I N   R E Q U I R E D   C O D E   S E C T I O N  -----------
+# v1.60 - Setup Variables and import SADMIN Python library '$SADMIN/lib/sadmlib2_std.py' as 'sa'.
+#       - To use SADMIN scripting tools, this section MUST be present near the top of your code.  
 # --------------------------------------------------------------------------------------------------
 try:
-    SADM = os.environ['SADMIN']                                      # Get SADMIN Environment Var.
-except KeyError as e:                                                # If SADMIN is not define
-    print("Environment variable 'SADMIN' is not defined.\n%s\nScript aborted.\n" % e) 
+    SADM = os.environ['SADMIN']                                      # Get 'SADMIN' Environment Var.
+except KeyError as e:                                                # If 'SADMIN' is not defined
+    print("Environment variable 'SADMIN' not defined.\n%s\nScript aborted.\n" % e) 
     sys.exit(1)                                                      # Go Back to O/S with Error
-
 try: 
-    sys.path.insert(0, os.path.join(SADM, 'lib'))                    # Add lib dir to sys.path
+    sys.path.insert(0, os.path.join(SADM, 'lib'))                    # Add SADMIN libdir to sys.path
     import sadmlib2_std as sa                                        # Import SADMIN Python Library
 except ImportError as e:                                             # If Error importing SADMIN
     print("Import error : SADMIN module: %s " % e)                   # Advise User of Error
     print("Please make sure the 'SADMIN' environment variable is defined.")
     sys.exit(1)                                                      # Go Back to O/S with Error
 
-# Local variables local to this script.
-sa.pn                 = os.path.basename(sys.argv[0])         # [P]rogram [N]ame with extension
-sa.ver                = "3.26.01"                             # Your Program VERSION number
+# Global Variables for you to use
+pid                   = os.getpid()                     # Get Current Process ID.
+hostname              = sa.get_hostname()               # Get Current hostname
+os_type               = sa.get_ostype()                 # OS Type (In Uppercase,LINUX,AIX,MACOS)
+username              = sa.get_username()              # Return Current User Name
+debug                 = 0                               # Debug Level 0-9 (Increase Verbose)
+exit_code             = 0                               # Default Return Code (0=Success 1-Error)
+cmd_ssh_full          = "%s -qnp %s " % (sa.cmd_ssh,sa.sadm_ssh_port)# SSH Command with default port
+sa.pn                 = os.path.basename(sys.argv[0])   # [P]rogram [N]ame with extension
+sa.inst               = sa.pn.split('.')[0]             # INSTance Name = Pgm Name Without Extension
+
+# Variables shared with SADMIN Python Library.
+sa.ver                = "3.26.02"                       # Your Program VERSION number
 sa.desc               = "Update SADMIN database with information collected from each system."
-sa.inst               = sa.pn.split('.')[0]                   # INSTance Name = Pgm Name Without Ext
-sa.pid                = os.getpid()                           # Get Current Process ID.
-sa.hostname           = platform.node().split('.')[0].strip() # Get Current hostname
-sa.username           = pwd.getpwuid(os.getuid())[0]          # Get Current User Name
-sa.root_only          = False                                 # Can Only be run by 'root' (True/False)
-sa.server_only        = False                                 # Run Only on SADMIN server (True/False)
-sa.use_rch            = True                                  # Write exec info to RCH file(True/False)
-sa.debug              = 0                                     # Debug Level 0-9 (Increase Verbose)
-sa.quiet              = False                                 # If error in a function & quiet is :
-                                                              # False: Show error msg & return Error No 
-                                                              # True : Omly returm Error No. but No Msg
-sa.exit_code          = 0                                     # Default Return Code (0=Success 1-Error)
-sa.log_type           = "B"                                   # S=Screen L=Log B=Both
-sa.log_append         = False                                 # Append to previous log (True/False)
-sa.log_header         = True                                  # Produce Log Header (True/False)
-sa.log_footer         = True                                  # Produce Log Footer (True/False)
-sa.multiple_exec      = False                                 # Allow running multiple Instance ?
-sa.pid_timeout        = 7200                                  # PID File TimeToLive default
-sa.lock_timeout       = 3600                                  # Sec. (TTL) before automatically unlock 
-sa.max_logline        = 500                                   # Maximum number of lines in log file.
-sa.max_rchline        = 35                                    # Maximum number of lines in rch file.
-sa.mail_addr          = ""                                    # Default use email(s) in sadmin.cfg
-sa.db_used            = True                # Open/Use auto connect DB(True), No DB needed (False) 
+sa.root_only          = True       # Can Only be run by 'root'(True/False)
+sa.server_only        = True       # Run Only on SADMIN server(True/False) SADM_SERVER in sadmin.cfg
+sa.sadm_group_only    = False      # Run if part of SADMIN Group 'SADM_GROUP' in sadmin.cfg or root
+sa.multiple_exec      = False      # Allow running multiple Instance ?
+sa.quiet              = False      # If error in a function & quiet is: (ctrl show/hide of message)
+                                   # False: Show error message and return the error number. 
+                                   # True : Only returm error number, but don't show error message.
+sa.log_type           = "B"        # S=Screen L=Log B=Both
+sa.log_append         = False      # Append to previous log (True/False)
+sa.log_header         = True       # Produce Log Header (True/False)
+sa.log_footer         = True       # Produce Log Footer (True/False)
+sa.use_rch            = True       # Write exec info to RCH file(True/False)
+sa.errno              = 0          # Error No. set by function called (0=OK Else error/warning)
+sa.errmsg             = ""         # Error Mess. set by function you call (blank or error msg)
+sa.pid_timeout        = 14400      # PID File TTL (14400=4hrs) is SADM_PID_TIMEOUT in sadmin.cfg
+sa.lock_timeout       = 7200       # Sec. before unlock (7200=2hrs) SADM_LOCK_TIMEOUT in sadmin.cfg
+sa.db_used            = False      # Open/Use auto connect DB(True)
+sa.db_name            = "sadmin"   # Database Name (sadmin=default) SADM_DBNAME in sadmin.cfg
+sa.db_conn            = None       # Database Connector when using DB,  set by sa.start()
+sa.db_cur             = None       # Database Cursor if you use the DB, set by sa.start()
 
-# Fields used by sa.start(),sa.stop() & DB functions that influence execution of SADMIN library
-# Thwse are default values, they can be changed by the script that use this library.
-db_conn        = None              # Use this Database Connector when using DB,  set by sa.start()
-db_cur         = None              # Use this Database cursor if you use the DB, set by sa.start()
-sa.db_name        = "sadmin"             # Database Name (sadmin=default) define in $SADMIN/cfg/sadmin.cfg
-sa.errno       = 0              # PyMysql Database Error Number
-sa.errmsg     = ""             # Database Error Message
+# Variables that can override default value taken from $SADMIN/cfg/sadmin.cfg
+#sa.sadm_alert_type    = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
+#sa.sadm_alert_group   = "default"  # Error Alert   Group defined in $SADMIN/cfg/alert_group.cfg
+#sa.sadm_warning_group = "warning"  # Warning Alert Group defined in $SADMIN/cfg/alert_group.cfg
+#sa.sadm_info_group    = "info"     # Info Alert    Group defined in $SADMIN/cfg/alert_group.cfg
+#sa.sadm_alert_repeat  = 0          # 0=Alert Only Once or Interval in Seconds before alert repeat
+#sa.sadm_mail_addr     = ""         # Send email to ... default in sadmin.cfg 
+#sa.max_logline        = 500        # Max. number of lines in log file SADM_MAX_LOGLINE in sadmin.cfg
+#sa.max_rchline        = 50         # Max. number of lines in rch file SADM_MAX_RCLINE in sadmin.cfg
+# --------------------------------------------------------------------------------------------------
 
 
-# The values of fields below, are loaded automatically from sadmin.cfg when you import sadmlib2_std.
-# Change them to fit your need, they are use by start() & stop() functions of SADMIN Python Library.
-sa.sadm_alert_type    = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
-sa.sadm_alert_group   = "default"  # Valid Alert Group defined in $SADMIN/cfg/alert_group.cfg
-sa.sadm_warning_group = "warning"  # Valid Alert Group defined in $SADMIN/cfg/alert_group.cfg
-sa.sadm_info_group    = "info"     # Valid Alert Group defined in $SADMIN/cfg/alert_group.cfg
-# ==================================================================================================
 
 
 
@@ -510,7 +513,8 @@ def process_servers(db_conn,db_cur):
 
 
 
-# Command line Options
+
+# Analyze Command Line Options
 # --------------------------------------------------------------------------------------------------
 def cmd_options(argv):
 
@@ -524,63 +528,76 @@ def cmd_options(argv):
               [-X]          Delete the script PID file before running the script.
 
         Returns:
-            sa.debug: Debug level set by the user on the command line (Default is 0)
-            Your variable(s) you will need to set based on the command line options you want to use.
+            debug: Debug level set by the user on the command line from 1 to 9 (Default is 0).
+            Your Global variable(s) you will need to set based on the command line options you use.
 
     """
     parser = argparse.ArgumentParser(description=sa.desc)               # Desc in SADMIN section
 
     # Declare Arguments
-    parser.add_argument("-v",
+    parser.add_argument("-v",                                           # Show script information
                         action="store_true",
                         dest='version',
                         help="Show script information")
-    parser.add_argument("-X",
+    parser.add_argument("-X",                                           # Wish to delete pid file
                         action="store_true",
                         dest='delpid',
                         help="Delete script PID file prior to running.")
-    parser.add_argument("-d",
+    parser.add_argument("-d",                                           # Set debug level
                         metavar="0-9",
                         type=int,
                         dest='pdebug',
                         help="debug/verbose level from 0 to 9",
                         default=0)
-    
     args = parser.parse_args()                                          # Parse the Arguments
 
-    # Set return values accordingly.
     if args.pdebug:                                                     # Debug Level -d specified
-        sa.debug = args.pdebug                                          # Save Debug Level
-        print("Debug Level is now set at %d" % (sa.debug))                # Show user debug Level
+        debug = args.pdebug                                             # Save Debug Level
+        print("Debug Level is now set at %d" % (debug))                 # Show user debug Level
+
     if args.version:                                                    # If -v specified
         sa.show_version(sa.ver)                                         # Show Script & Lib. Version
         sys.exit(0)                                                     # Exit with code 0
+    
     if args.delpid:                                                     # If -X specified
-        if os.path.exists(sa.pid_file):                                 # If use -X Delete PID file
-            os.remove(sa.pid_file)                                      # Delete the PID file.
-            print ("The PID File (" + sa.pid_file + ") is now removed.") 
-
+        if os.path.exists(sa.pid_file):                                 # If PID file exist
+            os.remove (sa.pid_file)                                     # Delete the PID file.
+            print (f"The PID File {sa.pid_file} is now removed.")       # Advise user
     return()                                             
                                                          
 
+                                           
+                                                         
 
 
 
 # Main Function
 # --------------------------------------------------------------------------------------------------
 def main(argv):
-    cmd_options(argv)                                                   # Analyse cmdline options
-    (db_conn,db_cur) = sa.start()                                       # Init env. & Connect to DB
-    if sa.db_used : sa.exit_code = process_servers(db_conn,db_cur)      # Loop All Active systems
-    sa.stop(sa.exit_code)                                               # Exit Gracefully & Close DB
+    cmd_options(argv)                                                   # Analyze cmdline options
+    if (sa.db_used == True):                                            # If Use Db, Process Systems
+        (sa.db_conn, sa.db_cur) = sa.start()                            # Return DB connector,cursor
+        sa.exit_code = process_servers()                                # Use Db Loop Active Systems
+#    else: 
+#        sa.start()                                                      # SADMIN Initialization
+#        sa.exit_code = main_process()                                   # Main Process, No Db Used
+    sa.stop(sa.exit_code)                                               # Exit Gracefully SADMIN Lib
     sys.exit(sa.exit_code)                                              # Back to O/S with Exit Code
 
-# This idiom means the below code only runs when executed from command line
+
+# Python assigns the string "__main__" to __name__. 
+# If the file is imported elsewhere (import script), __name__ matches the actual filename instead.
+# This condition guards your code against accidental execution during imports.
 if __name__ == "__main__": 
     try:
         main(sys.argv)
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
-        sa.stop(sa.exit_code)                                           # Exit Gracefully & Close DB
+    except KeyboardInterrupt as e: 
+        print(f"[ ERROR ] A Keyboard interrupt as occurred: {e}")
+        sa.stop(1)                                                      # Exit Gracefully & Close DB
         sys.exit(1)
+    except Exception as e:
+        print(f"[ ERROR ] An unexpected error occurred: {e}")
+        sa.stop(1)                                                      # Exit Gracefully & Close DB
+        sys.exit(1)
+        
         
