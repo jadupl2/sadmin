@@ -78,12 +78,12 @@ export SADM_ROOT_ONLY="N"                                  # Pgm. run only by ro
 export SADM_SERVER_ONLY="N"                                # Pgm. run only on SADMIN server? [Y]/[N]
 export SADM_GROUP_ONLY='N'                                 # Pgm. run only if usr part of SADMIN Grp
 export SADM_MULTIPLE_EXEC="N"                              # Can Run Simultaneous copy of script Y/N
+export SADM_QUIET="N"                                      # Y=HideMsg & Error#  N=Show Msg & Error#
 export SADM_LOG_TYPE="B"                                   # Write log to [S]creen, [L]og, [B]oth
 export SADM_LOG_APPEND="N"                                 # Append log ? Y=AppendLog,N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y = ProduceLogHeader, N = NoLogHeader
 export SADM_LOG_FOOTER="Y"                                 # Y = ProduceLogFooter, N = NoLogFooter
 export SADM_USE_RCH="Y"                                    # Update the RCH History File (Y/N)
-export SADM_QUIET="N"                                      # Y=HideMsg & Error#  N=Show Msg & Error#
 export SADM_ERRMSG=""                                      # Error Message returned by Library 
 export SADM_ERRNO=0                                        # Error number (0=OK) returned by Library
 export SADM_PID_TIMEOUT=7200                               # Sec. before PID file is remove,7200=2hr
