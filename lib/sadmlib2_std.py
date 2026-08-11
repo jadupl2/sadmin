@@ -775,6 +775,19 @@ def load_sadmin_config(cfg_file=f"{dir_cfg}/sadmin.cfg") :
         Returns:
             The dictionnary containing the keys and values from the configuration file.
     """
+#root@bilbo:/etc # python3
+#Python 3.14.6 (main, Jun 11 2026, 00:00:00) [GCC 16.1.1 20260515 (Red Hat 16.1.1-2)] on linux
+#Type "help", "copyright", "credits" or "license" for more information.
+#>>> line = "print('Hello') # This is a comment"
+#>>> code_only = line.split('#')[0].strip()
+#>>> code_only
+#"print('Hello')"
+#>>> 
+#
+
+
+
+
     global cfg_dict
     cfg_dict = {}                                                       # Create empty Dictionnary
     if lib_debug > 4 : print (f"Loading Configuration file {cfg_file} in dictionnary 'cfg_dict'.")
@@ -3131,7 +3144,6 @@ def sendmail(waddr, wsub, wbody, wattach="") :
 #        write_err ("The email specified is not valid '%s'." % waddr)
 #        write_err (errmsg)
 #        return 1
-
     # Ensure email body file exists before checking its size
     if not os.path.exists(wbody) or os.path.getsize(wbody) == 0:    
        if (not quiet) : write_err ("Mail body file is is empty or not found '%s'."  % wbody)
@@ -3147,7 +3159,7 @@ def sendmail(waddr, wsub, wbody, wattach="") :
     if wattach != "" :                                                  # If attachment not blank
         filenames = wattach.split(',')                                  # Split by , filename in array
         for filename in filenames :                                     # For each attachement
-            if os.path.exists(filename):                                # Check if attachement exist
+            if os.path.isfile(filename):                                # Check if attachement exist
                 attachment += " -a %s " % filename                      # Add -a attachment
                 if debug > 4 : write_log ("Attachement list : %s" % attachment)
             else:
