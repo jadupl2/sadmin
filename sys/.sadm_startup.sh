@@ -153,15 +153,18 @@ poweron_mail()
     echo -e "System '${SADM_HOSTNAME}' has just started on $(date)" > $wb
     echo -e "The program '${SADM_PN}' is reponsable for sending this email." >> $wb
     echo -e "\n\nLast 3 Reboot :\n$(last reboot | head -3)\n" >> $wb
+    echo -e "\nFilesystems usage : \n$(df -h)\n" >> $wb
     echo -e "Have a nice day !" >> $wb
 
-    sadm_sendmail "$we" "$ws" "$wb"
+    # Send Info Email To Sysadmin
+    sadm_sendmail "$we" "$ws" "$wb" "$SADM_LOG,$SADM_ELOG" 
     RC=$? 
     if [ $RC -eq 0 ] 
         then sadm_write_log "[ OK ] Mail sent successfully to $we"
         else sadm_write_err "[ ERROR ] Problem sending email to $we" 
     fi 
     
+    # Delete the temporary email body file.
     if [ -f  "$wb" ] ; then rm -f "$wb" ; fi                            # Remove body file
     return $RC 
 }

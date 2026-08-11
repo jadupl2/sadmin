@@ -120,15 +120,16 @@ shutdown_mail()
     echo -e "$(date)"  > $wb
     echo -e "For your information, system '${SADM_HOSTNAME}' is going down." >> $wb
     echo -e "The program '${SADM_PN}' is reponsable for sending this email." >> $wb
-    echo -e "\n\nUptime         : \n$(uptime)\n" >> $wb
-    echo -e "\nLast Reboot      : \n$(last reboot | head -3)\n" >> $wb
-    echo -e "\nUsers on system  : \n$(w)\n" >> $wb
+    echo -e "\n\nUptime          : \n$(uptime)\n" >> $wb
+    echo -e "\nLast Reboot       : \n$(last reboot | head -3)\n" >> $wb
+    echo -e "\nFilesystems usage : \n$(df -h)\n" >> $wb
+    echo -e "\nUsers on system   : \n$(w)\n" >> $wb
     echo -e "\nHardware or kernel errors prior to power down : \n$(dmesg -l err)\n" >> $wb
     #echo -e "\nlistening ports  : \n$(ss -tnul)\n" >> $wb
     #echo -e "\nTop 10 processes : \n$(ps -eo pid,ppid,cmd,%cpu,%mem --sort=-%cpu | head -n 11)\n" >> $wb
     echo -e "\nHave a nice day !" >> $wb
 
-    sadm_sendmail "$we" "$ws" "$wb" 
+    sadm_sendmail "$we" "$ws" "$wb" "$SADM_LOG,$SADM_ELOG"     
     RC=$?
     if [ $RC -eq 0 ] 
         then sadm_write_log "[ OK ] Mail sent successfully to $we"
