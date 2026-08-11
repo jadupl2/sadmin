@@ -45,7 +45,7 @@ sadm_writexy()
     tput cup `expr $1 - 1`  `expr $2 - 1`                               # Position the Cursor
     case "$(sadm_get_ostype)" in                                        # Depending on OS 
         "LINUX")    #echo -e "$3\c"                                      # -e enable interpretation
-                    printf "%s" "$3"                                  # -e enable interpretation    
+                    printf "%s" "$3"                                     
                     ;;
         "AIX")      echo "$3\c"                                         # Don't need the in AIX
                     ;;      
