@@ -1130,17 +1130,14 @@ sadm_trimfile() {
 #
 #   Also return a string : 
 #   - Blank              : Will return blank if the command was not found.
-#   - Command Full Path: : Eample if received 'lsb_release' will return 'usr/bin/lsb_release'.
+#   - Command Full Path: : Example if received 'lsb_release' will return '/usr/bin/lsb_release'.
 #
 #---------------------------------------------------------------------------------------------------
 sadm_get_command_path() {
     SADM_CMD=$1                                                         # Save Parameter received
-    if [ "$?" -ne 0 ]                                                   # Command not found
-        then echo ""                                                    # echo blank for Cmd Path 
-             return 1                                                   # Return error to caller
-        else CMD_PATH=$(command -v ${SADM_CMD})                         # Store Path in Cmd path
-             echo "$CMD_PATH"                                           # echo the Command Path 
-    fi 
+    CMD_PATH=$(command -v ${SADM_CMD})                                  # Try to get cmd path
+    if [ "$?" -ne 0 ] ; then echo "" ; return 1 ; fi                    # command not found,return 1
+    echo "$CMD_PATH"                                                    # echo the Command Path 
     return 0  
 }
 
@@ -2323,6 +2320,10 @@ sadm_server_vg() {
 
 # --------------------------------------------------------------------------------------------------
 #            LOAD SADMIN CONFIGURATION FILE AND SET GLOBAL VARIABLES ACCORDINGLY
+#
+# sed -i 's/\s*#.*$//' filename.txt
+# sed -E 's/[[:space:]]*#.*$//; s/[[:space:]]+$//' $SADMIN/cfg/sadmin.cfg | grep -v "^$" > output.txt
+#
 # --------------------------------------------------------------------------------------------------
 sadm_load_config_file() {
 
