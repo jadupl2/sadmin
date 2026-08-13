@@ -150,6 +150,7 @@ show_usage()
 # --------------------------------------------------------------------------------------------------
 process_systems()
 {
+    sadm_write_log "Starting Process Systems ..."                       # Starting processing Mess.
 
     # If run from command line, ask user if want to continue (To avoid accidental execution).
     # Will not ask the question, if not run from a terminal.
@@ -160,8 +161,6 @@ process_systems()
              if [ $? -eq 0 ] ; then sadm_stop 0 ; exit 0 ; fi           # 0 = Don't want to continue
 #        else sadm_write_log "Script not executed on the command line." 
     fi
-    sadm_write_log "Starting Process Systems ..."                       # Starting processing Mess.
-
 
     # Build SQL to Select Actives Servers (Except SADMIN Server) & output result in $SADM_TMP_FILE.
     SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_sadmin_dir,srv_ssh_port"
@@ -371,13 +370,13 @@ function cmd_options()
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Won't come back if error
 
-    process_systems                                            # Code using SADMIN Database
-    SADM_EXIT_CODE=$?                                          # Save Process Return Code 
+    # Use 'process_system()' when you need to do something based on system present in Database.
+    #process_systems                                                     # Code using SADMIN Database
+    #SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
 
-    main_process                                               # Not using SADMIN Database
-    if [ "$?" -ne 0 ] ; then SADM_EXIT_CODE=((SADM_EXIT_CODE+1)) ; fi 
-    ((i=i+1))
-
+    # Use 'main_process()' when you don't need the Database and you need to do some other stuff.
+    main_process                                                        # Not using SADMIN Database
+    SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
 
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
