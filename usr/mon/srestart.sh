@@ -124,36 +124,35 @@ export SRVNAME=""                                                       # Servic
 
 
 
-
-# Show script command line options
+# Show Script Command Line Options
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
     byellow="${BOLD}${YELLOW}" ; bcyan="${BOLD}${CYAN}"; bgreen="${BOLD}${GREEN}"; reset="${NORMAL}"
-    
     printf "\n${byellow}${SADM_PN} v${SADM_VER} - Hostname '${SADM_HOSTNAME}'"
     printf "\n${byellow}${SADM_DESC}${reset}\n"
-    printf "\nUsage: %s%s%s%s [options] [serviceName]" "$bcyan" "$(basename "$0")" "${reset}"
+    printf "\nUsage: %s%s%s%s [options]" "$bcyan" "$(basename "$0")" "${reset}"
     printf "\n\n${bgreen}Options:${reset}"
     printf "\n  ${byellow}[-d 0-9]${reset}\tSet Debug verbose Level."
     printf "\n  ${byellow}[-h]${reset}\t\tShow this help message."
     printf "\n  ${byellow}[-v]${reset}\t\tShow script version and information."
+    printf "\n  ${byellow}[-X]${reset}\t\tRemove the PID file & run script."
     printf "\n\n"
 }
-
 
 
 
 # --------------------------------------------------------------------------------------------------
 # Command line Options functions
 # Evaluate Command Line Switch Options Upfront
-# -d[0-9] Set Debug Level  
-# -h) Show Help Usage, 
-# -v) Show Script Version,  
+#   -d[0-9] Set Debug Level  
+#   -h) Show Help Usage, 
+#   -v) Show Script Version,  
+#   -X) Delete the script PID file before running the script.
 # --------------------------------------------------------------------------------------------------
 function cmd_options()
 {
-    while getopts "d:hv" opt ; do                                       # Loop to process Switch
+    while getopts "d:hvX" opt ; do                                      # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
                num=$(echo "$SADM_DEBUG" |grep -E "^\-?[0-9]?\.?[0-9]+$") # Valid if Level is Numeric
@@ -170,6 +169,9 @@ function cmd_options()
             v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
                ;;
+            X) /usr/bin/rm -f "${SADMIN}/tmp/${SADM_INST}.pid" >/dev/null 2>&1
+               printf "\n$The PID File '${SADMIN}/tmp/${SADM_INST}.pid' is now removed.\n" 
+               ;;
            \?) printf "\nInvalid option: ${OPTARG}.\n"                  # Invalid Option Message
                show_usage                                               # Display Help Usage
                exit 1                                                   # Exit with Error
@@ -181,68 +183,70 @@ function cmd_options()
 
 
 
+
 #===================================================================================================
 #                             S c r i p t    M a i n     P r o c e s s
 #===================================================================================================
 main_process()
 {
     # Show Script Name, Version and starting Date/Time.
-    sadm_write_log "Service name to restart : ${SRV_NAME}"              # SHow User we receive it
+    sadm_write_log "Service name to restart : '${SRV_NAME}'"            # Show User we receive it
 
-    # Test if running on Systemd system or SysVinit
-    if [ -d /run/systemd/system ] 
-        then sadm_write_log "This system is using 'systemd'."
-             SYSTEMD="Y" 
-        else sadm_write_log "This system is using 'SysVinit'."
-             SYSTEMD="N"
+    # Test if we are running on 'systemd' or 'SysVinit' system.
+    if [ -d /run/systemd/system ]                                       # Exist if systemd dir.
+        then sadm_write_log "[ OK ] This system is using 'systemd'."
+             SYSTEMD="Y"                                                # OK on systemd
+        else sadm_write_log "[ OK ] This system is using 'SysVinit'."          
+             SYSTEMD="N"                                                # No systemd, on SysVinit
     fi 
 
+    # Assume that the service could not be started.
+    STARTED="N"                                                         # NoRestart Worked (Default)
 
-    # Try to restart each Service name received (Could be comma delimited).
-    STARTED="N"                                                         # No Restart Worked Default 
     for service in $(echo $SRV_NAME | sed "s/,/ /g")                    # For every Serv. comma del.
         do     
-        sadm_write_log "Validating service '$service.service'."          # Show User we are testing
+        sadm_write_log "[ INFO ] Validating service '$service.service'."          # Show User we are testing
 
         # Systemd System - Use systemctl to restart and check status of service
         if [ "$SYSTEMD" = "Y" ]                                         # If System using SystemD
             then systemctl list-units --all --type=service --no-pager | awk '{print $1}' | grep -q "^$service.service"                 
                  #systemctl list-units --all --type=service --no-pager | grep -q "${service}.service"
                  if [ $? -ne  0 ]                                       # If Service down't exist
-                    then sadm_write_log "Service '$service.service' doesn't exist." 
+                    then sadm_write_log "[ ERROR ] Service '$service.service' doesn't exist." 
                          continue                                       # Skip to next service
-                    else sadm_write_log "Service '$service.service' exist." 
+                    else sadm_write_log "[ OK ] Service '$service.service' exist." 
                  fi
                  systemctl restart $service >>$SADM_LOG 2>&1            # Restart using systemctl
                  if [ $? -eq 0 ]                                        # If restart worked
                     then STARTED="Y"                                    # At least one restart work
-                         sadm_write_log "[ SUCCESS ] Restarting service '$service'." 
+                         sadm_write_log "[ OK ] Restarting service '$service'." 
                     else sadm_write_log "[ ERROR ] Failed to restart service '$service'." 
                  fi 
                  systemctl is-active $service >/dev/null 2>&1
                  if [ $? -eq 0 ]                                        # If service is active
-                    then sadm_write_log "Service '$service' is active after restart."
+                    then sadm_write_log "[ OK ] Service '$service' is now active."
                     else sadm_write_log "[ ERROR ] Service '$service' is NOT active after restart." 
                  fi
+
 
             # SystemV System - Use service to restart and check status of service
             else sadm_write_log "Validating service '$service'."        # Show User we are testing
                  if [ ! -f /etc/init.d/$service ]                       # If Service down't exist
-                    then sadm_write_log "Service '$service' not found in '/etc/init.d'." 
+                    then sadm_write_log "[ ERROR ] Service '$service' not found in '/etc/init.d'." 
                          continue                                       # Skip to next service
-                    else sadm_write_log "Service '$service' exist." 
+                    else sadm_write_log "[ OK ] Service '$service' exist." 
                  fi
                  sadm_write_log "Restarting service '$service'."
                  service $service restart  >>$SADM_LOG 2>&1             # Restart using service cmd
                  if [ $? -eq 0 ]                                        # If restart worked
                     then STARTED="Y"                                    # At least one restart work
-                         sadm_write_log "[ SUCCESS ] Restarting service '$service'." 
+                         sadm_write_log "[ OK ] Restarting service '$service'." 
                     else sadm_write_log "[ ERROR ] Failed to restart service '$service'."
                  fi 
                  /etc/init.d/$service status >>$SADM_LOG 2>&1
                  if [ $? -eq 0 ]                                        # If service is active
-                    then sadm_write_log "Service '$service' is active after restart."
-                    else sadm_write_log "[ ERROR ] Service '$service' is NOT active after restart." 
+                    then sadm_write_log "[ OK ] Service '$service' is now active."
+                    else sadm_write_log "[ ERROR ] Problem trying to restart '$service' service."
                  fi                                                    
         fi
         done
@@ -251,11 +255,11 @@ main_process()
     EFILE="${SADM_UMON_DIR}/${INST}_${SRV_NAME}.txt"                    # Script Error Mess File
     if [ "$STARTED" = "Y" ]                                             # At least 1 service started
         then RC=0                                                       # OK Return Code is 0
-             rm -f $EFILE >/dev/null 2>&1                               # Remove Error File when OK
+             if [[ -f "$EFILE" ]] ;then rm -f "$EFILE" >/dev/null 2>&1  ; fi # Remove Error File 
         else RC=1                                                       # Error Return Code is 1
-             EMSG="Couldn't start service '$SRV_NAME'."                 # Error Message file Test
-             echo "$EMSG" > $EFILE                                      # Write to Error Msg File
-             sadm_write_log "[ ERROR ] ${EMSG}"
+             EMSG="Restarting service '$SRV_NAME'."                     # Message file text
+             echo "$EMSG" > $EFILE                                      # Write to Error Msg to File
+             sadm_write_log "[ ERROR ] ${EMSG}"                         # Advise user and log.
     fi              
     return $RC                                                          # Return Status to Caller
 }
@@ -265,11 +269,10 @@ main_process()
 #                                       Script Start HERE
 #===================================================================================================
 
-    # Parameter received should always be 1 string - If not write to error log and exit 1
+    # Parameter received should always be one string - If not write to error log and exit 1
     if [ $# -eq 1 ]
         then SRV_NAME=$1                                                # Service Name to Restart
-        else sadm_write_err " " 
-             sadm_write_err "[ ERROR ] Script should receive the name of the service to restart as a parameter."
+        else sadm_write_err "[ ERROR ] Script should receive the name of the service to restart as a parameter."
              sadm_write_err "   - Received '$*' and this isn't valid." 
              sadm_write_err "   - Service may have different name across distribution."
              sadm_write_err "   - If more than one service name is received, it must be comma separated."

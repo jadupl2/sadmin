@@ -1,1 +1,1 @@
-Performance Collector 'nmon' not running, restarting it.
+Perf. Collector 'nmon' isn't active, restarting it.

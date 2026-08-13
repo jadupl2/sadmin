@@ -22,6 +22,7 @@
 # 2018_06_04 V2.5 Adapt to new Libr.
 # 2018_07_21 v2.6 Rewrote for performance since it now run within System Monitor.
 #@2020_10_01 v2.7 If not able to start/Restart nmon, email include instruction about what to do.
+#@2026_08_12 v2.8 
 #
 # --------------------------------------------------------------------------------------------------
 trap 'exit 0' 2                                                          # INTERCEPT The Control-C
@@ -34,13 +35,13 @@ trap 'exit 0' 2                                                          # INTER
 export HOSTNAME=`hostname -s`                                           # Hostname Without domain
 export OSTYPE=`uname -s | tr '[:lower:]' '[:upper:]'`                   # OSName(AIX/LINUX/DARWIN) 
 export PN=${0##*/}                                                      # Script name
-export VER='2.7'                                                        # Script Version No.
+export VER='2.8'                                                        # Script Version No.
 export INST=`echo "$PN" | awk -F\. '{ print $1 }'`                      # Script name without ext.
 export WDATE=`date "+%C%y.%m.%d;%H:%M:%S"`                              # Today Date and Time
 export DASH=`printf %80s |tr ' ' '-'`                                   # 80 dashes
 export NMON_DIR="${SADMIN}/dat/nmon"                                    # NMON Data Files Directory
 export WDATE_EPOCH=""                                                   # Converted date to Epoch
-
+export SADM_DEBUG=0                                                     # Debug Level(0-9),0=NoDebug
 
 
 # --------------------------------------------------------------------------------------------------
@@ -124,7 +125,6 @@ pre_validation()
 # --------------------------------------------------------------------------------------------------
 #    - Check if nmon is running - If not start it and set parameter so it stop at 23:55
 # --------------------------------------------------------------------------------------------------
-#
 check_nmon()
 {
     # On Aix we might be running 'nmon' (older aix) or 'topas_nmon' (latest Aix)
@@ -163,26 +163,28 @@ check_nmon()
     # nmon_count = 1 = Running - Then OK
     # nmon_count = * = More than one running ? Kill them and then we start a fresh one
     # not running nmon, start it
-    echo -e " "
+    #echo -e " "
     if [ "$nmon_count" -ne 1 ]
-       then echo -e "----------------------"
-            EPOCH_NOW=`perl -e 'print time'`
-            echo -e "CURRENT DATE/TIME           = `date +"%Y.%m.%d %H:%M:%S"`"
-            echo -e "CURRENT EPOCH               = $EPOCH_NOW"          # Show Current Epoch Time
+       then EPOCH_NOW=`perl -e 'print time'`
             CUR_DATE=`date +"%Y.%m.%d"`                                 # Current Date
             NOW="$CUR_DATE 23:59:58"                                    # Build epoch cmd date format
             date2epoch "${NOW}"                                         # Epoch of Today at 23:58
             EPOCH_END=$WDATE_EPOCH
-            echo -e "END DATE/TIME               = $NOW"
-            echo -e "END EPOCH                   = $EPOCH_END" 
             TOT_SEC=`echo "${EPOCH_END}-${EPOCH_NOW}"|bc`               # Nb Sec. between now & 23:58
-            echo -e "SECONDS TILL 23:59:58       = $TOT_SEC" 
             TOT_MIN=`echo "${TOT_SEC}/60"| bc`                          # Nb of Minutes till 23:58
-            echo -e "MINUTES TILL 23:59:58       = $TOT_MIN"
-            echo -e "SECONDS BETWEEN SNAPSHOT    = 120"
             TOT_SNAPSHOT=`echo "${TOT_MIN}/2"| bc`                      # Nb. of 2 Min till 23:58    
-            echo -e "Nb. SnapShot till 23:59:58  = $TOT_SNAPSHOT" 
-            echo -e "----------------------"
+            if [[ "$SADM_DEBUG" -ne 0 ]]                                # If debug activated
+                then echo -e "----------------------"
+                     echo -e "CURRENT DATE/TIME           = `date +"%Y.%m.%d %H:%M:%S"`"
+                     echo -e "CURRENT EPOCH               = $EPOCH_NOW"          # Show Current Epoch Time
+                     echo -e "END DATE/TIME               = $NOW"
+                     echo -e "END EPOCH                   = $EPOCH_END" 
+                     echo -e "SECONDS TILL 23:59:58       = $TOT_SEC" 
+                     echo -e "MINUTES TILL 23:59:58       = $TOT_MIN"
+                     echo -e "SECONDS BETWEEN SNAPSHOT    = 120"
+                     echo -e "Nb. SnapShot till 23:59:58  = $TOT_SNAPSHOT" 
+                     echo -e "----------------------"
+            fi 
             case $nmon_count in
                 0)  echo -e "The nmon process is not running - Starting nmon daemon ..."
                     echo -e "We will start a fresh one that will terminate at 23:55"

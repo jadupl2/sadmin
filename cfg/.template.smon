@@ -205,7 +205,7 @@
 # - If return 1 : This indicate an error, because the '1' in col.2 is equal to the '1' in col.5.
 #   So user will be notified and the error will appears pn the monitopr web page.
 # - Warning (col #4) is not considered when it's equal to 00.
-script:sysmon_script_test.sh     1  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
+script:stemplate.sh     1  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
 
 
 # - Check for the number of a process running, it could  be more than one.
