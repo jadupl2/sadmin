@@ -122,6 +122,7 @@ shutdown_mail()
     echo -e "The program '${SADM_PN}' is reponsable for sending this email." >> $wb
     echo -e "\n\nUptime          : \n$(uptime)\n" >> $wb
     echo -e "\nLast Reboot       : \n$(last reboot | head -3)\n" >> $wb
+    echo -e "\nLast 10 Users : \n$(last -10)" >> $wb
     echo -e "\nFilesystems usage : \n$(df -h)\n" >> $wb
     echo -e "\nUsers on system   : \n$(w)\n" >> $wb
     echo -e "\nHardware or kernel errors prior to power down : \n$(dmesg -l err)\n" >> $wb

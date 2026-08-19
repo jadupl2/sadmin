@@ -152,9 +152,10 @@ poweron_mail()
     # Create the Body of email in a text file 
     echo -e "System '${SADM_HOSTNAME}' has just started on $(date)" > $wb
     echo -e "The program '${SADM_PN}' is reponsable for sending this email." >> $wb
-    echo -e "\n\nLast 3 Reboot :\n$(last reboot | head -3)\n" >> $wb
-    echo -e "\nFilesystems usage : \n$(df -h)\n" >> $wb
-    echo -e "Have a nice day !" >> $wb
+    echo -e "\nLast 3 Reboot :\n$(last reboot | head -3)" >> $wb
+    echo -e "\nLast 10 Users : \n$(last -10)" >> $wb
+    echo -e "\nFilesystems usage : \n$(df -hP --total)" >> $wb
+    echo -e "\nHave a nice day !" >> $wb
 
     # Send Info Email To Sysadmin
     sadm_sendmail "$we" "$ws" "$wb" "$SADM_LOG,$SADM_ELOG" 
@@ -202,7 +203,7 @@ normal_startup()
 
     # Synchronize system clock with NTP Servers
     command -v ntpdate >/dev/null                                       # Is ntpdate cmd on system ?
-    if [ $? -eq 0 ]                                                   # ntpdate command on system
+    if [ $? -eq 0 ]                                                     # ntpdate command on system
         then sadm_write_log "  - Synchronize clock with NTP server 'ntpdate -u $NTP_SERVER'."
              ntpdate -u $NTP_SERVER >> $SADM_LOG 2>&1                   # Synchronize with NTP server
              if [ $? -ne 0 ]                                            # If failed to synchronize
@@ -213,9 +214,9 @@ normal_startup()
 
              fi
         else command -v chronyc >/dev/null                              # Is chrony cmd on system ?
-             if [ $? -eq 0 ]                                          # chrony cmd is on system!
+             if [ $? -eq 0 ]                                            # chrony cmd is on system!
                 then sadm_write_log "  - Synchronize clock with 'chronyc makestep' command."
-                     chronyc makestep >> $SADM_LOG 2>&1
+                     chronyc makestep > /dev/null                       # No ok 200 on screen 
                      if [ $? -ne 0 ] 
                         then sadm_write_err "  - [ ERROR ] Time synchronization 'chronyc makestep'."
                             ((ERROR_COUNT++))
@@ -234,7 +235,8 @@ normal_startup()
     sadm_write_log "  - Start 'nmon' performance system monitor tool."
     #[   -x /usr/bin/python3 ] && $SADMIN/bin/sadm_nmon_watcher.py >/dev/null 2>&1 # Start nmon 
     #[ ! -x /usr/bin/python3 ] && $SADMIN/bin/sadm_nmon_watcher.sh >/dev/null 2>&1 # Start nmon 
-    $SADMIN/usr/mon/swatch_nmon.sh >> $SADM_LOG 2>&1
+#    $SADMIN/usr/mon/swatch_nmon.sh >> $SADM_LOG 2>&1
+    $SADMIN/usr/mon/swatch_nmon.sh /dev/null 2>&1
     RC=$?
     if [ $RC -ne 0 ] 
        then sadm_write_err "     - [ ERROR ] Starting 'nmon' System Monitor." 
