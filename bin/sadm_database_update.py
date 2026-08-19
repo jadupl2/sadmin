@@ -55,6 +55,7 @@
 #@2026_05_27 server v3.26.0 Added more exception handling to database update function.
 #@2026_06_24 server v3.26.1 Add a chown 664 to $SADMIN/dat/dr/$hostanme_sysinfo.txt.
 #@2026_08_03 server v3.26.2 If note column is empty, fill it with manufacturer,model & firmware version.
+#@2026_08_19 server v3.26.3 More explanatory output and performance.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -100,7 +101,7 @@ sa.pn                 = os.path.basename(sys.argv[0])   # [P]rogram [N]ame with 
 sa.inst               = sa.pn.split('.')[0]             # INSTance Name = Pgm Name Without Extension
 
 # Variables shared with SADMIN Python Library.
-sa.ver                = "3.26.02"                       # Your Program VERSION number
+sa.ver                = "3.26.03"                       # Your Program VERSION number
 sa.desc               = "Update SADMIN database with information collected from each system."
 sa.root_only          = True       # Can Only be run by 'root'(True/False)
 sa.server_only        = True       # Run Only on SADMIN server(True/False) SADM_SERVER in sadmin.cfg
@@ -118,7 +119,7 @@ sa.errno              = 0          # Error No. set by function called (0=OK Else
 sa.errmsg             = ""         # Error Mess. set by function you call (blank or error msg)
 sa.pid_timeout        = 14400      # PID File TTL (14400=4hrs) is SADM_PID_TIMEOUT in sadmin.cfg
 sa.lock_timeout       = 7200       # Sec. before unlock (7200=2hrs) SADM_LOCK_TIMEOUT in sadmin.cfg
-sa.db_used            = False      # Open/Use auto connect DB(True)
+sa.db_used            = True       # Open/Use auto connect DB(True)
 sa.db_name            = "sadmin"   # Database Name (sadmin=default) SADM_DBNAME in sadmin.cfg
 sa.db_conn            = None       # Database Connector when using DB,  set by sa.start()
 sa.db_cur             = None       # Database Cursor if you use the DB, set by sa.start()
@@ -152,7 +153,7 @@ wdict           = {}                                                    # Dict f
 def update_row(wdict,db_conn,db_cur):
 
     sa.write_log ("[ INFO ] Update '%s.%s' information in database." % (wdict['srv_name'],wdict['srv_domain']))
-    if sa.debug > 4: 
+    if debug > 4: 
        sa.write_log ("We are in function : %s "% (inspect.stack()[0][3])) 
        sa.write_log ("db_conn = " + str(db_conn) + " (type: " + str(type(db_conn)) + ")" )
        sa.write_log ("db_cur = "  + str(db_cur)  + " (type: " + str(type(db_cur))  + ")" )
@@ -197,12 +198,12 @@ def update_row(wdict,db_conn,db_cur):
     # Execute the SQL Update Statement & Commit change if no error, otherwise Rollback the 
     # transaction and return an error.
     try:
-        if sa.debug > 4: sa.write_log("[ DEBUG %03d ] About to execute, sql='%s'" % (sa.debug, sql))
+        if debug > 4: sa.write_log("[ DEBUG %03d ] About to execute, sql='%s'" % (debug, sql))
         with db_conn.cursor() as db_cur:
              db_cur.execute( sql )                                      # Execute the SQL statement
 
         # No Error, then commit change to database.
-        if sa.debug > 4: sa.write_log("[ DEBUG %03d ] Commit change." % (sa.debug))
+        if debug > 4: sa.write_log("[ DEBUG %03d ] Commit change." % (debug))
         try : 
             db_conn.commit()                                            # Commit the transaction
         except Exception as e:
@@ -214,7 +215,7 @@ def update_row(wdict,db_conn,db_cur):
             sa.write_err (f">>>>>>>>>>>> (%s) %s " % (enum,emsg))       # Print Error No. & Message
             sa.write_err (f"sql          : {sql}")                      # Show SQL That Cause Error
             return(1)                                                   # return (1) to indicate Err
-        sa.write_log ("[ SUCCESS ] Change committed to '%s' database." % (sa.db_name))
+        sa.write_log ("[ OK ] Change committed to '%s' database." % (sa.db_name))
         return(0)                                                       # return (0) Insert Worked
 
     # If error trying to update system data, try to do a rollback and catch error on rollback if any.
@@ -242,23 +243,23 @@ def update_row(wdict,db_conn,db_cur):
 # Process all your active(s) server(s) in the Database (Used if want to process selected servers)
 # --------------------------------------------------------------------------------------------------
 def process_servers(db_conn,db_cur):
-    sa.write_log ("Processing all actives systems")
+    sa.write_log ("\nProcessing all active systems")
 
     # Build the SQL to retreive all active systems, sorted by hostname.
     sql  = "SELECT srv_name, srv_desc, srv_domain, srv_osname  "
     sql += " FROM server WHERE srv_active = %s " % ('True')
     sql += " order by srv_name;"
 
-    if sa.debug > 4: 
+    if debug > 4: 
         sa.write_log (f"Function : {inspect.stack()[0][3]}")            # Show current function name
         sa.write_log ("db_conn   : " + str(db_conn) + " (type: " + str(type(db_conn)) + ")" )
         sa.write_log ("db_cur    : " + str(db_cur)  + " (type: " + str(type(db_cur))  + ")" )
         sa.write_log ("SQL       : %s" % (sql))                 
 
     try :
-        with db_conn.cursor() as db_cur:
-             db_cur.execute(sql)
-             rows = db_cur.fetchall()
+        with db_conn.cursor() as sa.db_cur:
+            sa.db_cur.execute(sql)
+            rows = sa.db_cur.fetchall()
     except (pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as e:
         enum,emsg = e.args                                              # Get Error No. & Message
         sa.write_err (f"[ ERROR ] %d: %s" % (enum, emsg))               # Print Error No. & Message
@@ -268,7 +269,7 @@ def process_servers(db_conn,db_cur):
     
 
     # Under debug show all actives systems that was fetch
-    if sa.debug > 4:
+    if debug > 4:
         for row in rows:
             wname   = row['srv_name']
             wdesc   = row['srv_desc'] 
@@ -287,11 +288,11 @@ def process_servers(db_conn,db_cur):
         wos     = row['srv_osname']
         sa.write_log("")                                                # Insert Blank Line
         sa.write_log (('-' * 40))                                       # Insert Dash Line
-        sa.write_log ("Processing (%d) %-15s - os:%s" % (lineno,wname+"."+wdomain,wos))
+        sa.write_log ("Processing (%d) %-15s - %s - %s" % (lineno,wname+"."+wdomain,wos,wdesc))
 
         # Construct the name of the sysinfo file for that system
         sysfile = sa.dir_www_dat + "/" + wname + "/dr/" + wname + "_sysinfo.txt"
-        sa.write_log("[ INFO ] Reading sysinfo file : " + sysfile)      # Display Sysinfo File
+        sa.write_log("[ INFO ] Reading sysinfo from " + sysfile)       # Display Sysinfo File
 
         # Open sysinfo.txt file for the current server
         try:
@@ -310,10 +311,10 @@ def process_servers(db_conn,db_cur):
             sa.write_log (repr(e))
             sa.write_log( "Error Text   : {0}\r\n.format(e.strerror)")  # Print Error Message
             continue                                                    # Go read next system data
-        if sa.debug > 4: sa.write_log ("[ DEBUG %03d ] SysInfo file '%s' opened" % (sa.debug,sysfile))    
+        if debug > 4: sa.write_log ("[ DEBUG %03d ] SysInfo file '%s' opened" % (debug,sysfile))    
 
         # Process the content of the sysinfo.txt file ----------------------------------------------
-        if sa.debug > 4: sa.write_log("[ DEBUG %03d ] Reading '%s'." % (sa.debug, sysfile))
+        if debug > 4: sa.write_log("[ DEBUG %03d ] Reading '%s'." % (debug, sysfile))
 
 
         # Create Dict. in which we store all the info we want to update in the DB for that server.
@@ -333,7 +334,7 @@ def process_servers(db_conn,db_cur):
         for cfg_line in FH:                                             # Loop until all lines parse
             wline = cfg_line.strip()                                    # Strip CR/LF/Trailing space
             if wline.lstrip()[0] == '#' or len(wline) == 0: continue    # If comment or blank line
-            if sa.debug > 5: sa.write_log ("[ DEBUG %03d ] Parsing Line : %s" % (sa.debug, wline))
+            if debug > 5: sa.write_log ("[ DEBUG %03d ] Parsing Line : %s" % (debug, wline))
             split_line = wline.split('=')                               # Split based on equal sign
             CFG_NAME = split_line[0].strip()                            # Get Name of Variable 
 
@@ -487,7 +488,7 @@ def process_servers(db_conn,db_cur):
                 total_error += 1                                        # Add 1 To Total Error
                 NO_ERROR_OCCUR = False                                  # Now No "Error" is False
         
-        if sa.debug > 4: sa.write_log("[ DEBUG %03d ] Closing %s" % (sa.debug, sysfile))
+        if debug > 4: sa.write_log("[ DEBUG %03d ] Closing %s" % (debug, sysfile))
         FH.close()                                                      # Close the Sysinfo File
         os.chmod(sysfile,0o0664)                                        # Change Log File Permission
 
@@ -507,6 +508,7 @@ def process_servers(db_conn,db_cur):
             continue
         lineno += 1                                                     # Increment system number
 
+    sa.write_log (" ")
     return(total_error)                                                 # Return Nb Error to caller
 
 
@@ -575,12 +577,13 @@ def cmd_options(argv):
 # --------------------------------------------------------------------------------------------------
 def main(argv):
     cmd_options(argv)                                                   # Analyze cmdline options
-    if (sa.db_used == True):                                            # If Use Db, Process Systems
-        (sa.db_conn, sa.db_cur) = sa.start()                            # Return DB connector,cursor
-        sa.exit_code = process_servers()                                # Use Db Loop Active Systems
-#    else: 
-#        sa.start()                                                      # SADMIN Initialization
-#        sa.exit_code = main_process()                                   # Main Process, No Db Used
+    sa.db_used == True                                                  # Yes we use the Database
+    (sa.db_conn,sa.db_cur) = sa.start()                                 # Return DB connector,cursor
+    if debug > 4: 
+        sa.write_log ("sa.db_conn   : " + str(sa.db_conn) + " (type: " + str(type(sa.db_conn)) + ")" )
+        sa.write_log ("sa.db_cur    : " + str(sa.db_cur)  + " (type: " + str(type(sa.db_cur))  + ")" )
+
+    sa.exit_code = process_servers(sa.db_conn,sa.db_cur)                # Use Db Loop Active Systems
     sa.stop(sa.exit_code)                                               # Exit Gracefully SADMIN Lib
     sys.exit(sa.exit_code)                                              # Back to O/S with Exit Code
 
@@ -588,16 +591,19 @@ def main(argv):
 # Python assigns the string "__main__" to __name__. 
 # If the file is imported elsewhere (import script), __name__ matches the actual filename instead.
 # This condition guards your code against accidental execution during imports.
-if __name__ == "__main__": 
-    try:
-        main(sys.argv)
-    except KeyboardInterrupt as e: 
-        print(f"[ ERROR ] A Keyboard interrupt as occurred: {e}")
-        sa.stop(1)                                                      # Exit Gracefully & Close DB
-        sys.exit(1)
-    except Exception as e:
-        print(f"[ ERROR ] An unexpected error occurred: {e}")
-        sa.stop(1)                                                      # Exit Gracefully & Close DB
-        sys.exit(1)
+# This idiom means the below code only runs when executed from command line
+if __name__ == "__main__": main(sys.argv)
+
+#if __name__ == "__main__": 
+#    try:
+#        main(sys.argv)
+#    except KeyboardInterrupt as e: 
+#        print(f"[ ERROR ] A Keyboard interrupt as occurred: {e}")
+#        sa.stop(1)                                                      # Exit Gracefully & Close DB
+#        sys.exit(1)
+#    except Exception as e:
+#        print(f"[ ERROR ] An unexpected error occurred: {e}")
+#        sa.stop(1)                                                      # Exit Gracefully & Close DB
+#        sys.exit(1)
         
         

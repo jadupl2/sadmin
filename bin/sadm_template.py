@@ -29,7 +29,8 @@
 #@2025_09_04 lib v01.01.01 Now ONE template for Python & remove the need of importing pymysql.
 #@2026_05_30 lib v01.02.01 Added 'quiet' parameter to 'db_connect()' function in SADMIN Python Library.
 #@2026_06_24 lib v01.02.02 Trap Keybord control-C and stop grancefully.
-
+#@2026_08_19 lib v01.02.03 Minors output changes.
+#
 #
 
 
@@ -79,7 +80,7 @@ sa.pn                 = os.path.basename(sys.argv[0])   # [P]rogram [N]ame with 
 sa.inst               = sa.pn.split('.')[0]             # INSTance Name = Pgm Name Without Extension
 
 # Variables shared with SADMIN Python Library.
-sa.ver                = "01.02.02" # Your Program VERSION number
+sa.ver                = "01.02.03" # Your Program VERSION number
 sa.desc               = "Description of program '%s'" % (sa.pn) # Your Program DESCRIPTION 
 sa.root_only          = False      # Can Only be run by 'root'(True/False)
 sa.server_only        = False      # Run Only on SADMIN server(True/False) SADM_SERVER in sadmin.cfg
@@ -121,12 +122,11 @@ current_time = datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S") # Formatted
 
 
 
-# Process all your active(s) server(s) in the Database (Used if want to process selected servers)
-# Called when 'sa.db_used' is set to 'True'.
+# Process all your active(s) server(s) 
 # --------------------------------------------------------------------------------------------------
 def process_servers():
 
-    sa.write_log("Processing all active system(s)")                     # Enter Servers Processing
+    sa.write_log("\nProcessing all active system(s)")                   # Enter Servers Processing
 
     if (not sa.db_used) :                                               # Make sure db_used is True
         sa.write_err ("Variable 'sa.db_used' must be set to 'True' to have access to the database.")
@@ -198,6 +198,7 @@ def process_servers():
         if (error_count != 0): sa.write_log ("Total error(s) : %s" % (error_count)) 
         lineno += 1                                                     # Increase Server Counter
 
+    sa.write_log(" ")                                                   # White Line
     return (error_count)                                                # Return Err.Count to caller
 
 

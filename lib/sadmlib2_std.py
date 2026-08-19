@@ -2406,18 +2406,18 @@ def db_close(db_conn,db_cur):
     if db_cur is not None:
         try:
             db_cur.close()
-            if not quiet : write_log ("Cursor closed successfully.")
+            if not quiet : write_log ("[ OK ] Successfully closed database cursor.")
         except Exception as e:
-            if not quiet : write_err (f"Error closing cursor: {e}")
+            if not quiet : write_err (f"[ ERROR ] Closing Database Cursor: {e}")
             errno += 1
             
     # 2. Close the connection second
     if db_conn is not None:
         try:
             db_conn.close()
-            if not quiet : write_log ("Successfully closed database connection.")
+            if not quiet : write_log ("[ OK ] Successfully closed database connection.")
         except Exception as e:
-            if not quiet : write_err (f"Error closing connection: {e}")
+            if not quiet : write_err (f"[ ERROR ] Closing Database connection: {e}")
             errno += 1
 
     return(errno)
@@ -3387,7 +3387,7 @@ def db_connect(db_name="sadmin",quiet=False):
             cursorclass=pymysql.cursors.DictCursor
         )
         db_cur = db_conn.cursor()
-        if (not quiet): write_log ("[ OK ] Connection to %s database establish." % (db_name))
+        if (not quiet): write_log ("[ OK ] Connection to '%s' database establish." % (db_name))
     
     except (pymysql.Error,NameError) as e:
         (enum,emsg) = e.args                                            # Get Error No. & Message
