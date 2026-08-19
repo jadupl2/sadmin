@@ -38,6 +38,7 @@
 # 2023_07_09 server v3.9 Modify code to get the mac address of ip (Depreciate python module 'getmac´)
 # 2023_08_18 server v4.0 Adapt code to the fact that sa.start() & sa.stop() function open/close DB.
 #@2026_05_30 server v4.1 Adapt code to the fact that sa.start() & sa.stop() function open/close DB.
+#@2026_08_19 server v4.2 Change output and small fixes.
 # --------------------------------------------------------------------------------------------------
 #
 from sys import platform
@@ -74,7 +75,7 @@ except ImportError as e:                                             # If Error 
 
 # Local variables local to this script.
 sa.pn                 = os.path.basename(sys.argv[0])         # [P]rogram [N]ame with extension
-sa.ver                = "4.1"                                 # Program version
+sa.ver                = "4.2"                                 # Program version
 sa.desc               = "Create web page showing IP address usage with hostname, MAC address of subnet."
 sa.inst               = sa.pn.split('.')[0]                   # INSTance Name = Pgm Name Without Ext
 sa.pid                = os.getpid()                           # Get Current Process ID.
@@ -330,7 +331,7 @@ def db_update(wip,db_conn,db_cur,wzero,wname,wmac,wman,wping,wdateping,wdatechan
 #
 def scan_network (snet,db_conn,db_cur) :
 
-    sa.write_log ("Sanning Subnet %s" % snet)
+    sa.write_log ("\nSanning Subnet %s" % snet)
     if sa.debug > 4 : print ("scan_network dbconn,db_cur : ", db_conn, db_cur)
     scan_status = 0                                                     # 0=No error 1=Error in func
 
@@ -342,7 +343,7 @@ def scan_network (snet,db_conn,db_cur) :
         sa.write_err ("Stdout : %s \nStdErr : %s" % (cstdout,cstderr))  # Write stdout & stderr
     else:                                                               # If netstat succeeded
         netdev=cstdout                                                  # Save Net. Interface Name
-        sa.write_log ("Current host interface name     : %s" % (netdev)) # Show Interface selected
+        sa.write_log ("\nCurrent host interface name     : %s" % (netdev)) # Show Interface selected
 
 
     # Show Number Of Possible IP In Network Subnet
@@ -390,12 +391,12 @@ def scan_network (snet,db_conn,db_cur) :
         #print("The search ip is : ...%s...\n" % (search_ip)) 
         if search_ip in ping_array:
             hactive = 1                                                 # IP is reachable
-            sa.write_log("%-16s Command 'fping' say it's active." % (hip))   
+            sa.write_log("%-16s System responded to 'fping', network alive %s." % (hip,hname))   
         else: 
             hactive = 0                                                 # IP is not Reachable
-            sa.write_log("%-16s Command 'fping' say it's not active." % (hip)) 
+            sa.write_log("%-16s System didn't responded to 'fping', network inactive." % (hip)) 
 
-# Get the Mac Address of IP
+        # Get the Mac Address of IP
         hmac = ''                                                       # Clear Work Mac Address
         hmac = sa.get_mac_address(hip)                                  # Get Mac Address of IP 
         if sa.debug > 4 : print ("get_mac_address is '%s'" % (hmac))      # Show debug info
@@ -440,17 +441,21 @@ def scan_network (snet,db_conn,db_cur) :
         row_datechg  = dbrow['net_date_update']                         # Save Last Mac/Name Chg Date
         if (sa.debug > 4) :
             sa.write_log("Actual data in Database: host:%s, Mac:%s, Ping:%s, DatePing:%s, DateUpdate:%s" 
-            % (row_hostname,row_mac,row_ping,row_pingdate,row_datechg))
+            % (row_hostname, row_mac, row_ping, row_pingdate, row_datechg))
         wdate = time.strftime('%Y-%m-%d %H:%M:%S')                      # Format Current Date & Time
 
         # Show ping date - If IP Pingable save ping date and ping status
         if (hactive == 1) :                                             # If IP is pingable now
             row_ping = 1                                                # Update Row Ping Info work
-            sa.write_log("%-16s Ping worked - Update last ping date from %s to %s" % (hip,row_pingdate,wdate))
+            sa.write_log("%-16s Update the last scan date from %s to %s" % (hip,row_pingdate,wdate))
             row_pingdate = wdate                                        # Update Last Ping Date
         else:
             row_ping = 0                                                # Upd. Row Info not pingable
-            sa.write_log("%-16s Ping didn't worked - Leave last ping date as it is '%s'." % (hip,row_pingdate))
+            if row_pingdate == "0000-00-00 00:00:00" : 
+               sa.write_log("%-16s IP never responded, no change to report."  % (hip))
+               continue
+            else:
+               sa.write_log("%-16s The last time the mac address change was '%s'." % (hip,row_pingdate))
 
 
         # If MAC have changed, update MAC and last change date/time.
@@ -458,7 +463,7 @@ def scan_network (snet,db_conn,db_cur) :
         if row_mac != hmac :                                            # If MAC Changed
             if hmac == "" or hmac is None :                             # If No MAC (No card or off)
                 hmac = "" 
-                sa.write_log("%-16s No MAC address change, still at %s." % (hip,row_mac))
+                sa.write_log("%-16s The last MAC address to connect was %s." % (hip,row_mac))
             else:
                 if hmac is not None : 
                     sa.write_log("%-16s >>>>> Mac address changed from '%s' to '%s'." % (hip,row_mac,hmac))
@@ -481,7 +486,7 @@ def scan_network (snet,db_conn,db_cur) :
         if (sa.debug > 4) : sa.write_log ("Updating '%s' data" % (hip))
         dberr = db_update(hip,db_conn,db_cur,zip,row_hostname,row_mac,row_manu,row_ping,row_pingdate,row_datechg)
         if (dberr != 0) :                                               # If no Error updating IP
-            sa.write_log("%-16s [ ERROR ] Updating databse" % (hip))    # Advise User Update Error
+            sa.write_log("%-16s [ ERROR ] Updating database" % (hip))    # Advise User Update Error
             scan_status = 1
         else :
             if (sa.debug > 4) : 
@@ -499,7 +504,7 @@ def scan_network (snet,db_conn,db_cur) :
 def main_process(db_conn,db_cur):
 
     if sa.debug > 4 : 
-        sa.write_log("main_process db_conn,db_cur : ", db_conn, db_cur)
+        sa.write_log("main_process db_conn=%s, db_cur=%s " % (db_conn, db_cur))
         sa.write_log("Processing Network1 = _%s_" % (sa.sadm_network1))
 
     if (sa.sadm_network1 != "") :
