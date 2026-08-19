@@ -157,7 +157,6 @@ e_note()        { printf "${underline}${bold}${blue}Note:${reset}  ${blue}%s${re
 #                                Script Start HERE
 # --------------------------------------------------------------------------------------------------
     sadm_start                                                          # Init Env. Dir. & RC/Log
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
     tput clear 
 
     # GET THE LAST LINE OF EVERY RCH FILE INTO THE TMP2 WORK FILE
@@ -176,7 +175,7 @@ e_note()        { printf "${underline}${bold}${blue}Note:${reset}  ${blue}%s${re
              exit 0    
     fi
 
-    tput clear 
+#    tput clear 
     WDATE=`date "+%Y/%m/%d %H:%M"`
     e_bold "System Monitor Command Line Report v${SADM_VER}                      $WDATE"
     echo "------------------------------------------------------------------------------"
