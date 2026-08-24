@@ -322,22 +322,17 @@ main_process()
 
 
 
-# --------------------------------------------------------------------------------------------------
-# Command line Options functions
-# Evaluate Command Line Switch Options Upfront
-#   -d[0-9] Set Debug Level  
-#   -h) Show Help Usage, 
-#   -v) Show Script Version,  
-#   -X) Delete the script PID file before running the script.
+# Command line Options functions, Evaluate Command Line Switch Options Upfront.
+# -h) Show Help Usage, -v) Show Script Version,  -d[0-9] Set Debug Level,  -X=Delete PID file.
 # --------------------------------------------------------------------------------------------------
 function cmd_options()
 {
     while getopts "d:hvX" opt ; do                                      # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
-               num=$(echo "$SADM_DEBUG" |grep -E "^\-?[0-9]?\.?[0-9]+$") # Valid if Level is Numeric
+               num=$(echo "$SADM_DEBUG" |grep -E "^\-?[0-9]?\.?[0-9]+$") # Is debug level Numeric ?
                if [ "$num" = "" ]                            
-                  then printf "\nInvalid debug level.\n"                # Inform User Debug Invalid
+                  then printf "\nValid debug level value are 0 to 9.\n" # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
                        exit 1                                           # Exit Script with Error
                fi
@@ -349,8 +344,8 @@ function cmd_options()
             v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
                ;;
-            X) /usr/bin/rm -f "${SADMIN}/tmp/${SADM_INST}.pid" >/dev/null 2>&1
-               printf "\n$The PID File '${SADMIN}/tmp/${SADM_INST}.pid' is now removed.\n" 
+            X) /usr/bin/rm -f "$SADM_PID_FILE" >/dev/null 2>&1          # Remove script pid file
+               printf "\nPID File '$SADM_PID_FILE' is now removed.\n"   # Advise user
                ;;
            \?) printf "\nInvalid option: ${OPTARG}.\n"                  # Invalid Option Message
                show_usage                                               # Display Help Usage
@@ -370,11 +365,11 @@ function cmd_options()
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Won't come back if error
 
-    # Use 'process_system()' when you need to do something based on system present in Database.
-    #process_systems                                                     # Code using SADMIN Database
+    # When you need to do something based on system in Database.
+    #process_systems                                                     # Using SADMIN Database
     #SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
 
-    # Use 'main_process()' when you don't need the Database and you need to do some other stuff.
+    # When you don't need the Database and you need to do some other stuff.
     main_process                                                        # Not using SADMIN Database
     SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
 
