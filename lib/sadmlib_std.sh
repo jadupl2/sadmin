@@ -283,6 +283,7 @@
 #@2026_07_22 lib V04.92.07 Replace dash '-' with equal sign '=' 
 #@2026_07_23 lib V04.92.08 Change to sadm_write_log() to deal with special characters
 #@2026_07_27 lib V04.92.09 Fix error "SADM_ROOT_ONLY" and "SADM_SERVER_ONLY" command not found.
+#@2026_08_23 lib V04.92.10 Add variable '$SADM_HOST_DEV' not to delete $SADMIN/www on that system.
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x
@@ -291,7 +292,7 @@ trap 'exit 0' 2
 # --------------------------------------------------------------------------------------------------
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
-export SADM_LIB_VER="04.92.09"                                          # This Library Version
+export SADM_LIB_VER="04.92.10"                                          # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -471,7 +472,6 @@ export SADM_SMTP_PORT=587                                   # smtp port(25,465,5
 export SADM_SMTP_SENDER="sadmin.gmail.com"                  # Email address of sender 
 export SADM_GMPW=""    
 
-
 # O?S Update Variables (Default Values here will be overridden by SADM CONFIG FILE Content)
 export SADM_OSUPDATE_INTERVAL=15                            # Threshold between o/s update in days 
 export SADM_OSUPDATE_SCRIPT="sadm_osupdate.sh"              # Name of O/S update script
@@ -546,6 +546,11 @@ export SADM_VM_EXPORT_BATCH_DATE2RUN="0"                    # 0=AnyDate, Date to
 # Array of O/S Supported & Package Family - ${SADM_OS_SUPPORTED[2]} = "FEDORA" 
 export SADM_OS_SUPPORTED=("REDHAT" "CENTOS" "FEDORA" "ALMA" "ROCKY" "DEBIAN" "RASPBIAN" "UBUNTU" "MINT")
 #echo -e "\nSADM_OS_SUPPORTED[5,6] = ${SADM_OS_SUPPORTED[5]} ${SADM_OS_SUPPORTED[6]}\n"
+
+# This host is use for my development will treated as a SADMIN server
+# Don'delete the $SADMIN/www (Even if $SADM_HOST_TYPE="C")
+export SADM_DEV_HOST="bilbo"                                # Development system host name
+
 
 # OS Release File
 export OS_RELFILE="/etc/os-release"                         # O/S Release File
