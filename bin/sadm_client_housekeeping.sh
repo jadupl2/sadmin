@@ -95,6 +95,7 @@
 #@2026_03_15 client v2.31 Fix removal of $SADMIN.git directory & '.gitignore' (if exist) on client.
 #@2026_03_27 client v2.32 Default set password expiration to never (Since passwd off, use ssh keys).
 #@2026_06_15 client v2.33 Add $SADMIN/sys files, create them if not exist from template
+#@2026_08_23 client v2.34 Delete $SADMIN/www when not on SADMIN server to save space.
 # --------------------------------------------------------------------------------------------------
 # Add trap to catch ^C and stop script gracefully.
 trap 'sadm_stop 1; exit 1' 2                                        
@@ -126,7 +127,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.33'                                     # Script version number
+export SADM_VER='2.34'                                     # Script version number
 export SADM_DESC="Set \$SADMIN owner:group permission, prune old log,rch files & check 'sadmin' account."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -258,8 +259,8 @@ check_sadmin_account()
     
     if [ "$SADM_PWD_RANDOM" = "Y" ] && [ "$(sadm_get_ostype)" = "LINUX" ] # User want new pwd daily
         then sadm_write_log "  - Random password generation is activated." 
-             sadm_write_log "    - 'SADM_PWD_RANDOM' is set to 'Y' in 'SADMIN' config file."
-             sadm_write_log "    - A new random 16 characters password is assigned to '${SADM_USER}'."
+             sadm_write_log "    - 'SADM_PWD_RANDOM' is set to 'Y' in 'SADM_CFG_FILE' file."
+             sadm_write_log "    - New random 16 characters long password assigned to '${SADM_USER}' account."
              random_pwd=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16; echo)  # Generate random pwd
              echo "${SADM_USER}:${random_pwd}" | chpasswd               # Change sadmin password
              if [ $? -ne 0 ]                                            # If error when pwd change
@@ -329,8 +330,7 @@ check_sadmin_account()
     #       - # chage -m 0 -M 90 -W 14 -E -1 -I 100 sadmin
     # 
     if [ "$(sadm_get_ostype)" = "LINUX" ] 
-        then sadm_write_log " "
-             sadm_write_log "  - Set '$SADM_USER' account aging information to SADMIN standard"
+        then sadm_write_log "  - Set '$SADM_USER' account aging information to SADMIN standard"
              sadm_write_log "    - chage -m 0 -M -1 -W 14 -E -1 -I 100 $SADM_USER" 
              chage -m 0 -M -1 -W 14 -E -1 -I 100 $SADM_USER 
              if [ $? -ne 0 ] 
@@ -412,7 +412,7 @@ set_files_recursive()
     RETURN_CODE=0                                                       # Reset Error Counter
 
     # Make sure DAT Directory $SADM_DAT_DIR Directory files is own by sadmin
-    if [ -d "$VAL_DIR" ]
+    if [ -d "$VAL_DIR" ]                                                # Test if directory exist
         then CMD="find $VAL_DIR -type f -exec chown ${VAL_OWNER}:${VAL_GROUP} {} \;" 
              find $VAL_DIR -type f -exec chown ${VAL_OWNER}:${VAL_GROUP} {} \; #>/dev/null 2>&1
              if [ $? -ne 0 ]
@@ -500,37 +500,63 @@ set_file()
 # --------------------------------------------------------------------------------------------------
 file_housekeeping()
 {
-    sadm_write_log ""
-    sadm_write_log ""
-    sadm_write_log "SADMIN CLIENT FILES HOUSEKEEPING"
+    sadm_write_log "\n\nSADMIN CLIENT FILES HOUSEKEEPING"
+    ERROR_COUNT=0                                                       # Set error count to zero.
 
-   # Just to make sure .gitkeep file always exist in some directories (for git).
-    if [ ! -f "${SADM_TMP_DIR}/.gitkeep" ]  ; then touch ${SADM_TMP_DIR}/.gitkeep  ; fi 
-    if [ ! -f "${SADM_LOG_DIR}/.gitkeep" ]  ; then touch ${SADM_LOG_DIR}/.gitkeep  ; fi 
-    if [ ! -f "${SADM_DAT_DIR}/.gitkeep" ]  ; then touch ${SADM_DAT_DIR}/.gitkeep  ; fi 
-    if [ ! -f "${SADM_SYS_DIR}/.gitkeep" ]  ; then touch ${SADM_SYS_DIR}/.gitkeep  ; fi 
-    if [ ! -f "${SADM_UBIN_DIR}/.gitkeep" ] ; then touch ${SADM_UBIN_DIR}/.gitkeep ; fi 
-    if [ ! -f "${SADM_ULIB_DIR}/.gitkeep" ] ; then touch ${SADM_ULIB_DIR}/.gitkeep ; fi 
-    if [ ! -f "${SADM_UCFG_DIR}/.gitkeep" ] ; then touch ${SADM_UCFG_DIR}/.gitkeep ; fi 
-    if [ ! -f "${SADM_UDOC_DIR}/.gitkeep" ] ; then touch ${SADM_UDOC_DIR}/.gitkeep ; fi 
+    # Just to make sure .gitkeep file always exist in some directories (for git).
+    if [[ ! -f "${SADM_TMP_DIR}/.gitkeep"  ]] ; then touch ${SADM_TMP_DIR}/.gitkeep  ; fi 
+    if [[ ! -f "${SADM_LOG_DIR}/.gitkeep"  ]] ; then touch ${SADM_LOG_DIR}/.gitkeep  ; fi 
+    if [[ ! -f "${SADM_DAT_DIR}/.gitkeep"  ]] ; then touch ${SADM_DAT_DIR}/.gitkeep  ; fi 
+    if [[ ! -f "${SADM_SYS_DIR}/.gitkeep"  ]] ; then touch ${SADM_SYS_DIR}/.gitkeep  ; fi 
+    if [[ ! -f "${SADM_UBIN_DIR}/.gitkeep" ]] ; then touch ${SADM_UBIN_DIR}/.gitkeep ; fi 
+    if [[ ! -f "${SADM_ULIB_DIR}/.gitkeep" ]] ; then touch ${SADM_ULIB_DIR}/.gitkeep ; fi 
+    if [[ ! -f "${SADM_UCFG_DIR}/.gitkeep" ]] ; then touch ${SADM_UCFG_DIR}/.gitkeep ; fi 
+    if [[ ! -f "${SADM_UDOC_DIR}/.gitkeep" ]] ; then touch ${SADM_UDOC_DIR}/.gitkeep ; fi 
 
     # Remove ReaR default cron - We want to run ReaR Backup from our crontab 'etc/cron.d/sadm_rear'.
     if [ -r /etc/cron.d/rear ] ; then rm -f /etc/cron.d/rear >/dev/null 2>&1; fi
 
     # Remove file(s) and directories used by SADMIN server and not needed on SADMIN client
-    if [ "$SADM_HOST_TYPE" = "C" ]                                  # If not on SADMIN server      
-        then if [ -f "$SADM_ALERT_ARC"  ] ; then rm -f "$SADM_ALERT_ARC"  >/dev/null 2>&1 ;fi
-             if [ -f "$SADM_ALERT_HIST" ] ; then rm -f "$SADM_ALERT_HIST" >/dev/null 2>&1 ;fi
-             if [ -f "$GMPW_FILE_TXT"   ] ; then rm -f "$GMPW_FILE_TXT"   >/dev/null 2>&1 ;fi
-             if [ -f "$DBPASSFILE"      ] ; then rm -f "$DBPASSFILE"      >/dev/null 2>&1 ;fi
-             if [ -d "$SADM_DBB_DIR"    ] ; then rm -fr "$SADM_DBB_DIR" ; fi
-             if [ -d "$SADM_NET_DIR"    ] ; then rm -fr "$SADM_NET_DIR" ; fi    
+    if [[ "$SADM_HOST_TYPE" == "C" ]]                                  # If not on SADMIN server      
+        then #  Alert Archive (Only on SADMIN server)
+             if [[ -f "$SADM_ALERT_ARC"  ]] ; then rm -f "$SADM_ALERT_ARC"  >/dev/null 2>&1 ;fi
+             
+             # Alert History file (Only on SADMIN server)
+             if [[ -f "$SADM_ALERT_HIST" ]] ; then rm -f "$SADM_ALERT_HIST" >/dev/null 2>&1 ;fi
+             
+             # SMTP Unencrypted PasswdFile (Google password)
+             if [[ -f "$GMPW_FILE_TXT"   ]] ; then rm -f "$GMPW_FILE_TXT"   >/dev/null 2>&1 ;fi
+             
+             # Database Password file 
+             if [[ -f "$DBPASSFILE"      ]] ; then rm -f "$DBPASSFILE"      >/dev/null 2>&1 ;fi
+             
+             # Database Backup direcctory (Only on SADMIN server)
+             if [[ -d "$SADM_DBB_DIR"    ]] ; then rm -fr "$SADM_DBB_DIR" ; fi
+             
+             # Network SubNet Info Dir
+             if [[ -d "$SADM_NET_DIR"    ]] ; then rm -fr "$SADM_NET_DIR" ; fi    
+
+             # SADMIN client version (Only on SADMIN server)
              f="${SADM_CFG_DIR}/sadmin_client.cfg" 
              if [ -f "$f" ] ; then rm -f "$f" >/dev/null 2>&1 ; fi
+
+             # Left over from previous version (Should not be there)
              f="${SADM_CFG_DIR}/sherlock.smon"
              if [ -f "$f" ] ; then rm -f "$f" >/dev/null 2>&1 ; fi 
+
+             # Left over from previous version (Should not be there).
              f="$SADM_WWW_LIB_DIR/.crontab.txt"
              if [ -f "$f" ] ; then rm -f "$f" >/dev/null 2>&1 ; fi
+
+             # Delete $SADMIN/www on client, if encounter these conditions.
+             # Got to be a client "SADM_HOST_TYPE = C" & Not on SADMIN Server & Not on Dev. System
+             if [[ "$SADM_HOSTNAME" != "$SADM_DEV_HOST" ]] && [[ "$SADM_HOST_TYPE" == "C" ]]
+                then server_with_no_domain="$(echo $SADM_SERVER | awk -F\. '{print $1}')"
+                     if [[ "$server_with_no_domain" != "$SADM_HOSTNAME" ]] 
+                         then sadm_write_log "Safe to delete '$SADM_WWW_DIR' on this client." 
+                              rm -fr "$SADM_WWW_DIR"
+                     fi
+             fi      
     fi 
 
     # Set the owner/group and privilege of all files in these directories.
@@ -540,7 +566,6 @@ file_housekeeping()
     set_files_recursive "$SADM_LOG_DIR"        "0664" "${SADM_USER}" "${SADM_GROUP}" 
     set_files_recursive "$SADM_CFG_DIR"        "0664" "${SADM_USER}" "${SADM_GROUP}" 
     set_files_recursive "$SADM_USR_DIR"        "0644" "${SADM_USER}" "${SADM_GROUP}" 
-
     set_files_recursive "$SADM_BIN_DIR"        "0755" "${SADM_USER}" "${SADM_GROUP}" 
     set_files_recursive "$SADM_SYS_DIR"        "0775" "${SADM_USER}" "${SADM_GROUP}" 
     set_files_recursive "$SADM_LIB_DIR"        "0775" "${SADM_USER}" "${SADM_GROUP}" 
@@ -564,9 +589,7 @@ file_housekeeping()
     set_file "/etc/postfix/sasl_passwd"      "0600"  "root" "root"
     set_file "/etc/postfix/sasl_passwd.db"   "0600"  "root" "root"
 
-    sadm_write_log ""
-    sadm_write_log ""
-    sadm_write_log "SADMIN FILES PRUNING"
+    sadm_write_log "\n\nSADMIN FILES PRUNING"
 
     # Remove files older than 2 days and *.pid file in $SADMIN/tmp directory.
     if [ -d "$SADM_TMP_DIR" ]
@@ -580,8 +603,7 @@ file_housekeeping()
                      if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error: ${ERROR_COUNT}" ;fi
              fi
 
-             sadm_write_log " "
-             sadm_write_log "Remove all pid files once a day - This prevent script from not running."
+             sadm_write_log "\nRemove all pid files once a day, this prevent script from not running."
              CMD="find $SADM_TMP_DIR  -type f -name \"*.pid\" -exec rm -f {} \;"
              find $SADM_TMP_DIR  -type f -name "*.pid" -exec rm -f {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
@@ -707,49 +729,37 @@ file_housekeeping()
 
 
 # --------------------------------------------------------------------------------------------------
-# The script Remove some old files or files on client that should not be there
+# Remove some old files or files on client that should not be there
 # --------------------------------------------------------------------------------------------------
 function remove_client_unwanted_files_or_directories()
 {
-    sadm_write_log ""
-    #sadm_write_log "REMOVE SADMIN SERVER FILES ON CLIENT (if any)"
-    #sadm_write_log ""
-    ERROR_COUNT=0
-
-    if [ "$SADM_HOST_TYPE" = "C" ] 
-        then rm sherlock.smon        >/dev/null 2>&1
-             rm alert_archive.txt    >/dev/null 2>&1
-             rm sadmin_client.cfg    >/dev/null 2>&1
-             rm .dbpass              >/dev/null 2>&1
-             rm .gmpw                >/dev/null 2>&1
-#             if [ -d "${SADMIN}/.git"    ] ; then rm -fr "${SADMIN}/.git" ; fi
-#             if [ $? -ne 0 ]
-#                then sadm_write_err "[ ERROR ] With rm -fr '${SADMIN}/.git'."
-#                     ((ERROR_COUNT++))
-#                else sadm_write_log "[ OK ] Removing .git directory ${SADMIN}/.git"
-#             fi
+    sadm_write_log "\nRemove unwanted files in $SADMIN/cfg, if any.\n"
+    if [[ "$SADM_HOST_TYPE" == "C" ]] 
+        then rm $SADM_CFG_DIR/sherlock.smon        >/dev/null 2>&1
+             rm $SADM_CFG_DIR/alert_archive.txt    >/dev/null 2>&1
+             rm $SADM_CFG_DIR/sadmin_client.cfg    >/dev/null 2>&1
+             rm $SADM_CFG_DIR/.dbpass              >/dev/null 2>&1
+             rm $SADM_CFG_DIR/.gmpw                >/dev/null 2>&1
     fi 
-
-    return $ERROR_COUNT
+    return 0
 }
 
 
 
 
 
-# --------------------------------------------------------------------------------------------------
-# Command line Options functions
-# Evaluate Command Line Switch Options Upfront
-# -h) Show Help Usage, -v) Show Script Version,  -d0-9] Set Debug Level  -X=Delete PID file.
+
+# Command line Options functions, Evaluate Command Line Switch Options Upfront.
+# -h) Show Help Usage, -v) Show Script Version,  -d[0-9] Set Debug Level,  -X=Delete PID file.
 # --------------------------------------------------------------------------------------------------
 function cmd_options()
 {
     while getopts "d:hvX" opt ; do                                      # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
-               num=$(echo "$SADM_DEBUG" |grep -E "^\-?[0-9]?\.?[0-9]+$") # Valid if Level is Numeric
+               num=$(echo "$SADM_DEBUG" |grep -E "^\-?[0-9]?\.?[0-9]+$") # Is debug level Numeric ?
                if [ "$num" = "" ]                            
-                  then printf "\nInvalid debug level.\n"                # Inform User Debug Invalid
+                  then printf "\nValid debug level value are 0 to 9.\n" # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
                        exit 1                                           # Exit Script with Error
                fi
@@ -761,8 +771,8 @@ function cmd_options()
             v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
                ;;
-            X) /usr/bin/rm -f "${SADMIN}/tmp/${SADM_INST}.pid" >/dev/null 2>&1
-               printf "\n${BOLD}${BLINK}${YELLOW}The PID File ("${SADMIN}/tmp/${SADM_INST}.pid") is now removed.${NORMAL}\n" 
+            X) /usr/bin/rm -f "$SADM_PID_FILE" >/dev/null 2>&1          # Remove script pid file
+               printf "\nPID File '$SADM_PID_FILE' is now removed.\n"   # Advise user
                ;;
            \?) printf "\nInvalid option: ${OPTARG}.\n"                  # Invalid Option Message
                show_usage                                               # Display Help Usage
@@ -774,6 +784,8 @@ function cmd_options()
 }
 
 
+
+
 #===================================================================================================
 #                                       Script Start HERE
 #===================================================================================================
@@ -783,16 +795,17 @@ function cmd_options()
 
     check_sadmin_account                                                # SADMIN User Account Usable
     ACC_ERROR=$?                                                        # Return number of errors
-    if [ "$ACC_ERROR" -eq 0 ]
-        then dir_housekeeping                                           # Do Dir HouseKeeping
-             DIR_ERROR=$?                                               # ReturnCode = Nb. of Errors
-             if [ "$DIR_ERROR" -eq 0 ]
-                then file_housekeeping                                  # Do File HouseKeeping
-                     FILE_ERROR=$?                                      # ReturnCode = Nb. of Errors
-             fi
-    fi 
+    
+    dir_housekeeping                                                    # Do Dir HouseKeeping
+    DIR_ERROR=$?                                                        # ReturnCode = Nb. of Errors
 
+    file_housekeeping                                                   # Do File HouseKeeping
+    FILE_ERROR=$?                                                       # ReturnCode = Nb. of Errors
+
+    # Place python version instead of the bash script of the nmon watcher in /etc/cron.d/sadm_client
     set_new_nmon_watcher                                                # Use Python nmon_watcher  
+
+    # Remove some old files or files on client that should not be there
     remove_client_unwanted_files_or_directories                         # Del Server file not client
 
     SADM_EXIT_CODE=$(($DIR_ERROR+$FILE_ERROR+$ACC_ERROR))               # Count DIR+File+Lock Func.
