@@ -408,10 +408,6 @@ update_flatpak()
 #    'n\n' 2>/dev/null | flatpak update | grep -Eo "^[\ ]*[0-9]+\..*" --color=none # List of Update
 #    'n\n' 2>/dev/null | flatpak update | grep -Eo "^[\ ]*[0-9]+\." | wc -l  # Update Number
 
-
-
-
-
     # Check if flatpak is executable on this system, if ok run flatpak update command.
     if [[ -x "$FLATPAK_PATH" ]]
        then flatpak -y update >> $SADM_LOG 2>&1 
