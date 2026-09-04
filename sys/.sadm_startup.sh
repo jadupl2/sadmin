@@ -47,7 +47,9 @@
 #@2026_07_08 startup/shutdown v03.25.01 now include removal of any .rpt file in $SADMIN/dat/rpt.
 #@2026_07_08 startup/shutdown v03.26.02 On server, remove some .rpt in $SADMIN/www/dat/HOSTNAME/rpt.
 #@2026_07_22 startup/shutdown v03.26.03 Add more info in Email sent to SADMIN admin.
-## --------------------------------------------------------------------------------------------------
+#@2026_09_04 startup/shutdown v03.26.04 Small improvements and code revision.
+#
+# --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x 
 
@@ -78,11 +80,11 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 export SADM_DEBUG=0                                        # Debug Level(0-9), 0 = NoDebug
 export SADM_EXIT_CODE=0                                    # Pgm. Default Exit Code
 export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
-export SADM_PN=${0##*/}                                    # Script name(with extension)
-export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
+export SADM_PN=$(basename "$0")                            # Script name(with extension)
+export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
 
-export SADM_VER='03.26.03'                                 # Script version number
-export SADM_DESC="Run when the system is started (via sadmin.service)." 
+export SADM_VER='03.26.04'                                 # Script version number
+export SADM_DESC="Script run when the system is started (systemctl enable --now sadmin)." 
 export SADM_ROOT_ONLY="Y"                                  # Pgm. run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Pgm. run only on SADMIN server? [Y]/[N]
 export SADM_GROUP_ONLY='N'                            # Pgm. run only if usr part of SADMIN Grp
@@ -157,6 +159,9 @@ poweron_mail()
     echo -e "\nFilesystems usage : \n$(df -hP --total)" >> $wb
     echo -e "\nHave a nice day !" >> $wb
 
+    # Make sure the end portion of email body is written to the file before sending email.
+    sync; sync; sleep 5
+
     # Send Info Email To Sysadmin
     sadm_sendmail "$we" "$ws" "$wb" "$SADM_LOG,$SADM_ELOG" 
     RC=$? 
@@ -189,7 +194,7 @@ normal_startup()
     sadm_write_log "  - Remove any '*.rpt' left in '$SADM_RPT_DIR'."
     rm -f "${SADM_RPT_DIR}/*.rpt" >> $SADM_LOG 2>>$SADM_ELOG
     
-    if [ "$SADM_HOST_TYPE" = "S" ] 
+    if [[ "$SADM_HOST_TYPE" = "S" ]] 
         then sadm_write_log "  - Remove any '*.rpt' left in '$SADM_WWW_RPT_DIR'."
              rm -f "${SADM_WWW_RPT_DIR}/*.rpt" >> $SADM_LOG 2>>$SADM_ELOG
     fi
@@ -202,10 +207,10 @@ normal_startup()
 
 
     # Synchronize system clock with NTP Servers
-    command -v ntpdate >/dev/null                                       # Is ntpdate cmd on system ?
+    command -v ntpdate >/dev/null  2>&1                                 # Is ntpdate cmd on system ?
     if [ $? -eq 0 ]                                                     # ntpdate command on system
         then sadm_write_log "  - Synchronize clock with NTP server 'ntpdate -u $NTP_SERVER'."
-             ntpdate -u $NTP_SERVER >> $SADM_LOG 2>&1                   # Synchronize with NTP server
+             ntpdate -u $NTP_SERVER > /dev/null 2>&1                    # Synchronize with NTP server
              if [ $? -ne 0 ]                                            # If failed to synchronize
                 then sadm_write_err "  - [ ERROR ] ntpdate - time synchronization with $NTP_SERVER" 
                      ((ERROR_COUNT++))
@@ -213,10 +218,10 @@ normal_startup()
                      sadm_write_log "    - Current Date and Time: $(date)"
 
              fi
-        else command -v chronyc >/dev/null                              # Is chrony cmd on system ?
+        else command -v chronyc >/dev/null 2>&1                         # Is chrony cmd on system ?
              if [ $? -eq 0 ]                                            # chrony cmd is on system!
                 then sadm_write_log "  - Synchronize clock with 'chronyc makestep' command."
-                     chronyc makestep > /dev/null                       # No ok 200 on screen 
+                     chronyc makestep > /dev/null  2>&1                 # Hide ok 200 on screen 
                      if [ $? -ne 0 ] 
                         then sadm_write_err "  - [ ERROR ] Time synchronization 'chronyc makestep'."
                             ((ERROR_COUNT++))
@@ -231,14 +236,9 @@ normal_startup()
 
 
     # Start performance monitor 'nmon'.
-    # Use 'sadm_nmon_watcher.py' if Python3 is available, otherwise use 'sadm_nmon_watcher.sh'.
     sadm_write_log "  - Start 'nmon' performance system monitor tool."
-    #[   -x /usr/bin/python3 ] && $SADMIN/bin/sadm_nmon_watcher.py >/dev/null 2>&1 # Start nmon 
-    #[ ! -x /usr/bin/python3 ] && $SADMIN/bin/sadm_nmon_watcher.sh >/dev/null 2>&1 # Start nmon 
-#    $SADMIN/usr/mon/swatch_nmon.sh >> $SADM_LOG 2>&1
     $SADMIN/usr/mon/swatch_nmon.sh /dev/null 2>&1
-    RC=$?
-    if [ $RC -ne 0 ] 
+    if [ $? -ne 0 ] 
        then sadm_write_err "     - [ ERROR ] Starting 'nmon' System Monitor." 
             ((ERROR_COUNT++))
        else sadm_write_log "     - [ OK ] Performance system monitor 'nmon' is started." 
@@ -255,8 +255,8 @@ normal_startup()
 main_process()
 {
 
-    ERROR_COUNT=0                                           
     sadm_write_log "*** Running SADMIN system startup script on $(sadm_get_fqdn) ***"
+    ERROR_COUNT=0                                           
 
 
     # Perform the System Standard Startup Procedure for every servers.
