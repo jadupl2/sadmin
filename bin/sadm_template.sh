@@ -372,5 +372,6 @@ function cmd_options()
     # When you don't need the Database and you need to do some other stuff.
     main_process                                                        # Not using SADMIN Database
     SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
+
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
