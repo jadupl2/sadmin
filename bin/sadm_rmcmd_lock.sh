@@ -198,8 +198,8 @@ show_usage()
 update_rpt_file()
 {
     if [ $# -ne 7 ]
-        then sadm_write_log "Invalid number of argument received by function ${FUNCNAME}."
-             sadm_write_log "Should be 7, but we received $# : $* "     # Show what received
+        then sadm_write_err "Invalid number of argument received by function ${FUNCNAME}."
+             sadm_write_err "Should be 7, but we received $# : $* "     # Show what received
              return 1                                                   # Return Error to caller
     fi
     
@@ -324,7 +324,7 @@ rmcmd_start()
         # Lock the remote system while the script is executed (-l) 
         sadm_lock_system "$LOCK_FILENAME" "$REM_SCRIPT $REM_SCRIPT_ARGS"
         if [ $? -ne 0 ]                                                 # Unable to Lock Node
-           then sadm_write_log "[ ERROR ] Couldn't lock system '$LOCK_FILENAME'."
+           then sadm_write_err "[ ERROR ] Couldn't lock system '$LOCK_FILENAME'."
                 return 1
         fi
         
