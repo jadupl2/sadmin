@@ -26,6 +26,7 @@
 #@2026_07_09 startup/shutdown v02.17.02 Add 'uptime' and 'who-u' in the email sent to SADMIN admin.
 #@2026_07_10 startup/shutdown v02.17.03 Add more info in Email sent to SADMIN admin.
 #@2026_07_22 startup/shutdown v02.17.04 Reduce info in Email sent to SADMIN admin.
+#@2026_09_04 startup/shutdown v02.17.05 Small improvements and code revision.
 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
@@ -56,10 +57,10 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 export SADM_DEBUG=0                                        # Debug Level(0-9), 0 = NoDebug
 export SADM_EXIT_CODE=0                                    # Pgm. Default Exit Code
 export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
-export SADM_PN=${0##*/}                                    # Script name(with extension)
-export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
+export SADM_PN=$(basename "$0")                            # Script name(with extension)
+export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
 
-export SADM_VER='02.17.04'                                 # Script version number
+export SADM_VER='02.17.05'                                 # Script version number
 export SADM_PDESC="Executed when the system is brought down by the 'sadmin.service'."
 export SADM_ROOT_ONLY="Y"                                  # Pgm. run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Pgm. run only on SADMIN server? [Y]/[N]
@@ -120,15 +121,16 @@ shutdown_mail()
     echo -e "$(date)"  > $wb
     echo -e "For your information, system '${SADM_HOSTNAME}' is going down." >> $wb
     echo -e "The program '${SADM_PN}' is reponsable for sending this email." >> $wb
-    echo -e "\n\nUptime          : \n$(uptime)\n" >> $wb
-    echo -e "\nLast Reboot       : \n$(last reboot | head -3)\n" >> $wb
-    echo -e "\nLast 10 Users : \n$(last -10)" >> $wb
-    echo -e "\nFilesystems usage : \n$(df -h)\n" >> $wb
-    echo -e "\nUsers on system   : \n$(w)\n" >> $wb
-    echo -e "\nHardware or kernel errors prior to power down : \n$(dmesg -l err)\n" >> $wb
-    #echo -e "\nlistening ports  : \n$(ss -tnul)\n" >> $wb
-    #echo -e "\nTop 10 processes : \n$(ps -eo pid,ppid,cmd,%cpu,%mem --sort=-%cpu | head -n 11)\n" >> $wb
-    echo -e "\nHave a nice day !" >> $wb
+    echo -e "\nUptime           : $(uptime)" >> $wb
+    echo -e "\nLast 3 Reboot    :\n$(last reboot | head -3 | nl)" >> $wb
+    echo -e "\nLast 5 Users     :\n$(last -5) | nl" >> $wb
+    echo -e "\nHardware or kernel errors prior to power down : \n$(dmesg -l err) | nl" >> $wb
+    echo -e "\nFilesystems usage:\n$(df -hT --total)\n" >> $wb    
+    echo -e "\nTop 10 processes : \n$(ps -eo pid,ppid,cmd,%cpu,%mem --sort=-%cpu | head -n 11)\n" >> $wb
+    echo -e "\nHave a nice day !\n" >> $wb
+
+    # Make sure the end portion of email body is written to the file before sending email.
+    sync; sync; sleep 5
 
     sadm_sendmail "$we" "$ws" "$wb" "$SADM_LOG,$SADM_ELOG"     
     RC=$?
