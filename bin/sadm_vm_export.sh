@@ -68,7 +68,7 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # **********************
 # SPECIAL DEROGATION HERE TO INSERT THE EXPORTED VM NAME IN THE FILENAME OF THE LOG AND RCH FILE.
-# SCRIPT ACCEPT ONLY ONE PARAMETER, IT'S THE NAME OF THE VM YOU WANT TO EXPORT.
+# SCRIPT ACCEPT ONLY ONE PARAMETER AND IT'S THE NAME OF THE VM YOU WANT TO EXPORT.
 if [ $# -eq 1 ]                                            # Only Parameter is VMName
     then export VMNAME="$1"                                # Save VM Name to export
     else printf "[ ERROR ] You need to specify the name of the VM to export.\n\n"
@@ -108,7 +108,7 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 
 # VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
 # BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
-export SADM_ALERT_TYPE=3                                   # 0=No 1=OnError 2=OnOK 3=Always
+#export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
 #export SADM_ALERT_GROUP="default"                          # Alert Group to advise
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
 #export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
