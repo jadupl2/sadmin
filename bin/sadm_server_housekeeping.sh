@@ -52,7 +52,7 @@
 #@2026_02_07 server v2.26 Code enhancement.
 #@2026_03_09 server v2.27 Change Owner of Database backup.
 #@2026_03_12 server v2.28 Special chown & chmod for $SADMIN/dat/dbb (Database backup)
-#@2026_08_25 server v2.29 Enhance archiving portion, Update to secttion 1.60,
+#@2026_08_25 server v2.29 Enhance archiving portion, Update to section 1.60,
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
@@ -233,7 +233,7 @@ alert_archiving()
     
     # Show actual number of alert in Alert History file (Short Term)
     sadm_write_log " "
-    sadm_write_log "Number of alert moved to Archive is ${move_count}."
+    sadm_write_log "Number of alert(s) moved to the alert archive is ${move_count}."
     history_alert_count="$(grep -viE "^#|^$" $SADM_TMP_FILE3 | wc -l | cut -d' ' -f1)"
     sadm_write_log "Actual Alert History File '$SADM_ALERT_HIST' have $history_alert_count alerts."
 
