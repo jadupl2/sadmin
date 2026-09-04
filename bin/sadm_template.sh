@@ -23,7 +23,7 @@
 # --------------------------------------------------------------------------------------------------
 #
 # ---CHANGE LOG---
-# GRP are :
+# GROUPS are :
 #   - "Web"     Web Interface modification      - "install"  Install,Uninstall & Update changes.
 #   - "cmdline" Command line tools changes.     - "template" Library,Templates,Libr demo.
 #   - "mon"     System Monitor related.         - "backup"   Backup related modification or fixes.
@@ -33,7 +33,7 @@
 #   - "sys"     System (startup and shutdown)   - "nolog"    Minor change, not included in rel. note
 #   - "doc"     SADMIN documentation
 #
-# YYYY-MM-DD GRP      vXX.XX.XX ------------------ 69 Characters to describe change ----------------
+# YYYY-MM-DD GROUPS   vXX.XX.XX ------------------ 69 Characters to describe change ----------------
 #@2026_08_02 template v00.01.00 Initial development version.
 #
 #---------------------------------------------------------------------------------------------------
@@ -69,8 +69,8 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 export SADM_DEBUG=0                                        # Debug Level(0-9), 0 = NoDebug
 export SADM_EXIT_CODE=0                                    # Pgm. Default Exit Code
 export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
-export SADM_PN=${0##*/}                                    # Script name(with extension)
-export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
+export SADM_PN=$(basename "$0")                            # Script name(with extension)
+export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
 
 export SADM_VER='00.01.00'                                 # Pgm. Version Number
 export SADM_DESC="Describe what your program is doing."    # Short Desc. of your script.
@@ -372,6 +372,5 @@ function cmd_options()
     # When you don't need the Database and you need to do some other stuff.
     main_process                                                        # Not using SADMIN Database
     SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
-
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
