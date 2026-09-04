@@ -66,6 +66,7 @@
 #@2026_06_29 mon v.2.60.2 To Minimize false alert on ping test, now ping twice at 2 seconds interval
 #@2026_06_29 mon v.2.60.3 Change ping error message
 #@2026_07_01 mon v.2.60.4 When filesystem usage exceed warning or error, print 'df -h' below it.
+#@2026_09_04 mon v.2.60.5 Remove non pertinent info from email sent when hostname.smon is not found.
 #===================================================================================================
 #
 use English;
@@ -80,7 +81,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.60.4";                                     # Version Number
+my $VERSION_NUMBER      = "2.60.5";                                     # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -333,11 +334,8 @@ sub load_smon_file {
         my $msg3 = "A new one was created based on the template file ${SYSMON_STD_FILE}.\n";
         my $msg4 = "\n\nList of '.smon' file: \n"; 
         my $msg5 = `ls -la $SADM_BASE_DIR/cfg/*.smon`; chomp $msg5;
-        my $msg6 = "\n\nSADMIN process running : \n"; 
-        my $msg7= "\nps -aux | grep 'sadm_' : \n"; 
-        my $msg8= `ps -aux | grep '_sadm'`  ; chomp $msg8;  
         my $mail_subject = "SADM INFO: $SYSMON_CFG_FILE not found on $HOSTNAME";
-        my $mail_message = "${msg0}${msg1}${msg2}${msg3}${msg4}${msg5}${msg6}${msg7}\n";
+        my $mail_message = "${msg0}${msg1}${msg2}${msg3}${msg4}${msg5}\n";
 
         # Send the Email.
         @cmd = ("echo \"$mail_message\" | $CMD_MUTT -s \"$mail_subject\" $SADM_MAIL_ADDR");
