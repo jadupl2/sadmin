@@ -64,6 +64,7 @@
 #@2025_06_20 osupdate v3.45 Modify test to allow reboot at the end of update, if requested.
 #@2025_07_26 osupdate v3.46 Add 'dnf autoremove -y' at the end of a Redhat family system.
 #@2026_06_20 osupdate v3.47.01 Added chmod 664 and chown owner:groip to sysinfo.txt file.
+#@2026_09_04 osupdate v3.47.02 Initial attempt to update Flatpak, if SADM_OSUPDATE_FLATPAK=Y in sadmin.cfg.
 # --------------------------------------------------------------------------------------------------
 #set -x
 # dnf clean expire-cache && dnf makecache # Refresh cache in dnf5
@@ -91,7 +92,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.47.01'                                  # Your Current Script Version
+export SADM_VER='3.47.02'                                  # Your Current Script Version
 export SADM_DESC="Script is used to perform an O/S update on the system"
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -167,6 +168,7 @@ show_usage()
 # --------------------------------------------------------------------------------------------------
 check_available_update()
 {
+    sadm_write_log "----------"    
     x_version="$(sadm_get_osmajorversion).$(sadm_get_osminorversion)"
     sadm_write_log "Starting O/S update process for $(sadm_capitalize $SADM_OS_NAME) v${x_version}"
     
@@ -319,6 +321,7 @@ run_dnf()
 # --------------------------------------------------------------------------------------------------
 run_apt()
 {
+    
     sadm_write_log "Starting $(sadm_get_osname) update process ..."
     
     CMD="DEBIAN_FRONTEND='noninteractive' apt -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' upgrade"
@@ -379,6 +382,49 @@ run_apt()
     sadm_write_log "System Updated with Success."
     return 0
 }
+
+
+#
+# --------------------------------------------------------------------------------------------------
+# Update Flatpak packages if Flatpak is installed on the system.
+# --------------------------------------------------------------------------------------------------
+update_flatpak()
+{
+    sadm_write_log " "
+    sadm_write_log "----------"
+    sadm_write_log "Checking if Flatpak is installed on the system."
+    rc=0                                                                # Function return code      
+
+    # Check if flatpak program is available on this system.
+    FLATPAK_PATH=$(sadm_get_command_path "flatpak" >/dev/null)          # Get full path of flatpak
+    if [ $? -ne 0 ]                                                     # If not found
+       then sadm_write_log "[ OK ] Flatpak not installed on the system."
+            return 1
+       else sadm_write_log "[ OK ] Flatpak is installed on the system."
+    fi 
+    
+#    flatpak remote-ls --updates | tee -a >> $SADM_LOG 2>&1 
+    flatpak remote-ls --updates 
+#    'n\n' 2>/dev/null | flatpak update | grep -Eo "^[\ ]*[0-9]+\..*" --color=none # List of Update
+#    'n\n' 2>/dev/null | flatpak update | grep -Eo "^[\ ]*[0-9]+\." | wc -l  # Update Number
+
+
+
+
+
+    # Check if flatpak is executable on this system, if ok run flatpak update command.
+    if [[ -x "$FLATPAK_PATH" ]]
+       then flatpak -y update >> $SADM_LOG 2>&1 
+            f=$(mktemp); { flatpak -y update ; echo $?>$f ; } |tee -a $SADM_LOG 2>&1; rc=$(cat $f) 
+            if [[ "$rc" -eq 0 ]]
+                then sadm_write_log "[ OK ] The 'flatpak -y update' command ran with success.\n"
+                else sadm_write_err "[ ERROR ] Return Code of 'flatpak -y update' is ${rc}.\n"
+                     rc=1
+            fi
+    fi
+    return $rc
+}
+
 
 
 
@@ -493,6 +539,18 @@ main_process()
     # Update Date & Status (S=Success F=Fail) of update in Sysinfo file : 
     # ($SADMIN/dat/dr/`hostname -s`_sysinfo.txt).
     update_sysinfo_file $SADM_EXIT_CODE                                 # Upd. Sysinfo Date & Status
+
+
+
+    # If SADM_OSUPDATE_FLATPAK is set to Y in $SADMIN/cfg/sadmin.cfg 
+    if [[ "$SADM_OSUPDATE_FLATPAK" == "Y" ]] 
+        then update_flatpak
+             if [[ $? -ne 0 ]] 
+                then sadm_write_err "[ ERROR ] Error updating Flatpak packages."
+                     ((SADM_EXIT_CODE++))                                # Incr exit code 
+                else sadm_write_log "[ OK ] Flatpak packages updated successfully."
+             fi
+    fi
 
     return $SADM_EXIT_CODE
 }
