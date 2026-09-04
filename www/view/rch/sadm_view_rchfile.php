@@ -40,6 +40,7 @@
 #@2025_06_13 web v2.14 Enhance overall page look and add more information.
 #@2026_02_18 web v2.15 Add execution time average for the script.
 #@2026_03_05 web v2.16 Fix could not view rch file (Path is now fix)
+#@2026_09_04 web v2.17 Fix problem viewing some rch file.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -112,8 +113,8 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 # Local Variables
 #===================================================================================================
 #
-$DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.15" ;                                                       # Current version number
+$DEBUG = False ;                                                         # Debug Activated True/False
+$SVER  = "2.17" ;                                                       # Current version number
 
 
 
@@ -322,13 +323,14 @@ function display_rch_file ($GET_HOSTNAME, $GET_RCHFILE, $SORTED_RCHFILE) {
 # Program Start Here
 # ==================================================================================================
 
+
     # Get First Parameter (Hostname) and validate that it exist in the SADMIN database.
     if (isset($_GET['host']) ) {                                        # If Hostname is Receive/Set
         $GET_HOSTNAME = $_GET['host'];                                  # Get GET_HOSTNAME Value
         if ($DEBUG)  { echo "<br>1st parameter : " . $GET_HOSTNAME; }   # In Debug display RCH Name
         
         # SQL to See if the hostname received is valid.
-        $sql = "SELECT * FROM server where srv_name = '$GET_HOSTNAME' ;";   # Check if in DB 
+        $sql = "SELECT * FROM server where srv_name = '$GET_HOSTNAME';"; # Check if in DB 
         if ($DEBUG) { echo "<br>SQL = $sql"; }                          # In Debug Display SQL Stat.
         if ( ! $result=mysqli_query($con,$sql)) {                       # Execute SQL Select
             $err_line = (__LINE__ -1) ;                                 # Error with SQL 
@@ -352,8 +354,9 @@ function display_rch_file ($GET_HOSTNAME, $GET_RCHFILE, $SORTED_RCHFILE) {
     # Validate that global RCH directory exist (directory where the RCH file reside).
     $GET_RCHFILE = $_GET['filename'];                                   # Extract Filename of RCH
     if ($DEBUG)  { echo "<br>2nd parameter : " . $GET_RCHFILE; }        # In Debug display RCH Name
-    #$DIR = $_SERVER['DOCUMENT_ROOT'] . "/dat/" .$GET_HOSTNAME ."/rch/"; # RCH Host Directory Name
+    #$DIR = $_SERVER['DOCUMENT_ROOT'] . "/dat/".$GET_HOSTNAME ."/rch/"; # RCH Host Directory Name
     $DIR = dirname($GET_RCHFILE);                                       # RCH Host Directory Name
+    if ($DEBUG)  { echo "<br>RCH location : " . $DIR; }                 # In Debug display RCH Name
     if (! is_dir($DIR))  {                                              # If RCH Dir.do not exist
         $msg = "The global RCH directory '" . $DIR . "' does not exist.\n"; 
         $msg = $msg . "No RCH file to display.";                        # Needed to proceed
