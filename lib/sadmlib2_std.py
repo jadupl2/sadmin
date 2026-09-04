@@ -87,7 +87,8 @@
 #@2026_07_03 lib v04.69.02 Add function to load sadmin.cfg in a dict. 'cfg_dict=load_sadmin_config()'
 #@2026_07_03 lib v04.69.03 Fix minor bugs and add in sadmin.cfg, var. to use 'ntfy' as notification. 
 #@2027_07_08 lib v04.69.04 Fix Minor bugs (int Error)
-# 
+#@2026_09_04 lib V04.69.05 Add variable 'SADM_CFG_VERSION' to track the configuration file version.
+#  
 # --------------------------------------------------------------------------------------------------
 
 #from multiprocessing.dummy import connection
@@ -144,7 +145,7 @@ except ImportError as e:
 
 # Global Variables to this script 
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.69.4"                              # This Library Version
+lib_ver             = "4.69.5"                              # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 
 start_time          = ""                                    # Script Start Date & Time
@@ -204,6 +205,7 @@ current_time = datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S") # Format cu
 # Content of SADMIN configuration file (sadmin.cfg) default value.
 # The value below, will be overridden by configuration file ($SADMIN/cfg/sadmin.cfg)
 #---------------------------------------------------------------------------------------------------
+sadm_cfg_version              = ""                          # Version of the configuration file
 sadm_host_type                = ""                          # [C or S] Client or Server
 sadm_server                   = ""                          # SADMIN Server FQDN 
 sadm_domain                   = ""                          # Default Host Domain
@@ -827,6 +829,7 @@ def load_sadmin_config(cfg_file=f"{dir_cfg}/sadmin.cfg") :
             CFG_NAME   = split_line[0].upper().strip()                  # Param Name Uppercase Trim
             CFG_VALUE  = str(split_line[1]).strip()                     # Get Param Value Trimmed
 
+            if "SADM_CFG_VERSION"                == CFG_NAME: cfg_dict['SADM_CFG_VERSION']               = CFG_VALUE
             if "SADM_MAIL_ADDR"                  == CFG_NAME: cfg_dict['SADM_MAIL_ADDR']                 = CFG_VALUE
             if "SADM_CIE_NAME"                   == CFG_NAME: cfg_dict['SADM_CIE_NAME']                  = CFG_VALUE
             if "SADM_ALERT_TYPE"                 == CFG_NAME: cfg_dict["SADM_ALERT_TYPE"]                = int(CFG_VALUE)
@@ -988,7 +991,7 @@ def load_config_file(cfg_file):
     sadm_www_user                ,sadm_www_group                ,sadm_ssh_port                    ,\
     sadm_lock_timeout            ,sadm_max_logline              ,sadm_max_rchline                 ,\
     sadm_smtp_server             ,sadm_smtp_port                ,sadm_smtp_sender                 ,\
-    sadm_gmpw                                                                                     ,\
+    sadm_gmpw                    ,sadm_cfg_version                                                                 ,\
     sadm_days_history            ,sadm_max_arc_line                                               ,\
     sadm_email_startup           ,sadm_email_shutdown                                             ,\
     sadm_network1                ,sadm_network2                 ,sadm_network3                    ,\
@@ -1076,6 +1079,7 @@ def load_config_file(cfg_file):
             print("cfgline = ..." + CFG_NAME + "...  ..." + CFG_VALUE + "...")
 
         # General Variables found in SADMIN configuration File
+        if "SADM_CFG_VERSION"              in CFG_NAME: sadm_cfg_version             = CFG_VALUE
         if "SADM_MAIL_ADDR"                in CFG_NAME: sadm_mail_addr               = CFG_VALUE
         if "SADM_CIE_NAME"                 in CFG_NAME: sadm_cie_name                = CFG_VALUE
         if "SADM_ALERT_TYPE"               in CFG_NAME: sadm_alert_type              = int(CFG_VALUE)
