@@ -283,23 +283,25 @@
 #@2026_07_22 lib V04.92.07 Replace dash '-' with equal sign '=' 
 #@2026_07_23 lib V04.92.08 Change to sadm_write_log() to deal with special characters
 #@2026_07_27 lib V04.92.09 Fix error "SADM_ROOT_ONLY" and "SADM_SERVER_ONLY" command not found.
-#@2026_08_23 lib V04.92.10 Add variable '$SADM_HOST_DEV' not to delete $SADMIN/www on that system.
+#@2026_08_23 lib V04.92.10 Add variable 'SADM_HOST_DEV' not to delete $SADMIN/www on that system.
+#@2026_09_04 lib V04.92.11 Add variable 'SADM_CFG_VERSION' to track the configuration file version.
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x
 
- 
+
+# V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
-#                             V A R I A B L E S      D E F I N I T I O N S
-# --------------------------------------------------------------------------------------------------
-export SADM_LIB_VER="04.92.10"                                          # This Library Version
+export SADM_LIB_VER="04.92.11"                                          # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
 export SADM_TEN_DASH=$(printf %10s |tr ' ' '=')                         # 10 dashes line
-export SADM_STIME=""                                                    # Script Start Time
+export SADM_STIME=""                                                    # Will be, Script Start Time
 export DELETE_PID="Y"                                                   # Default Delete PID On Exit
 export LIB_DEBUG=0                                                      # This Library Debug Level
+
+
 
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
@@ -413,6 +415,7 @@ export SADM_INXI=""                                         # Path to inxi
 
 
 # SADMIN CONFIG FILE VARIABLES (Default Values here will be overridden by SADM CONFIG FILE Content)
+export SADM_CFG_VERSION=""                                  # Configuration File Version
 export SADM_MAIL_ADDR="your_email@domain.com"               # Default is in sadmin.cfg
 export SADM_ALERT_TYPE=1                                    # 0=No 1=Err 2=Success 3=All
 export SADM_ALERT_GROUP="default"                           # Error Group Define in alert_group.cfg
@@ -2368,6 +2371,8 @@ sadm_load_config_file() {
         case $KEY in
             "SADM_MAIL_ADDR")               SADM_MAIL_ADDR=$VALUE
                                             ;;
+            "SADM_CFG_VERSION")             SADM_CFG_VERSION=$VALUE
+                                            ;;
             "SADM_CIE_NAME")                SADM_CIE_NAME=$VALUE
                                             ;;
             "SADM_ALERT_TYPE")              SADM_ALERT_TYPE=$VALUE
@@ -2785,7 +2790,7 @@ sadm_start() {
     if [[ -z "$SADM_SERVER_ONLY" ]] ; then SADM_SERVER_ONLY="N" ; fi    # Default can run everywhere
     if [ "$SADM_SERVER_ONLY" = "Y" ] && [ "$SADM_HOST_TYPE" != "S" ]
         then sadm_write_err "[ ERROR ] This script will only run on the SADMIN server '$SADM_SERVER'."
-             sadm_write_err "The variable 'SADM_SERVER_ONLY' is set to 'Y'."
+             sadm_write_err "The variable 'SADM_SERVER_ONLY' is set to 'Y' in '$SADM_PN'."
              sadm_write_err "Process aborted."                          # Abort advise message
              sadm_stop 1                                                # clean up before exit
              exit 1                                                     # Exit To O/S
@@ -2947,7 +2952,7 @@ sadm_stop() {
              sadm_write_log "$foot1 and execution time was ${sadm_elapse}." # Write the Elapse Time
     fi
 
-    # Update RCH File and Trim It to $SADM_MAX_RCHLINE lines define in sadmin.cfg
+    # Update RCH File and Trim it to 'SADM_MAX_RCHLINE' lines define in sadmin.cfg
     if [ "$SADM_USE_RCH" = "Y" ]                                        # User Want to use RCH File
         then if [ -s "$SADM_RCH_FILE" ]                                 # RCH file exist & size > 0
                 then XCODE=`tail -1 "$SADM_RCH_FILE" |awk '{ print $NF }'` # Last Field of last line
@@ -2975,8 +2980,8 @@ sadm_stop() {
     # If variable "$SADM_LOG_FOOTER" is either unset or empty, define it & set it to default 'Y'.
     if [[ -z "$SADM_LOG_FOOTER" ]] ; then  "$SADM_LOG_FOOTER" = "Y" ;fi # Then default incl. footer
 
-    # If log size not at zero and user want to produce a log.
-    if [ "$SADM_LOG_FOOTER" = "Y" ]                                     # User Want the Log Footer
+    # If user want to produce a log.
+    if [[ "$SADM_LOG_FOOTER" = "Y" ]]                                     # User Want the Log Footer
         then GRP_TYPE=$(grep -i "^$SADM_ALERT_GROUP " $SADM_ALERT_FILE |awk '{print$2}' |tr -d ' ')
              GRP_NAME=$(grep -i "^$SADM_ALERT_GROUP " $SADM_ALERT_FILE |awk '{print$3}' |tr -d ' ')
              ORG_NAME=$GRP_NAME                                         # Save Original Group Name
@@ -3032,7 +3037,7 @@ sadm_stop() {
              sadm_write_log " "                                         
              sadm_write_log " "                                         
              sadm_write_log " "                                         
-             cat $SADM_LOG > /dev/null                                  # Force buffer to flush
+             cat $SADM_LOG > /dev/null ; sync; sync; sleep 1            # Force buffer to flush
     fi 
 
     # Trim the log and RCH file to $SADM_MAX_LOGLINE and $SADM_MAX_RCHLINE lines (0=No Trim)
@@ -3097,10 +3102,10 @@ sadm_stop() {
 # Send email to email address received.
 # 
 # Args:            
-#     maddr (str)     : Email Address to which you want to send it
-#     msubject (str)  : Subject of your email
-#     mbody (str)     : Filename of the Text file containing the body of the email.
-#     mfile (str)     : (Optional) Name of the files (MUST exist) to attach to the email.
+#     $1 maddr (str)     : Email Address to which you want to send it
+#     $2 msubject (str)  : Subject of your email
+#     $3 mbody (str)     : Filename of the Text file containing the body of the email.
+#     $4 mfile (str)     : (Optional) Name of the files (MUST exist) to attach to the email.
 #                           - If no attachment, leave blank "")
 #                           - If you have multiple attachments, separate each file name with comma.
 # Returns:
@@ -3111,7 +3116,7 @@ sadm_stop() {
 sadm_sendmail() {
 
     RC=0                                                                # Function Return Code
-    LIB_DEBUG=0                                                         # Debug funtion Library Level
+    #LIB_DEBUG=0                                                         # Debug funtion Library Level
     if [ $# -lt 3 ] || [ $# -gt 4 ]                                     # Invalid No. of Parameter
         then sadm_write_err "[ ERROR ] Invalid number of argument, '$#' received by function ${FUNCNAME}."
              sadm_write_err "Should be 3 or 4 we received $# : $* "     # Show what received
@@ -3219,7 +3224,7 @@ sadm_lock_system()
     SNAME="$1"                                                          # Name of system to lock
     if [ $# -eq 2 ]                                                     # Second parameter specified
         then SCRIPT_NAME="$2"                                           # Desc. or Remote ScriptName
-             LOCK_MESS="System '$SNAME' lock by '"${SCRIPT_NAME/$SADMIN\/bin\//}"'" 
+             LOCK_MESS="System '$SNAME' lock by '$SCRIPT_NAME'." 
         else SCRIPT_NAME="$SADM_INST"                                   # Use current script name
              LOCK_MESS="Lock system '$SNAME' while '$SADM_INST' is running."
     fi 
@@ -3227,9 +3232,9 @@ sadm_lock_system()
     # Refuse to lock if already lock or create the system lock file
     LOCK_FILE="${SADM_BASE_DIR}/${SNAME}.lock"                          # System Lock file name
     if [ -f "$LOCK_FILE" ]                                              # If lock file present
-        then sadm_write_log "[ ERROR ] System '$SNAME' is already lock."
-             sadm_write_log "  - Lock file already exist '$LOCK_FILE'."
-             sadm_write_log "  - Lock file content : $(sadm_show_lock "$SNAME")."
+        then sadm_write_err "[ ERROR ] System '$SNAME' is already lock."
+             sadm_write_err "  - Lock file already exist '$LOCK_FILE'."
+             sadm_write_err "  - Lock file content : $(sadm_show_lock "$SNAME")."
              return 1
         else echo "$LOCK_MESS" > "$LOCK_FILE"                           # Write reason why to lock  
              if [ $? -ne 0 ]                                            # Error while writing to file
@@ -3243,7 +3248,7 @@ sadm_lock_system()
              chmod 0664 "$LOCK_FILE" 
     fi
 
-    return $SADM_EXIT_CODE
+    return 0
 } 
 
 
@@ -3587,6 +3592,7 @@ EOF
 
 # Things to do when the Library is source - Initialize SADMIN Library
 # --------------------------------------------------------------------------------------------------
+   
     SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`                            # Save Startup Date & Time
     if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # If invoke from cmdline
         then printf "\n$SADM_STIME Loading SADMIN Shell Library ..."    # Show reference point #1
