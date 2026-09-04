@@ -17,6 +17,7 @@
 # 2018_07_21 template v01.01.01 Remove SADMIN Library dependance for Performance.
 #@2019_04_19 template v01.02.01 Now can have customize error message use by System Monitor.
 #@2026_08_13 template v01.02.02 Added more comments ,refine the code.
+#@2026_09_04 template v01.02.03 Use $SADMIN/tmp instead of /tmp for temp file creation.
 # --------------------------------------------------------------------------------------------------
 trap 'exit 0' 2                                                         # INTERCEPT The Control-C
 #set -x
@@ -36,7 +37,7 @@ INST=`echo "$PN" | awk -F\. '{ print $1 }'`                             # Script
 WDATE=`date "+%C%y.%m.%d;%H:%M:%S"`                                     # Today Date and Time
 DASH=`printf %80s |tr ' ' '-'`                                          # 80 dashes
 SADM_UMON_DIR="${SADMIN}/usr/mon"                                       # SysMon User Script Dir.
-
+SADM_TMP_DIR="$SADMIN/tmp"                                              # Script Temp  directory
 
 
 
@@ -50,7 +51,7 @@ main_process()
     echo "Starting script $PN on ${HOSTNAME} `date`"                    # Print Script Header
 
     # Example : As a place holder, for this template, check if file exist
-    FILENAME="/tmp/${INST}.tmp"                                         # Example FileName to test 
+    FILENAME="${SADM_TMP_DIR}/${INST}.$$"                               # Example FileName to test 
     touch "$FILENAME"                                                   # Create/Update empty file
     echo -e "Test if file $FILENAME exist ..."                          # Inform user and log 
     if [ -r $FILENAME ]                                                 # If file readable
@@ -71,6 +72,6 @@ main_process()
 # Script Start HERE
 #===================================================================================================
     main_process                                                        # Call Main Process Function
+
     EXIT_CODE=$?                                                        # Save Return Code 
-    echo -e "End of script $PN on ${HOSTNAME} - Exit Code : $EXIT_CODE - `date`\n" 
     exit $EXIT_CODE                                                     # Exit With Return Code                                             # Exit With Global Error code (0/1)
