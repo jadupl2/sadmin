@@ -117,7 +117,7 @@
 #@2026_04_27 server v3.63 Fix "sadm_vm" crontab, chamge the way it call the export script.
 #@2026_06_24 server v3.64.00 Was still creating entry in crontab, when 'VM export schedule' was 'no'.
 #@2026_06_24 server v3.65.00 Fix alert handling bug and done some performance improvements.
-#@2026_09_04 server v3.65.01 Email Alert Handling changes
+#@2026_09_04 server v3.65.01 Email Alert Handling changes.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT the ^C
