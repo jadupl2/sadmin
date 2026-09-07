@@ -116,6 +116,8 @@
 #@2026_04_13 server v3.62 Change PID Time out to 600 seconds (10 Min) to prevent false lock.
 #@2026_04_27 server v3.63 Fix "sadm_vm" crontab, chamge the way it call the export script.
 #@2026_06_24 server v3.64.00 Was still creating entry in crontab, when 'VM export schedule' was 'no'.
+#@2026_06_24 server v3.65.00 Fix alert handling bug and done some performance improvements.
+#@2026_09_04 server v3.65.01 Email Alert Handling changes.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT the ^C
@@ -123,62 +125,76 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 
-
-# ------------------- S T A R T  O F   S A D M I N   C O D E    S E C T I O N  ---------------------
-# v1.56 - Setup Global Variables and load the SADMIN standard library $SADMIN/lib/sadmlib_std.sh.
+                                                                                          
+# ---------   S T A R T   O F   S A D M I N   R E Q U I R E D   C O D E   S E C T I O N  -----------
+# v1.60 - Setup Global Variables and load the SADMIN standard library $SADMIN/lib/sadmlib_std.sh.
 #       - To use SADMIN scripting tools, this section MUST be present near the top of your code.    
-
-# Make Sure Environment Variable 'SADMIN' Is Defined.
-if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADMIN defined? Libr.exist
-    then if [ -r /etc/environment ] ; then source /etc/environment ;fi  # LastChance defining SADMIN
-         if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]   # Still not define = Error
-            then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
-                 exit 1                                                 # No SADMIN Env. Var. Exit
-         fi
+#
+# Make sure environment variable 'SADMIN' is defined, if it's not, exit with error message.
+if [ -r /etc/environment ] && [ -z "$SADMIN" ] ; then source /etc/environment ; fi 
+if [ -z "$SADMIN" ]                                        # Advise user, SADMIN Env. Var. is a MUST
+   then printf "\n[ ERROR ] Set 'SADMIN' environment variable to the install directory." 
+        printf "\n  - Add a line similar to 'SADMIN=/opt/sadmin' in /etc/environment." 
+        exit 1 
+fi 
+if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                   # If SADMIN shell library doesn't exist 
+   then printf "\n[ ERROR ] SADMIN library '$SADMIN/lib/sadmlib_std.sh' can't be found.\n" ; exit 1 
 fi 
 
-# YOU CAN USE THE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
-export SADM_PN=${0##*/}                                    # Script name(with extension)
-export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
+
+# SADMIN Section of your program that is shared with SADMIN Bash Library.
 export SADM_TPID="$$"                                      # Script Process ID.
 export SADM_HOSTNAME=$(hostname -s)                        # Host name without Domain Name
-export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_OS_TYPE=$(uname -s|tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
 export SADM_USERNAME=$(id -un)                             # Current user name.
+export SADM_DEBUG=0                                        # Debug Level(0-9), 0 = NoDebug
+export SADM_EXIT_CODE=0                                    # Pgm. Default Exit Code
+export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
+export SADM_PN=$(basename "$0")                            # Script name(with extension)
+export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
 
-# YOU CAN USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.64.00'                                  # Script version number
+export SADM_VER='3.65.01'                                  # Script version number
 export SADM_DESC="Collect scripts results & SysMon status from all systems and send alert if needed." 
-export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
-export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
-export SADM_EXIT_CODE=0                                    # Script Default Exit Code
-export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
-export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
-export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
-export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
-export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
-export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
-export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
-export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
-export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") 
-export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX") 
+export SADM_ROOT_ONLY="Y"                                  # Pgm. run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="Y"                                # Pgm. run only on SADMIN server? [Y]/[N]
+export SADM_GROUP_ONLY='N'                                 # Pgm. run only if usr part of SADMIN Grp
+export SADM_MULTIPLE_EXEC="N"                              # Can Run Simultaneous copy of script Y/N
+export SADM_QUIET="N"                                      # Y=HideMsg & Error#  N=Show Msg & Error#
+export SADM_LOG_TYPE="B"                                   # Write log to [S]creen, [L]og, [B]oth
+export SADM_LOG_APPEND="N"                                 # Append log ? Y=AppendLog,N=CreateNewLog
+export SADM_LOG_HEADER="Y"                                 # Y = ProduceLogHeader, N = NoLogHeader
+export SADM_LOG_FOOTER="Y"                                 # Y = ProduceLogFooter, N = NoLogFooter
+export SADM_USE_RCH="Y"                                    # Update the RCH History File (Y/N)
+export SADM_ERRMSG=""                                      # Error Message returned by Library 
+export SADM_ERRNO=0                                        # Error number (0=OK) returned by Library
+export SADM_PID_TIMEOUT=7200                               # Sec. before PID file is remove,7200=2hr
+export SADM_LOCK_TIMEOUT=3600                              # Sec. before System LockFile is Del, 1hr
+export SADM_DB_USED="N"                                    # Use or Not, Got to be on SADMIN server
+export SADM_DB_NAME="sadmin"                               # Database Name SADM_DBNAME in sadmin.cfg
+export SADM_TMP_FILE1=$(mktemp -q "$SADMIN/tmp/sadm_tmp1_XXX") # Make tmpfile1, rm in sadm_stop()
+export SADM_TMP_FILE2=$(mktemp -q "$SADMIN/tmp/sadm_tmp2_XXX") # Make tmpfile2, rm in sadm_stop()
+export SADM_TMP_FILE3=$(mktemp -q "$SADMIN/tmp/sadm_tmp3_XXX") # Make tmpfile3, rm in sadm_stop()
 
-# LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
-. "${SADMIN}/lib/sadmlib_std.sh"                           # Load SADMIN Shell Library
-export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
-export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
+# Load SADMIN Bash Shell Library, ready to  be used.
+. "${SADMIN}/lib/sadmlib_std.sh"                           # Init SADMIN tools, load cfg files
+
+# Example of some functions and variable you can use.
+export SADM_OS_NAME=$(sadm_get_osname)                     # REDHAT,ROCKY,ALMA,CENTOS,DEBIAN,UBUNTU.
+export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.5)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
-#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
-# VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
-# BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
-#export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
-#export SADM_ALERT_GROUP="default"                          # Alert Group to advise
-#export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
-#export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
-#export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
-export SADM_PID_TIMEOUT=600                                 # Sec. before PID Lock expire
-#export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
-# --------------- ---  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
+# Variables Below Are Taken From SADMIN Configuration File (sadmin.cfg) when the Library is loaded.
+# You Can Overridde them On A Per Program Basis (If Needed).
+#export SADM_ALERT_TYPE=1                                   # 0=NoAlert 1=OnError 2=OnOK 3=Always
+#export SADM_ALERT_GROUP="default"                          # Error Group Define in alert_group.cfg
+#export SADM_WARNING_GROUP="default"                        # Warning Alert Group (alert_group.cfg)   
+#export SADM_INFO_GROUP="default"                           # Info Alert Group (in alert_group.cfg)
+#export SADM_ALERT_REPEAT=0                                 # 0=No Alert Repeat, Sec. between Repeat
+#export SADM_MAIL_ADDR="your_email@domain.com"              # Send email to...default in sadmin.cfg
+#export SADM_MAX_LOGLINE=400                                # Nb of Lines to trim (0=NoTrim)
+#export SADM_MAX_RCHLINE=35                                 # Nb of Lines to trim (0=NoTrim)
+# -------------------  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
+
 
 
 
@@ -201,6 +217,7 @@ export BOOT_DATE=""                                                     # Server
 export ERROR_COUNT=0                                                    # Total Error Count
 export WARNING_COUNT=0                                                  # Total Warning count
 export SADM_TEN_DASH=$(printf %10s |tr " " "-")                         # 10 dashes line
+export BODY_FILE=$(mktemp "$SADMIN/tmp/${SADM_INST}4_XXX")              # To Store email body file
 #
 # Variables used to insert in /etc/cron.d/sadm* crontab files.
 export OS_SCRIPT="sadm_osupdate_starter.sh"                             # OSUpdate Script in crontab
@@ -744,7 +761,7 @@ create_vm_list()
 
 
     # Create VM list file "$SADM_VMLIST_ALL" with all VMs from all systems.
-    sadm_write_log "${BOLD}${YELLOW}List of all VMs in '$SADM_VMLIST_ALL'.${RESET}"
+    sadm_write_log "${BOLD}${YELLOW}List of all VMs - '$SADM_VMLIST_ALL'.${RESET}"
     find "$SADM_WWW_DAT_DIR" -name "vm_list.txt" -exec cat {} \; | sort > $SADM_VMLIST_ALL
     if [ -s "$SADM_VMLIST_ALL" ]                                        # Exist ? & contain data ? 
         then nl "$SADM_VMLIST_ALL"                                      # List Global VM List
@@ -1239,6 +1256,49 @@ build_server_list()
 
 
 
+# Display Database Column We Will Used, For Debugging
+# --------------------------------------------------------------------------------------------------
+show_db_columns()
+{
+    sadm_write_log " " 
+    sadm_write_log "----------" 
+    sadm_write_log "In function ${FUNCNAME[0]}." 
+    sadm_write_log "These values come directly from the database."
+    sadm_write_log "Column Name and Values we will rely on."
+    sadm_write_log "----------" 
+    sadm_write_log "server_name     = $server_name"        # Server Name to run script
+    sadm_write_log "backup_auto     = $backup_auto"        # Run Backup ? 1=Yes 0=No 
+    sadm_write_log "backup_mth      = $backup_mth"         # Month String YNYNYNYNYNY..
+    sadm_write_log "backup_dom      = $backup_dom"         # Day of MOnth String YNYN..
+    sadm_write_log "backup_dow      = $backup_dow"         # Day of Week String YNYN...
+    sadm_write_log "backup_hrs      = $backup_hrs"         # Hour to run script
+    sadm_write_log "backup_min      = $backup_min"         # Min. to run Script
+    sadm_write_log "backup_compress = $compress"           # Compress Backup 1=Y 0=N)
+    sadm_write_log "fqdn_server     = $fqdn_server"        # Name of Output file
+    sadm_write_log "ssh_port        = $ssh_port"           # Port No. to ssh to system
+    sadm_write_log "rear_auto       = $rear_auto "         # Rear Crontab 1=Yes 0=No 
+    sadm_write_log "rear_mth        = $rear_mth  "         # Rear Crontab Mth field
+    sadm_write_log "rear_dom        = $rear_dom  "         # Rear Crontab DOM field
+    sadm_write_log "rear_dow        = $rear_dow  "         # Rear Crontab DOW field 
+    sadm_write_log "rear_hrs        = $rear_hrs  "         # Rear Crontab Hrs field
+    sadm_write_log "rear_min        = $rear_min  "         # Rear Crontab Min field
+    sadm_write_log "vm_type         = $vm_type      "      # 1=VM, 0=Physical Machine
+    sadm_write_log "export_sched    = $export_sched "      # 1=Sched Active 0=Inactive
+    sadm_write_log "export_ova      = $export_ova   "      # ova version 0.9, 1.0, 2.0
+    sadm_write_log "export_mth      = $export_mth   "      # month of export 
+    sadm_write_log "export_dom      = $export_dom   "      # Date in month to export 
+    sadm_write_log "export_dow      = $export_dow   "      # Day of the week to export 
+    sadm_write_log "export_hrs      = $export_hrs   "      # Hour to start the export
+    sadm_write_log "export_min      = $export_min   "      # Minute to start the export
+    sadm_write_log "export_host     = $export_host  "      # VirtualBox Hosting VM
+    sadm_write_log "server_vm       = $server_vm  "        # 1=VirtualSystem 0=Physical
+    sadm_write_log "server_vm_ver   = $server_vm_ver "     # VM Addition version
+    sadm_write_log "server_uptime   = $server_uptime "     # System uptime 
+    sadm_write_log "server_lock     = $server_lock"        # System uptime 
+    sadm_write_log "----------" 
+    sadm_write_log " " 
+    return 0 
+}
 
 
 # --------------------------------------------------------------------------------------------------
@@ -1249,23 +1309,12 @@ build_server_list()
 #--------------------------------------------------------------------------------------------------
 process_servers()
 {
-    if [ "$SADM_DEBUG" -gt 1 ] ; then sadm_write_log "In function ${FUNCNAME[0]}." ; fi
-
-    # Build a list of active systems and output data to $SADM_TMP_FILE1 file.
-    build_server_list                                                   # Create List in TMP_FILE1
-    if [ $? -ne 0 ] ; then return 1 ; fi                                # Return Error to caller 
-    
- 
-    # Create SADMIN crontab files headers (sadm_backup, sadm_osupdate, sadm_rear_backup, sadm_vm)
-    create_crontab_files_header 
-    if [ "$SADM_DEBUG" -gt 1 ] ; then sadm_write_log "Returning from create_crontab_file_header" ;fi 
-
+    xcount=0; ERROR_COUNT=0; WARNING_COUNT=0                            # Initialize Counters 
 
     # Process each servers included in $SADM_TMP_FILE1 created previously by build_server_list()
-    xcount=0; ERROR_COUNT=0; WARNING_COUNT=0                            # Initialize Counters 
     while read wline                                                    # Read Server Data from DB
         do                                                              # Line by Line
-        xcount=$((xcount + 1))                                          # Incr Server Counter Var.
+        xcount=$((xcount++))                                            # Incr Server Counter Var.
         server_name=$(    echo $wline|awk -F\; '{ print $1 }')          # Extract Server Name
         server_os=$(      echo $wline|awk -F\; '{ print $2 }')          # Extract O/S (linux/aix)
         server_domain=$(  echo $wline|awk -F\; '{ print $3 }')          # Extract Domain of Server
@@ -1317,56 +1366,17 @@ process_servers()
 
         sadm_write_log " "                                              # White Line
         sadm_write_log "---- [ $xcount ] ${fqdn_server} ----"           # Show count & ServerName
-
-        # DISPLAY DATABASE COLUMN WE WILL USED, FOR DEBUGGING
-        if [ "$SADM_DEBUG" -gt 4 ] 
-            then sadm_write_log " " 
-                 sadm_write_log "----------" 
-                 sadm_write_log "I am in process_servers" 
-                 sadm_write_log "These values come directly from the database."
-                 sadm_write_log "Main Variables Column Name and Values we will rely on."
-                 sadm_write_log "server_name     = $server_name"        # Server Name to run script
-                 sadm_write_log "backup_auto     = $backup_auto"        # Run Backup ? 1=Yes 0=No 
-                 sadm_write_log "backup_mth      = $backup_mth"         # Month String YNYNYNYNYNY..
-                 sadm_write_log "backup_dom      = $backup_dom"         # Day of MOnth String YNYN..
-                 sadm_write_log "backup_dow      = $backup_dow"         # Day of Week String YNYN...
-                 sadm_write_log "backup_hrs      = $backup_hrs"         # Hour to run script
-                 sadm_write_log "backup_min      = $backup_min"         # Min. to run Script
-                 sadm_write_log "backup_compress = $compress"           # Compress Backup 1=Y 0=N)
-                 sadm_write_log "fqdn_server     = $fqdn_server"        # Name of Output file
-                 sadm_write_log "ssh_port        = $ssh_port"           # Port No. to ssh to system
-                 sadm_write_log "rear_auto       = $rear_auto "         # Rear Crontab 1=Yes 0=No 
-                 sadm_write_log "rear_mth        = $rear_mth  "         # Rear Crontab Mth field
-                 sadm_write_log "rear_dom        = $rear_dom  "         # Rear Crontab DOM field
-                 sadm_write_log "rear_dow        = $rear_dow  "         # Rear Crontab DOW field 
-                 sadm_write_log "rear_hrs        = $rear_hrs  "         # Rear Crontab Hrs field
-                 sadm_write_log "rear_min        = $rear_min  "         # Rear Crontab Min field
-                 sadm_write_log "vm_type         = $vm_type      "      # 1=VM, 0=Physical Machine
-                 sadm_write_log "export_sched    = $export_sched "      # 1=Sched Active 0=Inactive
-                 sadm_write_log "export_ova      = $export_ova   "      # ova version 0.9, 1.0, 2.0
-                 sadm_write_log "export_mth      = $export_mth   "      # month of export 
-                 sadm_write_log "export_dom      = $export_dom   "      # Date in month to export 
-                 sadm_write_log "export_dow      = $export_dow   "      # Day of the week to export 
-                 sadm_write_log "export_hrs      = $export_hrs   "      # Hour to start the export
-                 sadm_write_log "export_min      = $export_min   "      # Minute to start the export
-                 sadm_write_log "export_host     = $export_host  "      # VirtualBox Hosting VM
-                 sadm_write_log "server_vm       = $server_vm  "        # 1=VirtualSystem 0=Physical
-                 sadm_write_log "server_vm_ver   = $server_vm_ver "     # VM Addition version
-                 sadm_write_log "server_uptime   = $server_uptime "     # System uptime 
-                 sadm_write_log "server_lock     = $server_lock"        # System uptime 
-        fi
-        
+        if [ "$SADM_DEBUG" -gt 4 ]  ; then show_db_columns ; fi         # Show DB Columns in Debug
 
         # Check if system is lock, cosider it as a warning and process the next system.
         sadm_lock_status "$server_name"                                 # Check if system is locked 
-        if [ $? -eq 1 ]                                                 #If system is lock
+        if [ $? -eq 1 ]                                                 # If system is lock
             then sadm_write_err WARNING ] System '$server_name' is locked, skipping it."
                  LOCK_FILE="${SADMIN}/${server_name}.lock"
                  sadm_write_err - Content of actual lock file : $(cat $LOCK_FILE)"
                  WARNING_COUNT++
                  continue                        
         fi  
-
 
         # Test SSH connectivity, if not on the SADMIN server and update the 'uptime' in SADMIN DB.
         declare -i connectivity_rc                                      # Make sure it's an integer
@@ -1629,7 +1639,7 @@ process_servers()
 check_all_rpt()
 {
     # Combine all *.rpt files into one $SADM_TMP_FILE3
-    sadm_write_log "Verifying all systems monitors RePorTs files (*.rpt) :"
+    sadm_write_log "Verifying all Systems Monitors [R]e[P]or[T]s files (*.rpt) :"
     find "$SADM_WWW_DAT_DIR"  -name "*.rpt" -exec cat {} \;  > "$SADM_TMP_FILE3"
     if [ "$SADM_DEBUG" -gt 2 ] 
         then sadm_write_log " " 
@@ -1714,7 +1724,7 @@ check_all_rpt()
 }
 
 # --------------------------------------------------------------------------------------------------
-# Check the last line of every *.rch file of all systems and submit alert if needed.
+# Check the last line of every *.rch file of all active systems and submit alert if needed.
 #
 # Example of line in rch file :
 #   holmes 2018.09.18 11:48:53 2018.09.18 11:48:53 00:00:00 sadm_template default 0 1
@@ -1725,20 +1735,31 @@ check_all_rpt()
 check_all_rch()
 {
     sadm_write_log " "
-    sadm_write_log "${BOLD}${YELLOW}Verifying all systems scripts results files (*.rch) :${NORMAL}"
-    total_ok=0 ; total_error=0 ; total_oldies=0 ; total_duplicate=0     # Clear Function Totals
+    sadm_write_log "${BOLD}${YELLOW}Verifying all systems scripts result files (*.rch) :${NORMAL}"
+
+    # Total counters
+    total_ok=0 
+    total_error=0 
+    total_oldies=0  
+    total_duplicate=0                                                   # Total number of Duplicate
+
+    # Get the last line of each 'rch' files and put them in $SADM_TMP_FILE1 
     find $SADM_WWW_DAT_DIR -type f -name '*.rch' -exec tail -1 {} \; > $SADM_TMP_FILE1 2>&1
+
+    # From the file just created '$SADM_TMP_FILE1' we create '$SADM_TMP_FILE2'.
+    # We just want lines with a '0' or a '1' in the last column and put results in $SADM_TMP_FILE2
     awk 'match($NF,/[0-1]/) { print }' $SADM_TMP_FILE1 >$SADM_TMP_FILE2 # Keep line ending with 0or1
 
-    # IF NO FILE TO PROCESS
+    # If nothing to report
     if [ ! -s "$SADM_TMP_FILE2" ]                                       # If File Zero in Size
-        then sadm_write_log "No error reported by any scripts files (*.rch)" 
+        then sadm_write_log "No error reported by any script file (*.rch) ?" 
              sadm_write_log "${SADM_TEN_DASH}"                          # Print 10 Dash 
              sadm_write_log ""                                          # Separation Blank Line
              return 0                                                   # Return to Caller
     fi
 
-    # LOOP THROUGH EACH LINE IN THE CREATED FILE.
+
+    # Loop Through Each Line In The Created File.
     alert_counter=0                                                     # Init alert counter
     cat $SADM_TMP_FILE2 | { while read line                             # Read Each Line of file
         do                
@@ -1749,15 +1770,16 @@ check_all_rch()
         if [ "${NBFIELD}" != "${RCH_FIELD}" ]                           # If abnormal nb. of field
            then sadm_write_err " "
                 sadm_write_err "Line below have ${NBFIELD} fields, but it should have ${RCH_FIELD}."
-                sadm_write_err "This line was skipped: ${line}"
+                sadm_write_err "This is the line skipped: ${line}"
                 continue 
         fi
+
 
         # Extract each field from the current line and prepare alert content.
         # Line example: holmes 2018.09.18 11:48:53 2018.09.18 11:48:53 00:00:00 sadm_template default 0 1
         ehost=`echo $line   | awk '{ print $1 }'`                       # Host Name of Event
-        sdate=`echo $line   | awk '{ print $2 }'`                       # Get Script Ending Date 
-        stime=`echo $line   | awk '{ print $3 }' `                      # Get Script Ending Time 
+        sdate=`echo $line   | awk '{ print $2 }'`                       # Get Script starting Date 
+        stime=`echo $line   | awk '{ print $3 }' `                      # Get Script starting Time 
         stime=`echo ${stime:0:5}`                                       # Eliminate the Seconds
         start_time="${sdate} ${stime}"                                  # Combine Event Date & Time
         edate=`echo $line   | awk '{ print $4 }'`                       # Get Script Ending Date 
@@ -1770,62 +1792,75 @@ check_all_rch()
         egtype=`echo $line  | awk '{ print $9 }'`                       # Alert Group Type [0,1,2,3]
         ecode=`echo $line   | awk '{ print $10 }'`                      # Return Code (0,1)
         etype="S"                                                       # Event Type = S = Script 
+
+        # Prepare message to user, per mail 'subject' and 'body'.
         if [ "$ecode" = "1" ]                                           # Script Ended with Error
            then esub="Error with ${escript} on $ehost."                 # Alert Subject
                 emess="Script '$escript' failed on ${ehost}."           # Alert Message
-           else esub="Success of '$escript' on ${ehost}."               # Script Success Alert Subj.
-                emess="Successfully ran '$escript' on ${ehost}."        # Script Success Alert Mess.
+           else esub="Success of '$escript' on '$ehost'."               # Script Success Alert Subj.
+                emess="Successfully ran '$escript' on '$ehost'."        # Script Success Alert Mess.
         fi
         
+        # Prepare the log (If exist) to be an attachment
         eattach=""                                                      # Clear Attachment Name
         elogfile="${ehost}_${escript}.log"                              # Build Log File Name
         elogname="${SADM_WWW_DAT_DIR}/${ehost}/log/${elogfile}"         # Build Log Full Path File
-        if [ -e "$elogname" ]                                           # If Log file exist
+        if [ -f "$elogname" ]                                           # If Log file exist
            then eattach="$elogname"                                     # Set Attachment to LogName
         fi
+
+        # Prepare the Error log to be an attachment (if present and not empty).
         errlogfile="${ehost}_${escript}_e.log"                          # Build Err Log File Name
         errlogname="${SADM_WWW_DAT_DIR}/${ehost}/log/${errlogfile}"     # Build Err Log Full Path
-        if [ -e "$errlogname" ]                                         # If Error Log file exist
-           then if [ -e "$elogname" ]                                   # If log already attach
+        if [ -f "$errlogname" ]                                         # If Error Log file exist
+           then if [ -f "$elogname" ]                                   # If log already attach
                    then eattach="$eattach,$errlogname"                  # Also attach Error Log
                    else eattach="$errlogname"                           # Attach Error Log
                 fi 
         fi
 
-        # Event Group Type ($egtype) = 0=None 1=AlertOnErr 2=AlertOnOK 3=Always 
-        # Event Return Code ($ecode) = 0=Success 1=Error
+
         # So if user want to be alerted :
-        #  - If script terminate with error ($egtype=1 and $ecode=1)
+        #
+        #  - If script terminate with error code '$ecode' "1"  event group type '$egtype' is "1" 
+        #    ecode=1 when script terminate with error and egtype=1 user want to be alerted on error
+        #
         #  - If script terminate with success  ($egtype=2 and $ecode=0)
-        #  - Each time the script is executed ($egtype=3)
+        #    ecode=0 when script terminate with success and egtype=2 user want to be alerted on success
+        #
+        #  - User want to be alerted each time the script is executed  ($egtype=3)
+        #
+        # Event Group Type  ($egtype) = 0=None 1=AlertOnErr 2=AlertOnOK 3=Always 
+        # Event Return Code ($ecode)  = 0=Success 1=Error
+        #
         if [ "$egtype" = "1" ] && [ "$ecode" = "1" ] || 
            [ "$egtype" = "2" ] && [ "$ecode" = "0" ] || [ "$egtype" = "3" ]  
            then ((total_alert++))                                       # Incr. Alert counter
                 if [ "$SADM_DEBUG" -gt 2 ]                              # Under Debug Show Parameter
                    then dmess="'$etype' '$start_time' '$end_time' '$ehost' '$egname'"    # Build Mess to see Param.
                         dmess="$dmess '$esub' '$emess' '$eattach'"      # Build Mess to see Param.
-                        sadm_write_log "sadm_send_alert $dmess RC=$RC"   # Show User Paramaters sent
+                        sadm_write_log "sadm_send_alert $dmess RC=$RC"  # Show User Paramaters sent
+                        emess=$(echo -e "${emess}\nScript start time  : ${start_time}\n")
+                        emess=$(echo -e "${emess}\nScript end time    : ${end_time}\n")
+                        emess=$(echo -e "${emess}\nScript elapse time : ${elapse}\n")
+                        sadm_write_log "Email Message is:\n${emess}"
                 fi
-                ((alert_counter++))                                     # Increase Submit AlertCount
-                emess=$(echo -e "${emess}\nScript start time  : ${start_time}\n")
-                emess=$(echo -e "${emess}\nScript end time    : ${end_time}\n")
-                emess=$(echo -e "${emess}\nScript elapse time : ${elapse}\n")
-                if [ $SADM_DEBUG -gt 2 ] ;then sadm_write_log "Email Message is:\n${emess}" ; fi
+
                 sadm_send_alert "$etype" "$end_time" "$ehost" "$escript" "$egname" "$esub" "$emess" "$eattach"
                 RC=$?
-                if [ $SADM_DEBUG -gt 2 ] ;then sadm_write_log "RC=$RC" ;fi   # Debug Show ReturnCode
+                ((alert_counter++))                                     # Increase Submit AlertCount
                 case $RC in
                     0)  ((total_ok++))
-                        sadm_write_log "${alert_counter}) $start_time alert ($etype) for $escript on ${ehost}: Alert was sent successfully."
+                        sadm_write_log "${alert_counter}) $start_time alert type '$etype' & Group type '$egtype' for $escript on ${ehost}: Alert was sent successfully."
                         ;;
                     1)  ((total_error++))
-                        sadm_write_log "${alert_counter}) $start_time alert ($etype) for $escript on ${ehost}: Error submitting the alert."
+                        sadm_write_log "${alert_counter}) $start_time alert type '$etype' & Group type '$egtype' for $escript on ${ehost}: Error submitting the alert."
                         ;;
                     2)  ((total_duplicate++))
-                        sadm_write_log "${alert_counter}) $start_time alert ($etype) for $escript on ${ehost}: Alert already sent."
+                        sadm_write_log "${alert_counter}) $start_time alert type '$etype' & Group type '$egtype' for $escript on ${ehost}: Alert already sent."
                         ;;
                     3)  ((total_oldies++))
-                        sadm_write_log "${alert_counter}) $start_time alert ($etype) for $escript on ${ehost}: Alert is older than 24 hrs."
+                        sadm_write_log "${alert_counter}) $start_time alert type '$etype' & Group type '$egtype' for $escript on ${ehost}: Alert is older than 24 hrs."
                         ;;
                     *)  sadm_write_log "   - ERROR: Unknown return code $RC";
                         ;;
@@ -1913,7 +1948,7 @@ crontab_update()
     rm -f $SADM_REAR_NEWCRON  >/dev/null 2>&1                           # Remove crontab work file
 
 
-    # SADMIN VIRTUAL EXPORT CRONTAB 
+    # SADMIN VIRTUAL MACHINESEXPORT CRONTAB 
     # Create sha1sum on newly and actual VM export crontab.
     # Compare the two sha1sum and if they are different, then the new crontab become the actual.
     # SADM_VMEXPORT_NEWCRON="$SADM_CFG_DIR/.sadm_vm_export"     = Newly rebuild export VM Crontab
@@ -1984,95 +2019,111 @@ update_server_uptime()
 
 
 # --------------------------------------------------------------------------------------------------
-# Send an Alert
+# Send an Alert with information receive as parameters.
 #
-# 1st Parameter could be a [S]cript, [E]rror, [W]arning, [I]nfo :
-#  [S]      If it is a SCRIPT ALERT (Alert Message will include Script Info)
-#           For type [S] Default Group come from sadmin.cfg or user can modify it
-#           by altering SADM_ALERT_GROUP variable in it script.
+# 1st Parameter identify by whom the alert is issue, can be a [S]cript or by the SADMIN System 
+#   Monitor ([E]rror, [W]arning, [I]nfo).
 #
-#  [E/W/I]  ERROR, WARNING OR INFORMATION ALERT are detected by System Monitor.
-#           [M]onitor type Warning and Error Alert Group are taken from the host System Monitor 
-#           file ($SADMIN/cfg/hostname.smon).
-#           In System monitor file Warning are specify at column 'J' and Error at col. 'K'.
+#           [S]      If it is a SCRIPT ALERT (Alert Message will include Script Info)
+#                    The Default Alert Group is taken from sadmin.cfg or user can modify it 
+#                    by altering 'SADM_ALERT_GROUP' variable in it script.
+#           
+#         [E/W/I]    Provenance of alert detected by the SADMIN System Monitor.
+#                    [E]rror, [W]arning or [I]nformation.
+#                    The Warning and Error Alert Group are taken from the host SADMIN System Monitor 
+#                    file ($SADMIN/cfg/hostname.smon). The Warning are specify at column 'J' and 
+#                    Error at col. 'K'.
 #
 # 2nd Parameter    : Event date and time (YYYY/MM/DD HH:MM)
 # 3th Parameter    : Server Name Where Alert come from
 # 4th Parameter    : Script Name (or "" if not a script)
-# 5th Parameter    : Alert Group Name to send Message
+# 5th Parameter    : Alert Group Name to send alert
 # 6th Parameter    : Subject/Title
-# 7th Parameter    : Alert Message
-# 8th Parameter    : Full Path Name of the attachment (If used, else blank)
+# 7th Parameter    : Alert Message (Alert File Name for email)
+# 8th Parameter    : Full Path Name of the attachment (If used, else blank "")
 #
 # Example of parameters: 
 # 'E,W,I,S' EVENT_DATE_TIME HOST_NAME SCRIPT_NAME ALERT_GROUP SUBJECT MESSAGE ATTACHMENT_PATH
 #
+#
 # Function return value 
-#  0 = Success, Alert Sent
-#  1 = Error - Aborted could not send alert 
-#       - Number of arguments is incorrect
-#       - Attachement specified doesn't exist
-#       - Alert group name specified, doesn't exist in alert_group.cfg
-#       - Alert Group Type is invalid (Not m,s,t or c)
-#       - If SLack Used, Slack Channel is missing
-#  2 = Same alert yesterday in history file, Alert already Sent, Maxrepeat per day reached
-#  3 = Alert older than 24 hrs - Alert wasn't send
+#       0 = Success, Alert Sent
+#       1 = Error - Aborted could not send alert 
+#            - Number of arguments is incorrect
+#            - Attachement specified doesn't exist
+#            - Alert group name specified, doesn't exist in alert_group.cfg
+#            - Alert Group Type is invalid (Not m,s,t or c)
+#            - If SLack Used, Slack Channel is missing
+#       2 = Same alert yesterday in history file, Alert already Sent, Maxrepeat per day reached
+#       3 = Alert older than 24 hrs - Alert wasn't send
 # --------------------------------------------------------------------------------------------------
 #
 sadm_send_alert() 
 {
-    LIB_DEBUG=0                                                         # Debug Library Level
+    #SADM_DEBUG=0                                                         # Debug Library Level
     if [ $# -ne 8 ]                                                     # Invalid No. of Parameter
-        then sadm_write_log "Invalid number of argument received by function ${FUNCNAME}."
-             sadm_write_log "Should be 8 we received $# : $* "           # Show what received
+        then sadm_write_err "Invalid number of argument received by function ${FUNCNAME}."
+             sadm_write_err "Should be 8 we received $# : $* "          # Show what received
              return 1                                                   # Return Error to caller
     fi
 
     # Save Parameters Received (After Removing leading and trailing spaces).
     atype=`echo "$1" |awk '{$1=$1;print}' |tr "[:lower:]" "[:upper:]"`  # [S]cript [E]rr [W]arn [I]nfo
     atime=`echo "$2" | awk '{$1=$1;print}'`                             # Alert Event Date AND Time
-    adate=`echo "$2"   | awk '{ print $1 }'`                            # Alert Date without time
-    ahour=`echo "$2"   | awk '{ print $2 }'`                            # Alert Time without date
-    aserver=`echo "$3" | awk '{$1=$1;print}'`                           # Server where alert Come
+    adate=`echo "$2" | awk '{ print $1 }'`                              # Alert Date without time
+    ahour=`echo "$2" | awk '{ print $2 }'`                              # Alert Time without date
+    aserver=`echo "$3" | awk '{$1=$1;print}'`                           # System where alert ComeFrom
     ascript=`echo "$4" | awk '{$1=$1;print}'`                           # Script Name 
     agroup=`echo "$5"  | awk '{$1=$1;print}'`                           # SADM AlertGroup to Advise
     asubject="$6"                                                       # Save Alert Subject
-    echo "$asubject" | grep -q "$aserver"                               # Is server name in subject?
-    if [ $? -ne 0 ] ; then asubject="$aserver $6" ; fi                  # Add server name in subject
+    echo "$asubject" | grep -q "$aserver"                               # Is system name in subject?
+    if [ $? -ne 0 ] ; then asubject="$aserver $6" ; fi                  # Add system name in subject
     amessage="$7"                                                       # Save Alert Message
     aattach="$8"                                                        # Save Attachment FileName
-    acounter="01"                                                       # Default alert Counter
+    alert_sent_counter="00"                                             # Default alert sent counter
 
-    # If Alert group received is 'default', replace it with group specified in alert_group.cfg
+    # Calculate the number of repeat per day the user want
+    if [[ "$SADM_ALERT_REPEAT" -ne 0 ]]                                 # Value from sadmin.cfg
+        then MaxRepeat="$(( 86400 / $SADM_ALERT_REPEAT ))"              # Seconds between repeat 
+        else MaxRepeat=0                                                # MaxRepeat=0 NoAlarm Repeat
+    fi
+
+    # Calculate some data that we will need later on 
+    # Age of alert in seconds (alert_age_in_seconds) & Nb. Alert Repeat per day (MaxRepeat)
+    alert_epoch=$(sadm_date_to_epoch "$atime")                          # Alert date/time to Epoch
+    current_epoch=$(date +%s)                                           # Get Current Epoch Time
+    alert_age_in_seconds=$(expr $current_epoch - $alert_epoch)          # Age of Alert in Seconds.
+
+    # If Alert is older than 24Hrs, that's it, no more concern
+    if [[ "$alert_age_in_seconds" -ge 86400 ]]                          # If Alert older than 24Hrs?
+       then if [ $SADM_DEBUG -gt 2 ]                                    # Debug Info
+               then sadm_write_log "Alert older than 24 Hrs by $alert_age_in_seconds seconds on $aserver ended on $atime, with message: '$amessage'." 
+            fi
+            return 3                                                    # Return Error to caller
+    fi 
+
+
+    # Set variable '$agroup' to the alert group we are going to use going forward.
+    # Check if the Alert group received is define the alert group file ($SADMIN/cfg/alert_group.cfg)
+    # If Alert group received is 'default', replace it with group name specified in alert_group.cfg
+    # Example of a default group line in alert_group.cfg : 'default  m  mail_sysadmin'.
     if [ "$agroup" = "default" ] 
        then galias=`grep -i "^default " $SADM_ALERT_FILE | head -1 | awk '{ print $3 }'` 
             agroup=`echo $galias | awk '{$1=$1;print}'`                 # Del Leading/Trailing Space
        else grep -i "^$agroup " $SADM_ALERT_FILE >/dev/null 2>&1        # Search in Alert Group File
             if [ $? -ne 0 ]                                             # Group Missing in GrpFile
                 then sadm_write_log "[ ERROR ] Alert group '$agroup' missing from ${SADM_ALERT_FILE}"
-                     sadm_write_log "  - Alert date/time : $atime"       # Show Event Date & Time
-                     sadm_write_log "  - Alert subject   : $asubject"    # Show Event Subject
+                     sadm_write_log "  - Alert date/time : $atime"      # Show Event Date & Time
+                     sadm_write_log "  - Alert subject   : $asubject"   # Show Event Subject
                      return 1                                           # Return Error to caller
             fi
     fi 
 
-    # Display Values received and we will use in this function.
-    if [ $LIB_DEBUG -gt 4 ]                                             # Debug Info List what Recv.
-       then printf "\n\nFunction '${FUNCNAME}' parameters received :\n" # Print Function Name
-            sadm_write_log "atype=$atype"                                # Show Alert Type
-            sadm_write_log "atime=$atime"                                # Show Event Date & Time
-            sadm_write_log "aserver=$aserver"                            # Show Server Name
-            sadm_write_log "ascript=$ascript"                            # Show Script Name
-            sadm_write_log "agroup=$agroup"                              # Show Alert Group
-            sadm_write_log "asubject=\"$asubject\""                      # Show Alert Subject/Title
-            sadm_write_log "amessage=\"$amessage\""                      # Show Alert Message
-            sadm_write_log "aattachment=\"$aattach\""                    # Show Alert Attachment File
-    fi
 
-
+    # Prepare to send email attachement (-a attachfile) option.
     # Mail with more than one attachment (Verify if file do exist)
-    opt_a=""                                                            # -a attachment cumulative
-    if [ $(expr index "$aattach" ,) -ne 0 ]                             # comma = multiple attach
+    opt_a=""                                                            # clear attachment option 
+    if [ $(expr index "$aattach" ,) -ne 0 ]                             # Any comma in attachment ? 
        then for file in ${aattach//,/ }                                 # Process all Attachment
                 do if [ ! -r "$file" ]                                  # Attachment Not Readable ?
                         then emsg="Missing attachment file '$file' can't be read or doesn't exist."
@@ -2082,7 +2133,7 @@ sadm_send_alert()
                         else opt_a="$opt_a -a $file "                   # Add -a attach Cmd Option
                    fi 
                 done
-       else if [ "$aattach" != "" ] && [ ! -r "$aattach" ]              # Can't read Attachment File
+       else if [ "$aattach" != "" ] && [ ! -r "$aattach" ]              # One attachment file exist?
                then emsg="Missing file attachment '$aattach' can't be read or doesn't exist."
                     sadm_write_err "$emsg"                              # Avise user of error
                     amessage=$(printf "\n${amessage}\n\n${emsg}\n") 
@@ -2090,254 +2141,267 @@ sadm_send_alert()
             fi 
     fi
 
-    # Validate the Alert type from alert group file ([M]ail, [S]lack, [T]exto or [C]ellular)
-    agroup_type=$(grep -i "^$agroup " $SADM_ALERT_FILE |awk '{print $2}') # [S/M/T/C] Group
-    agroup_type=$(echo "$agroup_type" |awk '{$1=$1;print}' |tr  "[:lower:]" "[:upper:]")
-    if [ "$agroup_type" != "M" ] && [ "$agroup_type" != "S" ] &&
-       [ "$agroup_type" != "T" ] && [ "$agroup_type" != "C" ] 
+
+    # Set Alert type from alert group file ([M]ail, [S]lack, [T]exto, [C]ellular, [N]otify)
+    # Validate and set 'agroup_type' variable in uppercase, indicate type of alert that will be use.
+    agroup_type=$(grep -i "^$agroup " $SADM_ALERT_FILE |awk '{print $2}') # [S/M/T/C/N] Group Type
+    agroup_type=$(echo "$agroup_type" |awk '{$1=$1;print}' |tr  "[:lower:]" "[:upper:]") # Uppercase
+    if [[ "$agroup_type" != "M" ]] && [[ "$agroup_type" != "S" ]] && [[ "$agroup_type" != "N" ]] &&
+       [[ "$agroup_type" != "T" ]] && [[ "$agroup_type" != "C" ]] 
        then wmess="[ ERROR ] Invalid Group Type '$agroup_type' for '$agroup' in $SADM_ALERT_FILE"
             sadm_write_err " " ; sadm_write_err "${wmess}"
             return 1
     fi
 
-    # Calculate some data that we will need later on 
-    # Age of alert in Days (NbDaysOld), in Seconds (aage) & Nb. Alert Repeat per day (MaxRepeat)
-    aepoch=$(sadm_date_to_epoch "$atime")                               # Convert AlertTime to Epoch
-    cepoch=$(date +%s)                                                  # Get Current Epoch Time
-    aage=$(expr $cepoch - $aepoch)                                      # Age of Alert in Seconds.
-    if [ $SADM_ALERT_REPEAT -ne 0 ]                                     # If Config = Alert Repeat
-        then MaxRepeat=`echo "(86400 / $SADM_ALERT_REPEAT)" | $SADM_BC` # Calc. Nb Alert Per Day
-        else MaxRepeat=1                                                # MaxRepeat=1 NoAlarm Repeat
+
+    # For debugging purpose, display values received and we will use in this function.
+    if [ $SADM_DEBUG -gt 4 ]                                             # Debug Info List what Recv.
+       then printf "\n\nFunction '${FUNCNAME}' parameters received :\n" # Print Function Name
+            sadm_write_log "atype=$atype"                               # Show Alert Type
+            sadm_write_log "atime=$atime"                               # Show Event Date & Time
+            sadm_write_log "aserver=$aserver"                           # Show Server Name
+            sadm_write_log "ascript=$ascript"                           # Show Script Name
+            sadm_write_log "agroup=$agroup"                             # Show Alert Group
+            sadm_write_log "agroup_type='$agroup_type'"                 # Show Alert Type
+            sadm_write_log "asubject='$asubject'"                       # Show Alert Subject/Title
+            sadm_write_log "amessage='$amessage'"                       # Show Alert Message
+            sadm_write_log "aattachment='$aattach'"                     # Show Alert Attachment File
+            sadm_write_log "alert_epoch='$alert_epoch'"  
+            sadm_write_log "current_epoch='$current_epoch'"
+            sadm_write_log "alert_age_in_seconds='$alert_age_in_seconds'"
     fi
-    if [ $aage -ge 86400 ]                                              # Alrt Age > 86400sec = 1Day
-        then NbDaysOld=`echo "$aage / 86400" |$SADM_BC`                 # Calc. Alert age in Days
-        else NbDaysOld=0                                                # Default Alert Age in Days
-    fi 
-    if [ "$LIB_DEBUG" -gt 4 ]                                           # Debug Info List what Recv.
-        then sadm_write_log "Alert Epoch Time     - aepoch=$aepoch"  
-             sadm_write_log "Current EpochTime    - cepoch=$cepoch"
-             sadm_write_log "Age of alert in sec. - aage=$aage"
-             sadm_write_log "Age of alert in days - NbDaysOld=$NbDaysOld"
-    fi 
 
-    # If Alert is older than 24 hours, 
-    if [ $aage -gt 86400 ]                                              # Alert older than 24Hrs ?
-        then if [ "$LIB_DEBUG" -gt 4 ]                                  # If Under Debug
-                then sadm_write_log "Alert older than 24 Hrs ($aage sec.)." 
-             fi
-             return 3                                                   # Return Error to caller
-    fi 
 
-    # Search history to see if same alert already exist for today.
-    if [ "$atype" != "S" ]                                              # Not Script Alert (Sysmon)
+    # Set the string use to search history, to determinate if alert is already in Alert History File
+    if [ "$atype" != "S" ]                                            # Not Script Alert (Sysmon)
        then asearch=";$adate;$atype;$aserver;$agroup;$asubject;"        # Set Search Str for Sysmon
        else asearch=";$ahour;$adate;$atype;$aserver;$agroup;$asubject;" # Set Search Str for Script
     fi
-    if [ "$LIB_DEBUG" -gt 4 ]                                           # If under Debug
-        then sadm_write_log "Search history for \"${asearch}\""         # Show Search String
-             grep "${asearch}" $SADM_ALERT_HIST |tee -a $SADM_LOG       # Show grep result
+    if [ "$SADM_DEBUG" -gt 4 ]                                           # If under Debug
+        then sadm_write_log "Search history for '${asearch}'."          # Show Search String
+             grep -i "${asearch}" $SADM_ALERT_HIST |tee -a $SADM_LOG    # Show grep result
     fi 
-    grep "${asearch}" $SADM_ALERT_HIST >>/dev/null 2>&1                 # Search Alert History file
-    RC=$?                                                               # Save Grep Result
-    if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write_log "Search Return is $RC" ; fi
 
-    # If same alert wasn't found for today 
-    #   - search for same alert for yesterday 
-    #   - if it's a Sysmon Alert & age of alert is less than 86400 Sec. (1day) is was alereay sent.
-    if [ "$RC" -ne 0 ]                                                  # Alert was Not in History 
-        then acounter=0                                                 # Script: SetAlert Sent Cntr
-             if [ "$atype" != "S" ]                                     # Not a Script it's a Sysmon 
-                then ydate=$(date --date="yesterday" +"%Y.%m.%d")       # Get yesterday date 
-                     bsearch=`printf "%s;%s;%s;%s;%s" "$ydate" "$atype" "$aserver" "$agroup" "$asubject"`
-                     grep "$bsearch" $SADM_ALERT_HIST >>/dev/null 2>&1  # Search SameAlert Yesterday
-                     if [ $? -eq 0 ]                                    # Same Alert Yesterday Found
-                        then yepoch=`grep "$bsearch" $SADM_ALERT_HIST |tail -1 |awk -F';' '{print $1}'` 
-                             yage=`expr $cepoch - $yepoch`              # Yesterday Alert Age in Sec
-                             if [ "$yage" -lt 86400 ]                   # SysmonAlert less than 1day
-                                then return 2                           # Return Code 2 to caller
-                             fi                                         # Alert already sent 
-                     fi
-             fi
-    fi
 
-    # If the alert was found in the history file , check if user want an alarm repeat
-    if [ $RC -eq 0 ]                                                    # Same Alert was found
-        then if [ $SADM_ALERT_REPEAT -eq 0 ]                            # User want no alert repeat
-                then if [ "$LIB_DEBUG" -gt 4 ]                          # Under Debug
+    # Verify if the alert '$asearch' is found in the history file
+    # If it's a Sysmon Alert & age of alert is less than 86400 Sec. (1day) is was alereay sent.
+    #
+    # Example of a history line: (The second field is the number of time the alert was sent)
+    # 1757068320;01;06:32;2025.09.05;S;server1;mail_sysadmin;Success of 'sa_rsync_batnas_to_rasnas' on server1.;;20250905_0635
+    # 1758236160;01;18:56;2025.09.18;I;rocky9;mail_sysadmin;System 'rocky9' lock: 'sadm_vm_export.sh rocky9';;20250918_1900
+    history_line=""                                                     # History Line that match 
+    grep -qi "${asearch}" $SADM_ALERT_HIST                              # Search Alert History file
+    if [[ $? -eq 0 ]]                                                   # Alert is in History
+        then if [[ "$SADM_ALERT_REPEAT" -eq 0 ]]                        # Want No alert repeat
+                then if [[ "$SADM_DEBUG" -gt 2 ]]                       # In debug level 3 or more
                         then wmsg="Alert already sent, you asked to sent alert only once."
                              sadm_write_log "$wmsg - (SADM_ALERT_REPEAT set to $SADM_ALERT_REPEAT)."
-                     fi
-                     return 2                                           # Return 2 = Alreay Sent
-             fi             
-             acounter=`grep "$alertid" $SADM_ALERT_HIST |tail -1 |awk -F\; '{print $2}'` # Actual Cnt
-             if [ $acounter -ge $MaxRepeat ]                            # Max Alert per day Reached?
-                then if [ "$LIB_DEBUG" -gt 4 ]                          # Under Debug
-                        then sadm_write_log "Maximun number of Alert ($MaxRepeat) reached ($aepoch)." 
-                     fi
+                     fi 
                      return 2                                           # Return 2 = Alreay Sent
              fi 
-             WaitSec=$(( acounter * SADM_ALERT_REPEAT ))                # Next Alert Elapse Seconds
-             if [ $aage -le $WaitSec ]                                  # Repeat Time not reached
-                then xcount=$(( WaitSec - aage))                        # Sec till nxt alarm is sent
-                     nxt_epoch=$(( cepoch * xcount ))                   # Next Alarm Epoch     
-                     nxt_time=$(sadm_epoch_to_date "$nxt_epoch")        # Next Alarm Date/Time
-                     msg="Waiting - Next alert will be send in $xcount seconds around ${nxt_time}."
-                     if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_write_log "${msg}" ;fi 
-                     return 2                                           # Return 2 =Duplicate Alert
-             fi 
-    fi  
+             sadm_write_log "Alert '$asearch' found in History file '$SADM_ALERT_HIST'."
+             #grep -i "${asearch}" $SADM_ALERT_HIST | head -1
+             history_line=$(grep -i "${asearch}" $SADM_ALERT_HIST | head -1)
+             # sadm_write_log "Line that match: '$history_line'" ;fi  
+             alert_sent_counter=$(echo "$history_line" | awk -F\; '{print $2}') # Get Alert sent cntr
+             #sadm_write_log "Alert counter for this alert is at ${alert_sent_counter}."  
+             if [[ $alert_sent_counter -ge $MaxRepeat ]]                # Max Alert per day Reached?
+                then sadm_write_log "Maximum alert repeat '$MaxRepeat' is reached ${alert_sent_counter}." 
+                     return 2                                           # Return 2 = Alreay Sent
+             fi
+            # Update Alarm Counter 
+            ((alert_sent_counter++))                                    # Incr alert sent counter
+            if [ $alert_sent_counter -gt 1 ] ; then amessage="(Repeat) $amessage" ;fi
+            alert_sent_counter=$(printf "%02d" "$alert_sent_counter")   # Make counter two digits
+            sadm_write_log "Repeat counter at '$alert_sent_counter'."   # Show user alert sent count
+    fi 
 
-    # Update Alarm Counter 
-    ((acounter++))                                         # Increment Index by 1
-    if [ $acounter -gt 1 ] ; then amessage="(Repeat) $amessage" ;fi     # Ins.Repeat in Msg if cnt>1
-    acounter=$(printf "%02d" "$acounter")                               # Make counter two digits
-    if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_write_log "Repeat alert ($aepoch)-($acounter)-($alertid)" ;fi
+ 
 
-    NxtInterval=$(echo "$acounter * $SADM_ALERT_REPEAT" | $SADM_BC)     # Next Alert Elapse Seconds 
-    NxtEpoch=$(expr $NxtInterval + $aepoch)                             # Next repeat + ActualEpoch
+    NxtInterval=$(echo "$alert_sent_counter * $SADM_ALERT_REPEAT" | $SADM_BC)     # Next Alert Elapse Seconds 
+    NxtEpoch=$(expr $NxtInterval + $alert_epoch)                        # Next repeat + ActualEpoch
     NxtAlarmTime=$(sadm_epoch_to_date "$NxtEpoch")                      # Next repeat Date/Time
 
-    # Construct Subject Message base on alert type
-    case "$atype" in                                                    # Depending on Alert Type
-        E) ws="SADM ERROR: ${asubject}"                                 # Construct Mess. Subject
-           ;;  
-        W) ws="SADM WARNING: ${asubject}"                               # Build Warning Subject
-           ;;  
-        I) ws="SADM INFO: ${asubject}"                                  # Build Info Mess Subject
-           ;;  
-        S) ws="SADM SCRIPT: ${asubject}"                                # Build Script Msg Subject
-           ;;  
-        *) ws="Invalid Alert Type ($atype): ${aserver} ${asubject}"     # Invalid Alert type Message
-           ;;
-    esac
-    if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write_log "Alert Subject will be : $ws" ; fi
+    # Construct Subject base on alert type
+    ws="Invalid Alert Type ($atype): ${aserver} ${adate}"               # Invalid Alert type Message
+    if [[ "$atype" == "E" ]] ; then ws="SADM ERROR: ${asubject}"   ;fi # Error Alert Type
+    if [[ "$atype" == "W" ]] ; then ws="SADM WARNING: ${asubject}" ;fi # Warning Alert Type
+    if [[ "$atype" == "I" ]] ; then ws="SADM INFO: ${asubject}"    ;fi # Info Alert Type
+    if [[ "$atype" == "S" ]] ; then ws="SADM SCRIPT: ${asubject}"  ;fi # Script Alert Type
+    if [[ "$SADM_DEBUG" -gt 4 ]] ; then sadm_write_log "Alert Subject is : '$ws'." ; fi
 
-    # Message Header
-    mheader=""                                                          # Default Mess. Header Blank
-    if [ "$atype" != "S" ]                                              # If Sysmon Mess(Not Script)
-        then mheader="SADMIN System Monitor on '$aserver'."             # Sysmon Header Line
+
+    # Alert Message Header 
+    if [[ "$atype" != "S" ]]                                            # Not a script, sysmon alert
+        then mheader="SADMIN System Monitor on '$aserver'." 
+             if [[ "$atype" == "E" ]] ; then mheader="SADMIN System Monitor ERROR on '$aserver'."   ;fi 
+             if [[ "$atype" == "W" ]] ; then mheader="SADMIN System Monitor WARNING on '$aserver'." ;fi 
+             if [[ "$atype" == "I" ]] ; then mheader="SADMIN System Monitor INFO on '$aserver'."    ;fi  
+        else mheader="SADMIN Script Alert on '$aserver'."               # Script Header Alert Mess.
+        fi                                                               
+    
+
+    # Alert Message Footer 
+    # If the alert is a repeat, show the user how many time the alert was sent and 
+    # how many time it will be sent , else footyer is blank. 
+    # (MaxRepeat=0 means no repeat, MaxRepeat=1 means only 1 alert sent)
+    if [[ $alert_sent_counter -gt 1 ]] && [[ $MaxRepeat -gt 1 ]]        # Not 1st Alarm & Will repeat
+       then mfooter=`printf "%s: %02d of %02d" "Alert counter" "$alert_sent_counter" "$MaxRepeat"` 
+       else mfooter=""
     fi 
     
-    # Message Footer 
-    if [ $acounter -eq 1 ] && [ $MaxRepeat -eq 1 ]                      # If Alarm is 1 of 1 bypass
-        then mfooter=""                                                 # Default Footer is blank
-        else mfooter=`printf "%s: %02d of %02d" "Alert counter" "$acounter" "$MaxRepeat"` 
-    fi 
-    if [ $SADM_ALERT_REPEAT -ne 0 ] && [ $acounter -ne $MaxRepeat ]     # If Repeat and Not Last
-       then mfooter=`printf "%s, next notification around %s" "$mfooter" "$NxtAlarmTime"`
-    fi
-    
-    # Final Message combine 
-    body=$(printf "%s\n%s\n%s" "$mheader" "$amessage" "$mfooter")       # Construct Final Mess. Body
-    if [ "$atype" = "S" ] && [ "$agroup_type" != "T" ]                  # If Script Alert, Not Texto
-       then SNAME=$(echo ${ascript} |awk '{ print $1 }')                # Get Script Name
-            LOGFILE="${aserver}_${SNAME}.log"                           # Assemble log Script Name
-            LOGNAME="${SADM_WWW_DAT_DIR}/${aserver}/log/${LOGFILE}"     # Add Log Dir. Path 
-            URL_VIEW_FILE='/view/log/sadm_view_file.php'                # View File Content URL
+
+    # Begin creating the Body of the message (Header, Body and footer).
+    body=""
+    if [[ "$mheader"  != "" ]] ; then body+=$(printf "%s\n" "$mheader")  ;fi # Construct Final Body
+    if [[ "$amessage" != "" ]] ; then body+=$(printf "%s\n" "$amessage") ;fi # Construct Final Body
+    if [[ "$mfooter"  != "" ]] ; then body+=$(printf "%s\n" "$mfooter")  ;fi # Construct Final Body
+
+
+    # Format for Script email - Add link to log and error log in the body of email 
+    # atype       = [S]cript [E]rr [W]arn [I]nfo  -  
+    # agroup_type = [M]ail,[S]lack,[T]exto,[C]ellular,[N]otify
+    if [[ "$atype" == "S" ]] && [[ "$agroup_type" != "T" ]]             # If Script Alert, Not Texto
+       then SNAME=$(echo ${ascript} |awk '{ print $1 }')                # Del Leading/Trailing space
+            
+            # Link to view the Log
+            LOGFILE="${aserver}_${SNAME}.log"                           # Log Script Name
+            LOGNAME="${SADM_WWW_DAT_DIR}/${aserver}/log/${LOGFILE}"     # Full Path to Script Log
             LOGURL="https://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}" 
+            
+            # Link to view the Error Log
             ELOGFILE="${aserver}_${SNAME}_e.log"                        # Assemble Error log Name
-            ELOGNAME="${SADM_WWW_DAT_DIR}/${aserver}/log/${ELOGFILE}"   # Add Error log Dir. Path 
-            if [ -s "$ELOGNAME" ]                                       # If Error log not empty
-                then ELOGURL="https://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${ELOGNAME}" 
-                     body=$(printf "${body}\nError log :\n${ELOGURL}\nView full log :\n${LOGURL}") 
-                else body=$(printf "${body}\nView full log :\n${LOGURL}") 
-            fi 
+            ELOGNAME="${SADM_WWW_DAT_DIR}/${aserver}/log/${ELOGFILE}"   # Full Path to Script eLog
+            ELOGURL="https://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${ELOGNAME}"            
+
+            URL_VIEW_FILE='/view/log/sadm_view_file.php'                # Page to View File Content 
+            if [[ -s "$ELOGNAME" ]]                                     # ErrorLog exist & not empty
+                then body+=$(printf "${body}\nView script full log  :\n${LOGURL}") 
+                     body+=$(printf "${body}\nView script error log :\n${ELOGURL}") 
+                else body+=$(printf "${body}\nView script full log  :\n${LOGURL}") 
     fi
-    if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write_log "Alert body will be : $body" ; fi
+
+    sadm_write_log "Alert body file content :\n$(cat $body)" 
+    if [ "$SADM_DEBUG" -gt 4 ] ; then sadm_write_log "Alert body file content :\n$(cat $body)" ; fi
 
 
-    # Send the Alert Message using the type of alert requested
-    case "$agroup_type" in
+    # Check for invalid group type -  agroup_type=[M]ail,[S]lack,[T]exto,[C]ellular,[N]otify
+    if [[ "$agroup_type" != "M" ]] && [[ "$agroup_type" != "S" ]] && [[ "$agroup_type" != "T" ]] && 
+       [[ "$agroup_type" != "C" ]] && [[ "$agroup_type" != "N" ]] 
+       then sadm_write_err "[ ERROR ] In ${FUNCNAME} - Alert Group Type '$agroup_type' is invalid."
+            RC=1                                                          # Something went wrong
+    fi 
 
-       # SEND EMAIL ALERT 
-       M) aemail=$(grep -i "^$agroup " $SADM_ALERT_FILE |awk '{ print $3 }') # Get Emails of Group
-          aemail=$(echo $aemail | awk '{$1=$1;print}')                  # Del Leading/Trailing Space
-          if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write_log "Email alert sent to $aemail" ; fi 
-          sadm_sendmail "$aemail" "$ws" "$body" "$aattach"
-          RC=$?                                                         # Save Error Number
-          if [ $RC -ne 0 ]                                              # Error sending email 
-              then wstatus="[ Error ] Sending email to $aemail"         # Advise Error sending Email
-                   sadm_write_log "${wstatus}"                          # Show Message to user 
-          fi
-          ;;
 
-       # SEND SLACK ALERT 
-       S) s_channel=`grep -i "^$agroup " $SADM_ALERT_FILE | head -1 | awk '{ print $3 }'` 
-          s_channel=`echo $s_channel | awk '{$1=$1;print}'`             # Del Leading/Trailing Space
-          slack_hook_url=`grep -i "^$agroup " $SADM_ALERT_FILE | head -1 | awk '{ print $4 }'` 
-          slack_hook_url=`echo $s_channel | awk '{$1=$1;print}'`        # Del Leading/Trailing Space
-          if [ "$LIB_DEBUG" -gt 4 ]                                     # Library Debugging ON 
-              then sadm_write_log "Slack Channel=$s_channel got Webhook=${slack_hook_url}"
-          fi
-          if [ "$aattach" != "" ]                                       # If Attachment Specified
-              then logtail=`tail -20 ${aattach}`                        # Attach file last 50 lines
-                   body="${body}\n\n*----Attachment----*\n${logtail}"   # To Slack Message
-          fi
-          s_text="$body"                                                # Set Final Alert Text
-          escaped_msg=$(echo "${s_text}" |sed 's/\"/\\"/g' |sed "s/'/\'/g" |sed 's/`/\`/g')
-          s_text="\"text\": \"${escaped_msg}\""                         # Set Final Text Message
-          s_icon="warning"                                              # Message Slack Icon
-          s_md="\"mrkdwn\": true,"                                      # s_md format to true
-          json="{\"channel\": \"${s_channel}\", \"icon_emoji\": \":${s_icon}:\", ${s_md} ${s_text}}"
-          if [ "$LIB_DEBUG" -gt 4 ]
-              then sadm_write_log "$SADM_CURL -s -d \"payload=$json\" ${slack_hook_url}"
-          fi
-          SRC=`$SADM_CURL -s -d "payload=$json" $slack_hook_url`        # Send Slack Message
-          if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write_log "Status after send to Slack is ${SRC}" ;fi
-          if [ $SRC = "ok" ]                                            # If Sent Successfully
-              then RC=0                                                 # Set Return code to 0
-                   wstatus="[ OK ] Slack message sent with success to $agroup ($SRC)" 
-                   sadm_write_log "${wstatus}"                          # Advise User
-              else wstatus="[ ERROR ] Sending Slack message to $agroup ($SRC)"
-                   sadm_write_log "${wstatus}"                          # Advise User
-                   RC=1                                                 # When Error Return Code 1
-          fi
-          ;;
+    # SEND EMAIL ALERT 
+    # SADM_ALERT_FILE is $SADM_CFG_DIR/alert_group.cfg
+    if [[ "$agroup_type" == "M" ]]                                      # Alert group type is [M]ail
+        then aemail=$(grep -i "^$agroup " $SADM_ALERT_FILE |awk '{ print $3 }') # Get Email of Group
+             aemail=$(echo $aemail | awk '{$1=$1;print}')               # Del Leading/Trailing Space
+             
+             # Create Body file and send email.
+             if [[ -e "$BODY_FILE" ]]  ; then rm -f "$BODY_FILE" ; fi   # Will Start with a new file
+             #if [[ "$mheader" != "" ]] ; then echo -e "\n$mheader"  >> $BODY_FILE ; fi 
+             #echo -e "$amessage" >> $BODY_FILE
+             echo -e "$body"     >> $BODY_FILE
+             #if [[ "$mfooter" != "" ]] ; then echo -e "\n$mfooter"  >> $BODY_FILE ; fi 
+             if [ "$SADM_DEBUG" -gt 4 ] ; then sadm_write_log "Email alert will be sent to $aemail" ;fi 
+             sadm_sendmail "$aemail" "$ws" "$BODY_FILE" "$aattach"         # Email,subject,bodyFile,att
+             if [[ $? -ne 0 ]]                                             # Error sending email 
+                 then sadm_write_err "[ Error ] Sending email to $aemail"  # Advise Error sending Email
+             fi
+    fi 
 
-       # SEND TEXTO/SMS ALERT
-       T) amember=`grep -i "^$agroup " $SADM_ALERT_FILE |awk '{print $3}'` # Get Group Members 
-          amember=`echo $amember | awk '{$1=$1;print}'`                 # Del Leading/Trailing Space
-          total_error=0                                                 # Total Error Counter Reset
-          RC=0                                                          # Function Return Code Def.
-          for i in $(echo $amember | tr ',' '\n')                       # For each member of group
-              do
-              if [ "$LIB_DEBUG" -gt 4 ] 
-                  then printf "\nProcessing '$agroup' sms group member '${i}'.\n" 
-              fi   
-              # Get the Group Member of the Alert Group (Cellular No.)
-              acell=`grep -i "^$i " $SADM_ALERT_FILE |awk '{print $3}'` # Get GroupMembers Cell
-              acell=`echo $acell   | awk '{$1=$1;print}'`               # Del Leading/Trailing Space
-              agtype=`grep -i "^$i " $SADM_ALERT_FILE |awk '{print $2}'` # GroupType should be C
-              agtype=`echo $agtype | awk '{$1=$1;print}'`               # Del Leading/Trailing Space
-              agtype=`echo $agtype | tr "[:lower:]" "[:upper:]"`        # Make Grp Type is uppercase
-              if [ "$agtype" != "C" ]                                   # Member should be type [C]
-                  then sadm_write_log "Member of '$agroup' alert group '$i' is not a type 'C' alert."
-                       sadm_write_log "Alert not send to '$i', proceeding with next member."
-                       total_error=`expr $total_error + 1`
-                       continue
-              fi
-              T_URL=$SADM_TEXTBELT_URL                                  # Text Belt URL
-              T_KEY=$SADM_TEXTBELT_KEY                                  # User Text Belt Key
-              reponse=`${SADM_CURL} -s -X POST $T_URL -d phone=$acell -d "message=$body" -d key=$T_KEY`
-              echo "$reponse" | grep -i "\"success\":true," >/dev/null 2>&1   # Success Response ?
-              RC=$?                                                     # Save Error Number
-              if [ $RC -eq 0 ]                                          # If Error Sending Email
-                  then wstatus="SMS message sent to group $agroup ($acell)" 
-                  else wstatus="Error ($RC) sending SMS message to group $agroup ($acell)"
-                       sadm_write_log "${wstatus}"                      # Advise USer
-                       sadm_write_log "${reponse}"                      # Error msg from Textbelt
-                       total_error=`expr $total_error + 1`
-                       RC=1                                             # When Error Return Code 1
-              fi
-              done
-          if [ $total_error -ne 0 ] ; then RC=1 ; else RC=0 ; fi        # If Error Sending SMS
-          ;;
-       *) sadm_write_err "[ ERROR ] In ${FUNCNAME} - Alert Group Type '$agroup_type' not supported."
-          RC=1                                                          # Something went wrong
-          ;;
-    esac
-    write_alert_history "$atype" "$atime" "$agroup" "$aserver" "$asubject" "$acounter" "$wstatus"
-    LIB_DEBUG=0                                                        # If Debugging the Library
+
+    # SEND SLACK ALERT 
+    if [[ "$agroup_type" == "S" ]]   
+       then s_channel=`grep -i "^$agroup " $SADM_ALERT_FILE | head -1 | awk '{ print $3 }'` 
+            s_channel=`echo $s_channel | awk '{$1=$1;print}'`           # Del Leading/Trailing Space
+            slack_hook_url=`grep -i "^$agroup " $SADM_ALERT_FILE | head -1 | awk '{ print $4 }'` 
+            slack_hook_url=`echo $s_channel | awk '{$1=$1;print}'`      # Del Leading/Trailing Space
+            if [ "$SADM_DEBUG" -gt 4 ]                                  # Library Debugging ON 
+                then sadm_write_log "Slack Channel=$s_channel got Webhook=${slack_hook_url}"
+            fi
+            if [ "$aattach" != "" ]                                     # If Attachment Specified
+                then logtail=`tail -20 ${aattach}`                      # Attach file last 50 lines
+                     body="${body}\n\n*----Attachment----*\n${logtail}" # To Slack Message
+            fi
+            s_text="$body"                                              # Set Final Alert Text
+            escaped_msg=$(echo "${s_text}" |sed 's/\"/\\"/g' |sed "s/'/\'/g" |sed 's/`/\`/g')
+            s_text="\"text\": \"${escaped_msg}\""                       # Set Final Text Message
+            s_icon="warning"                                            # Message Slack Icon
+            s_md="\"mrkdwn\": true,"                                    # s_md format to true
+            json="{\"channel\": \"${s_channel}\", \"icon_emoji\": \":${s_icon}:\", ${s_md} ${s_text}}"
+            if [ "$SADM_DEBUG" -gt 4 ]
+                then sadm_write_log "$SADM_CURL -s -d \"payload=$json\" ${slack_hook_url}"
+            fi
+            SRC=`$SADM_CURL -s -d "payload=$json" $slack_hook_url`      # Send Slack Message
+            if [ "$SADM_DEBUG" -gt 4 ] ; then sadm_write_log "Status after send to Slack is ${SRC}" ;fi
+            if [ $SRC = "ok" ]                                          # If Sent Successfully
+                then RC=0                                               # Set Return code to 0
+                     wstatus="[ OK ] Slack message sent with success to $agroup ($SRC)" 
+                     sadm_write_log "${wstatus}"                        # Advise User
+                else wstatus="[ ERROR ] Sending Slack message to $agroup ($SRC)"
+                     sadm_write_log "${wstatus}"                        # Advise User
+                     RC=1                                               # When Error Return Code 1
+            fi
+    fi 
+
+
+
+    # SEND NOTIFICATION WITH NTFY
+    if [[ "$agroup_type" == "N" ]]   
+        then sadm_write_log "NTFY message is in development ..."
+             RC=1
+    fi 
+
+
+
+    # SEND TEXTO/SMS ALERT
+    if [[ "$agroup_type" == "T" ]]   
+       then amember=`grep -i "^$agroup " $SADM_ALERT_FILE |awk '{print $3}'` # Get Group Members 
+            amember=`echo $amember | awk '{$1=$1;print}'`               # Del Leading/Trailing Space
+            total_error=0                                               # Total Error Counter Reset
+            RC=0                                                        # Function Return Code Def.
+            for i in $(echo $amember | tr ',' '\n')                     # For each member of group
+                do
+                if [ "$SADM_DEBUG" -gt 4 ] 
+                    then printf "\nProcessing '$agroup' sms group member '${i}'.\n" 
+                fi   
+                # Get the Group Member of the Alert Group (Cellular No.)
+                acell=`grep -i "^$i " $SADM_ALERT_FILE |awk '{print $3}'` # Get GroupMembers Cell
+                acell=`echo $acell   | awk '{$1=$1;print}'`             # Del Leading/Trailing Space
+                agtype=`grep -i "^$i " $SADM_ALERT_FILE |awk '{print $2}'` # GroupType should be C
+                agtype=`echo $agtype | awk '{$1=$1;print}'`             # Del Leading/Trailing Space
+                agtype=`echo $agtype | tr "[:lower:]" "[:upper:]"`      # Make Grp Type is uppercase
+                if [ "$agtype" != "C" ]                                 # Member should be type [C]
+                    then sadm_write_log "Member of '$agroup' alert group '$i' is not a type 'C' alert."
+                         sadm_write_log "Alert not send to '$i', proceeding with next member."
+                         total_error=`expr $total_error + 1`
+                         continue
+                fi
+                T_URL=$SADM_TEXTBELT_URL                                # Text Belt URL
+                T_KEY=$SADM_TEXTBELT_KEY                                # User Text Belt Key
+                reponse=`${SADM_CURL} -s -X POST $T_URL -d phone=$acell -d "message=$body" -d key=$T_KEY`
+                echo "$reponse" | grep -i "\"success\":true," >/dev/null 2>&1   # Success Response ?
+                RC=$?                                                   # Save Error Number
+                if [ $RC -eq 0 ]                                        # If Error Sending Email
+                    then wstatus="SMS message sent to group $agroup '$acell'" 
+                    else wstatus="Error ($RC) sending SMS message to group $agroup '$acell'"
+                         sadm_write_log "${wstatus}"                    # Advise USer
+                         sadm_write_log "${reponse}"                    # Error msg from Textbelt
+                         total_error=`expr $total_error + 1`
+                         RC=1                                           # When Error Return Code 1
+                fi
+                done
+            if [ $total_error -ne 0 ] ; then RC=1 ; else RC=0 ; fi      # If Error Sending SMS
+    fi 
+
+
+    # Write Alert to History file
+    write_alert_history "$atype" "$atime" "$agroup" "$aserver" "$asubject" "$alert_sent_counter" "$wstatus"
+
+    #SADM_DEBUG=0                                                        # If Debugging the Library
     return $RC
 }
 
@@ -2348,22 +2412,27 @@ sadm_send_alert()
 
 
 # --------------------------------------------------------------------------------------------------
-# Write Alert History File
+# Write an Alert in the History File
+#
 # Parameters:
 #   1st = Alert Type         = [S]cript [E]rror [W]arning [I]nfo
 #   2nd = Alert Date/Time    = Alert/Event Date and Time (YYYY/MM/DD HH:MM)
 #   3th = Alert Group Name   = Alert Group Name to Alert (Must exist in $SADMIN/cfg/alert_group.cfg)
 #   4th = Server Name        = Server name where the event happen
 #   5th = Alert Description  = Alert Message
-#   6th = Alert Sent Counter = Incremented after an alert is sent
+#   6th = Alert Sent Counter = Incremented after same alert is sent 
 #   7th = Alert Status Mess. = Status got after sending alert
 #                               - Wait $elapse/$SADM_REPEAT
 # Example : 
 #   write_alert_history "$atype" "$atime" "$agroup" "$aserver" "$asubject" "$acount" "$astatus"
+#
+# Return code:
+#   0 = Success
+#   1 = Error 
 # --------------------------------------------------------------------------------------------------
 write_alert_history() {
     if [ $# -ne 7 ]                                                     # Did not received 7 Param.?
-        then sadm_write_err "Invalid number of argument received by function ${FUNCNAME}."
+        then sadm_write_err "Invalid number of arguments received by function ${FUNCNAME}."
              sadm_write_err "Should be 7, we received $# : $* "         # Show what received
              return 1                                                   # Return Error to caller
     fi
@@ -2386,7 +2455,7 @@ write_alert_history() {
     hline=$(printf "%s;%s;%s;%s" "$hline" "$hserver" "$hgroup" "$hsub") # Alert Server,Group,Subject
     hline=$(printf "%s;%s;%s" "$hline" "$hstat" "$cdatetime")           # Alert Status,Cur Date/Time
     echo "$hline" >> "$SADM_ALERT_HIST"                                 # Write Alert History File
-    if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write_log "Line added to History : $hline" ; fi 
+    if [ "$SADM_DEBUG" -gt 4 ] ; then sadm_write_log "Line added to History : $hline" ; fi 
 }
 
 
@@ -2405,17 +2474,24 @@ main_process()
     # Create empty global fetch report file (.rpt) in $SADMIN/www/dat/HOSTNAME/rpt/HOSTNAME_fetch.rpt
     if [ -f "$FETCH_RPT_GLOBAL" ] ;then rm -f "$FETCH_RPT_GLOBAL" ;fi   # rm global RPT file if exist
     touch "$FETCH_RPT_GLOBAL"                                           # Create global RPT file
-    chown "$SADM_WWW_USER:$SADM_GROUP"  "$FETCH_RPT_GLOBAL"  
-    chmod 664 "$FETCH_RPT_GLOBAL"
+    chown "$SADM_WWW_USER:$SADM_GROUP"  "$FETCH_RPT_GLOBAL"             # Give good owner ship
+    chmod 664 "$FETCH_RPT_GLOBAL"                                       # Give good permission
+
 
     # Create starting empty local rpt file $SADMIN/dat/rpt/HOSTNAME_fetch.rpt
     if [ -f "$FETCH_RPT_LOCAL" ] ; then rm -f "$FETCH_RPT_LOCAL" ; fi   # rm local RPT file if exist
     touch "$FETCH_RPT_LOCAL"                                            # Create EMPTY local RPTfile
-    chown "$SADM_USER:$SADM_GROUP"  "$FETCH_RPT_LOCAL"  
-    chmod 664 "$FETCH_RPT_LOCAL"
+    chown "$SADM_USER:$SADM_GROUP"  "$FETCH_RPT_LOCAL"                  # Give good owner ship
+    chmod 664 "$FETCH_RPT_LOCAL"                                        # Give good permission
 
+    # Build a list of active systems and output data to $SADM_TMP_FILE1 file.
+    build_server_list                                                   # Create List in $TMP_FILE1
+    if [ $? -ne 0 ] ; then ((PROCERSS_ERRORt++))  ; fi                  # Increase Error Counter                      
 
-    # Process All Active Linux systems.
+    # Create SADMIN crontab files headers (sadm_backup, sadm_osupdate, sadm_rear_backup, sadm_vm)
+    create_crontab_files_header                                         # Create crontab new headers
+
+    # Go Process All Active systems.
     process_servers                                                     # Process Active Linux
     PROCESS_ERROR=$?                                                    # Save Nb. Errors in process
 

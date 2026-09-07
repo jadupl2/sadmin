@@ -40,6 +40,7 @@
 #@2025_06_13 web v2.14 Enhance overall page look and add more information.
 #@2026_02_18 web v2.15 Add execution time average for the script.
 #@2026_03_05 web v2.16 Fix could not view rch file (Path is now fix)
+#@2026_09_04 web v2.17 Fix problem viewing some rch file.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -112,8 +113,8 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 # Local Variables
 #===================================================================================================
 #
-$DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.15" ;                                                       # Current version number
+$DEBUG = False ;                                                         # Debug Activated True/False
+$SVER  = "2.17" ;                                                       # Current version number
 
 
 
@@ -134,8 +135,8 @@ function display_heading() {
     echo "\n        <th align='center' width=105>Start Date & Time</th>";
     echo "\n        <th align='center' width=105>End Date & Time</th>";
     echo "\n        <th align='center' width=50>Duration"; 
-    echo "\n        <th align='center' width=160 >Notification Group</th>";
-    echo "\n        <th align='center' width=90>When to notify</th>";
+    echo "\n        <th align='center' width=160 >Alert Group</th>";
+    echo "\n        <th align='center' width=90>When to alert</th>";
     echo "\n        <th align='center' width=90>Status</th>";
     echo "\n  </tr>";
     echo "\n</thead>\n";
@@ -146,8 +147,8 @@ function display_heading() {
     echo "\n        <th align='center' width=105>Start Date & Time</th>";
     echo "\n        <th align='center' width=105>End Date & Time</th>";
     echo "\n        <th align='center' width=50>Duration"; 
-    echo "\n        <th align='center' width=160 >Notification Group</th>";
-    echo "\n        <th align='center' width=90>When to notify</th>";
+    echo "\n        <th align='center' width=160 >Alert Group</th>";
+    echo "\n        <th align='center' width=90>When to alert</th>";
     echo "\n        <th align='center' width=90>Status</th>";
     echo "\n  </tr>";
     echo "\n</tfoot>\n\n";
@@ -229,12 +230,12 @@ function display_rch_file ($GET_HOSTNAME, $GET_RCHFILE, $SORTED_RCHFILE) {
 
 
 
-        # Show Notification Group with Tooltip
+        # Show Alert Group with Tooltip
         echo "\n<td width=180 align='center'>";
         list($calert, $alert_group_type, $stooltip) = get_alert_group_data ($rch_array[7]) ;
         echo "<span data-toggle='tooltip' title='" . $stooltip . "'>"; 
         if ($alert_group_type == "m" ) { 
-            echo "Type '$alert_group_type', email notification to '$calert'"; 
+            echo "Type '$alert_group_type', email alert to '$calert'"; 
         }else{
             echo $calert . "(" . $alert_group_type . ")";             
         }
@@ -244,23 +245,23 @@ function display_rch_file ($GET_HOSTNAME, $GET_RCHFILE, $SORTED_RCHFILE) {
         # Show Alert type
         switch ($rch_array[8]) {                                           
             case 0 :                                                # 0=Don't send any Alert
-                $alert_type_msg="No notification (code 0)" ;        # No Alert even if failed.
+                $alert_type_msg="No alert (code 0)" ;        # No Alert even if failed.
                 $etooltip="'SADM_ALERT' set to 0 in script " . $cname ;
                 break;
             case 1 :                                                # 1=Send Alert on Error
-                $alert_type_msg="Notify only on error (code 1)"; 
+                $alert_type_msg="alert only on error (code 1)"; 
                 $etooltip="'SADM_ALERT' set to 1 in script " .$cname; # Tooltips  
                 break;
             case 2 :                                                # 2=Send Alert on Success
-                $alert_type_msg="Notify only on success (code 2)"; 
+                $alert_type_msg="alert only on success (code 2)"; 
                 $etooltip="'SADM_ALERT' set to 2 in script " . $cname ;
                 break;
             case 3 :                                                # 3=Always Send Alert
-                $alert_type_msg="Always notify (code 3)";
+                $alert_type_msg="Always alert (code 3)";
                 $etooltip="'SADM_ALERT' set to 3 in script " . $cname ;
                 break;
             default:
-                $alert_type_msg="Invalid notification type (code $rch_array[8]).";  
+                $alert_type_msg="Invalid alert type (code $rch_array[8]).";  
                 $etooltip="SADM_ALERT is set to ($rch_array[8]) in script " . $cname ;
                 break;
         }    
@@ -322,13 +323,14 @@ function display_rch_file ($GET_HOSTNAME, $GET_RCHFILE, $SORTED_RCHFILE) {
 # Program Start Here
 # ==================================================================================================
 
+
     # Get First Parameter (Hostname) and validate that it exist in the SADMIN database.
     if (isset($_GET['host']) ) {                                        # If Hostname is Receive/Set
         $GET_HOSTNAME = $_GET['host'];                                  # Get GET_HOSTNAME Value
         if ($DEBUG)  { echo "<br>1st parameter : " . $GET_HOSTNAME; }   # In Debug display RCH Name
         
         # SQL to See if the hostname received is valid.
-        $sql = "SELECT * FROM server where srv_name = '$GET_HOSTNAME' ;";   # Check if in DB 
+        $sql = "SELECT * FROM server where srv_name = '$GET_HOSTNAME';"; # Check if in DB 
         if ($DEBUG) { echo "<br>SQL = $sql"; }                          # In Debug Display SQL Stat.
         if ( ! $result=mysqli_query($con,$sql)) {                       # Execute SQL Select
             $err_line = (__LINE__ -1) ;                                 # Error with SQL 
@@ -352,8 +354,9 @@ function display_rch_file ($GET_HOSTNAME, $GET_RCHFILE, $SORTED_RCHFILE) {
     # Validate that global RCH directory exist (directory where the RCH file reside).
     $GET_RCHFILE = $_GET['filename'];                                   # Extract Filename of RCH
     if ($DEBUG)  { echo "<br>2nd parameter : " . $GET_RCHFILE; }        # In Debug display RCH Name
-    #$DIR = $_SERVER['DOCUMENT_ROOT'] . "/dat/" .$GET_HOSTNAME ."/rch/"; # RCH Host Directory Name
+    #$DIR = $_SERVER['DOCUMENT_ROOT'] . "/dat/".$GET_HOSTNAME ."/rch/"; # RCH Host Directory Name
     $DIR = dirname($GET_RCHFILE);                                       # RCH Host Directory Name
+    if ($DEBUG)  { echo "<br>RCH location : " . $DIR; }                 # In Debug display RCH Name
     if (! is_dir($DIR))  {                                              # If RCH Dir.do not exist
         $msg = "The global RCH directory '" . $DIR . "' does not exist.\n"; 
         $msg = $msg . "No RCH file to display.";                        # Needed to proceed

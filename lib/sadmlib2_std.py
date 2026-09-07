@@ -3130,6 +3130,8 @@ def sendmail(waddr, wsub, wbody, wattach="") :
             wsub  (str)     : Subject of email
             wbody (str)     : Full Path to file containing the body of your email.
                               If specified the file must exist and readable.
+                              if file don't exist assume that wbody is a string & output it to a 
+                              temporary file.
             wattach (str)   : Name of the file(s) to attach to the email.
                                - If more than one attachment, they go to be separated by comma.
                                - If no attachment, leave blank.
@@ -3139,51 +3141,50 @@ def sendmail(waddr, wsub, wbody, wattach="") :
             Return Code (Int)   : 0 Successfully sent the email
                                   1 Error while sending the email (Parameters may be wrong)
     """
+    debug=5
 
-    # Validate email address
-#    try:
-#        email_info = validate_email(waddr, check_deliverability=True)
-#    except EmailNotValidError as e:
-#        errmsg = {str(e)}
-#        write_err ("The email specified is not valid '%s'." % waddr)
-#        write_err (errmsg)
-#        return 1
-    # Ensure email body file exists before checking its size
-    if not os.path.exists(wbody) or os.path.getsize(wbody) == 0:    
-       if (not quiet) : write_err ("Mail body file is is empty or not found '%s'."  % wbody)
-       return 1
+    # If the wbody parameter received is not a file 
+    # assume that wbody is a string and output it to a file.
+    if not os.path.exists(wbody) :                                      # Body file don't exist
+        if (not quiet) : write_err ("Mail body file is not found '%s'."  % wbody)
+        # Assume it's a string
+        if isinstance(wbody, str):                                      # If wbody is a string
+            wbody="%s/body.$$"  % (dir_tmp)                             # Temp file name for body
+            with open(wbody, "w", encoding="utf-8") as file:            # File to write email body
+                file.write(wbody)                                       # Write string to File.
 
-    # Add subject to mutt command
-    cmd_mutt="mutt -s '%s' " % wsub
-    if debug > 4 : write_log ("cmd_mutt with subject added  '%s'" % (cmd_mutt))
+    # For debugging print content of the body file, if debug level is greater than 4
+    if debug > 4 : 
+        write_log ("Body file content:")
+        with open(wbody, "r") as file:
+            print(file.read())
+
 
     # Validate if attachment exist and prepare for a repetive '-a' option.
     attachment = ""                                                     # -a with each attachment
-    if debug > 4 : write_log ("Attachment receive: %s" % wattach) # Show Attachment info rcv
+    if debug > 5 : write_log ("Attachment receive: %s" % wattach) # Show Attachment info rcv
     if wattach != "" :                                                  # If attachment not blank
         filenames = wattach.split(',')                                  # Split by , filename in array
         for filename in filenames :                                     # For each attachement
             if os.path.isfile(filename):                                # Check if attachement exist
                 attachment += " -a %s " % filename                      # Add -a attachment
-                if debug > 4 : write_log ("Attachement list : %s" % attachment)
+                if debug > 5 : write_log ("Attachement list : %s" % attachment)
             else:
                 write_err ("Attachment does not exist '%s'" % filename)
                 return 1 
     if debug > 4 : write_log ("Final Attachment spec' %s'." % attachment) 
 
-    # Add attachment to mutt command
-    cmd_mutt = cmd_mutt + attachment + " -- "                           # combine '-a' and '--' opt
-    if debug > 4 : write_log ("Final email separater %s" % cmd_mutt) 
+#            cat "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" $opt_a \-\- "$maddr"
 
-    # Add email address & Body of email 
-    cmd_mutt += "%s < %s" % (waddr,wbody)                               # Add email addr & < body
-    if debug > 4 : write_log ("Final mutt command : %s" % cmd_mutt)
+
 
     # Execute the mutt command
+    cmd_mutt="cat %s | mutt -s '%s' %s %s " % (wbody,wsub,attachment + " -- ",waddr)
+    if debug > 4 : write_log ("\n\nFinal email mutt command: \n %s" % cmd_mutt) 
     ccode, cstdout, cstderr = oscommand(cmd_mutt)                       # Go execute 'mutt' command
     if not ccode == 0 :
         write_err ("[ ERROR ] No.%s Trying to send email." % ccode)
-        write_err ("%s\n%s\n" % (cstdout,cstderr))
+        write_err ("%s\n%s\n" % (cstdout,cstderr)) 
         return(1) 
     
     return (0)
