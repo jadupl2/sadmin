@@ -134,7 +134,9 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 # --------------------------------------------------------------------------------------------------
 #                                   This Script environment variables
 # --------------------------------------------------------------------------------------------------
-export NTP_SERVER="68.69.221.61 162.159.200.1 205.206.70.2"             # Canada NTP Pool
+export NTP_SERVER="68.69.221.61 162.159.200.1 205.206.70.2"         # Canada NTP Pool
+export SADM_EMAIL_STARTUP="Y"                                       # Y=Email on Startup, N=No Email
+
 
 
 
@@ -152,7 +154,7 @@ poweron_mail()
     we="$SADM_MAIL_ADDR"                                                # Send email to SysAdmin
 
     # Create the Body of email in a text file 
-    echo -e "System '${SADM_HOSTNAME}' has just started on $(date)" > $wb
+    echo -e "Salutation,\nSystem '${SADM_HOSTNAME}' has just started on $(date)" > $wb
     echo -e "The program '${SADM_PN}' is reponsable for sending this email." >> $wb
     echo -e "\nLast 3 Reboot :\n$(last reboot | head -3)" >> $wb
     echo -e "\nLast 10 Users : \n$(last -10)" >> $wb

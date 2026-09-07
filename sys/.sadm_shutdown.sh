@@ -6,14 +6,14 @@
 #   Synopsis:   This script is run when the sadmin.service is shutdown when server goes down.
 #               Called by /etc/systemd/system/sadmin.service (systemd) or /etc/init.d/sadmin (SysV)
 # --------------------------------------------------------------------------------------------------
-# 2015_01_09 startup/shutdown v2.2  Log Enhancement
-# 2015_02_09 startup/shutdown v2.3  Restructure to use the SADM Library and Send email on execution.
-# 2015_04_09 startup/shutdown v2.4  Add sleep of 5 sec. at the end, to allow completion shutdown
-# 2015_04_09 startup/shutdown v2.5  Added code to run shutdown command based on Hostname
-# 2017_08_05 startup/shutdown V2.6  Send email only on Execution Error
-# 2018_01_31 startup/shutdown V2.7  Added execution of /etc/profile.d/sadmin.sh to have SADMIN Var. 
-# 2018_09_19 startup/shutdown V2.8  Added Alert Group Utilization
-# 2018_10_18 startup/shutdown v2.9  Remove execution of /etc/profile.d/sadmin.sh(Don't need anymore)
+# 2015_01_09 startup/shutdown v02.02.00 Log Enhancement
+# 2015_02_09 startup/shutdown v02.03.00 Restructure to use the SADM Library and Send email on execution.
+# 2015_04_09 startup/shutdown v02.04.00 Add sleep of 5 sec. at the end, to allow completion shutdown
+# 2015_04_09 startup/shutdown v02.05.00 Added code to run shutdown command based on Hostname
+# 2017_08_05 startup/shutdown V02.06.00 Send email only on Execution Error
+# 2018_01_31 startup/shutdown V02.07.00 Added execution of /etc/profile.d/sadmin.sh to have SADMIN Var. 
+# 2018_09_19 startup/shutdown V02.08.00 Added Alert Group Utilization
+# 2018_10_18 startup/shutdown v02.09.00 Remove execution of /etc/profile.d/sadmin.sh(Don't need anymore)
 # 2019_03_29 startup/shutdown v02.10.00 Get SADMIN Directory Location from /etc/environment
 # 2020_05_27 startup/shutdown v02.11.00 Force using bash instead of dash & problem setting SADMIN var.
 # 2020_11_04 startup/shutdown v02.12.00 Update SADMIN section & use env cmd to use proper bash shell.
@@ -27,7 +27,6 @@
 #@2026_07_10 startup/shutdown v02.17.03 Add more info in Email sent to SADMIN admin.
 #@2026_07_22 startup/shutdown v02.17.04 Reduce info in Email sent to SADMIN admin.
 #@2026_09_04 startup/shutdown v02.17.05 Small improvements and code revision.
-
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x
@@ -102,7 +101,15 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #export SADM_MAX_RCHLINE=35                                 # Nb of Lines to trim (0=NoTrim)
 # -------------------  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
 
+
+
+# Script Global Variables Definitions
+# --------------------------------------------------------------------------------------------------
 #
+export SADM_EMAIL_SHUTDOWN="Y"                              # Y=Send Email on Shutdown, N=No Email
+
+
+
 
 
 
@@ -118,9 +125,10 @@ shutdown_mail()
 
     # Create the Body of email in a text file 
     wb="$SADMIN/tmp/body$$$.txt"                                        # Email body txt file
-    echo -e "$(date)"  > $wb
+    echo -e "Salutation,\n$(date)"  > $wb
     echo -e "For your information, system '${SADM_HOSTNAME}' is going down." >> $wb
     echo -e "The program '${SADM_PN}' is reponsable for sending this email." >> $wb
+    echo -e "To stop receiving this email, change 'SADM_EMAIL_SHUTDOWN' to 'N' in '$SADM_PN'." >>$wb
     echo -e "\nUptime           : $(uptime)" >> $wb
     echo -e "\nLast 3 Reboot    :\n$(last reboot | head -3 | nl)" >> $wb
     echo -e "\nLast 5 Users     :\n$(last -5) | nl" >> $wb
@@ -131,7 +139,6 @@ shutdown_mail()
 
     # Make sure the end portion of email body is written to the file before sending email.
     sync; sync; sleep 5
-
     sadm_sendmail "$we" "$ws" "$wb" "$SADM_LOG,$SADM_ELOG"     
     RC=$?
     if [ $RC -eq 0 ] 

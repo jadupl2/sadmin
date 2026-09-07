@@ -2469,7 +2469,6 @@ write_alert_history() {
 # --------------------------------------------------------------------------------------------------
 main_process()
 {   
-    PROCESS_ERROR=0                                                     # Init. Error count to 0
     
     # Create empty global fetch report file (.rpt) in $SADMIN/www/dat/HOSTNAME/rpt/HOSTNAME_fetch.rpt
     if [ -f "$FETCH_RPT_GLOBAL" ] ;then rm -f "$FETCH_RPT_GLOBAL" ;fi   # rm global RPT file if exist
@@ -2492,6 +2491,7 @@ main_process()
     create_crontab_files_header                                         # Create crontab new headers
 
     # Go Process All Active systems.
+    PROCESS_ERROR=0                                                     # Init. Error count to 0
     process_servers                                                     # Process Active Linux
     PROCESS_ERROR=$?                                                    # Save Nb. Errors in process
 
