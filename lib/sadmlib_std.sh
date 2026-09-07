@@ -3128,6 +3128,8 @@ sadm_sendmail() {
     msubject="$2"                                                       # Save Alert Subject
     mbody="$3"                                                          # Save Alert Body Mess file
     if [ $# -eq 3 ] ; then mfile="" ; else mfile="$4" ; fi              # Comma separated FileName(s)
+
+    # Debug information if LIB_DEBUG is set to 5 or more
     if [ "$LIB_DEBUG" -gt 4 ] 
          then sadm_write_log "1- Email sent to : ${maddr}" 
               sadm_write_log "2- Email subject : ${msubject}" 
