@@ -135,8 +135,8 @@ function display_heading() {
     echo "\n        <th align='center' width=105>Start Date & Time</th>";
     echo "\n        <th align='center' width=105>End Date & Time</th>";
     echo "\n        <th align='center' width=50>Duration"; 
-    echo "\n        <th align='center' width=160 >Notification Group</th>";
-    echo "\n        <th align='center' width=90>When to notify</th>";
+    echo "\n        <th align='center' width=160 >Alert Group</th>";
+    echo "\n        <th align='center' width=90>When to alert</th>";
     echo "\n        <th align='center' width=90>Status</th>";
     echo "\n  </tr>";
     echo "\n</thead>\n";
@@ -147,8 +147,8 @@ function display_heading() {
     echo "\n        <th align='center' width=105>Start Date & Time</th>";
     echo "\n        <th align='center' width=105>End Date & Time</th>";
     echo "\n        <th align='center' width=50>Duration"; 
-    echo "\n        <th align='center' width=160 >Notification Group</th>";
-    echo "\n        <th align='center' width=90>When to notify</th>";
+    echo "\n        <th align='center' width=160 >Alert Group</th>";
+    echo "\n        <th align='center' width=90>When to alert</th>";
     echo "\n        <th align='center' width=90>Status</th>";
     echo "\n  </tr>";
     echo "\n</tfoot>\n\n";
@@ -230,12 +230,12 @@ function display_rch_file ($GET_HOSTNAME, $GET_RCHFILE, $SORTED_RCHFILE) {
 
 
 
-        # Show Notification Group with Tooltip
+        # Show Alert Group with Tooltip
         echo "\n<td width=180 align='center'>";
         list($calert, $alert_group_type, $stooltip) = get_alert_group_data ($rch_array[7]) ;
         echo "<span data-toggle='tooltip' title='" . $stooltip . "'>"; 
         if ($alert_group_type == "m" ) { 
-            echo "Type '$alert_group_type', email notification to '$calert'"; 
+            echo "Type '$alert_group_type', email alert to '$calert'"; 
         }else{
             echo $calert . "(" . $alert_group_type . ")";             
         }
@@ -245,23 +245,23 @@ function display_rch_file ($GET_HOSTNAME, $GET_RCHFILE, $SORTED_RCHFILE) {
         # Show Alert type
         switch ($rch_array[8]) {                                           
             case 0 :                                                # 0=Don't send any Alert
-                $alert_type_msg="No notification (code 0)" ;        # No Alert even if failed.
+                $alert_type_msg="No alert (code 0)" ;        # No Alert even if failed.
                 $etooltip="'SADM_ALERT' set to 0 in script " . $cname ;
                 break;
             case 1 :                                                # 1=Send Alert on Error
-                $alert_type_msg="Notify only on error (code 1)"; 
+                $alert_type_msg="alert only on error (code 1)"; 
                 $etooltip="'SADM_ALERT' set to 1 in script " .$cname; # Tooltips  
                 break;
             case 2 :                                                # 2=Send Alert on Success
-                $alert_type_msg="Notify only on success (code 2)"; 
+                $alert_type_msg="alert only on success (code 2)"; 
                 $etooltip="'SADM_ALERT' set to 2 in script " . $cname ;
                 break;
             case 3 :                                                # 3=Always Send Alert
-                $alert_type_msg="Always notify (code 3)";
+                $alert_type_msg="Always alert (code 3)";
                 $etooltip="'SADM_ALERT' set to 3 in script " . $cname ;
                 break;
             default:
-                $alert_type_msg="Invalid notification type (code $rch_array[8]).";  
+                $alert_type_msg="Invalid alert type (code $rch_array[8]).";  
                 $etooltip="SADM_ALERT is set to ($rch_array[8]) in script " . $cname ;
                 break;
         }    
