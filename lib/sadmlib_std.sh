@@ -285,6 +285,7 @@
 #@2026_07_27 lib V04.92.09 Fix error "SADM_ROOT_ONLY" and "SADM_SERVER_ONLY" command not found.
 #@2026_08_23 lib V04.92.10 Add variable 'SADM_HOST_DEV' not to delete $SADMIN/www on that system.
 #@2026_09_04 lib V04.92.11 Add variable 'SADM_CFG_VERSION' to track the configuration file version.
+#@2026_09_06 lib V04.92.12 Send email function revision to fix bug.
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x
@@ -292,7 +293,7 @@ trap 'exit 0' 2
 
 # V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
-export SADM_LIB_VER="04.92.11"                                          # This Library Version
+export SADM_LIB_VER="04.92.12"                                          # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
