@@ -217,7 +217,6 @@ export BOOT_DATE=""                                                     # Server
 export ERROR_COUNT=0                                                    # Total Error Count
 export WARNING_COUNT=0                                                  # Total Warning count
 export SADM_TEN_DASH=$(printf %10s |tr " " "-")                         # 10 dashes line
-export BODY_FILE=$(mktemp "$SADMIN/tmp/${SADM_INST}4_XXX")              # To Store email body file
 #
 # Variables used to insert in /etc/cron.d/sadm* crontab files.
 export OS_SCRIPT="sadm_osupdate_starter.sh"                             # OSUpdate Script in crontab
@@ -1761,7 +1760,8 @@ check_all_rch()
 
     # Loop Through Each Line In The Created File.
     alert_counter=0                                                     # Init alert counter
-    cat $SADM_TMP_FILE2 | { while read line                             # Read Each Line of file
+#    cat $SADM_TMP_FILE2 | { while read line                             # Read Each Line of file
+    while read line                             # Read Each Line of file
         do                
         NBFIELD=$(echo $line | awk '{print NF}')                        # How many fields on line ?
 
@@ -1866,7 +1866,7 @@ check_all_rch()
                         ;;
                 esac                                                    # End of case
         fi
-        done 
+        done < $SADM_TMP_FILE2
 
         # Print Alert submitted Summary
         sadm_write_log " "                                               # Separation Blank Line
@@ -1876,7 +1876,7 @@ check_all_rch()
         sadm_write_log "   - Alert older than 24 Hrs     : $total_oldies"
         sadm_write_log "   - Alert already sent          : $total_duplicate"
         sadm_write_log "${SADM_TEN_DASH}"                                # Print 10 Dash lineHistory
-    }                                                              
+                                                         
 }
 
 
@@ -2237,7 +2237,7 @@ sadm_send_alert()
              if [[ "$atype" == "E" ]] ; then mheader="SADMIN System Monitor ERROR on '$aserver'."   ;fi 
              if [[ "$atype" == "W" ]] ; then mheader="SADMIN System Monitor WARNING on '$aserver'." ;fi 
              if [[ "$atype" == "I" ]] ; then mheader="SADMIN System Monitor INFO on '$aserver'."    ;fi  
-        else mheader="SADMIN Script Alert on '$aserver'."               # Script Header Alert Mess.
+        else mheader=""                                                 # Script Header Alert Mess.
         fi                                                               
     
 
@@ -2262,7 +2262,7 @@ sadm_send_alert()
     # atype       = [S]cript [E]rr [W]arn [I]nfo  -  
     # agroup_type = [M]ail,[S]lack,[T]exto,[C]ellular,[N]otify
     if [[ "$atype" == "S" ]] && [[ "$agroup_type" != "T" ]]             # If Script Alert, Not Texto
-       then SNAME=$(echo ${ascript} |awk '{ print $1 }')                # Del Leading/Trailing space
+       then SNAME=$(echo "$ascript" |awk '{ print $1 }')                # Del Leading/Trailing space
             
             # Link to view the Log
             LOGFILE="${aserver}_${SNAME}.log"                           # Log Script Name
@@ -2276,9 +2276,9 @@ sadm_send_alert()
 
             URL_VIEW_FILE='/view/log/sadm_view_file.php'                # Page to View File Content 
             if [[ -s "$ELOGNAME" ]]                                     # ErrorLog exist & not empty
-                then body+=$(printf "${body}\nView script full log  :\n${LOGURL}") 
-                     body+=$(printf "${body}\nView script error log :\n${ELOGURL}") 
-                else body+=$(printf "${body}\nView script full log  :\n${LOGURL}") 
+                then body+=$(printf "${body}\nView script full log  :\n$LOGURL") 
+                     body+=$(printf "${body}\nView script error log :\n$ELOGURL") 
+                else body+=$(printf "${body}\nView script full log  :\n$LOGURL") 
     fi
 
     sadm_write_log "Alert body file content :\n$(cat $body)" 
@@ -2300,15 +2300,16 @@ sadm_send_alert()
              aemail=$(echo $aemail | awk '{$1=$1;print}')               # Del Leading/Trailing Space
              
              # Create Body file and send email.
+             BODY_FILE=$(mktemp "$SADMIN/tmp/${SADM_INST}4_XXX")        # To Store email body file
              if [[ -e "$BODY_FILE" ]]  ; then rm -f "$BODY_FILE" ; fi   # Will Start with a new file
-             #if [[ "$mheader" != "" ]] ; then echo -e "\n$mheader"  >> $BODY_FILE ; fi 
+             if [[ "$mheader" != "" ]] ; then echo -e "\n$mheader" >>$BODY_FILE ; fi 
              #echo -e "$amessage" >> $BODY_FILE
-             echo -e "$body"     >> $BODY_FILE
-             #if [[ "$mfooter" != "" ]] ; then echo -e "\n$mfooter"  >> $BODY_FILE ; fi 
-             if [ "$SADM_DEBUG" -gt 4 ] ; then sadm_write_log "Email alert will be sent to $aemail" ;fi 
+             echo -e "\n$body"     >> $BODY_FILE
+             if [[ "$mfooter" != "" ]] ; then echo -e "\n$mfooter"  >> $BODY_FILE ; fi 
              sadm_sendmail "$aemail" "$ws" "$BODY_FILE" "$aattach"         # Email,subject,bodyFile,att
              if [[ $? -ne 0 ]]                                             # Error sending email 
                  then sadm_write_err "[ Error ] Sending email to $aemail"  # Advise Error sending Email
+                 else sadm_write_log "Email alert be sent to '$aemail'." ;fi 
              fi
     fi 
 
@@ -2377,7 +2378,7 @@ sadm_send_alert()
                 if [ "$agtype" != "C" ]                                 # Member should be type [C]
                     then sadm_write_log "Member of '$agroup' alert group '$i' is not a type 'C' alert."
                          sadm_write_log "Alert not send to '$i', proceeding with next member."
-                         total_error=`expr $total_error + 1`
+                         ((total_error++))                              # Increase ErrorCounter                      
                          continue
                 fi
                 T_URL=$SADM_TEXTBELT_URL                                # Text Belt URL
@@ -2386,11 +2387,11 @@ sadm_send_alert()
                 echo "$reponse" | grep -i "\"success\":true," >/dev/null 2>&1   # Success Response ?
                 RC=$?                                                   # Save Error Number
                 if [ $RC -eq 0 ]                                        # If Error Sending Email
-                    then wstatus="SMS message sent to group $agroup '$acell'" 
+                    then wstatus="SMS message sent to group $agroup '$acell'." 
                     else wstatus="Error ($RC) sending SMS message to group $agroup '$acell'"
-                         sadm_write_log "${wstatus}"                    # Advise USer
-                         sadm_write_log "${reponse}"                    # Error msg from Textbelt
-                         total_error=`expr $total_error + 1`
+                         sadm_write_log "$wstatus"                      # Advise USer
+                         sadm_write_log "$reponse"                      # Error msg from Textbelt
+                         ((total_error++))                              # Increase ErrorCounter                      
                          RC=1                                           # When Error Return Code 1
                 fi
                 done
