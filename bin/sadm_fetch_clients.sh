@@ -118,6 +118,7 @@
 #@2026_06_24 server v3.64.00 Was still creating entry in crontab, when 'VM export schedule' was 'no'.
 #@2026_06_24 server v3.65.00 Fix alert handling bug and done some performance improvements.
 #@2026_09_04 server v3.65.01 Email Alert Handling changes.
+#@2026_09_10 server v3.65.02 Fix link problem to log and rch in email alert.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT the ^C
@@ -153,7 +154,7 @@ export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access S
 export SADM_PN=$(basename "$0")                            # Script name(with extension)
 export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
 
-export SADM_VER='3.65.01'                                  # Script version number
+export SADM_VER='3.65.02'                                  # Script version number
 export SADM_DESC="Collect scripts results & SysMon status from all systems and send alert if needed." 
 export SADM_ROOT_ONLY="Y"                                  # Pgm. run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Pgm. run only on SADMIN server? [Y]/[N]
@@ -1407,53 +1408,46 @@ process_servers()
                 sadm_write_err "[ ERROR ] Host Connectivity RC unknown '$RC'."
                 ;;
         esac 
-        #if [ "$connectivity_rc" -eq 1 ] ; then continue ; fi            # System Down, return back
-        #if [ "$connectivity_rc" -eq 2 ] ; then continue ; fi            # Sporadic Sys,return back
+        #if [[ "$connectivity_rc" -eq 1 ]] ; then continue ; fi         # System Down, return back
+        #if [[ "$connectivity_rc" -eq 2 ]] ; then continue ; fi         # Sporadic Sys,return back
         
 
-        # O/S UPDATE
-        #Generate Crontab entry for O/S Update, if autoUpdate is ON, 
-        if [ "$db_updauto" -eq 1 ] && [ "$SYSTEM_ONLINE" = "Y" ]        # If O/S Update Requested
+        # Generate Crontab entry for O/S Update, if autoUpdate is ON, 
+        if [[ "$db_updauto" -eq 1 ]] && [[ "$SYSTEM_ONLINE" = "Y" ]]    # If O/S Update Requested
             then update_osupdate_crontab "$server_name" "${server_dir}/bin/$OS_SCRIPT" "$db_updmin" "$db_updhrs" "$db_updmth" "$db_upddom" "$db_upddow" "$ssh_port"
         fi
 
-        # DAILY BACKUP 
-        # Generate Crontab Entry for this server in Backup crontab work file, if online
-        if [ "$backup_auto" -eq 1 ] && [ "$SYSTEM_ONLINE" = "Y" ]       # If Backup set to Yes 
+        # Generate Crontab Entry for Backup crontab work file, if online
+        if [[ "$backup_auto" -eq 1 ]] && [[ "$SYSTEM_ONLINE" = "Y" ]]       # If Backup set to Yes 
             then update_backup_crontab "$server_name" "${server_dir}/bin/$BA_SCRIPT" "$backup_min" "$backup_hrs" "$backup_mth" "$backup_dom" "$backup_dow" "$ssh_port" "$compress"
         fi
 
-        # REAR BACKUP 
-        # Generate Crontab Entry for this server in ReaR crontab work file, if Shedule is active
-        if [ $rear_auto -eq 1 ] && [ "$SYSTEM_ONLINE" = "Y" ]           # If Rear Backup set to Yes 
+        # Generate Crontab Entry for ReaR backup crontab work file, if Shedule is active
+        if [[ $rear_auto -eq 1 ]] && [[ "$SYSTEM_ONLINE" = "Y" ]]           # If Rear Backup set to Yes 
             then update_rear_crontab "$server_name" "${server_dir}/bin/$REAR_SCRIPT" "$rear_min" "$rear_hrs" "$rear_mth" "$rear_dom" "$rear_dow" "$ssh_port"
         fi
                 
-        # EXPORT OF VIRTUAL BOX VM
         # Generate Crontab Entry for this VirtualBox VM export, if it's a VM & schedule is active.
         # System Don't need to be UP to do an export of the VM, will stay down after export.
         # The SADMIN dir. on VM Host = $(grep anemone ./vm_list.txt |tail -1 |awk -F, '{print $3}' 
-        if [ "$server_vm" -eq 1 ] && [ "$export_sched" -eq 1 ]          # 1-Virtual System, 0=Hardw
+        if [[ "$server_vm" -eq 1 ]] && [[ "$export_sched" -eq 1 ]]          # 1-Virtual System, 0=Hardw
             then find $SADM_WWW_DAT_DIR -name "vm_list.txt" -exec cat {} \; > $SADM_TMP_FILE2
-                 #sadm_write_log "VMHOST_SADMIN_DIR=grep '$export_host' $SADM_TMP_FILE2 |tail -1 |awk -F, '{print $3}"
                  VMHOST_SADMIN_DIR=$(grep "$export_host" $SADM_TMP_FILE2 |tail -1 |awk -F, '{print $3}')
-                 #grep -q "$server_name" $SADM_TMP_FILE2  
-                 if [ $? -ne 0 ] 
+                 if [[ $? -ne 0 ]] 
                     then sadm_write_err "[ WARNING ] System '$server_name' is registered as a VM in database."
                          sadm_write_err "[ WARNING ] But it's not in any 'vm_list' files under $SADM_WWW_DAT_DIR ?"
                          sadm_write_err "[ WARNING ] No export of this VM will be include in crontab."
                          ((WARNING_COUNT++))
                  fi 
-#                 update_vmexport_crontab "$server_name" "${server_dir}/bin/$EXPORT_SCRIPT" "$export_min" "$export_hrs" "$export_mth" "$export_dom" "$export_dow" "$ssh_port" "$export_host"
                  update_vmexport_crontab "$server_name" "${VMHOST_SADMIN_DIR}/bin/$EXPORT_SCRIPT" "$export_min" "$export_hrs" "$export_mth" "$export_dom" "$export_dow" "$ssh_port" "$export_host"
         fi
                 
         # Set remote $SADMIN/cfg Dir. and local www/dat/${server_name}/cfg directory.
-        LDIR="${SADM_WWW_DAT_DIR}/${server_name}/cfg"                   # Local Receiving Dir.
-        RDIR="${server_dir}/cfg"                                        # Remote cfg Directory
+        LDIR="${SADM_WWW_DAT_DIR}/${server_name}/cfg"                   # Local cfg in www Dir.
+        RDIR="${server_dir}/cfg"                                        # On Remote cfg Directory
 
-        # IF SYSTEM IS NOT ONLINE then no need to perform the rsync.
-        if [ "$SYSTEM_ONLINE" = "N" ] ; then continue ; fi              # No rsync when offline
+        # If system is not online then no need to perform the rsync, go to proceed next system.
+        if [[ "$SYSTEM_ONLINE" != "Y" ]] ; then continue ; fi           # No rsync when offline
 
 
         # If client backup list was modified on master (if backup_list.tmp exist) then update client.
@@ -1760,8 +1754,7 @@ check_all_rch()
 
     # Loop Through Each Line In The Created File.
     alert_counter=0                                                     # Init alert counter
-#    cat $SADM_TMP_FILE2 | { while read line                             # Read Each Line of file
-    while read line                             # Read Each Line of file
+    while read line                                                     # Read Each Line of file
         do                
         NBFIELD=$(echo $line | awk '{print NF}')                        # How many fields on line ?
 
@@ -1771,6 +1764,7 @@ check_all_rch()
            then sadm_write_err " "
                 sadm_write_err "Line below have ${NBFIELD} fields, but it should have ${RCH_FIELD}."
                 sadm_write_err "This is the line skipped: ${line}"
+                sadm_write_err " "
                 continue 
         fi
 
@@ -1793,8 +1787,8 @@ check_all_rch()
         ecode=`echo $line   | awk '{ print $10 }'`                      # Return Code (0,1)
         etype="S"                                                       # Event Type = S = Script 
 
-        # Prepare message to user, per mail 'subject' and 'body'.
-        if [ "$ecode" = "1" ]                                           # Script Ended with Error
+        # If script terminated with an error, prepare message to user, per mail 'subject' and 'body'
+        if [[ "$ecode" == "1" ]]                                        # Script Ended with Error
            then esub="Error with ${escript} on $ehost."                 # Alert Subject
                 emess="Script '$escript' failed on ${ehost}."           # Alert Message
            else esub="Success of '$escript' on '$ehost'."               # Script Success Alert Subj.
@@ -1805,9 +1799,7 @@ check_all_rch()
         eattach=""                                                      # Clear Attachment Name
         elogfile="${ehost}_${escript}.log"                              # Build Log File Name
         elogname="${SADM_WWW_DAT_DIR}/${ehost}/log/${elogfile}"         # Build Log Full Path File
-        if [ -f "$elogname" ]                                           # If Log file exist
-           then eattach="$elogname"                                     # Set Attachment to LogName
-        fi
+        if [ -f "$elogname" ] ; then eattach="$elogname" ; fi           # If Log file exist
 
         # Prepare the Error log to be an attachment (if present and not empty).
         errlogfile="${ehost}_${escript}_e.log"                          # Build Err Log File Name
@@ -1837,15 +1829,16 @@ check_all_rch()
            [ "$egtype" = "2" ] && [ "$ecode" = "0" ] || [ "$egtype" = "3" ]  
            then ((total_alert++))                                       # Incr. Alert counter
                 if [ "$SADM_DEBUG" -gt 2 ]                              # Under Debug Show Parameter
-                   then dmess="'$etype' '$start_time' '$end_time' '$ehost' '$egname'"    # Build Mess to see Param.
+                   then dmess="'$etype' '$start_time' '$end_time' '$ehost' '$egname'" # Build Mess
                         dmess="$dmess '$esub' '$emess' '$eattach'"      # Build Mess to see Param.
                         sadm_write_log "sadm_send_alert $dmess RC=$RC"  # Show User Paramaters sent
-                        emess=$(echo -e "${emess}\nScript start time  : ${start_time}\n")
-                        emess=$(echo -e "${emess}\nScript end time    : ${end_time}\n")
-                        emess=$(echo -e "${emess}\nScript elapse time : ${elapse}\n")
+                        xemess=$(echo -e "${xemess}\nScript start time  : ${start_time}\n")
+                        xemess=$(echo -e "${xemess}\nScript end time    : ${end_time}\n")
+                        xemess=$(echo -e "${xemess}\nScript elapse time : ${elapse}\n")
                         sadm_write_log "Email Message is:\n${emess}"
                 fi
 
+                sadm_write_log "sadm_send_alert $etype $end_time $ehost $escript $egname $esub $emess $eattach"
                 sadm_send_alert "$etype" "$end_time" "$ehost" "$escript" "$egname" "$esub" "$emess" "$eattach"
                 RC=$?
                 ((alert_counter++))                                     # Increase Submit AlertCount
@@ -2173,7 +2166,7 @@ sadm_send_alert()
 
 
     # Set the string use to search history, to determinate if alert is already in Alert History File
-    if [ "$atype" != "S" ]                                            # Not Script Alert (Sysmon)
+    if [ "$atype" != "S" ]                                              # Not Script Alert (Sysmon)
        then asearch=";$adate;$atype;$aserver;$agroup;$asubject;"        # Set Search Str for Sysmon
        else asearch=";$ahour;$adate;$atype;$aserver;$agroup;$asubject;" # Set Search Str for Script
     fi
@@ -2231,38 +2224,40 @@ sadm_send_alert()
     if [[ "$SADM_DEBUG" -gt 4 ]] ; then sadm_write_log "Alert Subject is : '$ws'." ; fi
 
 
-    # Alert Message Header 
-    if [[ "$atype" != "S" ]]                                            # Not a script, sysmon alert
-        then mheader="SADMIN System Monitor on '$aserver'." 
+    # Alert Message Header (Default is "") 
+    if [[ "$atype" == "S" ]]                                            # Not a script, sysmon alert
+        then mheader=""                                                 # Script Header Alert Mess.
+        else mheader="SADMIN System Monitor on '$aserver'."             # Default Header Sysmon Alert
              if [[ "$atype" == "E" ]] ; then mheader="SADMIN System Monitor ERROR on '$aserver'."   ;fi 
              if [[ "$atype" == "W" ]] ; then mheader="SADMIN System Monitor WARNING on '$aserver'." ;fi 
              if [[ "$atype" == "I" ]] ; then mheader="SADMIN System Monitor INFO on '$aserver'."    ;fi  
-        else mheader=""                                                 # Script Header Alert Mess.
-        fi                                                               
-    
+        fi  
 
-    # Alert Message Footer 
+
+    # Alert Message Footer (Default is "")
     # If the alert is a repeat, show the user how many time the alert was sent and 
-    # how many time it will be sent , else footyer is blank. 
-    # (MaxRepeat=0 means no repeat, MaxRepeat=1 means only 1 alert sent)
+    # How many time it will be sent , else footer is blank. 
+    # (MaxRepeat=0 means, no repeat only 1 alert sent)
     if [[ $alert_sent_counter -gt 1 ]] && [[ $MaxRepeat -gt 1 ]]        # Not 1st Alarm & Will repeat
-       then mfooter=`printf "%s: %02d of %02d" "Alert counter" "$alert_sent_counter" "$MaxRepeat"` 
-       else mfooter=""
+        then mfooter=`printf "%s: %02d of %02d" "Alert counter" "$alert_sent_counter" "$MaxRepeat"` 
+        else mfooter=""
     fi 
     
 
+    # OK let's build the body of the message, we will use it for email and slack.
     # Begin creating the Body of the message (Header, Body and footer).
     body=""
     if [[ "$mheader"  != "" ]] ; then body+=$(printf "%s\n" "$mheader")  ;fi # Construct Final Body
     if [[ "$amessage" != "" ]] ; then body+=$(printf "%s\n" "$amessage") ;fi # Construct Final Body
     if [[ "$mfooter"  != "" ]] ; then body+=$(printf "%s\n" "$mfooter")  ;fi # Construct Final Body
 
-
+    echo -e "1Body is : \n$body"
     # Format for Script email - Add link to log and error log in the body of email 
     # atype       = [S]cript [E]rr [W]arn [I]nfo  -  
     # agroup_type = [M]ail,[S]lack,[T]exto,[C]ellular,[N]otify
     if [[ "$atype" == "S" ]] && [[ "$agroup_type" != "T" ]]             # If Script Alert, Not Texto
        then SNAME=$(echo "$ascript" |awk '{ print $1 }')                # Del Leading/Trailing space
+            URL_VIEW_FILE='/view/log/sadm_view_file.php'                # Page to View File Content 
             
             # Link to view the Log
             LOGFILE="${aserver}_${SNAME}.log"                           # Log Script Name
@@ -2274,13 +2269,12 @@ sadm_send_alert()
             ELOGNAME="${SADM_WWW_DAT_DIR}/${aserver}/log/${ELOGFILE}"   # Full Path to Script eLog
             ELOGURL="https://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${ELOGNAME}"            
 
-            URL_VIEW_FILE='/view/log/sadm_view_file.php'                # Page to View File Content 
             if [[ -s "$ELOGNAME" ]]                                     # ErrorLog exist & not empty
                 then body+=$(printf "${body}\nView script full log  :\n$LOGURL") 
                      body+=$(printf "${body}\nView script error log :\n$ELOGURL") 
                 else body+=$(printf "${body}\nView script full log  :\n$LOGURL") 
     fi
-
+  echo -e "2Body is : \n$body"
     sadm_write_log "Alert body file content :\n$(cat $body)" 
     if [ "$SADM_DEBUG" -gt 4 ] ; then sadm_write_log "Alert body file content :\n$(cat $body)" ; fi
 
@@ -2303,7 +2297,7 @@ sadm_send_alert()
              BODY_FILE=$(mktemp "$SADMIN/tmp/${SADM_INST}4_XXX")        # To Store email body file
              if [[ -e "$BODY_FILE" ]]  ; then rm -f "$BODY_FILE" ; fi   # Will Start with a new file
              if [[ "$mheader" != "" ]] ; then echo -e "\n$mheader" >>$BODY_FILE ; fi 
-             #echo -e "$amessage" >> $BODY_FILE
+  echo -e "3Body is : \n$body\nBODY_FILE is : $BODY_FILE"
              echo -e "\n$body"     >> $BODY_FILE
              if [[ "$mfooter" != "" ]] ; then echo -e "\n$mfooter"  >> $BODY_FILE ; fi 
              sadm_sendmail "$aemail" "$ws" "$BODY_FILE" "$aattach"         # Email,subject,bodyFile,att
@@ -2471,15 +2465,15 @@ write_alert_history() {
 main_process()
 {   
     
-    # Create empty global fetch report file (.rpt) in $SADMIN/www/dat/HOSTNAME/rpt/HOSTNAME_fetch.rpt
-    if [ -f "$FETCH_RPT_GLOBAL" ] ;then rm -f "$FETCH_RPT_GLOBAL" ;fi   # rm global RPT file if exist
+    # Create empty global fetch report file (.rpt) $SADMIN/www/dat/HOSTNAME/rpt/HOSTNAME_fetch.rpt
+    if [[ -f "$FETCH_RPT_GLOBAL" ]] ;then rm -f "$FETCH_RPT_GLOBAL" ;fi # rm global RPT file if exist
     touch "$FETCH_RPT_GLOBAL"                                           # Create global RPT file
     chown "$SADM_WWW_USER:$SADM_GROUP"  "$FETCH_RPT_GLOBAL"             # Give good owner ship
     chmod 664 "$FETCH_RPT_GLOBAL"                                       # Give good permission
 
 
-    # Create starting empty local rpt file $SADMIN/dat/rpt/HOSTNAME_fetch.rpt
-    if [ -f "$FETCH_RPT_LOCAL" ] ; then rm -f "$FETCH_RPT_LOCAL" ; fi   # rm local RPT file if exist
+    # Create empty local rpt file $SADMIN/dat/rpt/HOSTNAME_fetch.rpt
+    if [[ -f "$FETCH_RPT_LOCAL" ]] ; then rm -f "$FETCH_RPT_LOCAL" ; fi # rm local RPT file if exist
     touch "$FETCH_RPT_LOCAL"                                            # Create EMPTY local RPTfile
     chown "$SADM_USER:$SADM_GROUP"  "$FETCH_RPT_LOCAL"                  # Give good owner ship
     chmod 664 "$FETCH_RPT_LOCAL"                                        # Give good permission
@@ -2492,7 +2486,6 @@ main_process()
     create_crontab_files_header                                         # Create crontab new headers
 
     # Go Process All Active systems.
-    PROCESS_ERROR=0                                                     # Init. Error count to 0
     process_servers                                                     # Process Active Linux
     PROCESS_ERROR=$?                                                    # Save Nb. Errors in process
 
