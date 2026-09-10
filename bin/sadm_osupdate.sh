@@ -65,6 +65,7 @@
 #@2025_07_26 osupdate v3.46 Add 'dnf autoremove -y' at the end of a Redhat family system.
 #@2026_06_20 osupdate v3.47.01 Added chmod 664 and chown owner:groip to sysinfo.txt file.
 #@2026_09_04 osupdate v3.47.02 Initial attempt to update Flatpak, if SADM_OSUPDATE_FLATPAK=Y in sadmin.cfg.
+#@2026_09_10 osupdate v3.47.03 Flatpak update is now working, but it is not yet fully tested.
 # --------------------------------------------------------------------------------------------------
 #set -x
 # dnf clean expire-cache && dnf makecache # Refresh cache in dnf5
@@ -92,7 +93,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.47.02'                                  # Your Current Script Version
+export SADM_VER='3.47.03'                                  # Your Current Script Version
 export SADM_DESC="Script is used to perform an O/S update on the system"
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -399,7 +400,7 @@ update_flatpak()
     FLATPAK_PATH=$(sadm_get_command_path "flatpak" >/dev/null)          # Get full path of flatpak
     if [ $? -ne 0 ]                                                     # If not found
        then sadm_write_log "[ OK ] Flatpak not installed on the system."
-            return 1
+            return 0
        else sadm_write_log "[ OK ] Flatpak is installed on the system."
     fi 
     
@@ -544,7 +545,6 @@ main_process()
              if [[ $? -ne 0 ]] 
                 then sadm_write_err "[ ERROR ] Error updating Flatpak packages."
                      ((SADM_EXIT_CODE++))                                # Incr exit code 
-                else sadm_write_log "[ OK ] Flatpak packages updated successfully."
              fi
     fi
 
