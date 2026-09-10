@@ -1405,10 +1405,10 @@ sadm_convert_sec2hms()
     fi
     #sadm_write_log "$HOURS Hours & $MINUTES minutes & $SECONDS seconds, remaining seconds: $remaining_sec"
 
-    if [ "$HOURS"   -ne 0 ] ; then hrs=$(printf "%-d hrs " $HOURS)   ;else hrs="" ; fi 
-    if [ "$MINUTES" -ne 0 ] ; then min=$(printf "%-d min " $MINUTES) ;else min="" ; fi
-    if  [ "$HOURS"  -eq 0 ] && [ "$MINUTES" -eq 0 ] && [ "$SECONDS" -eq 0 ] ; then SECONDS=1 ; fi
-    if [ "$SECONDS" -ne 0 ] ; then sec=$(printf "%-d sec " $SECONDS) ;else sec="" ; fi
+    if [[ "$HOURS"   -ne 0 ]] ; then hrs=$(printf "%-d hrs " $HOURS)   ;else hrs="" ; fi 
+    if [[ "$MINUTES" -ne 0 ]] ; then min=$(printf "%-d min " $MINUTES) ;else min="" ; fi
+    if [[ "$HOURS"   -eq 0 ]] && [[ "$MINUTES" -eq 0 ]] && [[ "$SECONDS" -eq 0 ]] ; then SECONDS=1 ; fi
+    if [[ "$SECONDS" -ne 0 ]] ; then sec=$(printf "%-d sec " $SECONDS) ;else sec="" ; fi
     echo "${hrs}${min}${sec}"
 }
 
@@ -2982,7 +2982,7 @@ sadm_stop() {
     if [[ -z "$SADM_LOG_FOOTER" ]] ; then  "$SADM_LOG_FOOTER" = "Y" ;fi # Then default incl. footer
 
     # If user want to produce a log.
-    if [[ "$SADM_LOG_FOOTER" = "Y" ]]                                     # User Want the Log Footer
+    if [[ "$SADM_LOG_FOOTER" = "Y" ]] || [[ -z "$SADM_LOG_FOOTER" ]]    # User Want the Log Footer
         then GRP_TYPE=$(grep -i "^$SADM_ALERT_GROUP " $SADM_ALERT_FILE |awk '{print$2}' |tr -d ' ')
              GRP_NAME=$(grep -i "^$SADM_ALERT_GROUP " $SADM_ALERT_FILE |awk '{print$3}' |tr -d ' ')
              ORG_NAME=$GRP_NAME                                         # Save Original Group Name
@@ -3047,10 +3047,10 @@ sadm_stop() {
 
     
     # Make sure the log file is writable and readable by the SADMIN user and group (Ignore error).
-    chmod 664 "$SADM_LOG"                 >/dev/null 2>&1          # R/W Owner/Group R by World
-    chgrp "$SADM_GROUP" "$SADM_LOG"       >/dev/null 2>&1          # Change Log Group to SADMIN Group
-    chmod 664 "$SADM_RCH_FILE"            >/dev/null 2>&1          # R/W Owner/Group R by World
-    chgrp "$SADM_GROUP" "$SADM_RCH_FILE"  >/dev/null 2>&1          # RCH File Group to SADMIN Group
+    chmod 664 "$SADM_LOG"                 >/dev/null 2>&1               # Change Log Permissions 
+    chgrp "$SADM_GROUP" "$SADM_LOG"       >/dev/null 2>&1               # Change Log to SADMIN Group
+    chmod 664 "$SADM_RCH_FILE"            >/dev/null 2>&1               # RCH file permissions
+    chgrp "$SADM_GROUP" "$SADM_RCH_FILE"  >/dev/null 2>&1               # RCH File to SADMIN Group
 
 
     # Normally we Delete the PID File when exiting the script.
@@ -3072,7 +3072,7 @@ sadm_stop() {
 
 
     # If script is running on the SADMIN server, rsync log and rch immediatly to global web dir.
-    if [ "$SADM_HOST_TYPE" = "S" ] && [ $(id -u) -eq 0 ]                # Only run on SADMIN server
+    if [[ "$SADM_HOST_TYPE" = "S" ]] && [[ $(id -u) -eq 0 ]]            # Only run on SADMIN server
        then 
             # Rsync Local 'log' directory ($SADMIN/log) to $SADMIN/www/dat/$SADM_HOSTNAME/log.
             WLOGDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/log"          # Dest. Main log Directory
@@ -3080,7 +3080,7 @@ sadm_stop() {
             CMD="rsync -ar --delete ${SADM_LOG_DIR}/ ${WLOGDIR}/" 
             eval "$CMD" >>$SADM_LOG 2>&1
             if [ $? -ne 0 ] ; then sadm_write_err "[ ERROR ] Doing : $CMD" ; fi
-            if [ $(id -u) -eq 0 ] ; then chown -R $SADM_WWW_USER:$SADM_GROUP "$WLOGDIR"  ;fi 
+            if [[ $(id -u) -eq 0 ]] ; then chown -R $SADM_WWW_USER:$SADM_GROUP "$WLOGDIR"  ;fi 
 
             # Rsync system Local 'rch' directory to ($SADMIN/www/dat/$SADM_HOSTNAME)/rch)
             WRCHDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"          # Host Main RCH Directory
@@ -3088,7 +3088,7 @@ sadm_stop() {
             CMD="rsync -ar --delete  ${SADM_RCH_DIR}/ ${WRCHDIR}/" 
             eval "$CMD" >>$SADM_LOG 2>&1
             if [ $? -ne 0 ] ; then sadm_write_err "[ ERROR ] Doing : $CMD" ; fi
-            if [ $(id -u) -eq 0 ] ; then chown -R $SADM_WWW_USER:$SADM_GROUP "$WRCHDIR"  ;fi 
+            if [[ $(id -u) -eq 0 ]] ; then chown -R $SADM_WWW_USER:$SADM_GROUP "$WRCHDIR"  ;fi 
     fi
     return $SADM_EXIT_CODE
 }
