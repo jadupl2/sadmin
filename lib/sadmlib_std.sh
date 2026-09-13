@@ -286,6 +286,7 @@
 #@2026_08_23 lib V04.92.10 Add variable 'SADM_HOST_DEV' not to delete $SADMIN/www on that system.
 #@2026_09_04 lib V04.92.11 Add variable 'SADM_CFG_VERSION' to track the configuration file version.
 #@2026_09_06 lib V04.92.12 Send email function revision to fix bug.
+#@2026_09_13 lib V04.92.13 New array 'SADM_OS_SUPPORTED','SADM_REDHAT_FAMILY','SADM_DEBIAN_FAMILY'
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x
@@ -293,7 +294,7 @@ trap 'exit 0' 2
 
 # V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
-export SADM_LIB_VER="04.92.12"                                          # This Library Version
+export SADM_LIB_VER="04.92.13"                                          # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -547,24 +548,30 @@ export SADM_VM_EXPORT_BATCH_DAY2RUN="2,7"                   # 0=AnyDay,1=Su,2=Mo
 export SADM_VM_EXPORT_BATCH_MTH2RUN="0"                     # 0=AnyMonth or [1,2,,,12] Month to run
 export SADM_VM_EXPORT_BATCH_DATE2RUN="0"                    # 0=AnyDate, Date to run [1,2...27,28]
 
+
 # Array of O/S Supported & Package Family - ${SADM_OS_SUPPORTED[2]} = "FEDORA" 
 export SADM_OS_SUPPORTED=("REDHAT" "CENTOS" "FEDORA" "ALMA" "ROCKY" "DEBIAN" "RASPBIAN" "UBUNTU" "MINT")
-#echo -e "\nSADM_OS_SUPPORTED[5,6] = ${SADM_OS_SUPPORTED[5]} ${SADM_OS_SUPPORTED[6]}\n"
+export SADM_REDHAT_FAMILY=("REDHAT" "CENTOS" "FEDORA" "ALMA" "ROCKY")
+export SADM_DEBIAN_FAMILY=("DEBIAN" "RASPBIAN" "UBUNTU" "MINT")
 
-# This host is use for my development will treated as a SADMIN server
-# Don'delete the $SADMIN/www (Even if $SADM_HOST_TYPE="C")
+
+# This host is use for my development and is treated as a SADMIN server
+# This is to allow me to test the SADMIN web site on my development system.
+# The $SADMIN/www directories will not be deleted (Even if $SADM_HOST_TYPE="C") on this hostname. 
 export SADM_DEV_HOST="bilbo"                                # Development system host name
-
+ 
 
 # OS Release File
 export OS_RELFILE="/etc/os-release"                         # O/S Release File
 
 
-# [L]ong WEEKDAY is from 1="Monday" to "7=Sunday" - [S]short WEEKDAY is from 1="Mon" to 7="Sun"
+# [L]ong   WEEKDAY is from 1="Monday" to "7=Sunday" - 
+# [S]short WEEKDAY is from 1="Mon" to 7="Sun"
 export SADM_LWEEKDAY=("index0" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday")
 export SADM_SWEEKDAY=("index0" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat" "Sun")
 
-# [L]ong MTH_NAME return from 1="Monday" to "7=Sunday" - [S]short MTH_NAME is from 1="Jan" to 7="Dec"
+# [L]ong   MTH_NAME is from 1="January" to "12=December" - 
+# [S]short MTH_NAME is from 1="Jan" to 12="Dec"
 export SADM_LMTH_NAME=("index0" "January" "February" "March" "April" "May" "June" "July" "August" 
                         "September" "October" "November" "December")
 export SADM_SMTH_NAME=("in0" "Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec")
