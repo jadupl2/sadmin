@@ -18,6 +18,7 @@
 #@2019_04_19 template v01.02.01 Now can have customize error message use by System Monitor.
 #@2026_08_13 template v01.02.02 Added more comments ,refine the code.
 #@2026_09_04 template v01.02.03 Use $SADMIN/tmp instead of /tmp for temp file creation.
+#@2026_09_24 template v01.02.04 Remove temp work file at the end.
 # --------------------------------------------------------------------------------------------------
 trap 'exit 0' 2                                                         # INTERCEPT The Control-C
 #set -x
@@ -65,6 +66,7 @@ main_process()
              echo "$EMSG" > $EFILE                                      # Message to Error Msg File
     fi
 
+    if [[ -f "$FILENAME" ]] ; then rm -f "$FILENAME" ; fi               # Remove Work Temp file
     return $RC                                                          # Return Status to Caller
 }
 
