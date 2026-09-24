@@ -1,23 +1,38 @@
-# SADMIN Alert History File v2.1
+# SADMIN Alert History File v2.5 (2026/09/24)
 # --------------------------------------------------------------------------------------------------
-# This file record each alert that was sent either by mail,SMS & Slack
-#   Comment and blank line are ignored.
-#   The ';' character is use as a field separator.
-#
+# This file record each alert that is sent either by mail,SMS,Slack or Ntfy
+#   - Comment and blank line are ignored.
+#   - The ';' character is use as a field separator.
 # --------------------------------------------------------------------------------------------------
-# Field definition of the Alert History file
-#   1= Epoch Time when alert was sent
-#   2= Alert Sent Counter, incremented each time the same alert is sent.
-#   3= Time of Event/Alert (HH:MM)
-#   4= Date of Event/Alert (YYYY.MM.DD)    -----|
-#   5= S,E,W,I - Alert issue type               |
-#       [S]cript, [I]nfo [W]arning [E]rror      |-- Use to search
-#   6= Server where event happened              |   for duplicate
-#   7= Alert Group used to send alert           |
-#   8= Alert Subject/Title                  ----|
-#   9= Indicate to whom the alert was sent.
-#  10= The Date & Time the message is sent.
-#       - When alert is sent more than once a day, it indicate the
-#         date and time the alert was resend (SADM_ALERT_REPEAT<>0 in sadmin.cfg).
+### Definition of the Alert History file
+#   
+#   - The Alert History file is called 'alert_history.txt'.
+#   - It is located in $SADMIN/cfg directory.
+#   - This file contains each alert that was sent.
+#   - Comment (Line beginning with '#') and blank line are ignored.
+#   - The ';' character is use as a field separator.
+#   - When an alert is older than "SADM_DAYS_HISTORY" it is moved to tha alert archive.
+#       - The move to the archive file is done every day by 'sadm_server_sunrise.sh'. 
+#       - "SADM_DAYS_HISTORY" is define in SADMIN configuration file "$SADMIN/cfg/sadmin.cfg".
 #
-#---------------------------------------------------------------------------------------------------
+### File layout
+#
+# | No. | Name    | Field Description                                           | Example       |
+# |:---:| --------| ------------------------------------------------------------| ------------- |
+# | 01  | hepoch  | Event or Start Date & Time in epoch time                    | 1789785000    |
+# | 02  | htype   | S=Script, W=Warning, E=Error, I=Info                        | S,W,E,I       |
+# | 03  | hsystem | Hostname where event happen                                 | batserver     |
+# | 04  | hscript | Event Module (Script name for script)                       | sadm_osupdate |
+# | 05  | hsdate  | Event Date (Start Date for Script)                          | 2026.09.16    |
+# | 06  | hstime  | Event Time (Start Time for Script)                          | 15:54:29      |
+# | 07  | hgroup  | Alert Group to advise                                       | batsupport    |
+# | 08  | hdesc   | Alert Subject / Message                                     | "System Down" |
+# | 09  | hcount  | Number of alert sent counter (not use default to 1)         | 01            |
+# | 10  | hstype  | Script Alert Type: 0=NoAlert,1=OnError,2=OnSuccess,3=Always | 1             |
+# | 11  | hedate  | Script execution end date (YYYY.MM.DD)                      | 2026.09.16    |
+# | 12  | hetime  | Script execution end time (HH:MM:SS)                        | 16:55:00      |
+# | 13  | helapse | Script time of execution (HH:MM:SS)                         | 00:01:31      |
+# | 14  | hrc     | Script Result Code (0=Success, 1=Error)                     | 0             |
+# 
+# --------------------------------------------------------------------------------------------------
+# 
