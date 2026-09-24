@@ -7,66 +7,67 @@
 #   Date     :  15 Janvier 2016
 #   Requires :  sh
 #===================================================================================================
-# 2017_12_30 mon V2.7 Change Config file extension to .smon & Defaut Virtual Machine presence to 'N'
-# 2017_12_30 mon V2.8 Change name of template file from sysmon.std to template.smon
-# 2017_12_30 mon V2.9 Change Message Sent to user when host.cfg file not there and using template file
-# 2018_05_07 mon V2.10 Bug Fixes - Code Revamp - Now read SADMIN config file
-# 2018_05_14 mon V2.11 MacOS/AIX Checking Swap Space/Load Average/New Filesystem Enhancement
-# 2018_05_27 mon v2.12 Change Location of SysMon Scripts Directory to $SADMIN/usr/sysmon_scripts
-# 2018_06_03 mon v2.13 Change Location of SysMon Scripts Directory to $SADMIN/usr/mon
-# 2018_06_12 mon v2.14 Correct Problem with file increase and Filesystem Warning double error
-# 2018_06_14 mon v2.15 Load $SADMIN/sadmin.cfg before the hostname.smon file (So we know Email Address)
-# 2018_07_11 mon v2.16 Uptime/Load Average take last 5 min. values instead of current.
-# 2018_07_12 mon v2.17 Service Line now execute srestart.sh script to restart it & Alert Insertion
-# 2018_07_18 mon v2.18 Fix when filesystem exceed threshold try increase when no script specified
-# 2018_07_19 mon v2.19 Add Mail Mess when sadmin.cfg not found & Change Mess when host.smon not found
-# 2018_07_21 mon v2.20 Fix When executing scripts from sysmon the log wasn't at proper place.
-# 2018_07_22 mon v2.21 Added Date and Time in mail messages sent.
-# 2018_09_14 mon v2.22 Take Default Alert Group from SADMIN configuration file.
-# 2018_09_18 mon v2.23 Error reported was stating > instead of >=
-# 2018_09_21 mon v2.24 Ping System 3 times before signaling an Error
-# 2018_10_16 mon v2.25 For initial host.smon file, default alert group are taken from host sadmin.cfg
-# 2018_10_16 mon v2.26 Change email sent when smon configuration isn't found.
-# 2018_12_29 mon v2.27 Enhance Performance checking service, chown & chmod only if running as root.
-# 2018_12_30 mon v2.28 Fix: problem when checking service using Sys V method.
-# 2019_03_09 mon v2.29 Remove DateTime Module (Not needed anymore)
-# 2019_03_20 nolog: v2.29 Mail message change
-# 2019_04_01 nolog: v2.30 Include color on status output.
-# 2019_04_17 mon v2.31 Get SADMIN Root Directory from /etc/environment.
-# 2019_04_19 mon v2.32 Produce customized Error Message, when running External Script.
-# 2019_05_13 mon v2.33 Don't abort if can't create sysmon.lock file, happen during setup.
-# 2019_07_07 mon v2.34 Update Filesystem Increase Message & verification.
-# 2019_07_25 mon v2.35 Now using a tmp rpt file and real rpt is replace at the end of execution.
-# 2019_10_25 mon v2.36 Don't check SNAP filesystem usage (snap filesystem always at 100%).
-# 2020_03_05 mon v2.37 Not getting 'SADMIN' variable content from /etc/environment (if export used).
-# 2020_03_28 mon v2.38 Fix problem when 'dmidecode' is not available on system.
-# 2020_07_27 mon v2.39 Used space of CIFS Mounted filesystem are no longer monitored.
-# 2020_10_01 mon v2.40 Write more elaborated email to user when restarting a service.
-# 2020_11_18 mon v2.41 Fix: Fix problem with 'iostat' on MacOS.
-# 2020_11_30 mon v2.42 Fix: Fix problem reading SADMIN variable in /etc/environment.
-# 2021_06_12 mon v2.43 Add Date & Time of last boot on last line of hostname.smon file.
-# 2021_07_03 mon v2.44 Fix problem when trying to run custom script.
-# 2021_07_05 mon v2.45 Added support to monitor 'http' and 'https' web site responsiveness.
-# 2021_07_06 mon v2.46 Change error messages syntax to be more descriptive.
-# 2022_07_02 mon v2.47 Replace 'mail' command (not avail on RHEL 9) by 'mutt'.
-# 2022_09_24 mon v2.48 On MacOS review 'check_cpu_usage', 'check_load average' & filesystem check
-# 2022_10_11 mon v2.49 Sysmon don't check capacity exceeded for '/snap/*' '/media/*' filesystem
-# 2023_05_06 mon v2.50 Reduce ping wait time to speed up processing.
-#@2025_05_31 nolog v2.51 Delay start (ramdom number from 1 to 20 seconds), so all not run at same time.
-#@2025_06_20 mon v2.52 Ping test, added continious error minute count before triggering an error.
-#@2025_06_24 mon v2.53 Solve 'hotsname.smon' intermittently get re-created using '.template.smon'.
-#@2025_07_09 mon v2.54 Add more info in email sent when the hostname.smon file is gone & replace.
-#@2026_05_05 mon v2.55 Enhance the check service function 'check_service()'.
-#@2026_05_07 mon v2.56 Add debug info in log and fix bug.
-#@2026_05_09 mon v2.57 Add a check if 'nmon' is running, if not run $SADMIN/usr/mon/swatch_nmon.shto restart it.
-#@2026_05_12 mon v2.58 Enhance code, review and retest all functions.
-#@2026_05_14 mon v2.59 Clearer output layout and remove filesystem increase function, not much used.
-#@2026_05_16 mon v2.60 Add some small change to output and log.
-#@2026_05_20 mon v.2.60.1 Fix check service status and optional running script (at end of line)
-#@2026_06_29 mon v.2.60.2 To Minimize false alert on ping test, now ping twice at 2 seconds interval
-#@2026_06_29 mon v.2.60.3 Change ping error message
-#@2026_07_01 mon v.2.60.4 When filesystem usage exceed warning or error, print 'df -h' below it.
-#@2026_09_04 mon v.2.60.5 Remove non pertinent info from email sent when hostname.smon is not found.
+# 2017_12_30 sysmon V02.07 Change Config file extension to .smon & Defaut Virtual Machine presence to 'N'
+# 2017_12_30 sysmon V02.08 Change name of template file from sysmon.std to template.smon
+# 2017_12_30 sysmon V02.09 Change Message Sent to user when host.cfg file not there and using template file
+# 2018_05_07 sysmon V02.10.00 Bug Fixes - Code Revamp - Now read SADMIN config file
+# 2018_05_14 sysmon V02.11.00 MacOS/AIX Checking Swap Space/Load Average/New Filesystem Enhancement
+# 2018_05_27 sysmon v02.12.00 Change Location of SysMon Scripts Directory to $SADMIN/usr/sysmon_scripts
+# 2018_06_03 sysmon v02.13.00 Change Location of SysMon Scripts Directory to $SADMIN/usr/mon
+# 2018_06_12 sysmon v02.14.00 Correct Problem with file increase and Filesystem Warning double error
+# 2018_06_14 sysmon v02.15.00 Load $SADMIN/sadmin.cfg before the hostname.smon file (So we know Email Address)
+# 2018_07_11 sysmon v02.16.00 Uptime/Load Average take last 5 min. values instead of current.
+# 2018_07_12 sysmon v02.17.00 Service Line now execute srestart.sh script to restart it & Alert Insertion
+# 2018_07_18 sysmon v02.18.00 Fix when filesystem exceed threshold try increase when no script specified
+# 2018_07_19 sysmon v02.19.00 Add Mail Mess when sadmin.cfg not found & Change Mess when host.smon not found
+# 2018_07_21 sysmon v02.20.00 Fix When executing scripts from sysmon the log wasn't at proper place.
+# 2018_07_22 sysmon v02.21.00 Added Date and Time in mail messages sent.
+# 2018_09_14 sysmon v02.22.00 Take Default Alert Group from SADMIN configuration file.
+# 2018_09_18 sysmon v02.23.00 Error reported was stating > instead of >=
+# 2018_09_21 sysmon v02.24.00 Ping System 3 times before signaling an Error
+# 2018_10_16 sysmon v02.25.00 For initial host.smon file, default alert group are taken from host sadmin.cfg
+# 2018_10_16 sysmon v02.26.00 Change email sent when smon configuration isn't found.
+# 2018_12_29 sysmon v02.27.00 Enhance Performance checking service, chown & chmod only if running as root.
+# 2018_12_30 sysmon v02.28.00 Fix: problem when checking service using Sys V method.
+# 2019_03_09 sysmon v02.29.00 Remove DateTime Module (Not needed anymore)
+# 2019_03_20 nolog: v02.29.01 Mail message change
+# 2019_04_01 nolog: v02.30.00 Include color on status output.
+# 2019_04_17 sysmon v02.31.01 Get SADMIN Root Directory from /etc/environment.
+# 2019_04_19 sysmon v02.32.01 Produce customized Error Message, when running External Script.
+# 2019_05_13 sysmon v02.33.01 Don't abort if can't create sysmon.lock file, happen during setup.
+# 2019_07_07 sysmon v02.34.01 Update Filesystem Increase Message & verification.
+# 2019_07_25 sysmon v02.35.01 Now using a tmp rpt file and real rpt is replace at the end of execution.
+# 2019_10_25 sysmon v02.36.01 Don't check SNAP filesystem usage (snap filesystem always at 100%).
+# 2020_03_05 sysmon v02.37.01 Not getting 'SADMIN' variable content from /etc/environment (if export used).
+# 2020_03_28 sysmon v02.38.01 Fix problem when 'dmidecode' is not available on system.
+# 2020_07_27 sysmon v02.39.01 Used space of CIFS Mounted filesystem are no longer monitored.
+# 2020_10_01 sysmon v02.40.01 Write more elaborated email to user when restarting a service.
+# 2020_11_18 sysmon v02.41.01 Fix: Fix problem with 'iostat' on MacOS.
+# 2020_11_30 sysmon v02.42.01 Fix: Fix problem reading SADMIN variable in /etc/environment.
+# 2021_06_12 sysmon v02.43.01 Add Date & Time of last boot on last line of hostname.smon file.
+# 2021_07_03 sysmon v02.44.01 Fix problem when trying to run custom script.
+# 2021_07_05 sysmon v02.45.01 Added support to monitor 'http' and 'https' web site responsiveness.
+# 2021_07_06 sysmon v02.46.01 Change error messages syntax to be more descriptive.
+# 2022_07_02 sysmon v02.47.01 Replace 'mail' command (not avail on RHEL 9) by 'mutt'.
+# 2022_09_24 sysmon v02.48.01 On MacOS review 'check_cpu_usage', 'check_load average' & filesystem check
+# 2022_10_11 sysmon v02.49.01 Sysmon don't check capacity exceeded for '/snap/*' '/media/*' filesystem
+# 2023_05_06 sysmon v02.50.01 Reduce ping wait time to speed up processing.
+#@2025_05_31 nolog v02.51.01 Delay start (ramdom number from 1 to 20 seconds), so all not run at same time.
+#@2025_06_20 sysmon v02.52.01 Ping test, added continious error minute count before triggering an error.
+#@2025_06_24 sysmon v02.53.01 Solve 'hotsname.smon' intermittently get re-created using '.template.smon'.
+#@2025_07_09 sysmon v02.54.01 Add more info in email sent when the hostname.smon file is gone & replace.
+#@2026_05_05 sysmon v02.55.01 Enhance the check service function 'check_service()'.
+#@2026_05_07 sysmon v02.56.01 Add debug info in log and fix bug.
+#@2026_05_09 sysmon v02.57.01 Add a check if 'nmon' is running, if not run $SADMIN/usr/mon/swatch_nmon.shto restart it.
+#@2026_05_12 sysmon v02.58.01 Enhance code, review and retest all functions.
+#@2026_05_14 sysmon v02.59.01 Clearer output layout and remove filesystem increase function, not much used.
+#@2026_05_16 sysmon v02.60.01 Add some small change to output and log.
+#@2026_05_20 sysmon v02.60.01 Fix check service status and optional running script (at end of line)
+#@2026_06_29 sysmon v02.60.02 To Minimize false alert on ping test, now ping twice at 2 seconds interval
+#@2026_06_29 sysmon v02.60.03 Change ping error message
+#@2026_07_01 sysmon v02.60.04 When filesystem usage exceed warning or error, print 'df -h' below it.
+#@2026_09_04 sysmon v02.60.05 Remove non pertinent info from email sent when hostname.smon is not found.
+#@2026_09_20 sysmon v02.60.06 Added the seconds to the time of event, for more precision.
 #===================================================================================================
 #
 use English;
@@ -81,7 +82,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.60.5";                                     # Version Number
+my $VERSION_NUMBER      = "02.60.06";                                   # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -1724,7 +1725,7 @@ sub write_rpt_file {
 
 
     $ERR_DATE = `date +%Y.%m.%d`; chop $ERR_DATE;                       # Setup Date of Error
-    $ERR_TIME = `date +%H:%M`   ; chop $ERR_TIME;                       # Setup Time of Error
+    $ERR_TIME = `date +%H:%M:%S`; chop $ERR_TIME;                       # Setup Time of Error
     if ($ERR_LEVEL eq "W") { $ERROR_TYPE = "Warning" ; }                # Setup Warning Type
     if ($ERR_LEVEL eq "E") { $ERROR_TYPE = "Error"   ; }                # Setup Error Type
     if ($ERR_LEVEL eq "I") { $ERROR_TYPE = "Info"    ; }                # Setup Info Type
@@ -2187,7 +2188,7 @@ sub end_of_sysmon {
     check_for_new_filesystems;                      # Check for new filesystem first
     loop_through_array;                             # Loop through smon Array line by line
 
-    # Close temp .rpt file and copy the temp .rpt to actual updated .rpt file
+    # Close temp .rpt file and copy the temp .rpt to new actual updated .rpt file
     close SADMRPT;                                  # Close SysMon .rpt tmp report file
     @cmd = ("$CMD_CP $SYSMON_RPT_FILE_TMP $SYSMON_RPT_FILE"); # Temp file become main rpt file
     $return_code = 0xffff & system @cmd ;           # Perform Command cp to update .rpt file    
