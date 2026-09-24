@@ -88,6 +88,7 @@
 #@2026_07_03 lib v04.69.03 Fix minor bugs and add in sadmin.cfg, var. to use 'ntfy' as notification. 
 #@2027_07_08 lib v04.69.04 Fix Minor bugs (int Error)
 #@2026_09_04 lib V04.69.05 Add variable 'SADM_CFG_VERSION' to track the configuration file version.
+#@2026_09_24 lib V04.69.05 Minor change and remove debug info
 #  
 # --------------------------------------------------------------------------------------------------
 
@@ -2377,9 +2378,10 @@ def load_cmd_path():
             if (cmd == 'ethtool')       : cmd_ethtool       = shutil.which(cmd)
             if (cmd == 'mutt')          : cmd_mutt          = shutil.which(cmd)
             if (cmd == 'curl')          : cmd_curl          = shutil.which(cmd)
-            if (cmd == 'rrdtool')       : cmd_rrdtool       = shutil.which(cmd)
             if sadm_host_type == "S" : 
-                if (cmd == 'mysql')     : cmd_mysql         = shutil.which(cmd) 
+               if (cmd == 'rrdtool')   : cmd_rrdtool       = shutil.which(cmd)
+            if sadm_host_type == "S" : 
+               if (cmd == 'mysql')     : cmd_mysql         = shutil.which(cmd) 
         else : 
             if lib_debug > 4 : print ("Command '%s' not found on system." % (cmd))
             requisites_status=False                                     # Requirement not Met
@@ -2508,7 +2510,7 @@ def stop(pexit_code : int) -> None:
         wgrp_dest = dict_alert['default'][2].lower().strip()            # Alert Destination
 
     # Example of sub group in alert dictionnary
-    #  - dict_alert['mail_sysadmin']    : ('mail_sysadmin', 'm', 'brucetalbot95@gmail.com', '')
+    #  - dict_alert['mail_sysadmin']    : ('mail_sysadmin', 'm', jacktalbot@gmail.com', '')
     if wgrp_name == 'default' :                                         # alert group is 'default'
         if wgrp_dest in dict_alert :                                    # if refer to a sub group
             wgrp_name = wgrp_dest                                       # Sub Group Name
@@ -3141,7 +3143,7 @@ def sendmail(waddr, wsub, wbody, wattach="") :
             Return Code (Int)   : 0 Successfully sent the email
                                   1 Error while sending the email (Parameters may be wrong)
     """
-    debug=5
+    #debug=5
 
     # If the wbody parameter received is not a file 
     # assume that wbody is a string and output it to a file.
@@ -3193,114 +3195,6 @@ def sendmail(waddr, wsub, wbody, wattach="") :
 
 
 
-
-# Send an email to sysadmin define in sadmin.cfg with subject and body received
-# ----------------------------------------------------------------------------------------------
-#def sendmail(mail_addr, mail_subject, mail_body, mail_attach="") :
-#    
-#    """ Send email to email address received.
-#        
-#        Args:            
-#            mail_addr (str)     : Email Address to which you want to send it
-#            mail_subject (str)  : Subject of your email
-#            mail_body (str)     : Body of your email
-#            mail_attach (str)   : Name of the file (MUST exist) to attach to the email.
-#                                  (If no attachment, leave blank)
-#    
-#        Returns:
-#            Return Code (Int)   : 0 Successfully sent the email
-#                                  1 Error while sending the email (Parameters may be wrong)
-#    """
-#
-#    data = MIMEMultipart()                                              # Instance of MIMEMultipart
-#    data['From '] = sadm_smtp_sender                                    # store sender email address  
-#    data['To '] = mail_addr                                             # store receiver email 
-#    data['Subject '] = mail_subject                                     # storing the subject 
-#    data.attach(MIMEText(str(mail_body), 'plain'))                      # attach body with msg inst
-#
-#    if mail_attach != "" :
-#        filenames = mail_attach.split(',')
-#        for filename in filenames :
-#            if os.path.exists(filename): 
-#                attachment = open(filename, "rb")                       # Read file into memory
-#                p = MIMEBase('application', 'octet-stream')             # MIMEBase inst & named as p
-#                p.set_payload((attachment).read())                      # Payload into encoded form
-#                encoders.encode_base64(p)                               # encode into base64
-#                p.add_header('Content-Disposition', "attachment; filename= %s" % filename)
-#                data.attach(p)                                          # attach inst p to inst msg
-#    text = data.as_string()                                             # Conv. Multipart msg 2 str
-#    try : 
-#        context = ssl.create_default_context()
-#        with smtplib.SMTP(sadm_smtp_server, sadm_smtp_port) as server:
-#            server.ehlo()  # Can be omitted
-#            server.starttls(context=context)
-#            server.ehlo()  # Can be omitted
-#            try:
-#                server.login(sadm_smtp_sender, sadm_gmpw)
-#            except smtplib.SMTPException :
-#                write_err("Authentication for %s at %s:%d failed (%s)." % (sadm_smtp_sender,sadm_smtp_server,sadm_smtp_port,sadm_gmpw))
-#                return (1)
-#            try : 
-#                server.sendmail(sadm_smtp_sender, mail_addr, text)
-#            except Exception as e: 
-#                write_err("[ ERROR ] Trying to send email to %s" % (mail_addr))
-#                write_err("%s" % e)
-#                return (1)
-#            finally:
-#                server.close()
-#    except (smtplib.SMTPException, socket.error, socket.gaierror, socket.herror) as e:
-#            write_err("[ ERROR ] Connection to %s port %s failed" % (sadm_smtp_server,sadm_smtp_port))
-#            write_err("%s" % e)
-#            return(1)
-#    return (0)
-
-
-#def send_gmail(recipient_email, subject, body, attachment_str):
-#    # Retrieve Gmail credentials from environment variables for security
-#    sender_email = "brucetalbot95@gmail.com"
-#    sender_password = "wtuapkxdxtuaidon"
-#
-#    if not sender_email or not sender_password:
-#        return "Error: GMAIL_USER or GMAIL_APP_PASSWORD environment variables not set."
-#
-#    try:
-#        # Create the email message
-#        msg = EmailMessage()
-#        msg["Subject"] = subject
-#        msg["From"] = sender_email
-#        msg["To"] = recipient_email
-#        msg.set_content(body)
-#
-#        # Handle attachments if the string is not empty
-#        if attachment_str:
-#            # Split the string by comma and strip any whitespace
-#            files = [file.strip() for file in attachment_str.split(",")]
-#
-#            for file_path in files:
-#                if os.path.exists(file_path):
-#                    with open(file_path, "rb") as f:
-#                        file_data = f.read()
-#                        file_name = os.path.basename(file_path)
-#                        msg.add_attachment(
-#                            file_data,
-#                            maintype="application",
-#                            subtype="octet-stream",
-#                            filename=file_name,
-#                        )
-#                else:
-#                    return f"Error: File not found - {file_path}"
-#
-#        # Connect to Gmail's SMTP server
-##        with smtplib.SMTP_SSL("://gmail.com", 465) as smtp:
-#        with smtplib.SMTP_SSL("://gmail.com", 587) as smtp:
-#            smtp.login(sender_email, sender_password)
-#            smtp.send_message(msg)
-#
-#        return "Email sent successfully!"
-#
-#    except Exception as e:
-#        return f"Failed to send email. Error: {e}"
-#
 
 
 
