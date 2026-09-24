@@ -31,7 +31,7 @@
 #   - "client"  Client related modifications.   - "osupdate" O/S Update modification or fixes.
 #   - "lib"     Library documentation           - "doc"      General Documentation
 #   - "sys"     System (startup and shutdown)   - "nolog"    Minor change, not included in rel. note
-#   - "doc"     SADMIN documentation
+#   - "doc"     SADMIN documentation            - "testenv"  Script to test environment
 #
 # YYYY-MM-DD GROUPS   vXX.XX.XX ------------------ 69 Characters to describe change ----------------
 #@2026_08_02 template v00.01.00 Initial development version.
@@ -39,7 +39,7 @@
 #---------------------------------------------------------------------------------------------------
 # Add trap to catch ^C and stop script gracefully.
 trap 'sadm_stop 1; exit 1' 2                                        
-#set -x
+#set -x                                                                  # Turn on debugging trace
      
 
 
@@ -68,7 +68,6 @@ export SADM_OS_TYPE=$(uname -s|tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 export SADM_DEBUG=0                                        # Debug Level(0-9), 0 = NoDebug
 export SADM_EXIT_CODE=0                                    # Pgm. Default Exit Code
-export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 export SADM_PN=$(basename "$0")                            # Script name(with extension)
 export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
 
@@ -101,6 +100,7 @@ export SADM_TMP_FILE3=$(mktemp -q "$SADMIN/tmp/sadm_tmp3_XXX") # Make tmpfile3, 
 export SADM_OS_NAME=$(sadm_get_osname)                     # REDHAT,ROCKY,ALMA,CENTOS,DEBIAN,UBUNTU.
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.5)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
+export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
 # Variables Below Are Taken From SADMIN Configuration File (sadmin.cfg) when the Library is loaded.
 # You Can Overridde them On A Per Program Basis (If Needed).
