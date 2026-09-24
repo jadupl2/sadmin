@@ -118,7 +118,7 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 
 # VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
 # BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
-export SADM_ALERT_TYPE=3                                   # 0=No 1=OnError 2=OnOK 3=Always
+#export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
 #export SADM_ALERT_GROUP="default"                          # Alert Group to advise
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
 #export SADM_MAX_LOGLINE=400                                # Nb Lines to trim(0=NoTrim)
@@ -162,19 +162,24 @@ show_usage()
 
 # --------------------------------------------------------------------------------------------------
 # Function to check update available before beginning update
-# Function Return :
-#   - 0 IF UPDATE ARE AVAILABLE
-#   - 1 IF NO UPDATE ARE AVAILABLE
-#   - 2 IF PROBLEM CHECKING FOR UPDATE
+#
+#   Args#: 
+#        None : Rely on Global Variable 
+#
+#   Return Value:
+#       - 0 If Update Are Available
+#       - 1 If No Update Are Available
+#       - 2 If Problem Checking For Update
+#
 # --------------------------------------------------------------------------------------------------
 check_available_update()
 {
     sadm_write_log "----------"    
-    x_version="$(sadm_get_osmajorversion).$(sadm_get_osminorversion)"
-    sadm_write_log "Starting O/S update process for $(sadm_capitalize $SADM_OS_NAME) v${x_version}"
+    sadm_write_log "Starting O/S update for $(sadm_capitalize $SADM_OS_NAME) v$(sadm_get_osversion)"
     
     case "$(sadm_get_osname)" in
-        # RedHat Family
+
+        # RedHat Family O/S
         "REDHAT"|"CENTOS"|"ALMA"|"ROCKY"|"FEDORA" ) 
             pkg_mgm="dnf"
             sadm_get_command_path "yum" >/dev/null                      # yum on system ? RHEL 7
@@ -206,7 +211,7 @@ check_available_update()
             esac
             ;;
             
-        # Suse Family
+        # Suse Family O/S
         "OPENSUSE"|"SUSE" )
                 sadm_write_log " "
                 sadm_write_err "Not supporting $(sadm_get_osname) yet."
@@ -214,51 +219,58 @@ check_available_update()
                 sadm_write_err "[ OK ] No Update available."
                 ;;
 
-        # Debian Family
-        * )     sadm_write_log "Start with a clean of APT cache, running 'apt clean'" 
+        # Debian Family O/S
+        "DEBIAN"|"RASPBIAN"|"UBUNTU"|"MINT" )
+                sadm_write_log "Start with a clean of APT cache, running 'apt clean'" 
                 apt clean  >>$SADM_LOG 2>>$SADM_ELOG                        # Cleanup /var/cache/apt
                 rc=$?                                                       # Save Exit Code
                 if [ $rc -ne 0 ] 
-                    then sadm_write_log "[ ERROR ] while cleaning apt cache, return code ${rc}" 
+                    then sadm_write_log "[ ERROR ] while cleaning apt cache, return code is ${rc}" 
                     else sadm_write_log "[ OK ] APT cache is now cleaned." 
                 fi
 
                 sadm_write_log " "
-                sadm_write_log "Load a fresh copy of the repository in apt cache with 'apt update'" 
-                apt update   >>$SADM_LOG 2>>$SADM_ELOG                      # Updating the apt-cache
-                rc=$?                                                       # Save Exit Code
-                if [ "$rc" -ne 0 ]
-                   then UpdateStatus=2                                      # 2=Problem checking update
+                sadm_write_log "----------" 
+                sadm_write_log "Load a fresh copy of the repository in apt database with 'apt update'." 
+                sadm_write_log "This will pull the latest changes from the APT repositories."
+                apt update   >>$SADM_LOG 2>>$SADM_ELOG                  # Updating the apt-cache
+                rc=$?                                                   # Save Exit Code
+                if [ "$rc" -ne 0 ]                                      # If completed with error
+                   then UpdateStatus=2                                  # 2 = Error checking update
+                        sadm_write_log " " 
                         sadm_write_err "[ ERROR ] We had problem running the 'apt update' command." 
                         sadm_write_err "We had a return code of ${rc}." 
                         sadm_write_err "For more information check the log ${SADM_LOG}."
-                        sadm_write_err " " ; sadm_write_log " "
+                        sadm_write_err " " 
                    else sadm_write_log "[ OK ] The cache have been updated."
-                        sadm_write_log " " ; sadm_write_log " "
+                        sadm_write_log " " 
+                        sadm_write_log "----------" 
                         sadm_write_log "Retrieving list of upgradable packages." 
                         sadm_write_log "Running 'apt list --upgradable'."                        
-                        #apt list --upgradable | tee -a  ${SADM_LOG}
-                        apt list --upgradable 2>/dev/null | grep -iv "Listing" | nl | tee -a $SADM_LOG 
+                        #apt list --upgradable 2>/dev/null | grep -iv "Listing" | nl | tee -a $SADM_LOG 
                         NB_UPD=$(apt list --upgradable 2>/dev/null | grep -iv 'Listing...' | wc -l)
                         if [ "$NB_UPD" -ne 0 ]
-                            then sadm_write_log " " 
-                                 sadm_write_log "There are ${NB_UPD} update available."
+                            then sadm_write_log "There are ${NB_UPD} update(s) available."
                                  apt list --upgradable 2>/dev/null | grep -v "Listing" >$SADM_TMP_FILE3
                                  if [ $? -ne 0 ] 
-                                    then sadm_write_log "Error getting list of packages to update."
-                                         sadm_write_log "Script aborted ..." 
-                                         sadm_stop 1
-                                         exit 1
-                                    else sadm_write_log "Packages that will be updated."
+                                    then sadm_write_err "[ ERROR ] Getting list of packages to update."
+                                         UpdateStatus=1                 # 1= No Update are available
+                                    else sadm_write_log "List of packages that will be updated."
                                          nl $SADM_TMP_FILE3
-                                         UpdateStatus=0                     # 0= Update are available
+                                         UpdateStatus=0                 # 0= Update are available
                                  fi 
-                            else UpdateStatus=1                             # 1= No Update are available
+                            else UpdateStatus=1                         # 1= No Update are available
                                  sadm_write_log "[ OK ] No Update available."
                         fi
                         sadm_write_log " " 
                 fi
                 ;;
+
+        *)  sadm_write_log " "
+            sadm_write_err "O/S $(sadm_get_osname) is not yet supported at this time."
+            UpdateStatus=1                                              # No Update available
+            sadm_write_err "[ OK ] No Update available."
+            ;;
     esac 
     
     return $UpdateStatus                                                # 0=UpdExist 1=NoUpd 2=Abort
@@ -323,16 +335,19 @@ run_dnf()
 run_apt()
 {
     
-    sadm_write_log "Starting $(sadm_get_osname) update process ..."
+    sadm_write_log " "
+    sadm_write_log "----------"     
+    sadm_write_log "Starting $(sadm_get_osname) $(sadm_get_osversion) update process ..."
+    sadm_write_log " "
     
     CMD="DEBIAN_FRONTEND='noninteractive' apt -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' upgrade"
-    sadm_write_log "Running: $CMD"
+    #sadm_write_log "Running: $CMD"
     DEBIAN_FRONTEND='noninteractive' apt -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' upgrade
     RC=$?
     if [ "$RC" -ne 0 ]
-       then sadm_write_err "Return Code of \"apt -y upgrade\" is ${RC}."
+       then sadm_write_err "[ ERROR ] Return Code of \"apt -y upgrade\" is ${RC}."
             return $RC
-       else sadm_write_log "[OK] \"apt -y upgrade\" done with success."
+       else sadm_write_log "[ SUCCESS] \"apt -y upgrade\" done with success."
     fi
 
     CMD="DEBIAN_FRONTEND='noninteractive' apt -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' dist-upgrade"
@@ -340,49 +355,67 @@ run_apt()
     DEBIAN_FRONTEND='noninteractive' apt -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' dist-upgrade
     RC=$?
     if [ "$RC" -ne 0 ]
-       then sadm_write_err "Return Code of \"apt -y dist-upgrade\" is ${RC}."
+       then sadm_write_err "[ ERROR ] Return Code of \"apt -y dist-upgrade\" is ${RC}."
             return $RC
-       else sadm_write_log "[OK] \"apt -y dist-upgrade\" ran with success."
+       else sadm_write_log "[ SUCCESS ] \"apt -y dist-upgrade\" ran with success."
     fi
     
     sadm_write_log " " 
+    sadm_write_log "----------"     
     sadm_write_log "Remove orphaned packages, running 'apt autoremove'."
     apt autoremove -y >>$SADM_LOG 2>&1
     RC=$?
     if [ "$RC" -ne 0 ]
-        then sadm_write_err "Return Code of 'apt autoremove -y' is ${RC}"
+        then sadm_write_err "[ ERROR ] Return Code of 'apt autoremove -y' is ${RC}"
              return $RC
+        else sadm_write_log "[ OK ] Remove orphaned packages removed." 
     fi
     
-    # Verify a last time to see if any package are kept back from update.
+
+    # Verify if any package are kept back from update.
     # - If the dependencies have changed on one of the packages you have installed so that a new 
     #   package must be installed to perform the upgrade then that will be listed as "kept-back".
     sadm_write_log " " 
-    sadm_write_log "Check if there are update that are kept back ..."
+    sadm_write_log "----------"     
+    sadm_write_log "Verifying if there are any update that are 'kept-back'."
+    sadm_write_log "This is a safety feature, not a bug, they will be updated later in time."
+    sadm_write_log "APT (the package manager) is being cautious to avoid breaking your system."
+    
     NB_UPD=$(apt list --upgradable 2>/dev/null | grep -v 'Listing...' | wc -l)
-    if [ "$NB_UPD" -ne 0 ]
-       then sadm_write_log "There are ${NB_UPD} update available."
-            apt list --upgradable 2>/dev/null | grep -v 'Listing...' | nl
-            sadm_write_log "Advise SysAdmin - Send warning email that some update are kept back."
-            msub="SADM WARNING: Update are kept back on system $SADM_HOSTNAME" 
-            body1=$(date)
-            body2=$(printf "\n\n${msub}\nThere are ${NB_UPD} update available\n\n")
+    if [ "$NB_UPD" -ne 0 ]                                              # If we have some kept-back
+       then sadm_write_err "There are ${NB_UPD} update that are kept-back."
+            apt list --upgradable | grep -v 'Listing...' | nl | tee -a $SADM_LOG 2>&1
+            sadm_write_err " " 
+            sadm_write_err "[ INFO ] Send warning email that some update are kept-back."
+
+            msub="SADM WARNING: Update are kept-back on $SADM_HOSTNAME" 
+            body1=$(echo -e "Salutation, \n$(date)")
+            body2=$(printf "\n{msub}\nThere are ${NB_UPD} update available\n\n")
             body3=$(apt list --upgradable 2>/dev/null | grep -v 'Listing...' | nl) 
             body4=$(printf "\nSome dependencies may have changed on one of the packages you have installed, ")
             body5="or maybe some new package must be installed to perform the upgrade."
-            body6="They are then listed as 'kept-back'."
-            body7="Run one of the following command if you wish to upgrade these package(s)."
+            body6="They are then listed as 'kept-back', they should be available soon."
+            body7="Run the following command if you wish to upgrade these package(s) now."
             body8="'sudo apt install <list of packages kept back>'."
-            body9="or "
-            body10="'sudo aptitude safe-upgrade'."
-            mbody=`echo -e "${body1}\n${body2}\n${body3}\n${body4}\n${body5}\n${body6}\n\n${body7}\n${body8}\n${body9}\n${body10}\n\nHave a nice day."`
-            #printf "%s" "$mbody" | $SADM_MUTT -s "$msub" "$SADM_MAIL_ADDR" >>$SADM_LOG 2>&1 
-            sadm_sendmail "$SADM_MAIL_ADDR" "$msub" "$mbody" ""
+            BODY_FILE=$(mktemp -q "$SADMIN/tmp/email_body_XXX")         # Email Body File
+            echo -e "$body1\n$body2\n$body3\n$body4\n$body5\n$body6\n\n$body7\n$body8\n\nHave a nice day" > $BODY_FILE
+
+            #cat $BODY_FILE| $SADM_MUTT -s "$msub" "$SADM_MAIL_ADDR" >>$SADM_LOG 2>&1 
+            sadm_sendmail "$SADM_MAIL_ADDR" "$msub" "$BODY_FILE" ""     # Send email to SysAdmin
+            if [ $? -ne 0 ] 
+                then sadm_write_err "[ ERROR ] Sending email to $SADM_MAIL_ADDR failed."
+                     sadm_write_err "For more information check the log ${SADM_LOG}."
+                else sadm_write_log "[ INFO ] Email sent to $SADM_MAIL_ADDR."
+            fi
     fi
 
-    sadm_write_log "System Updated with Success."
+    sadm_write_log " " 
+    sadm_write_log "----------"     
+    sadm_write_log "[ SUCCESS ] System Updated with Success."
     return 0
 }
+
+
 
 
 #
@@ -399,9 +432,9 @@ update_flatpak()
     # Check if flatpak program is available on this system.
     FLATPAK_PATH=$(sadm_get_command_path "flatpak" >/dev/null)          # Get full path of flatpak
     if [ $? -ne 0 ]                                                     # If not found
-       then sadm_write_log "[ OK ] Flatpak not installed on the system."
+       then sadm_write_log "[ INFO ] Flatpak not installed on the system."
             return 0
-       else sadm_write_log "[ OK ] Flatpak is installed on the system."
+       else sadm_write_log "[ INFO ] Flatpak is installed on the system."
     fi 
     
 #    flatpak remote-ls --updates | tee -a >> $SADM_LOG 2>&1 
@@ -470,23 +503,18 @@ perform_osupdate()
 {
 
     # Make sure no reboot on SADMIN server "WREBOOT="N".
-    if [ "$SADM_HOST_TYPE" = "S" ]  && [ "$WREBOOT" = "Y" ]             # No reboot of sadmin server
+    if [[ "$SADM_HOST_TYPE" == "S" ]]  && [[ "$WREBOOT" == "Y" ]]       # No reboot of sadmin server
        then WREBOOT="N"                                                 # No Auto Reboot on SADM Srv
             sadm_write_err "[ WARNING ] Refusing reboot after successful update on the SADMIN server" 
             sadm_write_err "[ WARNING ] You will need to reboot the system at your chosen time."
     fi
 
-    # Show user if the host will be rebooted after a successful update
-    if [ "$WREBOOT" = "Y" ]                     # If host is sadmin server
-        then sadm_write_log "[ OK ] Requested a reboot after a successful O/S update."
-        else sadm_write_log "[ OK ] Requested no reboot after a successful O/S update." 
-    fi 
-
     case "$(sadm_get_osname)" in                                        # Test OS Name
+
         "REDHAT"|"CENTOS"|"ALMA"|"ROCKY"|"FEDORA")
             pkg_mgm="dnf"                                               # Default value
-            sadm_get_command_path "dnf" >/dev/null                      # yum on system ? RHEL 7
-            if [ $? -eq 0 ] && [ $SADM_OS_MAJORVER -lt 8 ]
+            sadm_get_command_path "dnf" >/dev/null                      # dnf on system ? RHEL 8 
+            if [[ $? -eq 0 ]] && [[ "$SADM_OS_MAJORVER" -lt 8 ]]        # Do we use yum r dnf 
                then run_yum                                             # For RHEL 7 and prior ver.
                     SADM_EXIT_CODE=$?                                   # Save Return Code
                else run_dnf                                             # Version 8 and up use dnf
@@ -500,11 +528,16 @@ perform_osupdate()
             sadm_write_err "support@sadmin.ca"
             ;;
             
-        * ) 
+        "DEBIAN"|"RASPBIAN"|"UBUNTU"|"MINT" )
             run_apt
             SADM_EXIT_CODE=$?
             ;;
+
+        * ) sadm-write_error "System $(sadm_get_osname) not supported yet. "
+            ;; 
     esac
+        
+      
     return $SADM_EXIT_CODE
 }
 
@@ -515,12 +548,15 @@ perform_osupdate()
 #
 main_process()
 {
-    # Check for Automatic Update
-    UPDATE_AVAILABLE="N"                                                # Assume No Upd. Available
     check_available_update                                              # Update Avail./apt upd
     RC=$?                                                               # 0=UpdAvail 1=NoUpd 2=Error
+
+    # RC = 0 If Update Are Available, 
+    # RC = 1 If No Update Are Available, 
+    # RC = 2 If Problem Checking For Update
+    UPDATE_AVAILABLE="N"                                                # Assume No Upd. Available
     case $RC in                     
-        0)  UPDATE_AVAILABLE="Y"                                        # Set Upd to be done Flag ON
+        0)  UPDATE_AVAILABLE="Y"                                        # Update to be done Flag ON
             perform_osupdate                                            # Go Perform O/S Update
             SADM_EXIT_CODE=$?                                           # Save exit code of update
             ;;
@@ -538,7 +574,6 @@ main_process()
     update_sysinfo_file $SADM_EXIT_CODE                                 # Upd. Sysinfo Date & Status
 
 
-
     # If SADM_OSUPDATE_FLATPAK is set to Y in $SADMIN/cfg/sadmin.cfg 
     if [[ "$SADM_OSUPDATE_FLATPAK" == "Y" ]] 
         then update_flatpak
@@ -547,6 +582,10 @@ main_process()
                      ((SADM_EXIT_CODE++))                                # Incr exit code 
              fi
     fi
+
+    sadm_write_log " " 
+    sadm_write_log "----------"     
+    sadm_write_log "[ SUCCESS ] System Updated with Success."
 
     return $SADM_EXIT_CODE
 }
@@ -600,15 +639,10 @@ function cmd_options()
     SADM_EXIT_CODE=$?                                                   # Save Status returned 
 
     # If Reboot is requested (-r) and update available and the update was successful, advise user.
-    if [ "$WREBOOT" = "Y" ] && [ "$UPDATE_AVAILABLE" = "Y" ] && [ "$SADM_EXIT_CODE" -eq 0 ]     
-        then sadm_write_log "[ SUCESS ] Update successful, system will reboot in 1 Minute."
+    if [[ "$WREBOOT" == "Y" ]] && [[ "$UPDATE_AVAILABLE" == "Y" ]] && [[ "$SADM_EXIT_CODE" -eq 0 ]]
+        then sadm_write_log "[ SUCCESS ] Update successful, system will reboot in 1 Minute."
+             shutdown -r +1 "System reboot in 1 minute" >>$SADM_LOG     # Issue Shutdown & Reboot
     fi
     
     sadm_stop "$SADM_EXIT_CODE"                                         # End Process with exit Code
-
-    # If Reboot is requested and update were available and the update was successful, reboot system.
-    if [ "$WREBOOT" = "Y" ] && [ "$UPDATE_AVAILABLE" = "Y" ] && [ "$SADM_EXIT_CODE" -eq 0 ]     
-        then shutdown -r +1 "System will reboot in 1 minute."           # Issue Shutdown & Reboot
-    fi
-
     exit  "$SADM_EXIT_CODE"                                             # Exit script
