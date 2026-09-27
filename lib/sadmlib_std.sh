@@ -288,6 +288,7 @@
 #@2026_09_06 lib V04.92.12 Send email function revision to fix bug.
 #@2026_09_13 lib V04.92.13 New array 'SADM_OS_SUPPORTED','SADM_REDHAT_FAMILY','SADM_DEBIAN_FAMILY'
 #@2026_09_14 lib V04.92.14 Fix some epoch time math and code revision of sending email.
+#@2026_09_27 lib V04.92.15 Fix problem when sending multiple attachments by email (sadm_sendmail)
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x
@@ -295,7 +296,7 @@ trap 'exit 0' 2
 
 # V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
-export SADM_LIB_VER="04.92.14"                                          # This Library Version
+export SADM_LIB_VER="04.92.15"                                          # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -3167,54 +3168,55 @@ sadm_sendmail() {
     fi
 
     # Save Parameters Received (After Removing leading and trailing spaces).
-    maddr=$(echo "$1" |awk '{$1=$1;print}')                             # Send to this email
-    msubject="$2"                                                       # Save Alert Subject
-    mbody="$3"                                                          # Save Alert Body Mess file
-    if [ $# -eq 3 ] ; then attachfile="" ; else attachfile="$4" ; fi    # Comma separated FileName(s)
-
+    maddr=$(echo "$1" |awk '{$1=$1;print}')                             # Del Leading/Trailing space
+    msubject="$2"                                                       # Subject of Email
+    mbody="$3"                                                          # Body of the email.
+    attachfile=""                                                       # Clear attachment field
+    if [ $# -gt 3 ] ; then attachfile="$4" ; fi                         # Save attachments name(s)
 
     # Debug information if LIB_DEBUG is set to 5 or more
     if [ "$LIB_DEBUG" -gt 4 ] 
          then sadm_write_log "1- Email sent to : ${maddr}" 
-              sadm_write_log "2- Email subject : ${msubject}" 
-              sadm_write_log "3- Email body    : ${mbody}" 
-              sadm_write_log "4- Attachment    : ${attachfile}" 
+              sadm_write_log "2- Email subject : '${msubject}'" 
+              sadm_write_log "3- Email body    : '${mbody}'" 
+              sadm_write_log "4- Attachment    : '${attachfile}'" 
     fi
 
-    # Check if the '$mbody" is a filename that exist' ok continue.
+    # Body File ($3) can be a file containing the body or a string containing the body text.
     # If not a file, move the text to a file and make that file the body of the email.
-    if [[ ! -e "$mbody" ]]                                              # if file don't exist
-        then EMAIL_BODY=$(mktemp -q "$SADMIN/tmp/$SADM_INST}_XXX")      # Temp file for email body
-             echo -e "$mbody" > $EMAIL_BODY                             # Then $mbody is a string
-             mbody=$EMAIL_BODY                                          # $mbody is now a file
+    if [[ ! -f "$mbody" ]]                                              # if Body is not a file 
+        then wb="$SADMIN/tmp/${SADM_INST}.$$"                           # Work Email body file
+             if [[ -f "$wb" ]] ; then rm -f "$wb" ;fi                   # If file exist remove it
+             echo -e "$mbody" > $wb                                     # Output string to file
+             mbody=$wb                                                  # mbody name is now workfile
     fi                                                                  
-
-    # Verify if file attachment do exist and prepare to send (-a attachfile -a attachfile) 
+                                                             
+    # Verify if file attachment specified exist and prepare to send (-a attachfile -a attachfile) 
     # Mail with more than one attachment must have comma to separate them.
-    if [[ "$attachfile" != "" ]]                                        # If we have some attachment
-        then opt_a=""                                                   # Clear attachment option 
-             if [ $(expr index "$attachfile" ,) -ne 0 ]                 # Comma=Multiple attachments
-                then for file in ${aattaattachfilech//,/ }              # Process all Attachments
-                         do  
-                            if [[ -f "$file" ]]                         # File exist 
-                                then opt_a="$opt_a -a $file "           # Add Mutt attachment option
-                                else emsg="Attachment file '$file' doesn't exist."
-                                     echo "[ ERROR ] $emsg" >> $mbody
-                            fi
-                         done
-                     cat "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" $opt_a \-\- "$maddr"
-                     RC=$?
-                else if [[ -f "$attachfile" ]]                          # Attachment file exist
-                        then opt_a="-a $attachfile "                    # Add Mutt attachment option
+    opt_a=""                                                            # Clear attachment option 
+    if [[ -n "$attachfile" ]]                                           # Field empty ?
+        then if [ $(expr index "$attachfile" ,) -ne 0 ]                 # Comma=Multiple attachments
+                then for file in ${attachfile//,/ }                     # Process all Attachments
+                        do                              
+                        if [[ -f "$file" ]]                             # If attachment exist
+                            then opt_a+=" -a $file "                    # Add option -a with attach.    
+                            else emsg="Attachment file '$file' doesn't exist."
+                                 echo "[ WARNING ] $emsg" >> $mbody
+                        fi
+                        done
+                        cat "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" $opt_a \-\- "$maddr"  >>$SADM_LOG 2>&1
+                        RC=$?
+                else if [[ -f "$attachfile" ]] 
+                        then opt_a=" -a $attachfile " 
                         else emsg="Attachment file '$attachfile' doesn't exist."
-                             echo "[ ERROR ] $emsg" >> $mbody
-                             cat "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" "$maddr" -a "$attachfile" >>$SADM_LOG 2>&1 
-                             RC=$?
-                     fi
-             fi 
+                             echo "[ WARNING ] $emsg" >> $mbody
+                     fi 
+                     cat "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" "$maddr" -a "$attachfile" >>$SADM_LOG 2>&1 
+                     RC=$?
+             fi
         else cat "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" "$maddr" >>$SADM_LOG 2>&1
              RC=$?
-    fi              
+    fi 
                 
     return $RC
 } 
