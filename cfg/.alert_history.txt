@@ -18,11 +18,11 @@
 # | No. | Name    | Field Description                                           | Example       |
 # |:---:| --------| ------------------------------------------------------------| ------------- |
 # | 01  | hepoch  | Event or Start Date & Time in epoch time                    | 1789785000    |
-# | 02  | htype   | S=Script, W=Warning, E=Error, I=Info                        | S,W,E,I       |
-# | 03  | hsystem | Hostname where event happen                                 | batserver     |
-# | 04  | hscript | Event Module (Script name for script)                       | sadm_osupdate |
-# | 05  | hsdate  | Event Date (Start Date for Script)                          | 2026.09.16    |
-# | 06  | hstime  | Event Time (Start Time for Script)                          | 15:54:29      |
+# | 02  | hstime  | Event Time (Start Time for Script)                          | 15:54:29      |
+# | 03  | htype   | S=Script, W=Warning, E=Error, I=Info                        | S,W,E,I       |
+# | 04  | hsystem | Hostname where event happen                                 | batserver     |
+# | 05  | hscript | Event Module (Script name for script)                       | sadm_osupdate |
+# | 06  | hsdate  | Event Date (Start Date for Script)                          | 2026.09.16    |
 # | 07  | hgroup  | Alert Group to advise                                       | batsupport    |
 # | 08  | hdesc   | Alert Subject / Message                                     | "System Down" |
 # | 09  | hcount  | Number of alert sent counter (not use default to 1)         | 01            |
