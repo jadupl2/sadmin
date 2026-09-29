@@ -1,9 +1,7 @@
-# SADMIN Alert History File v2.5 (2026/09/24)
+# SADMIN Alert History File v2.6 (2026/09/29)
 # --------------------------------------------------------------------------------------------------
 # This file record each alert that is sent either by mail,SMS,Slack or Ntfy
-#   - Comment and blank line are ignored.
-#   - The ';' character is use as a field separator.
-# --------------------------------------------------------------------------------------------------
+#
 ### Definition of the Alert History file
 #   
 #   - The Alert History file is called 'alert_history.txt'.
