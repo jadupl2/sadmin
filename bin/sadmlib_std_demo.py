@@ -64,6 +64,7 @@
 #@2026_06_29 lib v03.27.01 Show Database info, if your are on the SADMIN server & db_used set to True.
 #@2026_07_03 lib v03.27.02 Add new variables related to NTFY notification system.
 #@2026_07_08 lib v03.28.00 Complete rewritten and update with new Variables.
+#@2026_10_01 lib V03.29.00 Replace variable 'SADM_ALERT_REPEAT' in sadmin.cfg, by 'SADM_ALERT_TTL'.
 # ==================================================================================================
 #
 try :
@@ -78,18 +79,16 @@ except ImportError as e:
 
 
 
-
-# --------------------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.58 (Compatible with previous one)
-# Setup some Global Variables and load the SADMIN standard library.
-# To use SADMIN tools, this section MUST be present near the top of your Python code.    
+ 
+# ---------   S T A R T   O F   S A D M I N   R E Q U I R E D   C O D E   S E C T I O N  -----------
+# v1.61 - Setup Variables and import SADMIN Python library '$SADMIN/lib/sadmlib2_std.py' as 'sa'.
+#       - To use SADMIN scripting tools, this section MUST be present near the top of your code.  
 # --------------------------------------------------------------------------------------------------
 try:
     SADM = os.environ['SADMIN']                                      # Get 'SADMIN' Environment Var.
 except KeyError as e:                                                # If 'SADMIN' is not defined
     print("Environment variable 'SADMIN' not defined.\n%s\nScript aborted.\n" % e) 
     sys.exit(1)                                                      # Go Back to O/S with Error
-
 try: 
     sys.path.insert(0, os.path.join(SADM, 'lib'))                    # Add SADMIN libdir to sys.path
     import sadmlib2_std as sa                                        # Import SADMIN Python Library
@@ -98,24 +97,23 @@ except ImportError as e:                                             # If Error 
     print("Please make sure the 'SADMIN' environment variable is defined.")
     sys.exit(1)                                                      # Go Back to O/S with Error
 
-# Global Variables 
-pid          = os.getpid()         # Get Current Process ID.
-hostname     = sa.get_hostname()   # Get Current hostname
-os_type      = sa.get_ostype()     # OS Type (In Uppercase,LINUX,AIX,MACOS)
-username     = sa.get_username()   # Get Current User Name
-debug        = 0                   # Debug Level 0-9 (Increase Verbose)
-exit_code    = 0                   # Default Return Code (0=Success 1-Error)
-cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh,sa.sadm_ssh_port) # /usr/bin/ssh with sadmin.cfg port
-
-# Variables shared with SADMIN Python Library.
+# Global Variables for you to use
+pid                   = os.getpid()                     # Get Current Process ID.
+hostname              = sa.get_hostname()               # Get Current hostname
+os_type               = sa.get_ostype()                 # OS Type (In Uppercase,LINUX,AIX,MACOS)
+username              = sa.get_username()               # Return Current User Name
+debug                 = 0                               # Debug Level 0-9 (Increase Verbose)
+exit_code             = 0                               # Default Return Code (0=Success 1-Error)
+cmd_ssh_full          = "%s -qnp %s " % (sa.cmd_ssh,sa.sadm_ssh_port)# SSH Command with default port
 sa.pn                 = os.path.basename(sys.argv[0])   # [P]rogram [N]ame with extension
 sa.inst               = sa.pn.split('.')[0]             # INSTance Name = Pgm Name Without Extension
-sa.ver                = "03.28.00" # Your Program VERSION number
-sa.desc               = "Short description of program"
+
+# Variables shared with SADMIN Python Library.
+sa.ver                = "03.29.00" # Your Program VERSION number
+sa.desc               = "Demonstrate functions & variables available to developers using SADMIN Tools"
 sa.root_only          = False      # Can Only be run by 'root'(True/False)
 sa.server_only        = False      # Run Only on SADMIN server(True/False) SADM_SERVER in sadmin.cfg
 sa.sadm_group_only    = False      # Run if part of SADMIN Group 'SADM_GROUP' in sadmin.cfg or root
-sa.quiet              = False      # If error in a function & quiet is: (give you ctrl of message)
 sa.multiple_exec      = False      # Allow running multiple Instance ?
 sa.quiet              = False      # If error in a function & quiet is: (ctrl show/hide of message)
                                    # False: Show error message and return the error number. 
@@ -134,17 +132,18 @@ sa.db_name            = "sadmin"   # Database Name (sadmin=default) SADM_DBNAME 
 sa.db_conn            = None       # Database Connector when using DB,  set by sa.start()
 sa.db_cur             = None       # Database Cursor if you use the DB, set by sa.start()
 
-#sa.max_logline        = 500        # Max. number of lines in log file SADM_MAX_LOGLINE in sadmin.cfg
-#sa.max_rchline        = 50         # Max. number of lines in rch file SADM_MAX_RCLINE in sadmin.cfg
+# Variables that can override default value taken from $SADMIN/cfg/sadmin.cfg
 #sa.sadm_alert_type    = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
-#sa.sadm_alert_repeat  = 0          # 0=Alert only once per alert. 14400=4hrs between alert repeat
 #sa.sadm_alert_group   = "default"  # Error Alert   Group defined in $SADMIN/cfg/alert_group.cfg
 #sa.sadm_warning_group = "warning"  # Warning Alert Group defined in $SADMIN/cfg/alert_group.cfg
 #sa.sadm_info_group    = "info"     # Info Alert    Group defined in $SADMIN/cfg/alert_group.cfg
-                                   # False: Show error message and return the error number. 
-
-
+#sa.sadm_alert_ttl     = 86400      # 86400 Sec =  24 Hrs Maximum sec. that an alert is still valid
+#sa.sadm_mail_addr     = ""         # Send email to ... default in sadmin.cfg 
+#sa.max_logline        = 500        # Max. number of lines in log file SADM_MAX_LOGLINE in sadmin.cfg
+#sa.max_rchline        = 50         # Max. number of lines in rch file SADM_MAX_RCLINE in sadmin.cfg
 # --------------------------------------------------------------------------------------------------
+
+
 
 
 
@@ -308,7 +307,7 @@ def print_user_variables():
     printline ("sa.sadm_alert_group","Error Group (Default Group)",sa.sadm_alert_group) 
     printline ("sa.sadm_warning_group","Warning Group Name",sa.sadm_warning_group) 
     printline ("sa.sadm_info_group","Info Group Name",sa.sadm_info_group) 
-    printline ("sa.sadm_alert_repeat","0=AlertOnce or Sec. before alert repeat","%d sec" % sa.sadm_alert_repeat) 
+    printline ("sa.sadm_alert_ttl","Alert will be ignored after 86400 Sec","%d sec" % sa.sadm_alert_ttl) 
     printline ("sa.sadm_mail_addr","SADMIN Administrator Email(s)",sa.sadm_mail_addr)
     printline ("sa.sadm_max_logline","Trim log to this maximum of lines","%d lines" % sa.sadm_max_logline)
     printline ("sa.sadm_max_rchline","Trim rch file to this max. of lines","%d lines" % sa.sadm_max_rchline)

@@ -133,6 +133,7 @@
 #@2026_09_10 server v3.65.02 Fix link problem to log and rch in email alert.
 #@2026_09_24 server v3.65.03 Alert file restructure, Code revision, fix in send_alert & sendmail.
 #@2026_09_29 server v3.65.04 Major review of alerting part of the script, correct some fixes.
+#@2026_10_01 server V3.65.05 Replace variable 'SADM_ALERT_REPEAT' in sadmin.cfg, by 'SADM_ALERT_TTL'.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT the ^C
@@ -167,7 +168,7 @@ export SADM_EXIT_CODE=0                                    # Pgm. Default Exit C
 export SADM_PN=$(basename "$0")                            # Script name(with extension)
 export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
 
-export SADM_VER='3.65.04'                                  # Script version number
+export SADM_VER='3.65.05'                                  # Script version number
 export SADM_DESC="Collect scripts results & SysMon status from all systems and send alert if needed." 
 export SADM_ROOT_ONLY="Y"                                  # Pgm. run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Pgm. run only on SADMIN server? [Y]/[N]
@@ -238,7 +239,6 @@ export OS_SCRIPT="sadm_osupdate_starter.sh"                             # OSUpda
 export BA_SCRIPT="sadm_backup.sh"                                       # Backup Script 
 export REAR_SCRIPT="sadm_rear_backup.sh"                                # ReaR Backup Script 
 export EXPORT_SCRIPT="sadm_vm_export.sh"                                # VM export Script 
-export SADM_ALERT_TTL=86400                                             # Ignore rch/rpt after 1 Day
 #
 # Reset Alert Totals Counters
 export total_alert=0 total_duplicate=0 total_ok=0 total_error=0 total_oldies=0
@@ -1958,7 +1958,8 @@ check_all_rch()
                 estatus="Running"                                       # Status of line
                 ((total_running++))
                 pline="[$ac] $start_time $ehost [$(sadm_toupper $etype)]cript running."
-                sadm_write_log "$pline\n      - Script '$escript' is currently running."
+                sadm_write_log "${pline}" 
+                sadm_write_log "      - Script '$escript' is currently running."
                 continue                                       # Go read next rch line
                 ;;
 
@@ -2044,8 +2045,9 @@ check_all_rch()
         sadm_write_log "   - Alert with no action needed : $total_noaction"
         sadm_write_log "   - Running script              : $total_running"
 
+        sadm_write_log " "                                               # Separation Blank Line
         sadm_write_log "${SADM_TEN_DASH}"                                # Print 10 Dash lineHistory
-                                                         
+        return 0 
 }
 
 

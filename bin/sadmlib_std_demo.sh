@@ -48,14 +48,15 @@
 #@2025_01_24 lib v03.30.00 Added lock functions examples.
 #@2026_07_03 lib v03.30.01 Added NFY notification variables to output.
 #@2026_07_08 lib v03.31.01 Complete Rewritten, update with new Variables and functions.
+#@2026_10_01 lib V03.31.02 Replace variable 'SADM_ALERT_REPEAT' in sadmin.cfg, by 'SADM_ALERT_TTL'.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
 
 
-                                                                                          
+                                                                                                        
 # ---------   S T A R T   O F   S A D M I N   R E Q U I R E D   C O D E   S E C T I O N  -----------
-# v1.60 - Setup Global Variables and load the SADMIN standard library $SADMIN/lib/sadmlib_std.sh.
+# v1.61 - Setup Global Variables and load the SADMIN standard library $SADMIN/lib/sadmlib_std.sh.
 #       - To use SADMIN scripting tools, this section MUST be present near the top of your code.    
 #
 # Make sure environment variable 'SADMIN' is defined, if it's not, exit with error message.
@@ -69,7 +70,6 @@ if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                   # If SADMIN shell lib
    then printf "\n[ ERROR ] SADMIN library '$SADMIN/lib/sadmlib_std.sh' can't be found.\n" ; exit 1 
 fi 
 
-
 # SADMIN Section of your program that is shared with SADMIN Bash Library.
 export SADM_TPID="$$"                                      # Script Process ID.
 export SADM_HOSTNAME=$(hostname -s)                        # Host name without Domain Name
@@ -77,33 +77,33 @@ export SADM_OS_TYPE=$(uname -s|tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 export SADM_DEBUG=0                                        # Debug Level(0-9), 0 = NoDebug
 export SADM_EXIT_CODE=0                                    # Pgm. Default Exit Code
-export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
+export SADM_PN=$(basename "$0")                            # Script name(with extension)
+export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
 
-# You Can Use & Change Variables Below To Your Needs (They Influence Execution Of Sadmin Library).
-export SADM_VER='03.31.01'                                 # Script version number
-export SADM_DESC="Describe what your program is doing."
+export SADM_VER='03.31.02'                                 # Script version number
+export SADM_DESC="Demonstrate functions & variables available to developers using SADMIN Tools."
 export SADM_ROOT_ONLY="N"                                  # Pgm. run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Pgm. run only on SADMIN server? [Y]/[N]
 export SADM_GROUP_ONLY='N'                                 # Pgm. run only if usr part of SADMIN Grp
+export SADM_MULTIPLE_EXEC="N"                              # Can Run Simultaneous copy of script Y/N
+export SADM_QUIET="N"                                      # Y=HideMsg & Error#  N=Show Msg & Error#
 export SADM_LOG_TYPE="B"                                   # Write log to [S]creen, [L]og, [B]oth
 export SADM_LOG_APPEND="N"                                 # Append log ? Y=AppendLog,N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y = ProduceLogHeader, N = NoLogHeader
 export SADM_LOG_FOOTER="Y"                                 # Y = ProduceLogFooter, N = NoLogFooter
-export SADM_MULTIPLE_EXEC="N"                              # Can Run Simultaneous copy of script Y/N
 export SADM_USE_RCH="Y"                                    # Update the RCH History File (Y/N)
-export SADM_QUIET="N"                                      # Y=HideMsg & Error#  N=Show Msg & Error#
 export SADM_ERRMSG=""                                      # Error Message returned by Library 
 export SADM_ERRNO=0                                        # Error number (0=OK) returned by Library
 export SADM_PID_TIMEOUT=7200                               # Sec. before PID file is remove,7200=2hr
 export SADM_LOCK_TIMEOUT=3600                              # Sec. before System LockFile is Del, 1hr
-export SADM_DB_USED="N"             
-export SADM_DB_NAME="sadmin"    
+export SADM_DB_USED="N"                                    # Use or Not, Got to be on SADMIN server
+export SADM_DB_NAME="sadmin"                               # Database Name SADM_DBNAME in sadmin.cfg
 export SADM_TMP_FILE1=$(mktemp -q "$SADMIN/tmp/sadm_tmp1_XXX") # Make tmpfile1, rm in sadm_stop()
 export SADM_TMP_FILE2=$(mktemp -q "$SADMIN/tmp/sadm_tmp2_XXX") # Make tmpfile2, rm in sadm_stop()
 export SADM_TMP_FILE3=$(mktemp -q "$SADMIN/tmp/sadm_tmp3_XXX") # Make tmpfile3, rm in sadm_stop()
 
 # Load SADMIN Bash Shell Library, ready to  be used.
-. "${SADMIN}/lib/sadmlib_std.sh"                           # Init SADMIN tools, Load SADMIN Library
+. "${SADMIN}/lib/sadmlib_std.sh"                           # Init SADMIN tools, load cfg files
 
 # Example of some functions and variable you can use.
 export SADM_OS_NAME=$(sadm_get_osname)                     # REDHAT,ROCKY,ALMA,CENTOS,DEBIAN,UBUNTU.
@@ -113,17 +113,15 @@ export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access S
 
 # Variables Below Are Taken From SADMIN Configuration File (sadmin.cfg) when the Library is loaded.
 # You Can Overridde them On A Per Program Basis (If Needed).
+#export SADM_ALERT_TYPE=1                                   # 0=NoAlert 1=OnError 2=OnOK 3=Always
 #export SADM_ALERT_GROUP="default"                          # Error Group Define in alert_group.cfg
 #export SADM_WARNING_GROUP="default"                        # Warning Alert Group (alert_group.cfg)   
 #export SADM_INFO_GROUP="default"                           # Info Alert Group (in alert_group.cfg)
-#export SADM_ALERT_TYPE=1                                   # 0=NoAlert 1=OnError 2=OnOK 3=Always
+#export SADM_ALERT_TTL=86400                                # 86400Sec=24Hrs that an alert is valid
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Send email to...default in sadmin.cfg
 #export SADM_MAX_LOGLINE=400                                # Nb of Lines to trim (0=NoTrim)
 #export SADM_MAX_RCHLINE=35                                 # Nb of Lines to trim (0=NoTrim)
-#export SADM_ALERT_REPEAT=0                                 # 0=No Alert Repeat, Sec. between Repeat
 # -------------------  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
-
-
 
 
 
@@ -291,7 +289,7 @@ print_user_variables()
     printline "\$SADM_ALERT_GROUP" "Error Group Name (Default)" "$SADM_ALERT_GROUP"
     printline "\$SADM_WARNING_GROUP" "Warning Alert group Name" "$SADM_WARNING_GROUP" 
     printline "\$SADM_INFO_GROUP" "Infor Alert Group Name" "$SADM_INFO_GROUP" 
-    printline "\$SADM_ALERT_REPEAT" "0=NoAlertRepeat, Repeat every sec." "$SADM_ALERT_REPEAT Sec."
+    printline "\$SADM_ALERT_TTL" "Alert will be ignored after 86400 Sec" "$SADM_ALERT_TTL Sec."
     printline "\$SADM_MAIL_ADDR" "Email Address of SADMIN SysAdmin " "$SADM_MAIL_ADDR" 
     printline "\$SADM_MAX_LOGLINE" "Nb of Lines to trim (0=NoTrim)" "$SADM_MAX_LOGLINE lines." 
     printline "\$SADM_MAX_RCHLINE" "Nb of Lines to trim (0=NoTrim)" "$SADM_MAX_RCHLINE lines." 
@@ -416,7 +414,7 @@ print_sadmin_cfg()
 
     print_section_header "----- Monitoring Section -----"
     printline "\$SADM_ALERT_TYPE" "0=NoMail 1=OnError 2=OnSuccess 3=All" "$SADM_ALERT_TYPE"
-    printline "\$SADM_ALERT_REPEAT" "Seconds to wait before repeat alert" "$SADM_ALERT_REPEAT"
+    printline "\$SADM_ALERT_TTL" "Alert will be ignored after 86400 Sec" "$SADM_ALERT_TTL"
     printline "\$SADM_ALERT_GROUP" "Error Group Name (Default Group)" "$SADM_ALERT_GROUP" 
     printline "\$SADM_WARNING_GROUP" "Default Alert Group" "$SADM_WARNING_GROUP" 
     printline "\$SADM_INFO_GROUP" "Default Alert Group" "$SADM_INFO_GROUP" 

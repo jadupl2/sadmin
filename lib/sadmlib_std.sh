@@ -289,6 +289,9 @@
 #@2026_09_13 lib V04.92.13 New array 'SADM_OS_SUPPORTED','SADM_REDHAT_FAMILY','SADM_DEBIAN_FAMILY'
 #@2026_09_14 lib V04.92.14 Fix some epoch time math and code revision of sending email.
 #@2026_09_27 lib V04.92.15 Fix problem when sending multiple attachments by email (sadm_sendmail)
+#@2026_10_01 lib V04.92.16 Remove variable 'SADM_ALERT_REPEAT' to sadmin.cfg, by SADM_ALERT_TTL.
+#@2026_10_01 lib V04.92.17 Add variable 'SADM_ALERT_TTL' to sadmin.cfg, Sec. (86400) alert stay valid.
+
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x
@@ -296,7 +299,7 @@ trap 'exit 0' 2
 
 # V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
-export SADM_LIB_VER="04.92.15"                                          # This Library Version
+export SADM_LIB_VER="04.92.17"                                          # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -425,7 +428,7 @@ export SADM_ALERT_TYPE=1                                    # 0=No 1=Err 2=Succe
 export SADM_ALERT_GROUP="default"                           # Error Group Define in alert_group.cfg
 export SADM_WARNING_GROUP="default"                         # Warning alert Group (alert_group.cfg)
 export SADM_INFO_GROUP="default"                            # Info alert Group (in alert_group.cfg)
-export SADM_ALERT_REPEAT=0                                  # 0=No Alert Repeat, Sec. between Repeat
+export SADM_ALERT_TTL=86400                                 # Alert Valid TimeToLive 86400 Sec=1Day
 export SADM_TEXTBELT_KEY="textbelt"                         # Textbelt.com API Key
 export SADM_TEXTBELT_URL="https://textbelt.com/text"        # Textbelt.com API URL
 export SADM_NTFY_EMAIL=""                                   # NTFY Email Address
@@ -2426,7 +2429,7 @@ sadm_load_config_file() {
                                             ;;
             "SADM_INFO_GROUP")              SADM_INFO_GROUP=$VALUE      # Info Grp (alert_group.cfg)
                                             ;;
-            "SADM_ALERT_REPEAT")            SADM_ALERT_REPEAT=$VALUE
+            "SADM_ALERT_TTL")               SADM_ALERT_TTL=$VALUE       # ALert valid time in seconds
                                             ;;
             "SADM_TEXTBELT_KEY")            SADM_TEXTBELT_KEY=$VALUE
                                             ;;
