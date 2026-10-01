@@ -289,7 +289,7 @@ print_user_variables()
     printline "\$SADM_ALERT_GROUP" "Error Group Name (Default)" "$SADM_ALERT_GROUP"
     printline "\$SADM_WARNING_GROUP" "Warning Alert group Name" "$SADM_WARNING_GROUP" 
     printline "\$SADM_INFO_GROUP" "Infor Alert Group Name" "$SADM_INFO_GROUP" 
-    printline "\$SADM_ALERT_TTL" "Alert will be ignored after 86400 Sec" "$SADM_ALERT_TTL Sec."
+    printline "\$SADM_ALERT_TTL" "Alert will be ignored after 86400Sec" "$SADM_ALERT_TTL Sec."
     printline "\$SADM_MAIL_ADDR" "Email Address of SADMIN SysAdmin " "$SADM_MAIL_ADDR" 
     printline "\$SADM_MAX_LOGLINE" "Nb of Lines to trim (0=NoTrim)" "$SADM_MAX_LOGLINE lines." 
     printline "\$SADM_MAX_RCHLINE" "Nb of Lines to trim (0=NoTrim)" "$SADM_MAX_RCHLINE lines." 

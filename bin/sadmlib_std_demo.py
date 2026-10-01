@@ -441,7 +441,7 @@ def print_sadmin_cfg(show_password=False):
 
     print_section_header  ("----- Monitoring Section -----")
     printline ("sa.sadm_alert_type","0=NoAlert 1=OnError 3=OnSuccess 4=All",sa.sadm_alert_type) 
-    printline ("sa.sadm_alert_repeat","0=AlertOnce or Sec. before alert repeat","%d sec" % sa.sadm_alert_repeat) 
+    printline ("sa.sadm_alert_ttl","Alert will be ignored after 86400Sec","%d sec" % sa.sadm_alert_ttl) 
     printline ("sa.sadm_alert_group","Error Group Name (Default Group)",sa.sadm_alert_group) 
     printline ("sa.sadm_warning_group","Warning Group Name",sa.sadm_warning_group) 
     printline ("sa.sadm_info_group","Info Group Name",sa.sadm_info_group) 
