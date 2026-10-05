@@ -391,8 +391,8 @@ export SADM_VMLIST="$SADM_DR_DIR/vm_list.txt"                           # List o
 
 
 # Definition of SADMIN log, error log, Result Code  History (.rch) and Monitor report file (*.rpt).
-export SADM_LOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SADM_INST}.log"     # Script Output LOG
-export SADM_ELOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SADM_INST}_e.log"  # Script Error LOG
+export SADM_LOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SADM_INST}.log"       # Script Output LOG
+export SADM_ELOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SADM_INST}_e.log"    # Script Error LOG
 export SADM_RCH_FILE="${SADM_RCH_DIR}/${SADM_HOSTNAME}_${SADM_INST}.rch"  # Result Code History File
 export SADM_RPT_FILE="${SADM_RPT_DIR}/${SADM_HOSTNAME}_${SADM_INST}.rpt"  # Monitor Report file (rpt)
 
@@ -475,7 +475,7 @@ export SADM_MONITOR_RECENT_EXCLUDE="sadm_nmon_watcher"      # SysMon Page Recent
 export SADM_SMTP_SERVER="smtp.gmail.com"                    # smtp mail relay host name
 export SADM_SMTP_PORT=587                                   # smtp port(25,465,587,2525)
 export SADM_SMTP_SENDER="sadmin.gmail.com"                  # Email address of sender 
-export SADM_GMPW=""    
+export SADM_GMPW=""                                         # GMail Password 
 
 # O?S Update Variables (Default Values here will be overridden by SADM CONFIG FILE Content)
 export SADM_OSUPDATE_INTERVAL=15                            # Threshold between o/s update in days 
@@ -2581,22 +2581,22 @@ sadm_load_config_file() {
 
 # If on client delete plain text email pwd file
 # On SADMIN Server recreate encrypted email pwd file from plaintext file.
-    if [ "$SADM_HOST_TYPE" != "S" ]                                   # If NOT on Admin Server
-        then rm -f $GMPW_FILE_TXT >>/dev/null                           # Del plain text email pwd
-        elif [ -r "$GMPW_FILE_TXT" ]                                    # On SADM srv & Text pwdfile         
-             then base64 $GMPW_FILE_TXT >$GMPW_FILE_B64                 # Recreate encrypt pwd file
-                  if [ $(id -u) -eq 0 ]
-                     then chmod 0664 $GMPW_FILE_B64 >/dev/null 2>&1
-                          chmod 0644 $GMPW_FILE_TXT >/dev/null 2>&1
-                          chown ${SADM_USER}:${SADM_GROUP} $GMPW_FILE_B64 >/dev/null 2>&1
-                          chown ${SADM_USER}:${SADM_GROUP} $GMPW_FILE_TXT >/dev/null 2>&1
-                  fi
+    if [[ "$SADM_HOST_TYPE" == "S" ]] && [[ -r "$GMPW_FILE_TXT" ]]      # Admin Server & Pwd txtfile
+       then base64 $GMPW_FILE_TXT >$GMPW_FILE_B64                       # Recreate encrypt pwd file
+            if [[ $(id -u) -eq 0 ]]
+               then chmod 0664 $GMPW_FILE_B64 >/dev/null 2>&1
+                    chmod 0644 $GMPW_FILE_TXT >/dev/null 2>&1
+                    chown ${SADM_USER}:${SADM_GROUP} $GMPW_FILE_B64 >/dev/null 2>&1
+                    chown ${SADM_USER}:${SADM_GROUP} $GMPW_FILE_TXT >/dev/null 2>&1
+            fi
+       else # No Text Pwd on Client, except on development system.
+            if [[ "$SADM_DEV_HOST" != "$SADM_HOSTNAME" ]] ;then rm -f $GMPW_FILE_TXT >>/dev/null ;fi
     fi
 
 # Set Email Account password from encrypted email account password file.
     SADM_GMPW=""
     if [ -r "$GMPW_FILE_B64" ] 
-        then SADM_GMPW=$(base64 -d "$GMPW_FILE_B64") 
+        then SADM_GMPW=$(base64 -d "$GMPW_FILE_B64")                    # Decrypt GM Password
              if [ $(id -u) -eq 0 ]
                 then chmod 0664 "$GMPW_FILE_B64" >/dev/null 2>&1
                      chown "${SADM_USER}":"${SADM_GROUP}" "$GMPW_FILE_B64" >/dev/null 2>&1
@@ -3014,18 +3014,18 @@ sadm_stop() {
                     ;;
                 1)  sadm_write_log "Script is set to only send an alert when it terminate with error."
                     if [ "$SADM_EXIT_CODE" -ne 0 ]
-                        then sadm_write_log "Script failed, alert will be send to '$SADM_ALERT_GROUP' alert group ${GRP_DESC}."
+                        then sadm_write_log "Script failed, a notification is sent to '$SADM_ALERT_GROUP' alert group '$GRP_DESC'."
                         else sadm_write_log "Script succeeded, no alert will be send (\$SADM_ALERT_TYPE=1)."
                     fi
                     ;;
-                2)  sadm_write_log "Script is set to send an alert only when it terminate with success."
+                2)  sadm_write_log "Script is set to send a notification only when it terminate with success."
                     if [ "$SADM_EXIT_CODE" -eq 0 ]
-                        then sadm_write_log "Script succeeded, alert will be send to '$SADM_ALERT_GROUP' alert group ${GRP_DESC}."
+                        then sadm_write_log "Script succeeded, alert will be send to '$SADM_ALERT_GROUP' alert group '$GRP_DESC'."
                         else sadm_write_log "Script failed, no alert will be send to '$SADM_ALERT_GROUP' alert group."
                     fi
                     ;;
-                3)  sadm_write_log "This script is set to always send an alert with termination status."
-                    sadm_write_log "Alert will be send to '$SADM_ALERT_GROUP' alert group ${GRP_DESC}."
+                3)  sadm_write_log "This script is set to always send a notification when it terminate."
+                    sadm_write_log "Alert will be send to '$SADM_ALERT_GROUP' alert group '$GRP_DESC'."
                     ;;
                 *)  sadm_write_log "Invalid '\$SADM_ALERT_TYPE' value, should be between 0 and 3."
                     sadm_write_log "It's set to '$SADM_ALERT_TYPE', changing it to 3."
@@ -3113,6 +3113,7 @@ sadm_stop() {
 #     $1 maddr (str)     : Email Address to which you want to send it
 #     $2 msubject (str)  : Subject of your email
 #     $3 mbody (str)     : Filename of the Text file containing the body of the email.
+#                          If $3 if not a file, the $3 will be consider a string as the body.
 #     $4 mfile (str)     : (Optional) Name of the files (MUST exist) to attach to the email.
 #                           - If no attachment, leave blank "")
 #                           - If you have multiple attachments, separate each file name with comma.
@@ -3124,7 +3125,7 @@ sadm_stop() {
 sadm_sendmail() {
 
     RC=0                                                                # Function Return Code
-    #LIB_DEBUG=0                                                         # Debug funtion Library Level
+    #LIB_DEBUG=5                                                         # Debug funtion Library Level
     if [ $# -lt 3 ] || [ $# -gt 4 ]                                     # Invalid No. of Parameter
         then sadm_write_err "[ ERROR ] Invalid number of argument, '$#' received by function ${FUNCNAME}."
              sadm_write_err "Should be 3 or 4 we received $# : $* "     # Show what received
@@ -3137,20 +3138,25 @@ sadm_sendmail() {
     mbody="$3"                                                          # Save Alert Body Mess file
     if [ $# -eq 3 ] ; then mfile="" ; else mfile="$4" ; fi              # Comma separated FileName(s)
 
+
     # Debug information if LIB_DEBUG is set to 5 or more
+    #LIB_DEBUG=5
     if [ "$LIB_DEBUG" -gt 4 ] 
          then sadm_write_log "1- Email sent to : ${maddr}" 
               sadm_write_log "2- Email subject : ${msubject}" 
               sadm_write_log "3- Email body    : ${mbody}" 
-              sadm_write_log "4- Email mfile(s): ${mfile}" 
-    fi 
+              sadm_write_log "4- Attachment    : ${mfile}" 
+    fi
+    #LIB_DEBUG=0
 
-    # Check if Body text file is readable and exist
-    if [[ ! -f "$mbody" || ! -r "$mbody" ]]
-        then sadm_write_err " " 
-             sadm_write_err "[ ERROR ] Email body file '$mbody' does not exist or is not readable in '$SADM_PN'."
-             return 1                                                   # Return Error to caller    
-    fi 
+    # Check if the '$mbody" is a filename that exist' ok continue.
+    # If not a file, move the text to a file and make that file the body of the email.
+    if [[ ! -f "$mbody" || ! -r "$mbody" ]]                             # Body not a readable file 
+        then EMAIL_BODY=$(mktemp -q "$SADMIN/tmp/$SADM_INST}_XXX")      # Temp file for email body
+             echo -e "$mbody" > $EMAIL_BODY                             # Then $mbody is a string
+             mbody=$EMAIL_BODY                                          # $mbody is now a file
+    fi                                                                  
+
 
     # Send mail with 1 or no attachment
     if [ $(expr index "$mfile" ,) -eq 0 ]                               # No comma = 1 file attach
@@ -3168,11 +3174,11 @@ sadm_sendmail() {
                 else cat "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" "$maddr" >>$SADM_LOG 2>&1 
                      RC=$?                                              # Save Error Number
             fi
-            if [ $RC -ne 0 ]                                            # Error sending email 
-                then wstatus="[ ERROR ] Sending email to $maddr"        # Advise Error sending Email
-                     sadm_write_err "${wstatus}"                        # Show Message to user 
-                     RC=1                                               # Set Error return code
-            fi 
+            #if [ $RC -ne 0 ]                                            # Error sending email 
+            #    then wstatus="[ ERROR ] Sending email to $maddr"        # Advise Error sending Email
+            #         sadm_write_err "${wstatus}"                        # Show Message to user 
+            #         RC=1                                               # Set Error return code
+            #fi 
     fi
 
     # Send mail with more than one attachment (filename are delimited by comma)

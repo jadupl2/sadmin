@@ -48,6 +48,7 @@
 #@2026_07_08 startup/shutdown v03.26.02 On server, remove some .rpt in $SADMIN/www/dat/HOSTNAME/rpt.
 #@2026_07_22 startup/shutdown v03.26.03 Add more info in Email sent to SADMIN admin.
 #@2026_09_04 startup/shutdown v03.26.04 Small improvements and code revision.
+#@2026_09_14 startup/shutdown v03.26.05 Add msg to disable email at startup 'SADM_EMAIL_STARTUP=N'.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
@@ -83,7 +84,7 @@ export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access S
 export SADM_PN=$(basename "$0")                            # Script name(with extension)
 export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
 
-export SADM_VER='03.26.04'                                 # Script version number
+export SADM_VER='03.26.05'                                 # Script version number
 export SADM_DESC="Script run when the system is started (systemctl enable --now sadmin)." 
 export SADM_ROOT_ONLY="Y"                                  # Pgm. run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Pgm. run only on SADMIN server? [Y]/[N]
@@ -154,10 +155,11 @@ poweron_mail()
     we="$SADM_MAIL_ADDR"                                                # Send email to SysAdmin
 
     # Create the Body of email in a text file 
-    echo -e "Salutation,\nSystem '${SADM_HOSTNAME}' has just started on $(date)" > $wb
-    echo -e "The program '${SADM_PN}' is reponsable for sending this email." >> $wb
-    echo -e "\nLast 3 Reboot :\n$(last reboot | head -3)" >> $wb
-    echo -e "\nLast 10 Users : \n$(last -10)" >> $wb
+    echo -e "Salutation,\n\nSystem '${SADM_HOSTNAME}' has just started on $(date)." > $wb
+    echo -e "The program '\$SADMIN/sys/${SADM_PN}' is reponsable for sending this email." >> $wb
+    echo -e "To stop receiving this email, change 'SADM_EMAIL_STARTUP' to 'N' in '$SADM_PN'." >>$wb    
+    echo -e "\nLast 5 Reboot :\n$(last reboot | head -5 | nl)" >> $wb
+    echo -e "\nLast 10 Users : \n$(last -10 | head -10 | nl)" >> $wb
     echo -e "\nFilesystems usage : \n$(df -hP --total)" >> $wb
     echo -e "\nHave a nice day !" >> $wb
 
