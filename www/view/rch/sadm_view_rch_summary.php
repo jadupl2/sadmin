@@ -42,6 +42,7 @@
 #@2025_05_07 web v2.14 Scripts status page - Enhance Web Page Layout.
 #@2026_03_07 web v2.15 Allow more space to system name
 #@2026_03_12 web v2.16 More space width adjustement.
+#@2026_10_01 web v2.17 Link to the rch file was not working, fixed it.
 
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -113,8 +114,8 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG              = False ;                                           # Debug Activated True/False
-$SVER               = "2.16" ;                                           # Current version number
-$CREATE_BUTTON      = False ;                                           # Yes Display Create Button
+$SVER               = "2.17" ;                                          # Current version number
+$CREATE_BUTTON      = False ;                                          # Yes Display Create Button
 $URL_HOST_INFO      = '/view/srv/sadm_view_server_info.php';            # Display Host Info URL
 $URL_VIEW_RCH       = '/view/rch/sadm_view_rchfile.php';                # View RCH File Content URL
 $URL_VIEW_FILE      = '/view/log/sadm_view_file.php';                   # View File Content URL
@@ -206,25 +207,29 @@ function display_script_array($con,$wpage_type,$script_array) {
             
             echo "\n<tr>";
 
+
             # Display System Name
             echo "\n<td align='left'>" ;
             echo "<a href='" . $URL_HOST_INFO . "?sel=" . $cserver . 
                  "' data-toggle='tooltip' title='" . $wdesc . "'>" .$cserver. "</a><br>" . $wdesc; 
             echo "</td>" ;
 
-            # Display Script Name
+
+            # Script Name 
             echo "\n<td align='left'>"   . $cname . "<br>" ;                  # Script Name Cell
-            # Display links to access the log file (If exist)
+
+            # Script log - Display links to access the log file (If exist)
             $LOGFILE = trim("${cserver}_${cname}.log");                 # Add .log to Script Name
             $log_name = SADM_WWW_DAT_DIR . "/" . $cserver . "/log/" . $LOGFILE ;
             if ((file_exists($log_name)) and (filesize($log_name) != 0))  {
-                echo "\n<a href='" . $URL_VIEW_FILE . "?filename=" . 
-                $log_name . "' data-toggle='tooltip' title='View script log file'>[log]</a>";
+                echo "\n<a href='" . $URL_VIEW_FILE . "?filename=";
+                echo "$log_name" . "' data-toggle='tooltip' title='View script log file'>[log]</a>";
             }else{
                 echo "&nbsp;";                                          # If No log exist for script
             }
  
-            # Show Link to error log if it exist on disk.
+
+            # Error log - Show Link to error log if it exist on disk.
             $ELOGFILE = trim("${cserver}_${cname}_e.log");              # Add _e.log to Script Name
             $elog_name = SADM_WWW_DAT_DIR . "/" . $cserver . "/log/" . $ELOGFILE ;
             if ((file_exists($elog_name)) and (filesize($elog_name) != 0))  {
@@ -234,16 +239,17 @@ function display_script_array($con,$wpage_type,$script_array) {
                 echo "&nbsp;";                                          # If No log exist for script
             }
 
-            # Display links to access history (rch) file (If exist)
+            # RCH File Display links to access history (rch) file (If exist)
             $RCHFILE = trim("${cserver}_${cname}.rch");                 # Add .rch to Script Name
             $rch_name  = SADM_WWW_DAT_DIR . "/" . $cserver . "/rch/" . $RCHFILE ;
             if ((file_exists($rch_name)) and (filesize($rch_name) != 0))  {
-                 echo "\n<a href='" . $URL_VIEW_RCH . "?host=". $cserver ."&filename=". $RCHFILE . 
+                 echo "\n<a href='" . $URL_VIEW_RCH . "?host=". $cserver ."&filename=". $rch_name . 
                    "' data-toggle='tooltip' title='View History (rch) file'>[rch]</a>";
             }else{
                 echo "&nbsp;";                                          # If no RCH Exist
             }
             
+
             # Display links to view script documentation (If exist)
             $doc_link = getdocurl("$cname") ;                           # Get Script Name Link
             if ( $doc_link != "" ) {                                    # We have a valid link ?
@@ -254,8 +260,10 @@ function display_script_array($con,$wpage_type,$script_array) {
             echo "</td>" ;
 
 
+
             # Display Start Date, Start Time
             echo "\n<td align='center'>" . $cdate1  . "&nbsp;" . substr($ctime1,0,5) . "</td>"; 
+
 
 
             # Display End Date, End Time And Elapse Script Time
