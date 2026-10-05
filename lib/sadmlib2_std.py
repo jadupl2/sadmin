@@ -88,6 +88,9 @@
 #@2026_07_03 lib v04.69.03 Fix minor bugs and add in sadmin.cfg, var. to use 'ntfy' as notification. 
 #@2027_07_08 lib v04.69.04 Fix Minor bugs (int Error)
 #@2026_09_04 lib V04.69.05 Add variable 'SADM_CFG_VERSION' to track the configuration file version.
+#@2026_09_24 lib V04.69.05 Minor change and remove debug info
+#@2026_10_01 lib V04.69.06 Remove variable 'SADM_ALERT_REPEAT' to sadmin.cfg, by SADM_ALERT_TTL.
+#@2026_10_01 lib V04.69.07 Add variable 'SADM_ALERT_TTL' to sadmin.cfg, Sec. (86400) alert stay valid.
 #  
 # --------------------------------------------------------------------------------------------------
 
@@ -145,7 +148,7 @@ except ImportError as e:
 
 # Global Variables to this script 
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.69.5"                              # This Library Version
+lib_ver             = "4.69.7"                              # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 
 start_time          = ""                                    # Script Start Date & Time
@@ -240,15 +243,13 @@ sadm_smtp_sender              = "sender@gmail.com"          # smtp sender accoun
 sadm_gmpw                     = ""                          # smtp sender password
 sadm_days_history             = 14                          # Days before moving alerts to Archive
 sadm_max_arc_line             = 1000                        # Maximum Nb. of Lines in Alert Archive
-sadm_email_startup            = "N"                         # Send email on startup to sysadmin ?
-sadm_email_shutdown           = "N"                         # Send email on shutdown to sysadmin 
 
 # SADMIN Alert Parameters (See alert_group.cfg for more info)
 sadm_alert_type               = 1                           # 0=No 1=Err 2=Succes 3=All
 sadm_alert_group              = "default"                   # Defined in alert_group.cfg
 sadm_warning_group            = "warning"                   # Defined in alert_group.cfg
 sadm_info_group               = "info"                      # Defined in alert_group.cfg
-sadm_alert_repeat             = 43200                       # Alarm Repeat Wait Time Sec
+sadm_alert_ttl                = 86400                       # Alarm Remain valid for 86400Sec=24Hrs
 sadm_textbelt_key             = "textbelt"                  # Textbelt.com Def. API Key
 sadm_textbelt_url             = "https://textbelt.com/text" # Textbelt.com Def. API URL
 sadm_ntfy_email               = " "                         # Email related to NTFY
@@ -836,7 +837,7 @@ def load_sadmin_config(cfg_file=f"{dir_cfg}/sadmin.cfg") :
             if "SADM_ALERT_GROUP"                == CFG_NAME: cfg_dict["SADM_ALERT_GROUP"]               = CFG_VALUE
             if "SADM_WARNING_GROUP"              == CFG_NAME: cfg_dict["SADM_WARNING_GROUP"]             = CFG_VALUE
             if "SADM_INFO_GROUP"                 == CFG_NAME: cfg_dict["SADM_INFO_GROUP"]                = CFG_VALUE
-            if "SADM_ALERT_REPEAT"               == CFG_NAME: cfg_dict["SADM_ALERT_REPEAT"]              = int(CFG_VALUE)
+            if "SADM_ALERT_TTL"                  == CFG_NAME: cfg_dict["SADM_ALERT_TTL"]                 = int(CFG_VALUE)
             if "SADM_TEXTBELT_KEY"               == CFG_NAME: cfg_dict["SADM_TEXTBELT_KEY"]              = CFG_VALUE
             if "SADM_TEXTBELT_URL"               == CFG_NAME: cfg_dict["SADM_TEXTBELT_URL"]              = CFG_VALUE
             if "SADM_NTFY_EMAIL"                 == CFG_NAME: cfg_dict["SADM_NTFY_EMAIL"]                = CFG_VALUE
@@ -869,8 +870,6 @@ def load_sadmin_config(cfg_file=f"{dir_cfg}/sadmin.cfg") :
             if "SADM_SMTP_SENDER"                == CFG_NAME: cfg_dict["SADM_SMTP_SENDER"]               = CFG_VALUE
             if "SADM_DAYS_HISTORY"               == CFG_NAME: cfg_dict["SADM_DAYS_HISTORY"]              = int(CFG_VALUE)
             if "SADM_MAX_ARC_LINE"               == CFG_NAME: cfg_dict["SADM_MAX_ARC_LINE"]              = int(CFG_VALUE)
-            if "SADM_EMAIL_STARTUP"              == CFG_NAME: cfg_dict["SADM_EMAIL_STARTUP"]             = CFG_VALUE
-            if "SADM_EMAIL_SHUTDOWN"             == CFG_NAME: cfg_dict["SADM_EMAIL_SHUTDOWN"]            = CFG_VALUE
 
             # Database Connection Information
             if "SADM_DBNAME"                     == CFG_NAME: cfg_dict["SADM_DBNAME"]                    = CFG_VALUE
@@ -983,7 +982,7 @@ def load_config_file(cfg_file):
 
     # Global variables to load with sadmin.cfg content;
     global \
-    sadm_alert_type              ,sadm_alert_group              ,sadm_alert_repeat                ,\
+    sadm_alert_type              ,sadm_alert_group              ,sadm_alert_ttl                   ,\
     sadm_warning_group           ,sadm_info_group               ,sadm_host_type                   ,\
     sadm_server                  ,sadm_domain                   ,sadm_mail_addr                   ,\
     sadm_cie_name                ,sadm_user                     ,sadm_group                       ,\
@@ -993,7 +992,6 @@ def load_config_file(cfg_file):
     sadm_smtp_server             ,sadm_smtp_port                ,sadm_smtp_sender                 ,\
     sadm_gmpw                    ,sadm_cfg_version                                                                 ,\
     sadm_days_history            ,sadm_max_arc_line                                               ,\
-    sadm_email_startup           ,sadm_email_shutdown                                             ,\
     sadm_network1                ,sadm_network2                 ,sadm_network3                    ,\
     sadm_network4                ,sadm_network5                 ,sadm_monitor_update_interval     ,\
     sadm_monitor_recent_count    ,sadm_monitor_recent_exclude                                     ,\
@@ -1086,7 +1084,7 @@ def load_config_file(cfg_file):
         if "SADM_ALERT_GROUP"              in CFG_NAME: sadm_alert_group             = CFG_VALUE
         if "SADM_WARNING_GROUP"            in CFG_NAME: sadm_warning_group           = CFG_VALUE
         if "SADM_INFO_GROUP"               in CFG_NAME: sadm_info_group              = CFG_VALUE
-        if "SADM_ALERT_REPEAT"             in CFG_NAME: sadm_alert_repeat            = int(CFG_VALUE)
+        if "SADM_ALERT_TTL"                in CFG_NAME: sadm_alert_ttl               = int(CFG_VALUE)
         if "SADM_TEXTBELT_KEY"             in CFG_NAME: sadm_textbelt_key            = CFG_VALUE
         if "SADM_TEXTBELT_URL"             in CFG_NAME: sadm_textbelt_url            = CFG_VALUE
         if "SADM_NTFY_EMAIL"               in CFG_NAME: sadm_ntfy_email              = CFG_VALUE
@@ -1119,8 +1117,6 @@ def load_config_file(cfg_file):
         if "SADM_SMTP_SENDER"              in CFG_NAME: sadm_smtp_sender             = CFG_VALUE
         if "SADM_DAYS_HISTORY"             in CFG_NAME: sadm_days_history            = int(CFG_VALUE)
         if "SADM_MAX_ARC_LINE"             in CFG_NAME: sadm_max_arc_line            = int(CFG_VALUE)
-        if "SADM_EMAIL_STARTUP"            in CFG_NAME: sadm_email_startup           = CFG_VALUE
-        if "SADM_EMAIL_SHUTDOWN"           in CFG_NAME: sadm_email_shutdown          = CFG_VALUE
 
         # Database Connection Information
         if "SADM_DBNAME"                   in CFG_NAME: sadm_dbname                  = CFG_VALUE
@@ -2377,9 +2373,10 @@ def load_cmd_path():
             if (cmd == 'ethtool')       : cmd_ethtool       = shutil.which(cmd)
             if (cmd == 'mutt')          : cmd_mutt          = shutil.which(cmd)
             if (cmd == 'curl')          : cmd_curl          = shutil.which(cmd)
-            if (cmd == 'rrdtool')       : cmd_rrdtool       = shutil.which(cmd)
             if sadm_host_type == "S" : 
-                if (cmd == 'mysql')     : cmd_mysql         = shutil.which(cmd) 
+               if (cmd == 'rrdtool')   : cmd_rrdtool       = shutil.which(cmd)
+            if sadm_host_type == "S" : 
+               if (cmd == 'mysql')     : cmd_mysql         = shutil.which(cmd) 
         else : 
             if lib_debug > 4 : print ("Command '%s' not found on system." % (cmd))
             requisites_status=False                                     # Requirement not Met

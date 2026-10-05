@@ -48,14 +48,15 @@
 #@2025_01_24 lib v03.30.00 Added lock functions examples.
 #@2026_07_03 lib v03.30.01 Added NFY notification variables to output.
 #@2026_07_08 lib v03.31.01 Complete Rewritten, update with new Variables and functions.
+#@2026_10_01 lib V03.31.02 Replace variable 'SADM_ALERT_REPEAT' in sadmin.cfg, by 'SADM_ALERT_TTL'.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
 
 
-                                                                                          
+                                                                                                        
 # ---------   S T A R T   O F   S A D M I N   R E Q U I R E D   C O D E   S E C T I O N  -----------
-# v1.60 - Setup Global Variables and load the SADMIN standard library $SADMIN/lib/sadmlib_std.sh.
+# v1.61 - Setup Global Variables and load the SADMIN standard library $SADMIN/lib/sadmlib_std.sh.
 #       - To use SADMIN scripting tools, this section MUST be present near the top of your code.    
 #
 # Make sure environment variable 'SADMIN' is defined, if it's not, exit with error message.
@@ -69,7 +70,6 @@ if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                   # If SADMIN shell lib
    then printf "\n[ ERROR ] SADMIN library '$SADMIN/lib/sadmlib_std.sh' can't be found.\n" ; exit 1 
 fi 
 
-
 # SADMIN Section of your program that is shared with SADMIN Bash Library.
 export SADM_TPID="$$"                                      # Script Process ID.
 export SADM_HOSTNAME=$(hostname -s)                        # Host name without Domain Name
@@ -77,33 +77,33 @@ export SADM_OS_TYPE=$(uname -s|tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 export SADM_DEBUG=0                                        # Debug Level(0-9), 0 = NoDebug
 export SADM_EXIT_CODE=0                                    # Pgm. Default Exit Code
-export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
+export SADM_PN=$(basename "$0")                            # Script name(with extension)
+export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
 
-# You Can Use & Change Variables Below To Your Needs (They Influence Execution Of Sadmin Library).
-export SADM_VER='03.31.01'                                 # Script version number
-export SADM_DESC="Describe what your program is doing."
+export SADM_VER='03.31.02'                                 # Script version number
+export SADM_DESC="Demo of functions & variables available when using SADMIN Tools."
 export SADM_ROOT_ONLY="N"                                  # Pgm. run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Pgm. run only on SADMIN server? [Y]/[N]
 export SADM_GROUP_ONLY='N'                                 # Pgm. run only if usr part of SADMIN Grp
+export SADM_MULTIPLE_EXEC="N"                              # Can Run Simultaneous copy of script Y/N
+export SADM_QUIET="N"                                      # Y=HideMsg & Error#  N=Show Msg & Error#
 export SADM_LOG_TYPE="B"                                   # Write log to [S]creen, [L]og, [B]oth
 export SADM_LOG_APPEND="N"                                 # Append log ? Y=AppendLog,N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y = ProduceLogHeader, N = NoLogHeader
 export SADM_LOG_FOOTER="Y"                                 # Y = ProduceLogFooter, N = NoLogFooter
-export SADM_MULTIPLE_EXEC="N"                              # Can Run Simultaneous copy of script Y/N
 export SADM_USE_RCH="Y"                                    # Update the RCH History File (Y/N)
-export SADM_QUIET="N"                                      # Y=HideMsg & Error#  N=Show Msg & Error#
 export SADM_ERRMSG=""                                      # Error Message returned by Library 
 export SADM_ERRNO=0                                        # Error number (0=OK) returned by Library
 export SADM_PID_TIMEOUT=7200                               # Sec. before PID file is remove,7200=2hr
 export SADM_LOCK_TIMEOUT=3600                              # Sec. before System LockFile is Del, 1hr
-export SADM_DB_USED="N"             
-export SADM_DB_NAME="sadmin"    
+export SADM_DB_USED="N"                                    # Use or Not, Got to be on SADMIN server
+export SADM_DB_NAME="sadmin"                               # Database Name SADM_DBNAME in sadmin.cfg
 export SADM_TMP_FILE1=$(mktemp -q "$SADMIN/tmp/sadm_tmp1_XXX") # Make tmpfile1, rm in sadm_stop()
 export SADM_TMP_FILE2=$(mktemp -q "$SADMIN/tmp/sadm_tmp2_XXX") # Make tmpfile2, rm in sadm_stop()
 export SADM_TMP_FILE3=$(mktemp -q "$SADMIN/tmp/sadm_tmp3_XXX") # Make tmpfile3, rm in sadm_stop()
 
 # Load SADMIN Bash Shell Library, ready to  be used.
-. "${SADMIN}/lib/sadmlib_std.sh"                           # Init SADMIN tools, Load SADMIN Library
+. "${SADMIN}/lib/sadmlib_std.sh"                           # Init SADMIN tools, load cfg files
 
 # Example of some functions and variable you can use.
 export SADM_OS_NAME=$(sadm_get_osname)                     # REDHAT,ROCKY,ALMA,CENTOS,DEBIAN,UBUNTU.
@@ -113,17 +113,15 @@ export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access S
 
 # Variables Below Are Taken From SADMIN Configuration File (sadmin.cfg) when the Library is loaded.
 # You Can Overridde them On A Per Program Basis (If Needed).
+#export SADM_ALERT_TYPE=1                                   # 0=NoAlert 1=OnError 2=OnOK 3=Always
 #export SADM_ALERT_GROUP="default"                          # Error Group Define in alert_group.cfg
 #export SADM_WARNING_GROUP="default"                        # Warning Alert Group (alert_group.cfg)   
 #export SADM_INFO_GROUP="default"                           # Info Alert Group (in alert_group.cfg)
-#export SADM_ALERT_TYPE=1                                   # 0=NoAlert 1=OnError 2=OnOK 3=Always
+#export SADM_ALERT_TTL=86400                                # 86400Sec=24Hrs that an alert is valid
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Send email to...default in sadmin.cfg
 #export SADM_MAX_LOGLINE=400                                # Nb of Lines to trim (0=NoTrim)
 #export SADM_MAX_RCHLINE=35                                 # Nb of Lines to trim (0=NoTrim)
-#export SADM_ALERT_REPEAT=0                                 # 0=No Alert Repeat, Sec. between Repeat
 # -------------------  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
-
-
 
 
 
@@ -138,7 +136,7 @@ export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access S
 #
 lcount=0                                                                # Print Line Counter
 first_page="Y"                                                          # No Form Feed on first page
-
+sample_output="N"                                                       # Don't show Sample Output
 
 
 # --------------------------------------------------------------------------------------------------
@@ -154,6 +152,7 @@ show_usage()
     printf "\n   ${BOLD}${YELLOW}[-v]${NORMAL}\t\t\tShow script version information"
     printf "\n   ${BOLD}${YELLOW}[-p]${NORMAL}\t\t\tShow password on output"
     printf "\n   ${BOLD}${YELLOW}[-t]${NORMAL}\t\t\tShow TextBelt Key on output"
+    printf "\n   ${BOLD}${YELLOW}[-s]${NORMAL}\t\t\tShow sample output (no email,no password,..."
     printf "\n\n" 
 }
 
@@ -265,7 +264,6 @@ print_user_variables()
     printline "\$SADM_DEBUG" "Debug Level (0-9), 0 = NoDebug" "$SADM_DEBUG" 
     printline "\$SADM_EXIT_CODE" "Current value of script exit code" "$SADM_EXIT_CODE" 
     printline "\$SADM_SSH_CMD" "SSH command to access client" "$SADM_SSH_CMD" 
-    printf    "\n" 
     printline "\$SADM_PN" "Script Name With Extension" "$SADM_PN"
     printline "\$SADM_INST" "Script name(without extension)" "$SADM_INST" 
     printline "\$SADM_VER" "Program Version Number" "$SADM_VER" 
@@ -290,9 +288,12 @@ print_user_variables()
     printline "\$SADM_ALERT_TYPE" "0=NoAlert 1=OnError 2=OnOK 3=Always" "$SADM_ALERT_TYPE" 
     printline "\$SADM_ALERT_GROUP" "Error Group Name (Default)" "$SADM_ALERT_GROUP"
     printline "\$SADM_WARNING_GROUP" "Warning Alert group Name" "$SADM_WARNING_GROUP" 
-    printline "\$SADM_INFO_GROUP" "Infor Alert Group Name" "$SADM_INFO_GROUP" 
-    printline "\$SADM_ALERT_REPEAT" "0=NoAlertRepeat, Repeat every sec." "$SADM_ALERT_REPEAT Sec."
-    printline "\$SADM_MAIL_ADDR" "Email Address of SADMIN SysAdmin " "$SADM_MAIL_ADDR" 
+    printline "\$SADM_INFO_GROUP" "Info Alert Group Name" "$SADM_INFO_GROUP" 
+    printline "\$SADM_ALERT_TTL" "Alert will be ignored after 86400Sec" "$SADM_ALERT_TTL Sec."
+    if [[ "$sample_output" == "Y" ]] 
+        then printline "\$SADM_MAIL_ADDR" "SADMIN Administrator Default Email" "batman@batcave.com"
+        else printline "\$SADM_MAIL_ADDR" "SADMIN Administrator Default Email" "$SADM_MAIL_ADDR"
+    fi
     printline "\$SADM_MAX_LOGLINE" "Nb of Lines to trim (0=NoTrim)" "$SADM_MAX_LOGLINE lines." 
     printline "\$SADM_MAX_RCHLINE" "Nb of Lines to trim (0=NoTrim)" "$SADM_MAX_RCHLINE lines." 
 } 
@@ -307,7 +308,7 @@ function print_start_stop()
 
     echo ""
     echo "'sadm_start()' - Bash Library Function   "
-    echo ""
+    #echo ""
     echo "    The 'sadm_start()' function basically initialize the SADMIN environment."
     echo "    When you call 'sadm_start()', it will only come back to caller if everything went OK."
     echo "    Otherwise, it will advise the user of the error and exit(1)."
@@ -327,11 +328,11 @@ function print_start_stop()
     echo "       If PID file exist and execution time (sec) is less than the '\$SADM_PID_TIMEOUT', show error message and exit(1)."
     echo "       If PID file exist and execution time (sec) exceed the '\$SADM_PID_TIMEOUT' a new '\$SADM_PID_FILE' is created"
     echo "       and execution is resume."
-    echo " "
+    #echo " "
     echo "   Notes:  If any unrecoverable error occurs while executing 'sadm_start()', it will advise" 
     echo "           the user of the error and exit(1). See example in '$SADMIN/bin/sadm_template.sh'."
     echo ""
-    echo ""
+    #echo ""
     echo "'sadm_stop(exit_code)'"
     echo "    The sadm_stop(exitcode) basically collect and write information in log and in 'rch' file."
     echo ""
@@ -347,7 +348,7 @@ function print_start_stop()
     echo "    9) If $SADM_MAX_RCLINE is not zero, trim the 'rch' according to user choice in 'SADM_MAX_RCLINE'." 
     echo "   10) Set permission and owner/group to log and rch files."
     echo "   11) If on the SADMIN server, then rch and log are immediatly web central directory."
-    echo " "
+    #echo " "
     echo "    Notes: This should be the one of the last function called at the end of your program."
     echo "           See example in '$SADMIN/bin/sadm_template.sh'."
     echo ""
@@ -381,16 +382,20 @@ print_sadmin_cfg()
     printline "\$SADM_DBPORT" "SADMIN Database Host TCP Port" "$SADM_DBPORT"
     # Read Only User (default is 'squery')
     printline "\$SADM_RO_DBUSER" "SADMIN Database Read Only User" "$SADM_RO_DBUSER"
+    
     presult="$SADM_RO_DBPWD"                                            # Actual Content of Variable
-    if [ "$show_password" = "N" ] ; then presult="*Hidden*" ;fi         # Don't show DB Password
+    if [[ "$show_password" == "N" ]] || [[ "$sample_output" == "Y" ]] ; then presult="*Hidden*" ;fi      
     printline "\$SADM_RO_DBPWD" "SADMIN Database Read Only User Pwd" "$presult"
+    
     # Read & Write User (default is 'sadmin')
     printline "\$SADM_RW_DBUSER" "SADMIN Database Read/Write User" "$SADM_RW_DBUSER"
+    
     presult="$SADM_RW_DBPWD"                                            # Actual Content of Variable
-    if [ "$show_password" = "N" ] ; then presult="*Hidden*" ;fi         # Don't show DB Password
+    if [[ "$show_password" == "N" ]] || [[ "$sample_output" == "Y" ]] ; then presult="*Hidden*" ;fi      
     printline "\$SADM_RW_DBPWD" "SADMIN Database Read/Write User Pwd" "$presult"
+    
     presult="$DBPASSFILE"
-    if [ "$show_password" = "N" ] ; then presult="*Hidden*" ;fi 
+    if [[ "$show_password" == "N" ]] || [[ "$sample_output" == "Y" ]] ; then presult="*Hidden*" ;fi      
     printline "\$DBPASSFILE" "SADMIN Database User Password File" "$presult"
 
 
@@ -403,36 +408,55 @@ print_sadmin_cfg()
 
 
     print_section_header "----- Email Section -----"
-    printline "\$SADM_MAIL_ADDR" "SADMIN Administrator Default Email" "$SADM_MAIL_ADDR"
+    if [[ "$sample_output" == "Y" ]] 
+        then printline "\$SADM_MAIL_ADDR" "SADMIN Administrator Default Email" "batman@batcave.com"
+        else printline "\$SADM_MAIL_ADDR" "SADMIN Administrator Default Email" "$SADM_MAIL_ADDR"
+    fi
     printline "\$SADM_SMTP_SERVER" "Your Internet SMTP Server Name" "$SADM_SMTP_SERVER" 
     printline "\$SADM_SMTP_PORT" "Your Internet SMTP Server Port" "$SADM_SMTP_PORT"
-    printline "\$SADM_SMTP_SENDER" "Your Internet Sender Email" "$SADM_SMTP_SENDER"
-    presult="$SADM_GMPWD"         
-    if [ "$show_password" = "N" ] ; then presult="*Hidden*" ;fi         # Don't show Mail Password
-    printline "\$SADM_GMPW" "Your Internet Sender Password" "$SADM_GMPW"
-    printline "\$SADM_EMAIL_STARTUP" "Email Administrator on Startup" "$SADM_EMAIL_STARTUP" 
-    printline "\$SADM_EMAIL_SHUTDOWN" "Email Administrator on Shutdown" "$SADM_EMAIL_SHUTDOWN"
+    presult="$SADM_SMTP_SENDER"
+    if [[ "$sample_output" == "Y" ]] ; then presult="batman@batcave.com" ;fi
+    printline "\$SADM_SMTP_SENDER" "Your Internet Sender Email" "$presult"
+    
+    presult="$SADM_GMPW"         
+    if [[ "$show_password" == "N" ]] || [[ "$sample_output" == "Y" ]] ; then presult="*Hidden*" ;fi      
+    printline "\$SADM_GMPW" "Your Internet Sender Password" "$presult"
 
 
     print_section_header "----- Monitoring Section -----"
     printline "\$SADM_ALERT_TYPE" "0=NoMail 1=OnError 2=OnSuccess 3=All" "$SADM_ALERT_TYPE"
-    printline "\$SADM_ALERT_REPEAT" "Seconds to wait before repeat alert" "$SADM_ALERT_REPEAT"
+    printline "\$SADM_ALERT_TTL" "Alert will be ignored after 86400Sec" "$SADM_ALERT_TTL"
     printline "\$SADM_ALERT_GROUP" "Error Group Name (Default Group)" "$SADM_ALERT_GROUP" 
-    printline "\$SADM_WARNING_GROUP" "Default Alert Group" "$SADM_WARNING_GROUP" 
-    printline "\$SADM_INFO_GROUP" "Default Alert Group" "$SADM_INFO_GROUP" 
+    printline "\$SADM_WARNING_GROUP" "Default Warning Alert Group" "$SADM_WARNING_GROUP" 
+    printline "\$SADM_INFO_GROUP" "Default Info Alert Group" "$SADM_INFO_GROUP" 
     printline "\$SADM_SSH_PORT" "SSH Port to communicate with client" "$SADM_SSH_PORT"
+    
     # Alerting with Textbelt   
-    presult="*Hidden*"                                                      # Default Hidden
-    if [ "$show_textbelt" = "Y" ] ;then presult="$SADM_TEXTBELT_KEY" ;fi    # TextBelt API Key
     printline "\$SADM_TEXTBELT_URL" "TextBelt.com API URL" "$SADM_TEXTBELT_URL"
-    printline "\$SADM_TEXTBELT_KEY" "TextBelt.com API Key" "$SADM_TEXTBELT_KEY"
+    presult="*Hidden*"                                                      # Default Hidden
+    if [[ "$show_password" == "N" ]] || [[ "$sample_output" == "Y" ]] ; then presult="*Hidden*" ;fi      
+    if [ "$show_textbelt" = "Y" ] ;then presult="$SADM_TEXTBELT_KEY" ;fi    # TextBelt API Key
+    printline "\$SADM_TEXTBELT_KEY" "TextBelt.com API Key" "$presult"
+    
     # Alerting with NTFY 
-    printline "\$SADM_NTFY_EMAIL" "NTFY Email Address" "$SADM_NTFY_EMAIL"                
-    printline "\$SADM_NTFY_PWD"   "NTFY Password"      "$SADM_NTFY_PWD"     
-    printline "\$SADM_NTFY_TOKEN" "NTFY Token"         "$SADM_NTFY_TOKEN"      
+    presult="$SADM_NTFY_EMAIL"
+    if [[ "$show_password" == "N" ]] || [[ "$sample_output" == "Y" ]] ; then presult="*Hidden*" ;fi      
+    printline "\$SADM_NTFY_EMAIL" "NTFY Email Address" "$presult"                
+
+    presult="$SADM_NTFY_PWD"
+    if [[ "$show_password" == "N" ]] || [[ "$sample_output" == "Y" ]] ; then presult="*Hidden*" ;fi
+    printline "\$SADM_NTFY_PWD"   "NTFY Password"      "$presult"     
+
+    presult="$SADM_NTFY_TOKEN"
+    if [[ "$show_password" == "N" ]] || [[ "$sample_output" == "Y" ]] ; then presult="*Hidden*" ;fi
+    printline "\$SADM_NTFY_TOKEN" "NTFY Token"         "$presult"
+
     printline "\$SADM_NTFY_TOPIC" "NTFY Topic"         "$SADM_NTFY_TOPIC"        
     printline "\$SADM_NTFY_URL"   "NTFY URL"           "$SADM_NTFY_URL"
-    printline "\$SADM_NTFY_USER"  "NTFY User"          "$SADM_NTFY_USER"                 
+
+    presult="$SADM_NTFY_USER"
+    if [[ "$show_password" == "N" ]] || [[ "$sample_output" == "Y" ]] ; then presult="*Hidden*" ;fi
+    printline "\$SADM_NTFY_USER"  "NTFY User"          "$presult"                 
 
 
     print_section_header "----- Files and Logs pruning Section -----" 
@@ -474,7 +498,7 @@ print_sadmin_cfg()
     printline "\$SADM_BACKUP_NFS_SERVER" "NFS Backup IP or Server Name" "$SADM_BACKUP_NFS_SERVER"   
     printline "\$SADM_BACKUP_NFS_SERVER_VER" "NFS Backup server Version" "$SADM_BACKUP_NFS_SERVER_VER"
     printline "\$SADM_BACKUP_NFS_MOUNT_POINT" "NFS Backup Mount Point" "$SADM_BACKUP_NFS_MOUNT_POINT"
-    printline "\$SADM_BACKUP_DIF" "Alert if cur. vs prev. size differ   " "${SADM_BACKUP_DIF}%"
+    printline "\$SADM_BACKUP_DIF" "Alert if cur. vs prev. size differ" "${SADM_BACKUP_DIF}%"
     printline "\$SADM_BACKUP_INTERVAL" "Alert if Backup older than X days" "$SADM_BACKUP_INTERVAL days"
     printline "\$SADM_DAILY_BACKUP_TO_KEEP" "Nb. of Daily Backup to keep" "$SADM_DAILY_BACKUP_TO_KEEP copies"
     printline "\$SADM_WEEKLY_BACKUP_TO_KEEP" "Nb. of Weekly Backup to keep" "$SADM_WEEKLY_BACKUP_TO_KEEP copies"
@@ -484,7 +508,7 @@ print_sadmin_cfg()
     printline "\$SADM_MONTHLY_BACKUP_DATE" "Monthly Backup Date (1-28)" "$SADM_MONTHLY_BACKUP_DATE"
     printline "\$SADM_YEARLY_BACKUP_MONTH" "Month to take Yearly Backup (1-12)" "$SADM_YEARLY_BACKUP_MONTH"
     printline "\$SADM_YEARLY_BACKUP_DATE" "Date to do Yearly Backup(1-DayInMth)" "$SADM_YEARLY_BACKUP_DATE"
-    printline "\$SADM_BACKUP_BATCH_MODE" "Run backup script in batch mode (Y/N)" "$SADM_BACKUP_BATCH_MODE"
+    printline "\$SADM_BACKUP_BATCH_MODE" "Run backup script in batch mode(Y/N)" "$SADM_BACKUP_BATCH_MODE"
     printline "\$SADM_BACKUP_BATCH_START_TIME" "Start time for launch batch backup" "$SADM_BACKUP_BATCH_START_TIME"
     printline "\$SADM_BACKUP_CONCURRENT" "Concurrent backup processes" "$SADM_BACKUP_CONCURRENT"
     printline "\$SADM_BACKUP_BATCH_DAY2RUN" "0=AnyDay, 1=Su,2=Mo,3=Tu,...7=Sa" "$SADM_BACKUP_BATCH_DAY2RUN"
@@ -557,11 +581,11 @@ print_directory()
     printline "\$SADM_DBB_DIR" "Database Backup Directory" "$SADM_DBB_DIR"
     printline "\$SADM_SETUP_DIR" "SADMIN Installation/Update Dir." "$SADM_SETUP_DIR"
 
-    printline "\$SADM_USR_DIR" "User/System specific directory " "$SADM_USR_DIR"
-    printline "\$SADM_UBIN_DIR" "User/System specific bin/script Dir." "$SADM_UBIN_DIR"
-    printline "\$SADM_ULIB_DIR" "User/System specific library Dir." "$SADM_ULIB_DIR"
-    printline "\$SADM_UDOC_DIR" "User/System specific documentation" "$SADM_UDOC_DIR"
-    printline "\$SADM_UMON_DIR" "User/System specific SysMon Scripts" "$SADM_UMON_DIR"
+    printline "\$SADM_USR_DIR"  "User specific directory " "$SADM_USR_DIR"
+    printline "\$SADM_UBIN_DIR" "User specific bin/script Dir." "$SADM_UBIN_DIR"
+    printline "\$SADM_ULIB_DIR" "User specific library Dir." "$SADM_ULIB_DIR"
+    printline "\$SADM_UDOC_DIR" "User specific documentation" "$SADM_UDOC_DIR"
+    printline "\$SADM_UMON_DIR" "User specific SysMon Scripts" "$SADM_UMON_DIR"
     
     printline "\$SADM_WWW_DIR" "SADMIN Web Site Root Directory" "$SADM_WWW_DIR"
     printline "\$SADM_WWW_DOC_DIR" "SADMIN Web Documentation Dir." "$SADM_WWW_DOC_DIR"
@@ -628,7 +652,7 @@ print_command_path()
         then printline "\$SADM_MYSQL" "'mysql' binary location" "$SADM_MYSQL"
         else SADM_MYSQL=""
     fi 
-    printline "\$SADM_SSH" "'ssh' use to SSH on SADMIN client" "$SADM_SSH"
+    printline "\$SADM_SSH" "'ssh' binary location" "$SADM_SSH"
     printline "\$SADM_SED" "'sed' binary location" "$SADM_SED"
     sadm_write_log " "
 }
@@ -698,6 +722,7 @@ print_db_variables()
 #   -h) Show Help Usage, 
 #   -v) Show Script Version,  
 #   -t) Show TextBelt Keys
+#   -s) Sample output for documentation (NoEmail Address or password)
 #   -p) Show password on output
 #   -X) Delete the script PID file before running the script.
 # --------------------------------------------------------------------------------------------------
@@ -705,8 +730,9 @@ function cmd_options()
 {
     show_password="N"                                                   # Don't show DB Password
     show_textbelt="N"                                                   # Don't show TextBelt Key
+    sample_output="N"                                                   # Don't show Sample Output
 
-    while getopts "d:hvXpt" opt ; do                                    # Loop to process Switch
+    while getopts "d:hvXpts" opt ; do                                   # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
                num=$(echo "$SADM_DEBUG" |grep -E "^\-?[0-9]?\.?[0-9]+$") # Valid if Level is Numeric
@@ -721,6 +747,8 @@ function cmd_options()
                exit 0                                                   # Back to shell
                ;;
             p) show_password="Y"                                        # Flag to Show DB Password
+               ;;                
+            s) sample_output="Y"                                        # Flag to Show Sample Output
                ;;                                                       
             t) show_textbelt="Y"                                        # Flag to Show TextBelt Key
                ;;                  
