@@ -30,6 +30,7 @@
 #@2026_05_30 lib v01.02.01 Added 'quiet' parameter to 'db_connect()' function in SADMIN Python Library.
 #@2026_06_24 lib v01.02.02 Trap Keybord control-C and stop grancefully.
 #@2026_08_19 lib v01.02.03 Minors output changes.
+#@2026_10_01 lib v01.02.04 Remove variable 'SADM_ALERT_REPEAT' to sadmin.cfg, by SADM_ALERT_TTL.
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -53,7 +54,7 @@ except ImportError as e:                                            # Trap Impor
 
  
 # ---------   S T A R T   O F   S A D M I N   R E Q U I R E D   C O D E   S E C T I O N  -----------
-# v1.60 - Setup Variables and import SADMIN Python library '$SADMIN/lib/sadmlib2_std.py' as 'sa'.
+# v1.61 - Setup Variables and import SADMIN Python library '$SADMIN/lib/sadmlib2_std.py' as 'sa'.
 #       - To use SADMIN scripting tools, this section MUST be present near the top of your code.  
 # --------------------------------------------------------------------------------------------------
 try:
@@ -81,7 +82,7 @@ sa.pn                 = os.path.basename(sys.argv[0])   # [P]rogram [N]ame with 
 sa.inst               = sa.pn.split('.')[0]             # INSTance Name = Pgm Name Without Extension
 
 # Variables shared with SADMIN Python Library.
-sa.ver                = "01.02.03" # Your Program VERSION number
+sa.ver                = "01.02.04" # Your Program VERSION number
 sa.desc               = "Description of program '%s'" % (sa.pn) # Your Program DESCRIPTION 
 sa.root_only          = False      # Can Only be run by 'root'(True/False)
 sa.server_only        = False      # Run Only on SADMIN server(True/False) SADM_SERVER in sadmin.cfg
@@ -109,7 +110,7 @@ sa.db_cur             = None       # Database Cursor if you use the DB, set by s
 #sa.sadm_alert_group   = "default"  # Error Alert   Group defined in $SADMIN/cfg/alert_group.cfg
 #sa.sadm_warning_group = "warning"  # Warning Alert Group defined in $SADMIN/cfg/alert_group.cfg
 #sa.sadm_info_group    = "info"     # Info Alert    Group defined in $SADMIN/cfg/alert_group.cfg
-#sa.sadm_alert_repeat  = 0          # 0=Alert Only Once or Interval in Seconds before alert repeat
+#sa.sadm_alert_ttl     = 86400      # 86400 Sec =  24 Hrs Maximum sec. that an alert is still valid
 #sa.sadm_mail_addr     = ""         # Send email to ... default in sadmin.cfg 
 #sa.max_logline        = 500        # Max. number of lines in log file SADM_MAX_LOGLINE in sadmin.cfg
 #sa.max_rchline        = 50         # Max. number of lines in rch file SADM_MAX_RCLINE in sadmin.cfg

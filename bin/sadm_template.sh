@@ -35,18 +35,19 @@
 #
 # YYYY-MM-DD GROUPS   vXX.XX.XX ------------------ 69 Characters to describe change ----------------
 #@2026_08_02 template v00.01.00 Initial development version.
+#@2026_10_01 template v00.02.00 Replace variable 'SADM_ALERT_REPEAT' in sadmin.cfg by 'SADM_ALERT_TTL'.
 #
 #---------------------------------------------------------------------------------------------------
 # Add trap to catch ^C and stop script gracefully.
 trap 'sadm_stop 1; exit 1' 2                                        
-#set -x
+#set -x                                                                  # Turn on debugging trace
      
 
 
 
                                                                                           
 # ---------   S T A R T   O F   S A D M I N   R E Q U I R E D   C O D E   S E C T I O N  -----------
-# v1.60 - Setup Global Variables and load the SADMIN standard library $SADMIN/lib/sadmlib_std.sh.
+# v1.61 - Setup Global Variables and load the SADMIN standard library $SADMIN/lib/sadmlib_std.sh.
 #       - To use SADMIN scripting tools, this section MUST be present near the top of your code.    
 #
 # Make sure environment variable 'SADMIN' is defined, if it's not, exit with error message.
@@ -60,7 +61,6 @@ if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                   # If SADMIN shell lib
    then printf "\n[ ERROR ] SADMIN library '$SADMIN/lib/sadmlib_std.sh' can't be found.\n" ; exit 1 
 fi 
 
-
 # SADMIN Section of your program that is shared with SADMIN Bash Library.
 export SADM_TPID="$$"                                      # Script Process ID.
 export SADM_HOSTNAME=$(hostname -s)                        # Host name without Domain Name
@@ -68,11 +68,10 @@ export SADM_OS_TYPE=$(uname -s|tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 export SADM_DEBUG=0                                        # Debug Level(0-9), 0 = NoDebug
 export SADM_EXIT_CODE=0                                    # Pgm. Default Exit Code
-export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 export SADM_PN=$(basename "$0")                            # Script name(with extension)
 export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
 
-export SADM_VER='00.01.00'                                 # Pgm. Version Number
+export SADM_VER='00.02.00'                                 # Pgm. Version Number
 export SADM_DESC="Describe what your program is doing."    # Short Desc. of your script.
 export SADM_ROOT_ONLY="N"                                  # Pgm. run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Pgm. run only on SADMIN server? [Y]/[N]
@@ -101,6 +100,7 @@ export SADM_TMP_FILE3=$(mktemp -q "$SADMIN/tmp/sadm_tmp3_XXX") # Make tmpfile3, 
 export SADM_OS_NAME=$(sadm_get_osname)                     # REDHAT,ROCKY,ALMA,CENTOS,DEBIAN,UBUNTU.
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.5)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
+export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
 # Variables Below Are Taken From SADMIN Configuration File (sadmin.cfg) when the Library is loaded.
 # You Can Overridde them On A Per Program Basis (If Needed).
@@ -108,7 +108,7 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #export SADM_ALERT_GROUP="default"                          # Error Group Define in alert_group.cfg
 #export SADM_WARNING_GROUP="default"                        # Warning Alert Group (alert_group.cfg)   
 #export SADM_INFO_GROUP="default"                           # Info Alert Group (in alert_group.cfg)
-#export SADM_ALERT_REPEAT=0                                 # 0=No Alert Repeat, Sec. between Repeat
+#export SADM_ALERT_TTL=86400                                # Alert will be ignored after 86400 Sec
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Send email to...default in sadmin.cfg
 #export SADM_MAX_LOGLINE=400                                # Nb of Lines to trim (0=NoTrim)
 #export SADM_MAX_RCHLINE=35                                 # Nb of Lines to trim (0=NoTrim)

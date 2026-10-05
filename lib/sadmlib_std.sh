@@ -287,6 +287,11 @@
 #@2026_09_04 lib V04.92.11 Add variable 'SADM_CFG_VERSION' to track the configuration file version.
 #@2026_09_06 lib V04.92.12 Send email function revision to fix bug.
 #@2026_09_13 lib V04.92.13 New array 'SADM_OS_SUPPORTED','SADM_REDHAT_FAMILY','SADM_DEBIAN_FAMILY'
+#@2026_09_14 lib V04.92.14 Fix some epoch time math and code revision of sending email.
+#@2026_09_27 lib V04.92.15 Fix problem when sending multiple attachments by email (sadm_sendmail)
+#@2026_10_01 lib V04.92.16 Remove variable 'SADM_ALERT_REPEAT' to sadmin.cfg, by SADM_ALERT_TTL.
+#@2026_10_01 lib V04.92.17 Add variable 'SADM_ALERT_TTL' to sadmin.cfg, Sec. (86400) alert stay valid.
+
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x
@@ -294,7 +299,7 @@ trap 'exit 0' 2
 
 # V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
-export SADM_LIB_VER="04.92.13"                                          # This Library Version
+export SADM_LIB_VER="04.92.17"                                          # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -423,7 +428,7 @@ export SADM_ALERT_TYPE=1                                    # 0=No 1=Err 2=Succe
 export SADM_ALERT_GROUP="default"                           # Error Group Define in alert_group.cfg
 export SADM_WARNING_GROUP="default"                         # Warning alert Group (alert_group.cfg)
 export SADM_INFO_GROUP="default"                            # Info alert Group (in alert_group.cfg)
-export SADM_ALERT_REPEAT=0                                  # 0=No Alert Repeat, Sec. between Repeat
+export SADM_ALERT_TTL=86400                                 # Alert Valid TimeToLive 86400 Sec=1Day
 export SADM_TEXTBELT_KEY="textbelt"                         # Textbelt.com API Key
 export SADM_TEXTBELT_URL="https://textbelt.com/text"        # Textbelt.com API URL
 export SADM_NTFY_EMAIL=""                                   # NTFY Email Address
@@ -434,8 +439,6 @@ export SADM_NTFY_URL="https://ntfy.sh"                      # NTFY URL
 export SADM_NTFY_USER=""                                    # NTFY User
 export SADM_DAYS_HISTORY=14                                 # Days to move alert to Arch
 export SADM_MAX_ARC_LINE=1000                               # Max Lines in Alert Archive
-export SADM_EMAIL_STARTUP="N"                               # No email on Startup
-export SADM_EMAIL_SHUTDOWN="N"                              # No email on Shutdown
 export SADM_CIE_NAME="Your Company Name"                    # Company Name
 export SADM_HOST_TYPE=""                                    # [S]erver/[C]lient/[D]ev.
 export SADM_USER="sadmin"                                   # sadmin user account
@@ -1095,6 +1098,12 @@ sadm_show_version()
 # 
 sadm_trimfile() {
     wfile=$1 ; maxline=$2                                               # Save FileName & Trim Num.
+    tail -n $maxline $wfile > $wfile.tmp && mv $wfile.tmp $wfile
+    RC=$?
+    return $RC
+
+
+
     wreturn_code=0                                                      # Default Return Code 
     if [ $# -ne 2 ]                                                     # Should have rcv 1 Param
         then SADM_ERRMSG΅"${FUNCNAME}: Should receive 2 Parameters"  # Show User Info on Err
@@ -1420,23 +1429,56 @@ sadm_convert_sec2hms()
 }
 
 
+sadm_validate_datetime() {
+    local input="$1"
+
+    # 1. Enforce the exact layout using a Regular Expression
+    # Matches: 4 digits, dot, 2 digits, dot, 2 digits, space, 2 digits, colon, 2 digits, colon, 2 digits
+    if [[ ! "$input" =~ ^[0-9]{4}\.[0-9]{2}\.[0-9]{2}[[:space:]][0-9]{2}:[0-9]{2}:[0-9]{2}$ ]]
+        then return 1
+    fi
+
+    # 2. Transform dots to dashes so the GNU 'date' utility can parse it
+    # 'YYYY.MM.DD HH:MM:SS' becomes 'YYYY-MM-DD HH:MM:SS'
+    local normalized_input="${input//./-}"
+
+    # 3. Use GNU date to verify if it is a real calendar date/time
+    if date -d "$normalized_input" >/dev/null 2>&1; then
+        return 0  # Valid
+    else
+        return 1  # Invalid calendar date (e.g., 2026.02.31)
+    fi
+}
+
 
 # --------------------------------------------------------------------------------------------------
 #    Calculate elapse time between date1 (YYYY.MM.DD HH:MM:SS) and date2 (YYYY.MM.DD HH:MM:SS)
 #    Date 1 MUST be greater than date 2  (Date 1 = Like End time,  Date 2 = Start Time )
+# Return: 
+#   The difference ($1 - $2) in the format HH:MM:SS.
 # --------------------------------------------------------------------------------------------------
 sadm_elapse() {
-    if [ $# -ne 2 ]                                                     # Should have rcv 1 Param
+
+    if [ $# -ne 2 ]                                             # Should have received 2 Parameters
         then sadm_write_err "Invalid number of parameter received by $FUNCNAME function."
-             sadm_write_err "Please correct script please, script aborted." # Advise that will abort
-             sadm_stop 1                                                # Prepare to exit gracefully
-             exit 1                                                     # Terminate the script
+             sadm_write_err "Function received this '$@'."
+             return 1                                           # Return error to caller
     fi
-    w_endtime=$1                                                        # Save Ending Time
-    w_starttime=$2                                                      # Save Start Time
-    epoch_start=`sadm_date_to_epoch "$w_starttime"`                     # Get Epoch for Start Time
-    epoch_end=`sadm_date_to_epoch   "$w_endtime"`                       # Get Epoch for End Time
-    epoch_elapse=`echo "$epoch_end - $epoch_start" | $SADM_BC`          # Substract End - Start time
+
+    w_endtime=$1                                                        # Ending YYYY.MM.DD HH:MM:SS
+    w_starttime=$2                                                      # Start YYYY.MM.DD HH:MM:SS
+
+
+    #sadm_validate_datetime "$w_endtime"                         # Check if a valid Date & Time
+    #if [[ $? -ne 0 ]] ; then echo "00:00:00" ; return ; fi      # If Invalid, default is 00:00:00
+#   # if [[ $? -ne 0 ]] ; then sadm_write_err "Invalid end date : '$w_endtime'"   ; return 1 ; fi
+    #sadm_validate_datetime "$w_startime" 
+    #if [[ $? -ne 0 ]] ; then echo "00:00:00" ; return ; fi
+#   # if [[ $? -ne 0 ]] ; then sadm_write_err "Invalid start date : '$w_starttime'" ; return 1 ; fi
+
+    epoch_start=$(sadm_date_to_epoch "$w_starttime")            # Convert Start Time to Epoch Time
+    epoch_end=$(sadm_date_to_epoch "$w_endtime")                # Convert End time to Epoch Time
+    epoch_elapse=$(($epoch_end - $epoch_start))                 # Calculate Elepase time in Seconds
 
     if [ "$epoch_elapse" = "" ] ; then epoch_elapse=0 ; fi              # If nb Sec Greater than 1Hr
     whour=00 ; wmin=00 ; wsec=00
@@ -2391,7 +2433,7 @@ sadm_load_config_file() {
                                             ;;
             "SADM_INFO_GROUP")              SADM_INFO_GROUP=$VALUE      # Info Grp (alert_group.cfg)
                                             ;;
-            "SADM_ALERT_REPEAT")            SADM_ALERT_REPEAT=$VALUE
+            "SADM_ALERT_TTL")               SADM_ALERT_TTL=$VALUE       # ALert valid time in seconds
                                             ;;
             "SADM_TEXTBELT_KEY")            SADM_TEXTBELT_KEY=$VALUE
                                             ;;
@@ -2544,10 +2586,6 @@ sadm_load_config_file() {
             "SADM_DAYS_HISTORY" )           SADM_DAYS_HISTORY=$VALUE
                                             ;; 
             "SADM_MAX_ARC_LINE" )           SADM_MAX_ARC_LINE=$VALUE
-                                            ;; 
-            "SADM_EMAIL_STARTUP" )          SADM_EMAIL_STARTUP=$VALUE
-                                            ;; 
-            "SADM_EMAIL_SHUTDOWN" )         SADM_EMAIL_SHUTDOWN=$VALUE
                                             ;; 
             "SADM_OSUPDATE_INTERVAL" )      SADM_OSUPDATE_INTERVAL=$VALUE
                                             ;; 
@@ -3113,8 +3151,13 @@ sadm_stop() {
 #     $1 maddr (str)     : Email Address to which you want to send it
 #     $2 msubject (str)  : Subject of your email
 #     $3 mbody (str)     : Filename of the Text file containing the body of the email.
+<<<<<<< HEAD
 #                          If $3 if not a file, the $3 will be consider a string as the body.
 #     $4 mfile (str)     : (Optional) Name of the files (MUST exist) to attach to the email.
+=======
+#                          If not a file, the $3 will be consider a string as the body.
+#     $4 mfile (str)     : Attachments (Optional) Names of the files (MUST exist) to attach to email
+>>>>>>> 2f8883612be9401401b64c287bedb2ab2b5d3074
 #                           - If no attachment, leave blank "")
 #                           - If you have multiple attachments, separate each file name with comma.
 # Returns:
@@ -3133,16 +3176,18 @@ sadm_sendmail() {
     fi
 
     # Save Parameters Received (After Removing leading and trailing spaces).
-    maddr=$(echo "$1" |awk '{$1=$1;print}')                             # Send to this email
-    msubject="$2"                                                       # Save Alert Subject
-    mbody="$3"                                                          # Save Alert Body Mess file
-    if [ $# -eq 3 ] ; then mfile="" ; else mfile="$4" ; fi              # Comma separated FileName(s)
+    maddr=$(echo "$1" |awk '{$1=$1;print}')                             # Del Leading/Trailing space
+    msubject="$2"                                                       # Subject of Email
+    mbody="$3"                                                          # Body of the email.
+    attachfile=""                                                       # Clear attachment field
+    if [ $# -gt 3 ] ; then attachfile="$4" ; fi                         # Save attachments name(s)
 
 
     # Debug information if LIB_DEBUG is set to 5 or more
     #LIB_DEBUG=5
     if [ "$LIB_DEBUG" -gt 4 ] 
          then sadm_write_log "1- Email sent to : ${maddr}" 
+<<<<<<< HEAD
               sadm_write_log "2- Email subject : ${msubject}" 
               sadm_write_log "3- Email body    : ${mbody}" 
               sadm_write_log "4- Attachment    : ${mfile}" 
@@ -3179,29 +3224,49 @@ sadm_sendmail() {
             #         sadm_write_err "${wstatus}"                        # Show Message to user 
             #         RC=1                                               # Set Error return code
             #fi 
+=======
+              sadm_write_log "2- Email subject : '${msubject}'" 
+              sadm_write_log "3- Email body    : '${mbody}'" 
+              sadm_write_log "4- Attachment    : '${attachfile}'" 
+>>>>>>> 2f8883612be9401401b64c287bedb2ab2b5d3074
     fi
 
-    # Send mail with more than one attachment (filename are delimited by comma)
-    opt_a=""                                                            # -a attachment cumulative
-    if [ $(expr index "$mfile" ,) -ne 0 ]                               # comma = multiple attach
-       then for file in ${mfile//,/ }
-                do if [ ! -r "$file" ]                                  # Attachment Not Readable ?
-                        then emsg="Attachment file '$file' can't be read or doesn't exist."
-                             sadm_write_err "$emsg"                     # Avise user of error
-                             echo -e "\n\n${emsg}\n" >> $mbody          # Add Err Msg to Email Body
-                             RC=1                                       # Set Error return code
-                        else opt_a="$opt_a -a $file "                   # Add -a attach Cmd Option
-                             #echo "opt_a = $opt_a"
-                   fi 
-                done
-            cat "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" $opt_a \-\- "$maddr"
-            RC=$?                                                       # Save Error Number
-            if [ $RC -ne 0 ]                                            # Error sending email 
-                then wstatus="[ ERROR ] Sending email to $maddr"        # Advise Error sending Email
-                     sadm_write_err "${wstatus}\n"                      # Show Message to user 
-            fi
-    fi
-    LIB_DEBUG=0                                                         # Debug Library Level
+    # Body File ($3) can be a file containing the body or a string containing the body text.
+    # If not a file, move the text to a file and make that file the body of the email.
+    if [[ ! -f "$mbody" ]]                                              # if Body is not a file 
+        then wb="$SADMIN/tmp/${SADM_INST}.$$"                           # Work Email body file
+             if [[ -f "$wb" ]] ; then rm -f "$wb" ;fi                   # If file exist remove it
+             echo -e "$mbody" > $wb                                     # Output string to file
+             mbody=$wb                                                  # mbody name is now workfile
+    fi                                                                  
+                                                             
+    # Verify if file attachment specified exist and prepare to send (-a attachfile -a attachfile) 
+    # Mail with more than one attachment must have comma to separate them.
+    opt_a=""                                                            # Clear attachment option 
+    if [[ -n "$attachfile" ]]                                           # Field empty ?
+        then if [ $(expr index "$attachfile" ,) -ne 0 ]                 # Comma=Multiple attachments
+                then for file in ${attachfile//,/ }                     # Process all Attachments
+                        do                              
+                        if [[ -f "$file" ]]                             # If attachment exist
+                            then opt_a+=" -a $file "                    # Add option -a with attach.    
+                            else emsg="Attachment file '$file' doesn't exist."
+                                 echo "[ WARNING ] $emsg" >> $mbody
+                        fi
+                        done
+                        cat "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" $opt_a \-\- "$maddr"  >>$SADM_LOG 2>&1
+                        RC=$?
+                else if [[ -f "$attachfile" ]] 
+                        then opt_a=" -a $attachfile " 
+                        else emsg="Attachment file '$attachfile' doesn't exist."
+                             echo "[ WARNING ] $emsg" >> $mbody
+                     fi 
+                     cat "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" "$maddr" -a "$attachfile" >>$SADM_LOG 2>&1 
+                     RC=$?
+             fi
+        else cat "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" "$maddr" >>$SADM_LOG 2>&1
+             RC=$?
+    fi 
+                
     return $RC
 } 
 
@@ -3547,31 +3612,6 @@ EOF
     fi 
 
 
-# Add New variable 'SADM_EMAIL_STARTUP' and 'SADM_EMAIL_SHUTDOWN' to sadmin.cfg, if not in yet.
-    grep -q "SADM_EMAIL_STARTUP" $SADM_CFG_FILE
-    if [ $? -ne 0 ] 
-        then 
-        ( cat <<'EOF'
-
-
-#----------------------------------------------------------------------------
-# If you want to received and email before each system shutdown & after 
-# a system startup.
-# Default value is 'N'. 
-#
-# To enable this email you need to enable the sadmin.service, with the 
-# following command : 'systemctl enable sadmin'
-#
-# This will execute the startup script ($SADMIN/sys/sadm_startup.sh) when 
-# a system is starting and the shutdown script ($SADMIN/sys/sadm_shutdown.sh)
-# when the system is being brought down.
-#----------------------------------------------------------------------------
-SADM_EMAIL_STARTUP = N
-SADM_EMAIL_SHUTDOWN = N 
-
-EOF
-) >> $SADM_CFG_FILE
-    fi 
 
 # Add New variable 'SADM_PWD_RANDOM' to sadmin.cfg, if not in yet.
     grep -q "SADM_PWD_RANDOM" $SADM_CFG_FILE

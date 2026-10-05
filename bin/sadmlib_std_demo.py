@@ -64,6 +64,7 @@
 #@2026_06_29 lib v03.27.01 Show Database info, if your are on the SADMIN server & db_used set to True.
 #@2026_07_03 lib v03.27.02 Add new variables related to NTFY notification system.
 #@2026_07_08 lib v03.28.00 Complete rewritten and update with new Variables.
+#@2026_10_01 lib V03.29.00 Replace variable 'SADM_ALERT_REPEAT' in sadmin.cfg, by 'SADM_ALERT_TTL'.
 # ==================================================================================================
 #
 try :
@@ -78,18 +79,16 @@ except ImportError as e:
 
 
 
-
-# --------------------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.58 (Compatible with previous one)
-# Setup some Global Variables and load the SADMIN standard library.
-# To use SADMIN tools, this section MUST be present near the top of your Python code.    
+ 
+# ---------   S T A R T   O F   S A D M I N   R E Q U I R E D   C O D E   S E C T I O N  -----------
+# v1.61 - Setup Variables and import SADMIN Python library '$SADMIN/lib/sadmlib2_std.py' as 'sa'.
+#       - To use SADMIN scripting tools, this section MUST be present near the top of your code.  
 # --------------------------------------------------------------------------------------------------
 try:
     SADM = os.environ['SADMIN']                                      # Get 'SADMIN' Environment Var.
 except KeyError as e:                                                # If 'SADMIN' is not defined
     print("Environment variable 'SADMIN' not defined.\n%s\nScript aborted.\n" % e) 
     sys.exit(1)                                                      # Go Back to O/S with Error
-
 try: 
     sys.path.insert(0, os.path.join(SADM, 'lib'))                    # Add SADMIN libdir to sys.path
     import sadmlib2_std as sa                                        # Import SADMIN Python Library
@@ -98,24 +97,23 @@ except ImportError as e:                                             # If Error 
     print("Please make sure the 'SADMIN' environment variable is defined.")
     sys.exit(1)                                                      # Go Back to O/S with Error
 
-# Global Variables 
-pid          = os.getpid()         # Get Current Process ID.
-hostname     = sa.get_hostname()   # Get Current hostname
-os_type      = sa.get_ostype()     # OS Type (In Uppercase,LINUX,AIX,MACOS)
-username     = sa.get_username()   # Get Current User Name
-debug        = 0                   # Debug Level 0-9 (Increase Verbose)
-exit_code    = 0                   # Default Return Code (0=Success 1-Error)
-cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh,sa.sadm_ssh_port) # /usr/bin/ssh with sadmin.cfg port
-
-# Variables shared with SADMIN Python Library.
+# Global Variables for you to use
+pid                   = os.getpid()                     # Get Current Process ID.
+hostname              = sa.get_hostname()               # Get Current hostname
+os_type               = sa.get_ostype()                 # OS Type (In Uppercase,LINUX,AIX,MACOS)
+username              = sa.get_username()               # Return Current User Name
+debug                 = 0                               # Debug Level 0-9 (Increase Verbose)
+exit_code             = 0                               # Default Return Code (0=Success 1-Error)
+cmd_ssh_full          = "%s -qnp %s " % (sa.cmd_ssh,sa.sadm_ssh_port)# SSH Command with default port
 sa.pn                 = os.path.basename(sys.argv[0])   # [P]rogram [N]ame with extension
 sa.inst               = sa.pn.split('.')[0]             # INSTance Name = Pgm Name Without Extension
-sa.ver                = "03.28.00" # Your Program VERSION number
-sa.desc               = "Short description of program"
+
+# Variables shared with SADMIN Python Library.
+sa.ver                = "03.29.00" # Your Program VERSION number
+sa.desc               = "Demonstrate functions & variables available to developers using SADMIN Tools"
 sa.root_only          = False      # Can Only be run by 'root'(True/False)
 sa.server_only        = False      # Run Only on SADMIN server(True/False) SADM_SERVER in sadmin.cfg
 sa.sadm_group_only    = False      # Run if part of SADMIN Group 'SADM_GROUP' in sadmin.cfg or root
-sa.quiet              = False      # If error in a function & quiet is: (give you ctrl of message)
 sa.multiple_exec      = False      # Allow running multiple Instance ?
 sa.quiet              = False      # If error in a function & quiet is: (ctrl show/hide of message)
                                    # False: Show error message and return the error number. 
@@ -134,17 +132,18 @@ sa.db_name            = "sadmin"   # Database Name (sadmin=default) SADM_DBNAME 
 sa.db_conn            = None       # Database Connector when using DB,  set by sa.start()
 sa.db_cur             = None       # Database Cursor if you use the DB, set by sa.start()
 
-#sa.max_logline        = 500        # Max. number of lines in log file SADM_MAX_LOGLINE in sadmin.cfg
-#sa.max_rchline        = 50         # Max. number of lines in rch file SADM_MAX_RCLINE in sadmin.cfg
+# Variables that can override default value taken from $SADMIN/cfg/sadmin.cfg
 #sa.sadm_alert_type    = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
-#sa.sadm_alert_repeat  = 0          # 0=Alert only once per alert. 14400=4hrs between alert repeat
 #sa.sadm_alert_group   = "default"  # Error Alert   Group defined in $SADMIN/cfg/alert_group.cfg
 #sa.sadm_warning_group = "warning"  # Warning Alert Group defined in $SADMIN/cfg/alert_group.cfg
 #sa.sadm_info_group    = "info"     # Info Alert    Group defined in $SADMIN/cfg/alert_group.cfg
-                                   # False: Show error message and return the error number. 
-
-
+#sa.sadm_alert_ttl     = 86400      # 86400 Sec =  24 Hrs Maximum sec. that an alert is still valid
+#sa.sadm_mail_addr     = ""         # Send email to ... default in sadmin.cfg 
+#sa.max_logline        = 500        # Max. number of lines in log file SADM_MAX_LOGLINE in sadmin.cfg
+#sa.max_rchline        = 50         # Max. number of lines in rch file SADM_MAX_RCLINE in sadmin.cfg
 # --------------------------------------------------------------------------------------------------
+
+
 
 
 
@@ -156,6 +155,7 @@ sa.db_cur             = None       # Database Cursor if you use the DB, set by s
 # --------------------------------------------------------------------------------------------------
 lcount              = 0                                          # Print Line Counter
 show_password       = False                                      # Show DB Password
+sample_output       = False                                      # No Email, No Password, No Token
 first_page          = "Y"                                        # No form feed on first page
 
 # Use in printline() function to format output columns
@@ -308,8 +308,11 @@ def print_user_variables():
     printline ("sa.sadm_alert_group","Error Group (Default Group)",sa.sadm_alert_group) 
     printline ("sa.sadm_warning_group","Warning Group Name",sa.sadm_warning_group) 
     printline ("sa.sadm_info_group","Info Group Name",sa.sadm_info_group) 
-    printline ("sa.sadm_alert_repeat","0=AlertOnce or Sec. before alert repeat","%d sec" % sa.sadm_alert_repeat) 
-    printline ("sa.sadm_mail_addr","SADMIN Administrator Email(s)",sa.sadm_mail_addr)
+    printline ("sa.sadm_alert_ttl","Alert will be ignored after 86400 Sec","%d sec" % sa.sadm_alert_ttl) 
+    if sample_output:
+        printline ("sa.sadm_mail_addr","SADMIN Administrator Email(s)","batman@batcave.com")
+    else : 
+        printline ("sa.sadm_mail_addr","SADMIN Administrator Email(s)",sa.sadm_mail_addr)
     printline ("sa.sadm_max_logline","Trim log to this maximum of lines","%d lines" % sa.sadm_max_logline)
     printline ("sa.sadm_max_rchline","Trim rch file to this max. of lines","%d lines" % sa.sadm_max_rchline)
     return(0)
@@ -406,11 +409,14 @@ def print_sadmin_cfg(show_password=False):
     printline ("sa.sadm_dbname","SADMIN Database Name",sa.sadm_dbname)  
     printline ("sa.sadm_dbhost","SADMIN Database Host",sa.sadm_dbhost)  
     printline ("sa.sadm_dbport","SADMIN Database Host TCP Port",sa.sadm_dbport)
+
     # Read Only User
     printline ("sa.sadm_ro_dbuser","SADMIN Database Read Only User",sa.sadm_ro_dbuser) 
-    presult="*Hidden*"                                                  # Default don't show passwd
+    
+    if sample_output : presult="*Hidden*"                               #Default don't show passwd
     if show_password : presult=sa.sadm_ro_dbpwd                         # Selected to Show DB Passwd
     printline ("sa.sadm_ro_dbpwd","SADMIN Database Read Only User Pwd",presult) 
+    
     # Read/Write User
     printline ("sa.sadm_rw_dbuser","SADMIN Database Read/Write User",sa.sadm_rw_dbuser) 
     presult="*Hidden*"                                                  # Default don't show passwd
@@ -430,22 +436,27 @@ def print_sadmin_cfg(show_password=False):
     printline ("sa.sadm_monitor_recent_exclude","Monitor web page exclude list",sa.sadm_monitor_recent_exclude)
 
     print_section_header  ("----- Email Section -----")
+    presult=sa.sadm_mail_addr
+    if sample_output : presult="*Hidden*"                               #Default don't show passwd
     printline ("sa.sadm_mail_addr","SADMIN SysAdmin Email(s)",sa.sadm_mail_addr)
+
     printline ("sa.sadm_smtp_server","Your internet smtp server",sa.sadm_smtp_server)  
     printline ("sa.sadm_smtp_port","Your internet smtp server port",sa.sadm_smtp_port) 
-    printline ("sa.sadm_smtp_sender","Your internet smtp email address",sa.sadm_smtp_sender)
+    if sample_output : 
+        printline ("sa.sadm_smtp_sender","Your internet smtp email address","batman@batcave.com")
+    else : 
+        printline ("sa.sadm_smtp_sender","Your internet smtp email address",sa.sadm_smtp_sender)
+    
     presult="*Hidden*"                                                  # Default don't show passwd
     if show_password : presult=sa.sadm_gmpw                             # Selected to Show smtp pwd
     printline ("sa.sadm_gmpw","Your internet smtp email password",presult)  
-    printline ("sa.sadm_email_startup","Send email to SysAdmin on startup",sa.sadm_email_startup)  
-    printline ("sa.sadm_email_shutdown","Send email to SysAdmin on shutdown",sa.sadm_email_shutdown)  
 
     print_section_header  ("----- Monitoring Section -----")
     printline ("sa.sadm_alert_type","0=NoAlert 1=OnError 3=OnSuccess 4=All",sa.sadm_alert_type) 
-    printline ("sa.sadm_alert_repeat","0=AlertOnce or Sec. before alert repeat","%d sec" % sa.sadm_alert_repeat) 
-    printline ("sa.sadm_alert_group","Error Group Name (Default Group)",sa.sadm_alert_group) 
-    printline ("sa.sadm_warning_group","Warning Group Name",sa.sadm_warning_group) 
-    printline ("sa.sadm_info_group","Info Group Name",sa.sadm_info_group) 
+    printline ("sa.sadm_alert_ttl","Alert will be ignored after 86400Sec","%d sec" % sa.sadm_alert_ttl) 
+    printline ("sa.sadm_alert_group","Error Alert Group Name (Default Group)",sa.sadm_alert_group) 
+    printline ("sa.sadm_warning_group","Warning Alert Group Name",sa.sadm_warning_group) 
+    printline ("sa.sadm_info_group","Info Alert Group Name",sa.sadm_info_group) 
     printline ("sa.sadm_ssh_port","Default SSH Port to talk with client",sa.sadm_ssh_port)
     presult="*Hidden*"                                                  # Don't show TextBelt Key
     if show_password : presult=sa.sadm_textbelt_key                     # Unless requested (-p)
@@ -813,15 +824,18 @@ def cmd_options(argv):
               [-h]      Show this help message
               [-v]      Show script version information
               [-p]      Show Database, TextBelt & Mail passwd in output
+              [-s]      Show sample output (no email, no password, no token)
+              [-X]      Delete the script PID file before running the script.
 
         Returns:
             pdebug (int)          : Set to the debug level [0-9] (Default is 0)
     """
 
-    global debug, show_password
+    global debug, show_password, sample_output
 
     debug = 0                                                           # Default Debug Level
     show_password = False                                               # Don't show pwd default
+    sample_output = False                                               # NoPasswd,NoToken,NoEmail
     parser = argparse.ArgumentParser(description=sa.desc)               # Desc. is the script name
 
     # Declare Arguments
@@ -839,6 +853,10 @@ def cmd_options(argv):
                         action="store_true",
                         dest='show_password',
                         help="Show database password in output")
+    parser.add_argument("-s","--sample",
+                        action="store_true",
+                        dest='sample_output',
+                        help="[S]ample output (no email,no password,no token)")
     parser.add_argument("-X",
                         action="store_true",
                         dest='delpid',
@@ -853,6 +871,9 @@ def cmd_options(argv):
     
     if args.show_password:                                              # Show Password -p
         show_password = args.show_password                              # Show DB, Mail Password
+    
+    if args.sample_output:                                              # Show Sample Output -s
+        sample_output = args.sample_output                              # Show Sample Output
     
     if args.version:                                                    # If -v specified
         sa.show_version(sa.ver)                                           # Show Custom Show Version

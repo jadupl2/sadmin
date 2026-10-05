@@ -94,6 +94,7 @@
 #@2025_07_27 backup v2.46 Change the way ReaR backup was validated.
 #@2025_08_07 backup v2.47 Even if an error in a phase, now it will continue to the next one.
 #@2026_01_27 backup v2.48 Correct problem when the NFS server (SADM_REAR_NFS_SERVER) is localhost
+#@2026_09_24 backup v2.49 Updated to latest SADMIN section 1.60
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -127,7 +128,11 @@ export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access S
 export SADM_PN=$(basename "$0")                            # Script name(with extension)
 export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
 
+<<<<<<< HEAD
 export SADM_VER='2.48'                                     # Script version number
+=======
+export SADM_VER='2.49'                                     # Script version number
+>>>>>>> 2f8883612be9401401b64c287bedb2ab2b5d3074
 export SADM_DESC="Produce a ReaR bootable iso and a restorable backup on a NFS server"
 export SADM_ROOT_ONLY="Y"                                  # Pgm. run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Pgm. run only on SADMIN server? [Y]/[N]
