@@ -129,7 +129,7 @@ shutdown_mail()
     echo -e "Salutation,\n\n$(date)."  > $wb
     echo -e "For your information, system '${SADM_HOSTNAME}' is shutting down." >> $wb
     echo -e "\nThe program '\$SADMIN/sys/${SADM_PN}' is reponsable for sending this email." >> $wb
-    echo -e "To stop receiving this email, change 'SADM_EMAIL_SHUTDOWN' to 'N' in '$SADM_PN'." >>$wb
+    echo -e "If you wish to stop receiving this email, just change 'SADM_EMAIL_SHUTDOWN' to 'N' in '$SADM_PN'." >>$wb
     echo -e "\nUptime           : $(uptime)" >> $wb
     echo -e "\nLast 5 Reboot    :\n$(last reboot | head -5 | nl)" >> $wb
     echo -e "\nLast 10 Users : \n$(last -10 | head -10 | nl)" >> $wb

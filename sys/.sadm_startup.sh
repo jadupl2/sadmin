@@ -157,7 +157,7 @@ poweron_mail()
     # Create the Body of email in a text file 
     echo -e "Salutation,\n\nSystem '${SADM_HOSTNAME}' has just started on $(date)." > $wb
     echo -e "The program '\$SADMIN/sys/${SADM_PN}' is reponsable for sending this email." >> $wb
-    echo -e "To stop receiving this email, change 'SADM_EMAIL_STARTUP' to 'N' in '$SADM_PN'." >>$wb    
+    echo -e "If you wish to stop receiving this email, just change 'SADM_EMAIL_STARTUP' to 'N' in '$SADM_PN'." >>$wb    
     echo -e "\nLast 5 Reboot :\n$(last reboot | head -5 | nl)" >> $wb
     echo -e "\nLast 10 Users : \n$(last -10 | head -10 | nl)" >> $wb
     echo -e "\nFilesystems usage : \n$(df -hP --total)" >> $wb
