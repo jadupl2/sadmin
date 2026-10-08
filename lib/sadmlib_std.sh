@@ -291,7 +291,7 @@
 #@2026_09_27 lib V04.92.15 Fix problem when sending multiple attachments by email (sadm_sendmail)
 #@2026_10_01 lib V04.92.16 Remove variable 'SADM_ALERT_REPEAT' to sadmin.cfg, by SADM_ALERT_TTL.
 #@2026_10_01 lib V04.92.17 Add variable 'SADM_ALERT_TTL' to sadmin.cfg, Sec. (86400) alert stay valid.
-
+#@2026_10_08 lib V04.92.18 Minor adjustment
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x
@@ -299,7 +299,7 @@ trap 'exit 0' 2
 
 # V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
-export SADM_LIB_VER="04.92.17"                                          # This Library Version
+export SADM_LIB_VER="04.92.18"                                          # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -3151,13 +3151,8 @@ sadm_stop() {
 #     $1 maddr (str)     : Email Address to which you want to send it
 #     $2 msubject (str)  : Subject of your email
 #     $3 mbody (str)     : Filename of the Text file containing the body of the email.
-<<<<<<< HEAD
-#                          If $3 if not a file, the $3 will be consider a string as the body.
-#     $4 mfile (str)     : (Optional) Name of the files (MUST exist) to attach to the email.
-=======
 #                          If not a file, the $3 will be consider a string as the body.
 #     $4 mfile (str)     : Attachments (Optional) Names of the files (MUST exist) to attach to email
->>>>>>> 2f8883612be9401401b64c287bedb2ab2b5d3074
 #                           - If no attachment, leave blank "")
 #                           - If you have multiple attachments, separate each file name with comma.
 # Returns:
