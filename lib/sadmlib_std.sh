@@ -3187,7 +3187,6 @@ sadm_sendmail() {
     #LIB_DEBUG=5
     if [ "$LIB_DEBUG" -gt 4 ] 
          then sadm_write_log "1- Email sent to : ${maddr}" 
-<<<<<<< HEAD
               sadm_write_log "2- Email subject : ${msubject}" 
               sadm_write_log "3- Email body    : ${mbody}" 
               sadm_write_log "4- Attachment    : ${mfile}" 
@@ -3224,11 +3223,6 @@ sadm_sendmail() {
             #         sadm_write_err "${wstatus}"                        # Show Message to user 
             #         RC=1                                               # Set Error return code
             #fi 
-=======
-              sadm_write_log "2- Email subject : '${msubject}'" 
-              sadm_write_log "3- Email body    : '${mbody}'" 
-              sadm_write_log "4- Attachment    : '${attachfile}'" 
->>>>>>> 2f8883612be9401401b64c287bedb2ab2b5d3074
     fi
 
     # Body File ($3) can be a file containing the body or a string containing the body text.
