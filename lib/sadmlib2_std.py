@@ -91,6 +91,7 @@
 #@2026_09_24 lib V04.69.05 Minor change and remove debug info
 #@2026_10_01 lib V04.69.06 Remove variable 'SADM_ALERT_REPEAT' to sadmin.cfg, by SADM_ALERT_TTL.
 #@2026_10_01 lib V04.69.07 Add variable 'SADM_ALERT_TTL' to sadmin.cfg, Sec. (86400) alert stay valid.
+#@2026_10_10 lib V04.69.08 Remove warning msg for 'rrdtool' and 'mysql' if not on SADMIN server.
 #  
 # --------------------------------------------------------------------------------------------------
 
@@ -148,7 +149,7 @@ except ImportError as e:
 
 # Global Variables to this script 
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.69.7"                              # This Library Version
+lib_ver             = "4.69.08"                              # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 
 start_time          = ""                                    # Script Start Date & Time
@@ -2379,9 +2380,11 @@ def load_cmd_path():
                if (cmd == 'mysql')     : cmd_mysql         = shutil.which(cmd) 
         else : 
             if lib_debug > 4 : print ("Command '%s' not found on system." % (cmd))
-            requisites_status=False                                     # Requirement not Met
-            print ("\n[ WARNING ] Command '%s' not found." % (cmd))     # is not available
-            print ("              Please install it to insure full functionality.\n")
+            if ((cmd == 'rrdtool') or (cmd == 'mysql')) and sadm_host_type == "S" :
+                requisites_status=False                                     # Requirement not Met
+                print ("\n[ WARNING ] Command '%s' not found." % (cmd))     # is not available
+                print ("              Please install it to insure full functionality.\n")
+
     return(requisites_status)                                           # Requirement Met True/False
 
  
