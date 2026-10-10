@@ -49,6 +49,7 @@
 #@2026_07_22 startup/shutdown v03.26.03 Add more info in Email sent to SADMIN admin.
 #@2026_09_04 startup/shutdown v03.26.04 Small improvements and code revision.
 #@2026_09_14 startup/shutdown v03.26.05 Add msg to disable email at startup 'SADM_EMAIL_STARTUP=N'.
+#@2026_10_10 startup/shutdown v03.26.06 Change format of startup email.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
@@ -56,9 +57,9 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 
-                                                                                          
+                                                                                         
 # ---------   S T A R T   O F   S A D M I N   R E Q U I R E D   C O D E   S E C T I O N  -----------
-# v1.60 - Setup Global Variables and load the SADMIN standard library $SADMIN/lib/sadmlib_std.sh.
+# v1.61 - Setup Global Variables and load the SADMIN standard library $SADMIN/lib/sadmlib_std.sh.
 #       - To use SADMIN scripting tools, this section MUST be present near the top of your code.    
 #
 # Make sure environment variable 'SADMIN' is defined, if it's not, exit with error message.
@@ -72,7 +73,6 @@ if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                   # If SADMIN shell lib
    then printf "\n[ ERROR ] SADMIN library '$SADMIN/lib/sadmlib_std.sh' can't be found.\n" ; exit 1 
 fi 
 
-
 # SADMIN Section of your program that is shared with SADMIN Bash Library.
 export SADM_TPID="$$"                                      # Script Process ID.
 export SADM_HOSTNAME=$(hostname -s)                        # Host name without Domain Name
@@ -80,22 +80,21 @@ export SADM_OS_TYPE=$(uname -s|tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 export SADM_DEBUG=0                                        # Debug Level(0-9), 0 = NoDebug
 export SADM_EXIT_CODE=0                                    # Pgm. Default Exit Code
-export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 export SADM_PN=$(basename "$0")                            # Script name(with extension)
 export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
 
-export SADM_VER='03.26.05'                                 # Script version number
+export SADM_VER='03.26.06'                                 # Script version number
 export SADM_DESC="Script run when the system is started (systemctl enable --now sadmin)." 
 export SADM_ROOT_ONLY="Y"                                  # Pgm. run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Pgm. run only on SADMIN server? [Y]/[N]
 export SADM_GROUP_ONLY='N'                            # Pgm. run only if usr part of SADMIN Grp
 export SADM_MULTIPLE_EXEC="N"                              # Can Run Simultaneous copy of script Y/N
+export SADM_QUIET="N"                                      # Y=HideMsg & Error#  N=Show Msg & Error#
 export SADM_LOG_TYPE="B"                                   # Write log to [S]creen, [L]og, [B]oth
 export SADM_LOG_APPEND="N"                                 # Append log ? Y=AppendLog,N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y = ProduceLogHeader, N = NoLogHeader
 export SADM_LOG_FOOTER="Y"                                 # Y = ProduceLogFooter, N = NoLogFooter
 export SADM_USE_RCH="Y"                                    # Update the RCH History File (Y/N)
-export SADM_QUIET="N"                                      # Y=HideMsg & Error#  N=Show Msg & Error#
 export SADM_ERRMSG=""                                      # Error Message returned by Library 
 export SADM_ERRNO=0                                        # Error number (0=OK) returned by Library
 export SADM_PID_TIMEOUT=7200                               # Sec. before PID file is remove,7200=2hr
@@ -113,6 +112,7 @@ export SADM_TMP_FILE3=$(mktemp -q "$SADMIN/tmp/sadm_tmp3_XXX") # Make tmpfile3, 
 export SADM_OS_NAME=$(sadm_get_osname)                     # REDHAT,ROCKY,ALMA,CENTOS,DEBIAN,UBUNTU.
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.5)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
+export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
 # Variables Below Are Taken From SADMIN Configuration File (sadmin.cfg) when the Library is loaded.
 # You Can Overridde them On A Per Program Basis (If Needed).
@@ -120,12 +120,11 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #export SADM_ALERT_GROUP="default"                          # Error Group Define in alert_group.cfg
 #export SADM_WARNING_GROUP="default"                        # Warning Alert Group (alert_group.cfg)   
 #export SADM_INFO_GROUP="default"                           # Info Alert Group (in alert_group.cfg)
-#export SADM_ALERT_REPEAT=0                                 # 0=No Alert Repeat, Sec. between Repeat
+#export SADM_ALERT_TTL=86400                                # Alert will be ignored after 86400 Sec
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Send email to...default in sadmin.cfg
 #export SADM_MAX_LOGLINE=400                                # Nb of Lines to trim (0=NoTrim)
 #export SADM_MAX_RCHLINE=35                                 # Nb of Lines to trim (0=NoTrim)
 # -------------------  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
-
 
 
 
@@ -151,17 +150,19 @@ poweron_mail()
     sadm_write_log "Sending 'Startup' email to $SADM_MAIL_ADDR"         # Show what we're doing
 
     wb="$SADMIN/tmp/body$$$.txt"                                        # work email body file
-    ws="SADM_INFO: System '$SADM_HOSTNAME' just started."               # Email subject
+    ws="SADM_INFO: System '$SADM_HOSTNAME' is now operational."         # Email subject
     we="$SADM_MAIL_ADDR"                                                # Send email to SysAdmin
 
     # Create the Body of email in a text file 
-    echo -e "Salutation,\n\nSystem '${SADM_HOSTNAME}' has just started on $(date)." > $wb
-    echo -e "The program '\$SADMIN/sys/${SADM_PN}' is reponsable for sending this email." >> $wb
+    echo -e "Greeting\n$(date)"  > $wb
+    echo -e "System '${SADM_HOSTNAME}' is back online." >> $wb
+    echo -e "The script '\$SADMIN/sys/${SADM_PN}' is reponsable for sending this email." >> $wb
     echo -e "If you wish to stop receiving this email, just change 'SADM_EMAIL_STARTUP' to 'N' in '$SADM_PN'." >>$wb    
     echo -e "\nLast 5 Reboot :\n$(last reboot | head -5 | nl)" >> $wb
     echo -e "\nLast 10 Users : \n$(last -10 | head -10 | nl)" >> $wb
     echo -e "\nFilesystems usage : \n$(df -hP --total)" >> $wb
-    echo -e "\nHave a nice day !" >> $wb
+    echo -e "\nHave a pleasant day !" >> $wb
+
 
     # Make sure the end portion of email body is written to the file before sending email.
     sync; sync; sleep 5
@@ -176,6 +177,7 @@ poweron_mail()
     
     # Delete the temporary email body file.
     if [ -f  "$wb" ] ; then rm -f "$wb" ; fi                            # Remove body file
+
     return $RC 
 }
 
