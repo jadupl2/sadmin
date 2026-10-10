@@ -92,7 +92,7 @@
 #@2026_10_01 lib V04.69.06 Remove variable 'SADM_ALERT_REPEAT' to sadmin.cfg, by SADM_ALERT_TTL.
 #@2026_10_01 lib V04.69.07 Add variable 'SADM_ALERT_TTL' to sadmin.cfg, Sec. (86400) alert stay valid.
 #@2026_10_10 lib V04.69.08 Remove warning msg for 'rrdtool' and 'mysql' if not on SADMIN server.
-#  
+#   
 # --------------------------------------------------------------------------------------------------
 
 #from multiprocessing.dummy import connection
