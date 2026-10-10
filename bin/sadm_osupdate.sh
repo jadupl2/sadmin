@@ -425,7 +425,7 @@ run_apt()
 update_flatpak()
 {
     sadm_write_log " "
-    sadm_write_log "----------"
+    sadm_write_log "-----" 
     sadm_write_log "Checking if Flatpak is installed on the system."
     rc=0                                                                # Function return code      
 
@@ -434,23 +434,21 @@ update_flatpak()
     if [ $? -ne 0 ]                                                     # If not found
        then sadm_write_log "[ INFO ] Flatpak not installed on the system."
             return 0
-       else sadm_write_log "[ INFO ] Flatpak is installed on the system."
+       else sadm_write_log "[ OK ] Flatpak is installed on the system."
     fi 
     
 #    flatpak remote-ls --updates | tee -a >> $SADM_LOG 2>&1 
-    flatpak remote-ls --updates 
+#    flatpak remote-ls --updates 
 #    'n\n' 2>/dev/null | flatpak update | grep -Eo "^[\ ]*[0-9]+\..*" --color=none # List of Update
 #    'n\n' 2>/dev/null | flatpak update | grep -Eo "^[\ ]*[0-9]+\." | wc -l  # Update Number
 
     # Check if flatpak is executable on this system, if ok run flatpak update command.
-    if [[ -x "$FLATPAK_PATH" ]]
-       then flatpak -y update >> $SADM_LOG 2>&1 
-            f=$(mktemp); { flatpak -y update ; echo $?>$f ; } |tee -a $SADM_LOG 2>&1; rc=$(cat $f) 
-            if [[ "$rc" -eq 0 ]]
-                then sadm_write_log "[ OK ] The 'flatpak -y update' command ran with success.\n"
-                else sadm_write_err "[ ERROR ] Return Code of 'flatpak -y update' is ${rc}.\n"
-                     rc=1
-            fi
+    flatpak -y update >> $SADM_LOG 2>&1 
+    f=$(mktemp); { flatpak -y update ; echo $?>$f ; } |tee -a $SADM_LOG 2>&1; rc=$(cat $f) 
+    if [[ "$rc" -eq 0 ]]
+        then sadm_write_log "[ OK ] The 'flatpak -y update' command ran with success.\n"
+        else sadm_write_err "[ ERROR ] Return Code of 'flatpak -y update' is ${rc}.\n"
+             rc=1
     fi
     return $rc
 }
