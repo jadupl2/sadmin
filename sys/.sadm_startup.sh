@@ -50,6 +50,7 @@
 #@2026_09_04 startup/shutdown v03.26.04 Small improvements and code revision.
 #@2026_09_14 startup/shutdown v03.26.05 Add msg to disable email at startup 'SADM_EMAIL_STARTUP=N'.
 #@2026_10_10 startup/shutdown v03.26.06 Change format of startup email.
+#@2026_10_12 startup/shutdown v03.26.07 Log sent by email was not complete & change sendmail code.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
@@ -83,7 +84,7 @@ export SADM_EXIT_CODE=0                                    # Pgm. Default Exit C
 export SADM_PN=$(basename "$0")                            # Script name(with extension)
 export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
 
-export SADM_VER='03.26.06'                                 # Script version number
+export SADM_VER='03.26.07'                                 # Script version number
 export SADM_DESC="Script run when the system is started (systemctl enable --now sadmin)." 
 export SADM_ROOT_ONLY="Y"                                  # Pgm. run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Pgm. run only on SADMIN server? [Y]/[N]
@@ -146,9 +147,6 @@ export SADM_EMAIL_STARTUP="Y"                                       # Y=Email on
 # --------------------------------------------------------------------------------------------------
 poweron_mail()
 {
-    sadm_write_log " "
-    sadm_write_log "Sending 'Startup' email to $SADM_MAIL_ADDR"         # Show what we're doing
-
     wb="$SADMIN/tmp/body$$$.txt"                                        # work email body file
     ws="SADM_INFO: System '$SADM_HOSTNAME' is now operational."         # Email subject
     we="$SADM_MAIL_ADDR"                                                # Send email to SysAdmin
@@ -163,21 +161,16 @@ poweron_mail()
     echo -e "\nFilesystems usage : \n$(df -hP --total)" >> $wb
     echo -e "\nHave a pleasant day !" >> $wb
 
-
-    # Make sure the end portion of email body is written to the file before sending email.
-    sync; sync; sleep 5
-
     # Send Info Email To Sysadmin
-    sadm_sendmail "$we" "$ws" "$wb" "$SADM_LOG,$SADM_ELOG" 
-    RC=$? 
-    if [ $RC -eq 0 ] 
-        then sadm_write_log "[ OK ] Mail sent successfully to $we"
-        else sadm_write_err "[ ERROR ] Problem sending email to $we" 
-    fi 
+    if [[ -s "$SADM_ELOG" ]]                                            # If Error Log is not empty
+        then cat "$wb" | $SADM_MUTT -s "$ws" "$maddr" -a "$SADM_LOG" -a "$SADM_ELOG" -- "$we"
+             RC=$? 
+        else cat "$wb" | $SADM_MUTT -s "$ws" "$maddr" -a "$SADM_LOG" -- "$we"
+             RC=$? 
+    fi         
     
     # Delete the temporary email body file.
     if [ -f  "$wb" ] ; then rm -f "$wb" ; fi                            # Remove body file
-
     return $RC 
 }
 
@@ -192,7 +185,7 @@ normal_startup()
     ERROR_COUNT=0 
 
     sadm_write_log " "
-    sadm_write_log "Running Standard Startup Procedure:"
+    sadm_write_log "Running Common Startup Procedure:"
     
     sadm_write_log "  - Remove SADMIN tools system lock file '${SADMIN}/${SADM_HOSTNAME}.lock'."
     rm -f "${SADMIN}/${SADM_HOSTNAME}.lock" >> $SADM_LOG 2>>$SADM_ELOG
@@ -243,11 +236,10 @@ normal_startup()
 
     # Start performance monitor 'nmon'.
     sadm_write_log "  - Start 'nmon' performance system monitor tool."
-    $SADMIN/usr/mon/swatch_nmon.sh /dev/null 2>&1
+    $SADMIN/usr/mon/swatch_nmon.sh > /dev/null 2>&1
     if [ $? -ne 0 ] 
        then sadm_write_err "     - [ ERROR ] Starting 'nmon' System Monitor." 
             ((ERROR_COUNT++))
-       else sadm_write_log "     - [ OK ] Performance system monitor 'nmon' is started." 
     fi
 
     return $ERROR_COUNT
@@ -282,18 +274,14 @@ main_process()
         "gandalf" )     sadm_write_log "  - Start 'noip2'to update dynamic DNS"
                         /usr/local/bin/noip2 >/dev/null 2>&1
                         ;;
-        *)      	    sadm_write_log "  No special procedure needed at startup on $SADM_HOSTNAME"
+        *)      	    sadm_write_log "  - No special startup for '$SADM_HOSTNAME'."
                         ;;
     esac
 
-    sadm_write_log " "
-    sadm_write_log "End of startup script."                              # End of Script Message
-
-    if [ "$SADM_EMAIL_STARTUP" = "Y" ] 
-        then poweron_mail    
-             if [ $? -ne 0 ] ; then ((ERROR_COUNT++)) ; fi
+    if [[ "$SADM_EMAIL_STARTUP" = "Y" ]] 
+        then sadm_write_log "  - Sending 'Startup' email to $SADM_MAIL_ADDR" 
     fi 
-    return $ERROR_COUNT                                                 # Return Default return code
+    return $ERROR_COUNT                                                # Return Default return code
 }
  
 
@@ -305,4 +293,8 @@ main_process()
     main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
-    exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
+    if [[ "$SADM_EMAIL_STARTUP" = "Y" ]]                                # if send email at startup
+        then poweron_mail                                               # Send notification email
+             if [[ $? -ne 0 ]] ; then SADM_EXIT_CODE=1 ; fi             # If problem sending email
+    fi 
+    exit $SADM_EXIT_CODE 
