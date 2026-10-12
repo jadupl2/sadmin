@@ -29,6 +29,7 @@
 #@2026_09_04 startup/shutdown v02.17.05 Small improvements and code revision.
 #@2026_09_14 startup/shutdown v02.17.06 Add msg to disable email at shutdown 'SADM_EMAIL_SHUTDOWN=N'.
 #@2026_10_10 startup/shutdown v02.17.07 Change format of shutdown email sent to sysadmin.
+#@2026_10_12 startup/shutdown v02.17.08 Log sent by email was not complete & change sendmail code.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x
@@ -59,7 +60,7 @@ export SADM_EXIT_CODE=0                                    # Pgm. Default Exit C
 export SADM_PN=$(basename "$0")                            # Script name(with extension)
 export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
 
-export SADM_VER='02.17.07'                                 # Script version number
+export SADM_VER='02.17.08'                                 # Script version number
 export SADM_PDESC="Executed when the system is initiating shutdown by the 'sadmin.service'."
 export SADM_ROOT_ONLY="Y"                                  # Pgm. run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Pgm. run only on SADMIN server? [Y]/[N]
@@ -119,10 +120,7 @@ export SADM_EMAIL_SHUTDOWN="Y"                              # Y=Send Email on Sh
 # --------------------------------------------------------------------------------------------------
 shutdown_mail()
 {
-    sadm_write_log " "
-    sadm_write_log "Send shutdown email to $SADM_MAIL_ADDR"
-
-    ws="SADM_INFO: Initiating Shutdown of System '$SADM_HOSTNAME'" 
+    ws="SADM_INFO: Initiating Shutdown of '$SADM_HOSTNAME'" 
     we="$SADM_MAIL_ADDR"
 
     # Create the Body of email in a text file 
@@ -139,16 +137,15 @@ shutdown_mail()
     echo -e "\nFilesystems usage:\n$(df -hT --total)\n" >> $wb    
     echo -e "\nHave a pleasant day !" >> $wb
 
-    # Make sure the end portion of email body is written to the file before sending email.
-    sync; sync; sleep 5
-    sadm_sendmail "$we" "$ws" "$wb" "$SADM_LOG,$SADM_ELOG"     
-    RC=$?
-    if [ $RC -eq 0 ] 
-        then sadm_write_log "[ OK ] Mail sent successfully to $we"
-        else sadm_write_err "[ ERROR ] Problem sending email to $we" 
-    fi 
+    # Send Info Email To Sysadmin
+    if [[ -s "$SADM_ELOG" ]]                                            # If Error Log is not empty
+        then cat "$wb" | $SADM_MUTT -s "$ws" "$maddr" -a "$SADM_LOG" -a "$SADM_ELOG" -- "$we"
+             RC=$? 
+        else cat "$wb" | $SADM_MUTT -s "$ws" "$maddr" -a "$SADM_LOG" -- "$we"
+             RC=$? 
+    fi   
 
-    if [ -f  "$wb" ] ; then rm -f "$wb" ; fi                            # Remove body file
+    if [ -f  "$wb" ] ; then rm -f "$wb" ; fi                            # Remove Email body file
     return $RC 
 }
 
@@ -157,12 +154,10 @@ shutdown_mail()
 # --------------------------------------------------------------------------------------------------
 main_process()
 {
-    sadm_write_log "*** Running SADM System Shutdown Script on $(sadm_get_fqdn)  ***"
     ERROR_COUNT=0
-
-    # Special Operation for some particular System
     sadm_write_log " "
-    sadm_write_log "Shutdown procedure for $SADM_HOSTNAME"
+    sadm_write_log "Shutdown procedure for '$SADM_HOSTNAME'."
+
     case "$SADM_HOSTNAME" in
         "myhost" )  sadm_write_log "Stop MyApp Web Server ..."
                     /myapp/bin/stop_httpd.sh >> $SADM_LOG 2>&1
@@ -174,19 +169,10 @@ main_process()
 
 
 
-                *)  sadm_write_log "  No particular shutdown procedure needed for '$SADM_HOSTNAME'."
+                *)  sadm_write_log "  - No special shutdown procedure for '$SADM_HOSTNAME'."
                     ;;
 
     esac
-
-    sadm_write_log " "
-
-    if [[ "$SADM_EMAIL_SHUTDOWN" == "Y" ]] 
-        then shutdown_mail    
-             if [ $? -ne 0 ] ; then ((ERROR_COUNT++)) ; fi
-             sleep 10                                                   # Give time to send email   
-    fi     
-    
     return $ERROR_COUNT                                                 # Return Default return code
 }
 
@@ -200,4 +186,8 @@ main_process()
     main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
-    exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
+    if [[ "$SADM_EMAIL_SHUTDOWN" = "Y" ]]                               # if send email at shutdown
+        then shutdown_mail                                              # Send notification email
+             if [[ $? -ne 0 ]] ; then SADM_EXIT_CODE=1 ; fi             # If problem sending email
+    fi 
+    exit $SADM_EXIT_CODE 
