@@ -292,7 +292,7 @@
 #@2026_10_01 lib V04.92.16 Remove variable 'SADM_ALERT_REPEAT' to sadmin.cfg, by SADM_ALERT_TTL.
 #@2026_10_01 lib V04.92.17 Add variable 'SADM_ALERT_TTL' to sadmin.cfg, Sec. (86400) alert stay valid.
 #@2026_10_08 lib V04.92.18 Minor adjustment
-#@2026_10_10 lib V04.92.19 Fix problem with 'sadm_sendmail()' when sending multiple attachments.
+#@2026_10_10 lib V04.92.20 Fix problem with 'sadm_sendmail()' when sending multiple attachments.
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x
@@ -300,7 +300,7 @@ trap 'exit 0' 2
 
 # V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
-export SADM_LIB_VER="04.92.19"                                          # This Library Version
+export SADM_LIB_VER="04.92.20"                                          # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -3170,7 +3170,7 @@ sadm_sendmail() {
     fi
     RC=0                                                                # Function Return Code
 
-    # Save Parameters Received (After Removing leading and trailing spaces).
+    # Save Input Parameters Received (After Removing leading and trailing spaces).
     maddr=$(echo "$1" |awk '{$1=$1;print}')                             # Del Leading/Trailing space
     msubject="$2"                                                       # Subject of Email
     mbody="$3"                                                          # Body of the email.
@@ -3178,7 +3178,7 @@ sadm_sendmail() {
     if [ $# -gt 3 ] ; then attachfile="$4" ; fi                         # Save attachments name(s)
 
 
-    # Debug information if LIB_DEBUG is set to 5 or more
+    # Show Debug information if LIB_DEBUG is set to 5 or more
     if [ "$LIB_DEBUG" -gt 4 ] 
          then sadm_write_log "1- Email sent to : ${maddr}" 
               sadm_write_log "2- Email subject : ${msubject}" 
@@ -3186,32 +3186,15 @@ sadm_sendmail() {
               sadm_write_log "4- Attachment    : ${attachfile}" 
     fi
 
-    # Check if the '$mbody" is a filename that exist' ok continue.
-    # If not a file, move the text to a file and make that file the body of the email.
+    # Check if the '$mbody' is a : 
+    #   - Filename that exist', if so it's ok, continue.
+    #   - If it's not a file, write the text in '$mbody" to a file, will become the body of email
     if [[ ! -f "$mbody" || ! -r "$mbody" ]]                             # Body not a readable file 
         then EMAIL_BODY=$(mktemp -q "${SADM_TMP_DIR}/$SADM_INST}_XXX")  # Temp file for email body
-             echo -e "$mbody" > $EMAIL_BODY                             # Then $mbody is a string
-             mbody=$EMAIL_BODY                                          # $mbody is now a file
+             echo -e "$mbody" > $EMAIL_BODY                             # Create $EMAIL_BODY file
+             mbody=$EMAIL_BODY                                          # $mbody is now a filename
     fi                                                                  
 
-
-    ## Send mail with 1 or no attachment
-    #if [ $(expr index "$mfile" ,) -eq 0 ]                               # No comma = 1 file attach
-    #   then RC=0
-    #        if [ "$mfile" != "" ]                                       # If Attach. file specified 
-    #            then if [ ! -r "$mfile" ]                               # Attachment Not Readable ?
-    #                    then emsg="Attachment file $mfile can't be read or doesn't exist."
-    #                         sadm_write_err "[ ERROR ] $emsg"           # Avise user of error
-    #                         echo -e  "\n$emsg\n" >> $mbody             # Add Err Msg to Email Body
-    #                         RC=1                                       # Set Error return code
-    #                         cat "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" "$maddr" >>$SADM_LOG 2>&1
-    #                    else cat "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" "$maddr" -a "$mfile" >>$SADM_LOG 2>&1 
-    #                         RC=$?                                      # Save Error Number
-    #                 fi
-    #            else cat "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" "$maddr" >>$SADM_LOG 2>&1 
-    #                 RC=$?                                              # Save Error Number
-    #        fi
-    #fi
 
     # Body File ($3) can be a file containing the body or a string containing the body text.
     # If not a file, move the text to a file and make that file the body of the email.
