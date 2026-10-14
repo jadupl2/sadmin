@@ -125,8 +125,8 @@ shutdown_mail()
 
     # Create the Body of email in a text file 
     wb="$SADMIN/tmp/body$$.txt"                                        # Email body txt file
-    echo -e "Greeting\n$(date)"  > $wb
-    echo -e "For your information, system '${SADM_HOSTNAME}' is initiating a shutdown." >> $wb
+    echo -e "Greeting,\n$(date)"  > $wb
+    echo -e "The System '${SADM_HOSTNAME}' is initiating a shutdown." >> $wb
     echo -e "\nThe program '\$SADMIN/sys/${SADM_PN}' is reponsable for sending this email." >> $wb
     echo -e "If you wish to stop receiving this email, just change 'SADM_EMAIL_SHUTDOWN' to 'N' in '$SADM_PN'." >>$wb
     echo -e "\nUptime           : $(uptime)" >> $wb

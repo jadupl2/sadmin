@@ -152,7 +152,7 @@ poweron_mail()
     we="$SADM_MAIL_ADDR"                                                # Send email to SysAdmin
 
     # Create the Body of email in a text file 
-    echo -e "Greeting\n$(date)"  > $wb
+    echo -e "Greeting,\n$(date)"  > $wb
     echo -e "System '${SADM_HOSTNAME}' is back online." >> $wb
     echo -e "The script '\$SADMIN/sys/${SADM_PN}' is reponsable for sending this email." >> $wb
     echo -e "If you wish to stop receiving this email, just change 'SADM_EMAIL_STARTUP' to 'N' in '$SADM_PN'." >>$wb    
