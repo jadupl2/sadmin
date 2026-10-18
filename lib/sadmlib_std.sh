@@ -2707,13 +2707,13 @@ sadm_freshen_directories_structure() {
              chmod 0775 $SADM_WWW_LIB_DIR  ; chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_LIB_DIR 
              chmod 0775 $SADM_WWW_IMG_DIR  ; chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_IMG_DIR 
              chmod 1777 $SADM_WWW_TMP_DIR  ; chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_TMP_DIR 
-             chmod 0775 $SADM_WWW_NET_DIR  ; chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_NET_DIR
              chmod 1777 $SADM_WWW_PERF_DIR ; chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_PERF_DIR
              chmod 0775 $SADM_WWW_CRUD_DIR ; chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_CRUD_DIR
              chmod 0775 $SADM_WWW_CSS_DIR  ; chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_CSS_DIR
              chmod 0775 $SADM_WWW_VIEW_DIR ; chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_VIEW_DIR
              chmod 0775 $SADM_WWW_RRD_DIR  ; chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_RRD_DIR
     fi
+    return 0 
 }
 
 
@@ -2818,8 +2818,8 @@ sadm_start() {
 
     # Make sure 'SADM_GROUP_ONLY' exist & not empty, if not, set to default value "N".
     # Check if this script is to be run only by root user or a user part of $SADM_GROUP group
-    if [[ -z "$SADM_GROUP_ONLY" ]]; then SADM_GROUP_ONLY="N" ; fi   # Default can run everywhere
-    if  [ $(id -u) -ne 0 ] && [ "$SADM_GROUP_ONLY" = "Y" ]            # Restricted to $SADM_GROUP
+    if [[ -z "$SADM_GROUP_ONLY" ]]; then SADM_GROUP_ONLY="N" ; fi       # Default can run everywhere
+    if  [ $(id -u) -ne 0 ] && [ "$SADM_GROUP_ONLY" = "Y" ]              # Restricted to $SADM_GROUP
         then id -nG "$SADM_USERNAME" | grep -qw "$SADM_GROUP"           # User  part of $SADM_GROUP?
              if [ $? -ne 0 ]                                            # If not part of $SADM_GROUP
                 then sadm_write_err " "
@@ -3032,7 +3032,7 @@ sadm_stop() {
         then GRP_TYPE=$(grep -i "^$SADM_ALERT_GROUP " $SADM_ALERT_FILE |awk '{print$2}' |tr -d ' ')
              GRP_NAME=$(grep -i "^$SADM_ALERT_GROUP " $SADM_ALERT_FILE |awk '{print$3}' |tr -d ' ')
              ORG_NAME=$GRP_NAME                                         # Save Original Group Name
-             if [ "$SADM_ALERT_GROUP" = "default" ]                     # Get Real Default GroupName
+             if [[ "$SADM_ALERT_GROUP" == "default" ]]                  # Get Real Default GroupName
                 then GRP_NAME=$(grep -i "^$GRP_NAME " $SADM_ALERT_FILE |awk '{print$3}' |tr -d ' ')
              fi
              case "$GRP_TYPE" in                                        # Case on Default Alert Group
