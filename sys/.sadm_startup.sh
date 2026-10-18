@@ -148,12 +148,12 @@ export SADM_EMAIL_STARTUP="Y"                                       # Y=Email on
 poweron_mail()
 {
     wb="$SADMIN/tmp/body$$$.txt"                                        # work email body file
-    ws="SADM_INFO: System '$SADM_HOSTNAME' is now operational."         # Email subject
+    ws="SADM_INFO: System '$SADM_HOSTNAME' is back online."             # Email subject
     we="$SADM_MAIL_ADDR"                                                # Send email to SysAdmin
 
     # Create the Body of email in a text file 
     echo -e "Greeting,\n$(date)"  > $wb
-    echo -e "System '${SADM_HOSTNAME}' is back online." >> $wb
+    echo -e "System '${SADM_HOSTNAME}' is now operational." >> $wb
     echo -e "The script '\$SADMIN/sys/${SADM_PN}' is reponsable for sending this email." >> $wb
     echo -e "If you wish to stop receiving this email, just change 'SADM_EMAIL_STARTUP' to 'N' in '$SADM_PN'." >>$wb    
     echo -e "\nLast 5 Reboot :\n$(last reboot | head -5 | nl)" >> $wb
