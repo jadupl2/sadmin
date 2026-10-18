@@ -111,6 +111,7 @@ try :
     import socket                                           # LowLevel network interface
     import subprocess                                       # Subprocess management
     #from email_validator import validate_email, EmailNotValidError
+    import getpass                                          # To Get current user name
     import grp                                              # Access group database
     import linecache                                        # Text lines Random access 
     import subprocess                                       # Subprocess management
@@ -191,7 +192,8 @@ cfg_dict           = {}         # Define SADMIN Dict. for config file (sadmin.cf
 # Thwse are default values, they can be changed by the script that use this library.
 pn        = os.path.basename(sys.argv[0])  # [P]rogram [N]ame with extension
 inst      = pn.split('.')[0]        # INSTance Name = Pgm Name Without Ext
-username  = pwd.getpwuid(os.getuid()).pw_name       # Get Current User Name
+#username  = pwd.getpwuid(os.getuid()).pw_name       # Get Current User Name
+username  = getpass.getuser()                       # Get Current User Name
 hostname  = platform.node().split('.')[0].strip()   # Get Current hostname
 pid       = os.getpid()             # Get Current Process ID.
 errno     = 0                       # Error No. set by function called (0=OK Else error/warning)
@@ -1370,7 +1372,9 @@ def get_username() -> str:
     """ 
     username=""
     if get_ostype() == "WINDOWS"          : username = os.environ.get("USERNAME")
-    if get_ostype() in ["LINUX", "MACOS"] : username = pwd.getpwuid(os.getuid()).pw_name
+    if get_ostype() in ["LINUX", "MACOS"] : 
+        #username = pwd.getpwuid(os.getuid()).pw_name
+        get_username = getpass.getuser()
     return (username)
 
 
@@ -2896,7 +2900,7 @@ def start(db_name="sadmin") :
 
     # If this script can only be run by root or user part of SADMIN group (SADM_GROUP in sadmin.cfg)
     if os.getuid() != 0 and not user_in_group(username,sadm_group) : 
-        print ("This script can only run by a user part of the %s group." % sadm_group)
+        print ("This script can only be run by a user that is part of the %s group." % sadm_group)
         print (" - Variable 'SADM_HOST_TYPE' in $SADMIN/cfg/sadmin.cfg must be 'S'.")
         print (" - The IP of the host 'sadmin' must refer to an ip define on this host.")
         print (" - The 'SADMIN' MySQL database & Python module 'pymysql' must be present.") 
