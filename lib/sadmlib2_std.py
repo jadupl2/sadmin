@@ -92,6 +92,7 @@
 #@2026_10_01 lib V04.69.06 Remove variable 'SADM_ALERT_REPEAT' to sadmin.cfg, by SADM_ALERT_TTL.
 #@2026_10_01 lib V04.69.07 Add variable 'SADM_ALERT_TTL' to sadmin.cfg, Sec. (86400) alert stay valid.
 #@2026_10_10 lib V04.69.08 Remove warning msg for 'rrdtool' and 'mysql' if not on SADMIN server.
+#@2026_10_18 lib V04.69.09 Fix get username portability and fix testing if user part of sadmin group.
 #   
 # --------------------------------------------------------------------------------------------------
 
@@ -150,7 +151,7 @@ except ImportError as e:
 
 # Global Variables to this script 
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.69.08"                              # This Library Version
+lib_ver             = "4.69.09"                              # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 
 start_time          = ""                                    # Script Start Date & Time
@@ -1374,7 +1375,7 @@ def get_username() -> str:
     if get_ostype() == "WINDOWS"          : username = os.environ.get("USERNAME")
     if get_ostype() in ["LINUX", "MACOS"] : 
         #username = pwd.getpwuid(os.getuid()).pw_name
-        get_username = getpass.getuser()
+        username = getpass.getuser()
     return (username)
 
 
@@ -2436,11 +2437,18 @@ def db_close(db_conn,db_cur):
 # Check the user is part of the group 
 # --------------------------------------------------------------------------------------------------
 def user_in_group(user_name,group_name):
-    try:
-        group_data = grp.getgrnam(group_name)                           # Get Group Data Member
-        return user_name in group_data.gr_mem
-    except KeyError:
-        return False                                                    # Group don't exist
+  try:
+    # Get target group ID
+    group_info = grp.getgrnam(group_name)
+    target_gid = group_info.gr_gid
+
+    # Get user primary group ID and all supplemental/primary groups
+    user_info = pwd.getpwnam(user_name)
+    user_groups = os.getgrouplist(user_name, user_info.pw_gid)
+
+    return target_gid in user_groups
+  except KeyError:
+    return False
 
 
 
@@ -2899,12 +2907,10 @@ def start(db_name="sadmin") :
 
 
     # If this script can only be run by root or user part of SADMIN group (SADM_GROUP in sadmin.cfg)
-    if os.getuid() != 0 and not user_in_group(username,sadm_group) : 
-        print ("This script can only be run by a user that is part of the %s group." % sadm_group)
-        print (" - Variable 'SADM_HOST_TYPE' in $SADMIN/cfg/sadmin.cfg must be 'S'.")
-        print (" - The IP of the host 'sadmin' must refer to an ip define on this host.")
-        print (" - The 'SADMIN' MySQL database & Python module 'pymysql' must be present.") 
-        print ("Process aborted.")                                      # Abort advise message
+    if os.getuid() != 0 and sadm_group_only and not user_in_group(username,sadm_group) : 
+        print ("[ ERROR ] The current user '%s' is not part of the group '%s'." % (username,sadm_group))
+        print ("     - Script can only be run by a user that is part of the '%s' group." % (sadm_group))
+        print ("     - Process aborted.")                                      # Abort advise message
         stop(1)                                                         # Close SADMIN 
         sys.exit(1)                                                     # Back to O/S 
 
@@ -2919,11 +2925,12 @@ def start(db_name="sadmin") :
         sys.exit(1)                                                     # Abort on error,back to O/S 
 
 
-    # Check Files that should be present ONLY ON SADMIN SERVER
     # If on the SADMIN server and the current system is lock
     if (sadm_host_type == "S") and lock_status(hostname) :              # If on SADMIN server & Lock
-       stop(1)                                                          # if Lock Close gracefully
-       sys.exit(1)                                                      # If lock Exit back to O/S
+        print ("The current system is currently lock.")
+        print ("Process aborted.")                                      # Abort advise message
+        stop(1)                                                         # Close SADMIN 
+        sys.exit(1)                                                     # Abort on error,back to O/S 
 
 
     # Check Files that should be present ONLY ON SADMIN SERVER
