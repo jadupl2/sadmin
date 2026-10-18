@@ -346,7 +346,7 @@ backup_setup()
            ;;
     esac 
     sadm_write_log " " 
-    sadm_write_log "Base on SADMIN configuration file, you have chosen to:"
+    sadm_write_log "Base on SADMIN configuration file (\$SADMIN/cfg/sadmin.cfg), you have chosen to:"
     sadm_write_log " - Keep $SADM_DAILY_BACKUP_TO_KEEP daily backups"
     sadm_write_log " - Keep $SADM_WEEKLY_BACKUP_TO_KEEP weekly backups"
     sadm_write_log " - Keep $SADM_MONTHLY_BACKUP_TO_KEEP monthly backups"
