@@ -2510,7 +2510,7 @@ sadm_send_alert()
                 if [ "$SADM_DEBUG" -gt 4 ] 
                     then printf "\nProcessing '$agroup' sms group member '${i}'.\n" 
                 fi   
-                # Get the Group Member of the Alert Group (Cellular No.)
+                # Get the Group Members of the Alert Group (Cellular No.)
                 acell=`grep -i "^$i " $SADM_ALERT_FILE |awk '{print $3}'` # Get GroupMembers Cell
                 acell=`echo $acell   | awk '{$1=$1;print}'`             # Del Leading/Trailing Space
                 agtype=`grep -i "^$i " $SADM_ALERT_FILE |awk '{print $2}'` # GroupType should be C
