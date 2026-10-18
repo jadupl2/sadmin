@@ -65,6 +65,7 @@
 #@2026_07_03 lib v03.27.02 Add new variables related to NTFY notification system.
 #@2026_07_08 lib v03.28.00 Complete rewritten and update with new Variables.
 #@2026_10_01 lib V03.29.00 Replace variable 'SADM_ALERT_REPEAT' in sadmin.cfg, by 'SADM_ALERT_TTL'.
+#@2026_10_18 lib V03.29.01 By default no password,user,token are shown on report (-p show password)
 # ==================================================================================================
 #
 try :
@@ -109,7 +110,7 @@ sa.pn                 = os.path.basename(sys.argv[0])   # [P]rogram [N]ame with 
 sa.inst               = sa.pn.split('.')[0]             # INSTance Name = Pgm Name Without Extension
 
 # Variables shared with SADMIN Python Library.
-sa.ver                = "03.29.00" # Your Program VERSION number
+sa.ver                = "03.29.01" # Your Program VERSION number
 sa.desc               = "Demonstrate functions & variables available to developers using SADMIN Tools"
 sa.root_only          = False      # Can Only be run by 'root'(True/False)
 sa.server_only        = False      # Run Only on SADMIN server(True/False) SADM_SERVER in sadmin.cfg
@@ -155,7 +156,6 @@ sa.db_cur             = None       # Database Cursor if you use the DB, set by s
 # --------------------------------------------------------------------------------------------------
 lcount              = 0                                          # Print Line Counter
 show_password       = False                                      # Show DB Password
-sample_output       = False                                      # No Email, No Password, No Token
 first_page          = "Y"                                        # No form feed on first page
 
 # Use in printline() function to format output columns
@@ -279,7 +279,6 @@ def print_user_variables():
     printline ("debug","Debug Level 0-9 (Incr. Verbose)",debug)
     printline ("exit_code","Program Exit Return Code",exit_code)
     printline ("cmd_ssh_full","SSH cmd to client",cmd_ssh_full)
-    print     ("\n")
     printline ("sa.pn","Program name with extension",sa.pn)  
     printline ("sa.inst","Program name without extension",sa.inst)
     printline ("sa.ver","Program version number",sa.ver)
@@ -309,10 +308,9 @@ def print_user_variables():
     printline ("sa.sadm_warning_group","Warning Group Name",sa.sadm_warning_group) 
     printline ("sa.sadm_info_group","Info Group Name",sa.sadm_info_group) 
     printline ("sa.sadm_alert_ttl","Alert will be ignored after 86400 Sec","%d sec" % sa.sadm_alert_ttl) 
-    if sample_output:
-        printline ("sa.sadm_mail_addr","SADMIN Administrator Email(s)","batman@batcave.com")
-    else : 
-        printline ("sa.sadm_mail_addr","SADMIN Administrator Email(s)",sa.sadm_mail_addr)
+    presult="*Hidden*"                                                  # Default don't show passwd
+    if show_password : presult=sa.sadm_mail_addr                        
+    printline ("sa.sadm_mail_addr","SADMIN Administrator Email(s)",presult)
     printline ("sa.sadm_max_logline","Trim log to this maximum of lines","%d lines" % sa.sadm_max_logline)
     printline ("sa.sadm_max_rchline","Trim rch file to this max. of lines","%d lines" % sa.sadm_max_rchline)
     return(0)
@@ -413,19 +411,23 @@ def print_sadmin_cfg(show_password=False):
     # Read Only User
     printline ("sa.sadm_ro_dbuser","SADMIN Database Read Only User",sa.sadm_ro_dbuser) 
     
-    if sample_output : presult="*Hidden*"                               #Default don't show passwd
+    # Read Only User password
+    presult="*Hidden*"                                                  # Default don't show passwd
     if show_password : presult=sa.sadm_ro_dbpwd                         # Selected to Show DB Passwd
     printline ("sa.sadm_ro_dbpwd","SADMIN Database Read Only User Pwd",presult) 
     
     # Read/Write User
     printline ("sa.sadm_rw_dbuser","SADMIN Database Read/Write User",sa.sadm_rw_dbuser) 
+
+    # Read/Write User password
     presult="*Hidden*"                                                  # Default don't show passwd
     if show_password : presult=sa.sadm_rw_dbpwd                         # Selected to Show DB Passwd
     printline ("sa.sadm_rw_dbpwd","SADMIN Database Read/Write User Pwd",presult)
     
+    # Database Password File
     presult="*Hidden*"                                                  # Default don't show passwd
     if show_password : presult=sa.dbpass_file                           # Selected to Show DB Passwd
-    printline ("sa.dbpass_file","SADMIN Database User Password File",presult)
+    printline ("sa.dbpass_file","SADMIN Database Password File",presult)
 
 
     print_section_header ("----- Web Interface Section -----")
@@ -436,20 +438,23 @@ def print_sadmin_cfg(show_password=False):
     printline ("sa.sadm_monitor_recent_exclude","Monitor web page exclude list",sa.sadm_monitor_recent_exclude)
 
     print_section_header  ("----- Email Section -----")
-    presult=sa.sadm_mail_addr
-    if sample_output : presult="*Hidden*"                               #Default don't show passwd
-    printline ("sa.sadm_mail_addr","SADMIN SysAdmin Email(s)",sa.sadm_mail_addr)
+    presult="*Hidden*"                                                  # don't show Sysadmin Email
+    if show_password : presult=sa.sadm_mail_addr                        # eMail Address SysAdmin
+    printline ("sa.sadm_mail_addr","SADMIN SysAdmin Email(s)",presult)
 
     printline ("sa.sadm_smtp_server","Your internet smtp server",sa.sadm_smtp_server)  
     printline ("sa.sadm_smtp_port","Your internet smtp server port",sa.sadm_smtp_port) 
-    if sample_output : 
-        printline ("sa.sadm_smtp_sender","Your internet smtp email address","batman@batcave.com")
-    else : 
-        printline ("sa.sadm_smtp_sender","Your internet smtp email address",sa.sadm_smtp_sender)
-    
+
+    # Sender Email 
+    presult="*Hidden*"              
+    if show_password : presult=sa.sadm_smtp_sender
+    printline ("sa.sadm_smtp_sender","Sender smtp email address",presult)
+
+    # Sender Email Password
     presult="*Hidden*"                                                  # Default don't show passwd
     if show_password : presult=sa.sadm_gmpw                             # Selected to Show smtp pwd
     printline ("sa.sadm_gmpw","Your internet smtp email password",presult)  
+
 
     print_section_header  ("----- Monitoring Section -----")
     printline ("sa.sadm_alert_type","0=NoAlert 1=OnError 3=OnSuccess 4=All",sa.sadm_alert_type) 
@@ -462,12 +467,25 @@ def print_sadmin_cfg(show_password=False):
     if show_password : presult=sa.sadm_textbelt_key                     # Unless requested (-p)
     printline ("sa.sadm_textbelt_key","TextBelt.com API Key",presult)   
     printline ("sa.sadm_textbelt_url","TextBelt.com API URL",sa.sadm_textbelt_url) 
-    printline ("sa.sadm_ntfy_email","Email related to NTFY",sa.sadm_ntfy_email)      
-    printline ("sa.sadm_ntfy_pwd"  ,"Password related to NTFY",sa.sadm_ntfy_pwd)     
-    printline ("sa.sadm_ntfy_token","Token related to NTFY",sa.sadm_ntfy_token)      
+
+    presult="*Hidden*"
+    if show_password : presult = sa.sadm_ntfy_email
+    printline ("sa.sadm_ntfy_email","Email related to NTFY",presult)      
+
+    presult="*Hidden*"
+    if show_password : presult = sa.sadm_ntfy_pwd
+    printline ("sa.sadm_ntfy_pwd"  ,"Password related to NTFY",presult)     
+
+    presult="*Hidden*"
+    if show_password : presult = sa.sadm_ntfy_token
+    printline ("sa.sadm_ntfy_token","Token related to NTFY",presult)      
+
     printline ("sa.sadm_ntfy_topic","Topic use with NTFY",sa.sadm_ntfy_topic)        
     printline ("sa.sadm_ntfy_url  ","URL to send notification to NTFY",sa.sadm_ntfy_url)
-    printline ("sa.sadm_ntfy_user ","NTFY user name",sa.sadm_ntfy_user)                 
+
+    presult="*Hidden*"
+    if show_password : presult = sa.sadm_ntfy_user
+    printline ("sa.sadm_ntfy_user ","NTFY user name",presult)                 
 
     print_section_header ("----- Files and Logs pruning Section -----")
     printline ("sa.sadm_rch_keepdays","Nb. days to keep unmodified .rch file","%d days" % sa.sadm_rch_keepdays)
@@ -824,18 +842,16 @@ def cmd_options(argv):
               [-h]      Show this help message
               [-v]      Show script version information
               [-p]      Show Database, TextBelt & Mail passwd in output
-              [-s]      Show sample output (no email, no password, no token)
               [-X]      Delete the script PID file before running the script.
 
         Returns:
             pdebug (int)          : Set to the debug level [0-9] (Default is 0)
     """
 
-    global debug, show_password, sample_output
+    global debug, show_password
 
     debug = 0                                                           # Default Debug Level
     show_password = False                                               # Don't show pwd default
-    sample_output = False                                               # NoPasswd,NoToken,NoEmail
     parser = argparse.ArgumentParser(description=sa.desc)               # Desc. is the script name
 
     # Declare Arguments
@@ -852,11 +868,7 @@ def cmd_options(argv):
     parser.add_argument("-p","--password",
                         action="store_true",
                         dest='show_password',
-                        help="Show database password in output")
-    parser.add_argument("-s","--sample",
-                        action="store_true",
-                        dest='sample_output',
-                        help="[S]ample output (no email,no password,no token)")
+                        help="Show user emails,passwords,token in output")
     parser.add_argument("-X",
                         action="store_true",
                         dest='delpid',
@@ -871,9 +883,6 @@ def cmd_options(argv):
     
     if args.show_password:                                              # Show Password -p
         show_password = args.show_password                              # Show DB, Mail Password
-    
-    if args.sample_output:                                              # Show Sample Output -s
-        sample_output = args.sample_output                              # Show Sample Output
     
     if args.version:                                                    # If -v specified
         sa.show_version(sa.ver)                                           # Show Custom Show Version
