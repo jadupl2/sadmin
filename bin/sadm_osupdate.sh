@@ -66,6 +66,7 @@
 #@2026_06_20 osupdate v3.47.01 Added chmod 664 and chown owner:groip to sysinfo.txt file.
 #@2026_09_04 osupdate v3.47.02 Initial attempt to update Flatpak, if SADM_OSUPDATE_FLATPAK=Y in sadmin.cfg.
 #@2026_09_10 osupdate v3.47.03 Flatpak update is now working, but it is not yet fully tested.
+#@2026_10_18 osupdate v3.47.04 Change format of email when on Ubuntu they are kept-back packages.
 # --------------------------------------------------------------------------------------------------
 #set -x
 # dnf clean expire-cache && dnf makecache # Refresh cache in dnf5
@@ -98,7 +99,7 @@ export SADM_EXIT_CODE=0                                    # Pgm. Default Exit C
 export SADM_PN=$(basename "$0")                            # Script name(with extension)
 export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
 
-export SADM_VER='3.47.03'                                  # Your Current Script Version
+export SADM_VER='3.47.04'                                  # Your Current Script Version
 export SADM_DESC="Script is used to perform an O/S update on the system"
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -402,15 +403,15 @@ run_apt()
        then sadm_write_err "There are ${NB_UPD} update that are kept-back."
             apt list --upgradable | grep -v 'Listing...' | nl | tee -a $SADM_LOG 2>&1
             sadm_write_err " " 
-            sadm_write_err "[ INFO ] Send warning email that some update are kept-back."
+            sadm_write_err "[ INFO ] Send warning email,  since some update are kept-back."
 
             msub="SADM WARNING: Update are kept-back on $SADM_HOSTNAME" 
-            body1=$(echo -e "Salutation, \n$(date)")
-            body2=$(printf "\n{msub}\nThere are ${NB_UPD} update available\n\n")
+            body1=$(echo -e "Greeting,\n$(date)")
+            body2=$(printf "\n${msub}\nThere are ${NB_UPD} update available\n\n")
             body3=$(apt list --upgradable 2>/dev/null | grep -v 'Listing...' | nl) 
             body4=$(printf "\nSome dependencies may have changed on one of the packages you have installed, ")
             body5="or maybe some new package must be installed to perform the upgrade."
-            body6="They are then listed as 'kept-back', they should be available soon."
+            body6="They are then listed as 'kept-back', they should be release soon."
             body7="Run the following command if you wish to upgrade these package(s) now."
             body8="'sudo apt install <list of packages kept back>'."
             BODY_FILE=$(mktemp -q "$SADMIN/tmp/email_body_XXX")         # Email Body File
