@@ -369,11 +369,16 @@ export SADM_ALERT_HIST="$SADM_CFG_DIR/alert_history.txt"                # Alert 
 export SADM_ALERT_HINI="$SADM_CFG_DIR/.alert_history.txt"               # History Init
 export SADM_ALERT_ARC="$SADM_CFG_DIR/alert_archive.txt"                 # Alert Archive
 export SADM_ALERT_ARCINI="$SADM_CFG_DIR/.alert_archive.txt"             # Init Archive
-export SADM_REL_FILE="$SADM_CFG_DIR/.release"                           # Release Ver.
-export SADM_SYS_STARTUP="$SADM_SYS_DIR/sadm_startup.sh"                 # Startup File
-export SADM_SYS_START="$SADM_SYS_DIR/.sadm_startup.sh"                  # Startup Template
+export SADM_REL_FILE="$SADM_CFG_DIR/.release"  
+                         # Release Ver.
+export SADM_SYS_STARTUP="$SADM_SYS_DIR/sadm_startup.sh"                 # Startup script
+export SADM_SYS_START="$SADM_SYS_DIR/.sadm_startup.sh"                  # Startup script template
+export SADM_SYS_START_NOEMAIL="$SADM_SYS_DIR/sadm_startup_noemail.txt"  # If exist, no email on boot
+
 export SADM_SYS_SHUTDOWN="$SADM_SYS_DIR/sadm_shutdown.sh"               # Shutdown 
 export SADM_SYS_SHUT="$SADM_SYS_DIR/.sadm_shutdown.sh"                  # Shutdown Template
+export SADM_SYS_SHUTDOWN_NOEMAIL="$SADM_SYS_DIR/sadm_shutdown_noemail.txt" # If exist, no email on shut
+
 export SADM_CRON_FILE="$SADM_CFG_DIR/.sadm_osupdate"                    # Work crontab
 export SADM_CRONTAB="/etc/cron.d/sadm_osupdate"                         # Final crontab
 export SADM_BACKUP_NEWCRON="$SADM_CFG_DIR/.sadm_backup"                 # Tmp Cron
