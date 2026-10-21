@@ -293,6 +293,8 @@
 #@2026_10_01 lib V04.92.17 Add variable 'SADM_ALERT_TTL' to sadmin.cfg, Sec. (86400) alert stay valid.
 #@2026_10_08 lib V04.92.18 Minor adjustment
 #@2026_10_10 lib V04.92.20 Fix problem with 'sadm_sendmail()' when sending multiple attachments.
+#@2026_10_21 lib V04.92.21 Prevent startup email when "$SADM_SYS_START_NOEMAIL" file is present.
+#@2026_10_21 lib V04.92.22 Prevent shutdown email when "$SADM_SYS_SHUTDOWN_NOEMAIL" file is present.
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x
@@ -300,7 +302,7 @@ trap 'exit 0' 2
 
 # V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
-export SADM_LIB_VER="04.92.20"                                          # This Library Version
+export SADM_LIB_VER="04.92.22"                                          # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
