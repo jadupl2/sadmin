@@ -32,6 +32,7 @@
 #   - "lib"     Library documentation           - "doc"      General Documentation
 #   - "sys"     System (startup and shutdown)   - "nolog"    Minor change, not included in rel. note
 #   - "doc"     SADMIN documentation            - "testenv"  Script to test environment
+#   - "vmtools" Script to help managing VMs
 #
 # YYYY-MM-DD GROUPS   vXX.XX.XX ------------------ 69 Characters to describe change ----------------
 #@2026_08_02 template v00.01.00 Initial development version.
@@ -100,16 +101,16 @@ export SADM_TMP_FILE3=$(mktemp -q "$SADMIN/tmp/sadm_tmp3_XXX") # Make tmpfile3, 
 export SADM_OS_NAME=$(sadm_get_osname)                     # REDHAT,ROCKY,ALMA,CENTOS,DEBIAN,UBUNTU.
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.5)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
-export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
+export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access clients Systems
 
 # Variables Below Are Taken From SADMIN Configuration File (sadmin.cfg) when the Library is loaded.
 # You Can Overridde them On A Per Program Basis (If Needed).
 #export SADM_ALERT_TYPE=1                                   # 0=NoAlert 1=OnError 2=OnOK 3=Always
-#export SADM_ALERT_GROUP="default"                          # Error Group Define in alert_group.cfg
+#export SADM_ALERT_GROUP="default"                          # Error Group Define  (alert_group.cfg)
 #export SADM_WARNING_GROUP="default"                        # Warning Alert Group (alert_group.cfg)   
-#export SADM_INFO_GROUP="default"                           # Info Alert Group (in alert_group.cfg)
-#export SADM_ALERT_TTL=86400                                # Alert will be ignored after 86400 Sec
-#export SADM_MAIL_ADDR="your_email@domain.com"              # Send email to...default in sadmin.cfg
+#export SADM_INFO_GROUP="default"                           # Info Alert Group    (alert_group.cfg)
+#export SADM_ALERT_TTL=86400                                # Alert ignored after 86400 Sec = 24hrs
+#export SADM_MAIL_ADDR="your_email@domain.com"              # Default is in $SADMIN/cfg/sadmin.cfg
 #export SADM_MAX_LOGLINE=400                                # Nb of Lines to trim (0=NoTrim)
 #export SADM_MAX_RCHLINE=35                                 # Nb of Lines to trim (0=NoTrim)
 # -------------------  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
