@@ -51,6 +51,7 @@
 #@2026_09_14 startup/shutdown v03.26.05 Add msg to disable email at startup 'SADM_EMAIL_STARTUP=N'.
 #@2026_10_10 startup/shutdown v03.26.06 Change format of startup email.
 #@2026_10_12 startup/shutdown v03.26.07 Log sent by email was not complete & change sendmail code.
+#@2026_10_21 startup/shutdown V03.26.08 Prevent startup email when "$SADM_SYS_START_NOEMAIL" file is present.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
@@ -84,7 +85,7 @@ export SADM_EXIT_CODE=0                                    # Pgm. Default Exit C
 export SADM_PN=$(basename "$0")                            # Script name(with extension)
 export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
 
-export SADM_VER='03.26.07'                                 # Script version number
+export SADM_VER='03.26.08'                                 # Script version number
 export SADM_DESC="Script run when the system is started (systemctl enable --now sadmin)." 
 export SADM_ROOT_ONLY="Y"                                  # Pgm. run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Pgm. run only on SADMIN server? [Y]/[N]
@@ -136,7 +137,6 @@ export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access S
 #                                   This Script environment variables
 # --------------------------------------------------------------------------------------------------
 export NTP_SERVER="68.69.221.61 162.159.200.1 205.206.70.2"         # Canada NTP Pool
-export SADM_EMAIL_STARTUP="Y"                                       # Y=Email on Startup, N=No Email
 
 
 
@@ -145,17 +145,16 @@ export SADM_EMAIL_STARTUP="Y"                                       # Y=Email on
 
 # Send email to sysadmin when the system is starting
 # --------------------------------------------------------------------------------------------------
-poweron_mail()
+poweron_email()
 {
     wb="$SADMIN/tmp/body$$$.txt"                                        # work email body file
     ws="SADM_INFO: System '$SADM_HOSTNAME' is back online."             # Email subject
     we="$SADM_MAIL_ADDR"                                                # Send email to SysAdmin
 
     # Create the Body of email in a text file 
-    echo -e "Greeting,\n$(date)"  > $wb
-    echo -e "System '${SADM_HOSTNAME}' is now operational." >> $wb
-    echo -e "The script '\$SADMIN/sys/${SADM_PN}' is reponsable for sending this email." >> $wb
-    echo -e "If you wish to stop receiving this email, just change 'SADM_EMAIL_STARTUP' to 'N' in '$SADM_PN'." >>$wb    
+    echo -e "Greeting,\nOn $(date), the system '${SADM_HOSTNAME}' is back online." > $wb
+    echo -e "\nThe script '\${SADMIN}/sys/${SADM_PN}' is reponsable for sending you this email." >> $wb
+    echo -e "If you wish to stop receiving this email, just type the command 'touch $SADM_SYS_START_NOEMAIL'." >>$wb    
     echo -e "\nLast 5 Reboot :\n$(last reboot | head -5 | nl)" >> $wb
     echo -e "\nLast 10 Users : \n$(last -10 | head -10 | nl)" >> $wb
     echo -e "\nFilesystems usage : \n$(df -hP --total)" >> $wb
@@ -178,72 +177,66 @@ poweron_mail()
 
 
 
-# System Standard Startup Procedure for every servers.
-# --------------------------------------------------------------------------------------------------
-normal_startup()
-{
-    ERROR_COUNT=0 
 
+# System Standard Startup Procedure for every systems.
+# --------------------------------------------------------------------------------------------------
+common_startup()
+{
     sadm_write_log " "
-    sadm_write_log "Running Common Startup Procedure:"
+    sadm_write_log "Running Common Startup Procedure :"
+    error_count=0 
     
     sadm_write_log "  - Remove SADMIN tools system lock file '${SADMIN}/${SADM_HOSTNAME}.lock'."
-    rm -f "${SADMIN}/${SADM_HOSTNAME}.lock" >> $SADM_LOG 2>>$SADM_ELOG
+    rm -f "${SADMIN}/${SADM_HOSTNAME}.lock" >>$SADM_LOG  2>>$SADM_ELOG
 
     sadm_write_log "  - Remove any '*.rpt' left in '$SADM_RPT_DIR'."
     rm -f "${SADM_RPT_DIR}/*.rpt" >> $SADM_LOG 2>>$SADM_ELOG
     
-    if [[ "$SADM_HOST_TYPE" = "S" ]] 
+    if [[ "$SADM_HOST_TYPE" == "S" ]]                                   # If on the SADMIN Server
         then sadm_write_log "  - Remove any '*.rpt' left in '$SADM_WWW_RPT_DIR'."
-             rm -f "${SADM_WWW_RPT_DIR}/*.rpt" >> $SADM_LOG 2>>$SADM_ELOG
+             rm -f "${SADM_WWW_RPT_DIR}/*.rpt" >> $SADM_LOG 2>&1
     fi
     
-    sadm_write_log "  - Removing temporary files in '$SADMIN/tmp' directory."
+    sadm_write_log "  - Removing any temporary files in '$SADMIN/tmp' directory."
     rm -f ${SADMIN}/tmp/*  >> $SADM_LOG 2>&1
     
-    sadm_write_log "  - Removing SADMIN system monitor lock file ${SADMIN}/sysmon.lock."
+    sadm_write_log "  - Removing SYStem MONitor lock file ${SADMIN}/sysmon.lock."
     rm -f ${SADMIN}/sysmon.lock  >> $SADM_LOG 2>&1
 
-
-    # Synchronize system clock with NTP Servers
-    command -v ntpdate >/dev/null  2>&1                                 # Is ntpdate cmd on system ?
-    if [ $? -eq 0 ]                                                     # ntpdate command on system
-        then sadm_write_log "  - Synchronize clock with NTP server 'ntpdate -u $NTP_SERVER'."
-             ntpdate -u $NTP_SERVER > /dev/null 2>&1                    # Synchronize with NTP server
-             if [ $? -ne 0 ]                                            # If failed to synchronize
-                then sadm_write_err "  - [ ERROR ] ntpdate - time synchronization with $NTP_SERVER" 
-                     ((ERROR_COUNT++))
-                else sadm_write_log "  - [ SUCCESS ] Time synchronization done with $NTP_SERVER" 
-                     sadm_write_log "    - Current Date and Time: $(date)"
-
-             fi
-        else command -v chronyc >/dev/null 2>&1                         # Is chrony cmd on system ?
-             if [ $? -eq 0 ]                                            # chrony cmd is on system!
-                then sadm_write_log "  - Synchronize clock with 'chronyc makestep' command."
-                     chronyc makestep > /dev/null  2>&1                 # Hide ok 200 on screen 
-                     if [ $? -ne 0 ] 
-                        then sadm_write_err "  - [ ERROR ] Time synchronization 'chronyc makestep'."
-                            ((ERROR_COUNT++))
-                            sadm_write_err "System clock were not able to be synchronized with NTP Servers."
-                            sadm_write_err "Command 'ntpdate' or 'chronyc' commands not found on this system."  
-                            sadm_write_err "Is the current date and time are ok : $(date) ?" 
-                     fi 
-                else sadm_write_log "  - [ SUCCESS ] Time synchronization '$cmdpath makestep'." 
-                     sadm_write_log "    - Current Date and Time: $(date)"
-             fi
+    # Synchronize system clock with NTP Servers (if ntpdate is installed)
+    if command -v ntpdate >/dev/null 2>&1                               # Is ntpdate cmd on system ?
+       then ntpdate -u $NTP_SERVER > /dev/null 2>&1                     # Synchronize with NTP server
+            if [ $? -ne 0 ]                                             # If failed to synchronize
+               then sadm_write_err "  - [ ERROR ] Synchronizing clock with NTP server '$NTP_SERVER'."
+                    ((error_count++))
+               else sadm_write_log "  - Time synchronized with $NTP_SERVER" 
+                    sadm_write_log "    - Current Date and Time: $(date)"
+            fi
     fi 
 
+    # Synchronize system clock with chrony servers (if chrony is installed and ntpdate was not).
+    if [[ $(command -v chronyc >/dev/null 2>&1) ]] && ! [[ $(command -v ntpdate >/dev/null 2>&1) ]]
+       then chronyc makestep > /dev/null  2>&1                          # Hide ok 200 on screen 
+            if [ $? -ne 0 ]                                             # If Clock Sync didn't work
+               then sadm_write_err "  - [ ERROR ] Synchronizing Time with 'chronyc makestep'."
+                   ((error_count++))
+            fi 
+       else sadm_write_log "  - Synchronizing Time with 'chronyc makestep'." 
+            sadm_write_log "    - Current Date and Time: $(date)"
+    fi 
 
-    # Start performance monitor 'nmon'.
-    sadm_write_log "  - Start 'nmon' performance system monitor tool."
-    $SADMIN/usr/mon/swatch_nmon.sh > /dev/null 2>&1
-    if [ $? -ne 0 ] 
-       then sadm_write_err "     - [ ERROR ] Starting 'nmon' System Monitor." 
-            ((ERROR_COUNT++))
+    # Start performance monitor 'nmon' (We use that script that verify if 'nmon' is runnin.
+    # If it's not running, the '$SADMIN/usr/mon/swatch_nmon.sh' script will start it. 
+    $SADMIN/usr/mon/swatch_nmon.sh > /dev/null 2>&1                     # Ignore output of script
+    if [ $? -ne 0 ]                                                     # If we couldn't start nmon       
+       then sadm_write_err "  - [ ERROR ] Trying to start 'nmon' System Monitor." 
+            ((error_count++))
+       else sadm_write_log "  - The 'nmon' performance monitor tool is started."
     fi
 
-    return $ERROR_COUNT
+    return $error_count
 }
+
 
 
 
@@ -252,36 +245,34 @@ normal_startup()
 # --------------------------------------------------------------------------------------------------
 main_process()
 {
-
     sadm_write_log "*** Running SADMIN system startup script on $(sadm_get_fqdn) ***"
-    ERROR_COUNT=0                                           
 
-
-    # Perform the System Standard Startup Procedure for every servers.
-    normal_startup                                                      # Sync.Time,start nmon,...
+    # Perform Standard Startup Procedure that we execute on all systems at startup.
+    error_count=0                                                       # Reset error counter
+    common_startup                                                      # Sync.Time,start nmon,...
     if [ $? -ne 0 ]                                                     # If we had some error
         then sadm_write_err "Some error(s) occurred during the standard startup procedure." 
-             ((ERROR_COUNT++))                                          # Increase Error Count 
-             sadm_stop $ERROR_COUNT                                     # Normal shutdown of SADMIN
+             ((error_count++))                                          # Increase Error Count 
+             sadm_stop $error_count                                     # Normal shutdown of SADMIN
              exit 1                                                     # Exit with error code 1
     fi
 
-
-    # Special startup operation for each particular system
+    # Special startup commands for each particular system
     sadm_write_log " "
-    sadm_write_log "Starting specific startup procedure for '$SADM_HOSTNAME' system."
+    sadm_write_log "Starting specific startup procedure for system '$SADM_HOSTNAME'."
+
     case "$SADM_HOSTNAME" in
-        "gandalf" )     sadm_write_log "  - Start 'noip2'to update dynamic DNS"
-                        /usr/local/bin/noip2 >/dev/null 2>&1
-                        ;;
-        *)      	    sadm_write_log "  - No special startup for '$SADM_HOSTNAME'."
-                        ;;
+        "gandalf" ) sadm_write_log "  - Start 'noip2'to update dynamic DNS"
+                    /usr/local/bin/noip2 >> $SADM_LOG 2>&1
+                    ;;
+        *)      	sadm_write_log "  - No special startup for '$SADM_HOSTNAME'."
+                    ;;
     esac
 
-    if [[ "$SADM_EMAIL_STARTUP" = "Y" ]] 
-        then sadm_write_log "  - Sending 'Startup' email to $SADM_MAIL_ADDR" 
+    if [[ ! -f "$SADM_SYS_START_NOEMAIL" ]]                             # Email file don't exist
+        then sadm_write_log "  - Sending 'Startup' email to $SADM_MAIL_ADDR." 
     fi 
-    return $ERROR_COUNT                                                # Return Default return code
+    return $error_count                                                 # Return Default return code
 }
  
 
@@ -292,9 +283,14 @@ main_process()
     sadm_start                                                          # Won't come back if error
     main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
-    sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
-    if [[ "$SADM_EMAIL_STARTUP" = "Y" ]]                                # if send email at startup
-        then poweron_mail                                               # Send notification email
+
+    # Send email unless the file "$SADMIN/sys/sadm_startup_noemail.txt" exist 
+    if [[ ! -f "$SADM_SYS_START_NOEMAIL" ]]                             # Email file don't exist
+        then sadm_write_log "  - Sending 'Startup' email to the '$SADM_ALERT_GROUP' group."
+             poweron_email                                               # Send Email to sysadmin
              if [[ $? -ne 0 ]] ; then SADM_EXIT_CODE=1 ; fi             # If problem sending email
     fi 
-    exit $SADM_EXIT_CODE 
+
+    sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
+    exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
+                                             # Exit With Global Err (0/1)
