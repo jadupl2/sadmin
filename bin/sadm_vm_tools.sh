@@ -171,7 +171,7 @@ main_process()
                 then if [ "$OPT_VMNAME" != "" ]                         # If a VM Name Specified
                         then sadm_ask "Start '$OPT_VMNAME' virtual machine" # Wait user Answer(y/n)
                              if [ $? -eq 0 ] ; then return 0 ; fi 
-                        else sadm_ask "Start ALL virtual machine"       # Wait for user Answer (y/n)   
+                        else sadm_ask "Start ALL virtual machines"      # Wait for user Answer (y/n)   
                              if [ $? -eq 0 ] ; then return 0 ; fi 
                      fi 
              fi 
