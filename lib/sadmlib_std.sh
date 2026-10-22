@@ -431,11 +431,11 @@ export SADM_INXI=""                                         # Path to inxi
 
 # SADMIN CONFIG FILE VARIABLES (Default Values here will be overridden by SADM CONFIG FILE Content)
 export SADM_CFG_VERSION=""                                  # Configuration File Version
-export SADM_MAIL_ADDR="your_email@domain.com"               # Default is in sadmin.cfg
+export SADM_MAIL_ADDR="your_email@domain.com"               # Default is in $SADMIN/cfg/sadmin.cfg
 export SADM_ALERT_TYPE=1                                    # 0=No 1=Err 2=Success 3=All
-export SADM_ALERT_GROUP="default"                           # Error Group Define in alert_group.cfg
-export SADM_WARNING_GROUP="default"                         # Warning alert Group (alert_group.cfg)
-export SADM_INFO_GROUP="default"                            # Info alert Group (in alert_group.cfg)
+export SADM_ALERT_GROUP="default"                           # Error Group (Prod)  (alert_group.cfg)
+export SADM_WARNING_GROUP="default"                         # Warning Group (Dev) (alert_group.cfg)
+export SADM_INFO_GROUP="default"                            # Info alert Group    (alert_group.cfg)
 export SADM_ALERT_TTL=86400                                 # Alert Valid TimeToLive 86400 Sec=1Day
 export SADM_TEXTBELT_KEY="textbelt"                         # Textbelt.com API Key
 export SADM_TEXTBELT_URL="https://textbelt.com/text"        # Textbelt.com API URL
@@ -2746,7 +2746,7 @@ sadm_start() {
             *)  SADM_LOG_TYPE="B"                                       # Default Both Screen & Log
                 printf "\n[ WARNING ] Invalid log type '$SADM_LOG_TYPE' specified in script."              
                 printf "\n            Valid log type are: [S]screen, [L]og and [B]oth."
-                printf "\n            Default log type set to [B]oth."
+                printf "\n            Defaulting log type to [B]oth."
                 ;;
     esac
 
