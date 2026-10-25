@@ -32,7 +32,8 @@
 #   - "lib"     Library documentation           - "doc"      General Documentation
 #   - "sys"     System (startup and shutdown)   - "nolog"    Minor change, not included in rel. note
 #   - "doc"     SADMIN documentation            - "testenv"  Script to test environment
-#   - "vmtools" Script to help managing VMs
+#   - "vmtools" Script to help managing VMs     - "sysadmin" Script used for management of systems.
+#   - "test"    For testing futur enhancement
 #
 # YYYY-MM-DD GROUPS   vXX.XX.XX ------------------ 69 Characters to describe change ----------------
 #@2026_08_02 template v00.01.00 Initial development version.
