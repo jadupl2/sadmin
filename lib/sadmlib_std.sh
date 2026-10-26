@@ -1083,7 +1083,8 @@ sadm_abort()
 sadm_show_version()
 {
     printf "\n${SADM_PN} v${SADM_VER} - Hostname ${SADM_HOSTNAME}"
-    if [ "$SADM_DESC" ] ; then printf "\n${SADM_DESC}" ; fi 
+    # If NOT blank, run the command after && (using -n)
+    [[ -n "$SADM_DESC" ]] && printf "\nDesc: ${SADM_DESC}"
     printf "\nSADMIN Shell Library v${SADM_LIB_VER}"
     printf "\n$(sadm_get_osname) v$(sadm_get_osversion)"
     printf " - Kernel $(sadm_get_kernel_version)"
@@ -2723,6 +2724,49 @@ sadm_freshen_directories_structure() {
     return 0 
 }
 
+# --------------------------------------------------------------------------------------------------
+# Make sure standard log, error log and rch file are ok for operations.
+# --------------------------------------------------------------------------------------------------
+make_log_ready() {
+
+    # Validate Log Type '$SADM_LOG_TYPE' & make sure it's in upper case for later use.
+    case "$SADM_LOG_TYPE" in                                            # Test for valid Log Type
+            l|L|b|B|s|S)                                                # Various logtype validation
+                SADM_LOG_TYPE=$(sadm_toupper "$SADM_LOG_TYPE")          # Make sure in Uppercase 
+                ;;
+            *)  SADM_LOG_TYPE="B"                                       # Default Both Screen & Log
+                printf "\n[ WARNING ] Invalid log type '$SADM_LOG_TYPE' specified in script."              
+                printf "\n            Valid log type are: [S]screen, [L]og and [B]oth."
+                printf "\n            Defaulting log type to [B]oth."
+                ;;
+    esac
+
+    # If user don't want to append to existing log, removed them. 
+    if [[ "$SADM_LOG_APPEND" == "N" ]] ; then rm -f "$SADM_LOG" "$SADM_ELOG" >/dev/null 2>&1 ; fi 
+
+    # Makse sure log, elog and rch exist
+    [[ ! -f "$SADM_RCH_FILE" ]] && touch "$SADM_RCH_FILE"            # Create RCH  If not exist
+    [[ ! -f "$SADM_LOG" ]]      && touch "$SADM_LOG"                 # Create LOG  If not exist
+    [[ ! -f "$SADM_ELOG" ]]     && touch "$SADM_ELOG"                # Create ELOG If not exist
+
+    # Will work when running with root, otherwise don't report error.
+    chmod 664 "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 # Logs & RCH Permission 
+    chown "${SADM_USER}:${SADM_GROUP}"  "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 
+
+    # Check if the log and the error log are writable.
+    if [ ! -w "$SADM_LOG" ] || [ ! -w "$SADM_ELOG" ]                    # If can't write to log/elog
+       then printf "\n[ ERROR] User '$SADM_USERNAME' don't have permission to write to:"
+            printf "\n     - The script log '$SADM_LOG' or the script error log '$SADM_ELOG'."
+            printf "\n     - Change permission to correct the situation.\n"
+            ls -l "$SADM_LOG" "$SADM_ELOG" 
+            printf "\nScript Aborted !\n"
+            sadm_stop 1 
+            exit 1
+    fi 
+    return 0 
+}
+
+
 
 # --------------------------------------------------------------------------------------------------
 #                   SADM INITIALIZE FUNCTION - EXECUTE BEFORE DOING ANYTHING
@@ -2737,45 +2781,7 @@ sadm_freshen_directories_structure() {
 sadm_start() {
 
     sadm_freshen_directories_structure                                  # Chk Dir. Structure & Perm.
-
-    # Validate Log Type '$SADM_LOG_TYPE' & make sure it's in upper case for later use.
-    case "$SADM_LOG_TYPE" in                                            # Test for valid Log Type
-            l|L|b|B|s|S)                                                # Various logtype validation
-                SADM_LOG_TYPE=$(sadm_toupper "$SADM_LOG_TYPE")          # Make sure in Uppercase 
-                ;;
-            *)  SADM_LOG_TYPE="B"                                       # Default Both Screen & Log
-                printf "\n[ WARNING ] Invalid log type '$SADM_LOG_TYPE' specified in script."              
-                printf "\n            Valid log type are: [S]screen, [L]og and [B]oth."
-                printf "\n            Defaulting log type to [B]oth."
-                ;;
-    esac
-
-
-    # If user don't want to append to existing log, removed them. 
-    if [ "$SADM_LOG_APPEND" = "N" ]                                     # Want [N]ew log each time
-        then rm -f "$SADM_LOG" "$SADM_ELOG" >/dev/null 2>&1             # Remove old log & errorlog
-    fi 
-    [ ! -f "$SADM_RCH_FILE" ] && touch "$SADM_RCH_FILE"                 # Create RCH  If not exist
-    [ ! -f "$SADM_LOG" ]      && touch "$SADM_LOG"                      # Create LOG  If not exist
-    [ ! -f "$SADM_ELOG" ]     && touch "$SADM_ELOG"                     # Create ELOG If not exist
-
-    # Will work when running with root, don't give error if we are not 'root'.
-    chmod 664 "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 # Log & RCH Change Permission 
-    if [ "$(id -u)" -eq 0 ] 
-       then chown "${SADM_USER}:${SADM_GROUP}"  "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 
-    fi 
-
-    # Check if the log and the error log are writable.
-    if [ ! -w "$SADM_LOG" ] || [ ! -w "$SADM_ELOG" ]                    # If can't write to log/elog
-       then printf "\n[ ERROR] User '$SADM_USERNAME' don't have permission to write to:"
-            printf "\n     - The script log '$SADM_LOG'."
-            printf "\n     - The script error log '$SADM_ELOG'."
-            printf "\n     - Change permission to correct the situation.\n"
-            ls -l "$SADM_LOG" "$SADM_ELOG" 
-            printf "\nScript Aborted !\n"
-            sadm_stop 1 
-            exit 1
-    fi 
+    make_log_ready                                                      # Make log,elog,rch ready
 
     # Update the RCH file if it is writable, if it doesn't advise user and abort script.
     if [ "$SADM_USE_RCH" = "Y" ]                                        # Want a Result Code History
@@ -2793,25 +2799,42 @@ sadm_start() {
              fi
     fi
 
+
+    # Validate Alert Group Name and Determine group type
+    grep -q "^${SADM_ALERT_GROUP} " $SADMIN/cfg/alert_group.cfg
+    if [[ $? -ne 0 ]] 
+       then sadm_write_err " "
+            sadm_write_err "[ WARNING ] Invalid alert group name '$SADM_ALERT_GROUP'." 
+            sadm_write_err "    - Group name wasn't found in the alert group file '$SADM_ALERT_GROUP'." 
+            SADM_ALERT_GROUP='default'
+            sadm_write_err "    - Continuing with the '$SADM_ALERT_GROUP' group name." 
+            sadm_write_err " "
+   fi          
+   gtype=$(grep "^${SADM_ALERT_GROUP} " $SADM_ALERT_FILE | awk '{print$2}')
+   gtype=$(echo $gtype | tr "[:lower:]" "[:upper:]")                    # Always in UpperCase Std
+
+
     # Write Log Header
     if [ ! -z "$SADM_LOG_HEADER" ] && [ "$SADM_LOG_HEADER" = "Y" ]      # User Want Log Header
         then sadm_write_log "${SADM_80_DASH}"                           # Write 80 Dashes Line
-             sadm_write_log "$(date +"%a %d %b %Y %T") - ${SADM_PN} v${SADM_VER} - Library v${SADM_LIB_VER}"
-             if [ "$SADM_DESC" ]                                       # If Script Desc. Not empty
-                then sadm_write_log "Desc: $SADM_DESC"                 # Include it in log Header
-             fi
-             sadm_write_log "$(sadm_get_fqdn) - User: $SADM_USERNAME - Umask : $(umask) - Arch: $(sadm_server_arch)"
-             hline3="$(sadm_capitalize $(sadm_get_osname)) $(sadm_capitalize $(sadm_get_ostype))"
-             hline3="${hline3} v$(sadm_get_osversion) - Kernel $(sadm_get_kernel_version)"
-             hline3="${hline3} - SADMIN($SADM_HOST_TYPE): $SADMIN"
-             sadm_write_log "$hline3"
+             hline="$(date +"%a %d %b %Y %T") - ${SADM_PN} v${SADM_VER} - Library v${SADM_LIB_VER}"
+             sadm_write_log "$hline" 
+             if [[ ! -z "$SADM_DESC" ]] ; then sadm_write_log "$SADM_DESC" ; fi # Script description
+             hline="$(sadm_get_fqdn) - User: $SADM_USERNAME - Umask : $(umask) - "
+             hline+="Alert Group : ${SADM_ALERT_GROUP}($gtype)"
+             sadm_write_log "$hline"
+             hline="$(sadm_capitalize $(sadm_get_osname)) $(sadm_capitalize $(sadm_get_ostype))"
+             hline+="v$(sadm_get_osversion) - Kernel $(sadm_get_kernel_version)"
+             hline+="- SADMIN($SADM_HOST_TYPE): $SADMIN"
+             sadm_write_log "$hline"
              sadm_write_log "${SADM_FIFTY_DASH}"                         # Write 50 Dashes Line
              sadm_write_log " "                                         
     fi
 
+
     # Make sure 'SADM_ROOT_ONLY' exist and not empty, if not set to default value "N" NO restriction
     # Check if this script is to be run only by root user
-    if [[ -z "$SADM_ROOT_ONLY" ]] ; then export SADM_ROOT_ONLY="N" ; fi       # Default can run everywhere
+    if [[ -z "$SADM_ROOT_ONLY" ]] ; then export SADM_ROOT_ONLY="N" ; fi # Default can run everywhere
     if [ "$SADM_ROOT_ONLY" == "Y" ] &&  [ $(id -u) -ne 0 ]  
         then sadm_write_err " "
              sadm_write_err "Script can only be run by the 'root' user."
@@ -2849,6 +2872,7 @@ sadm_start() {
              sadm_stop 1                                                # clean up before exit
              exit 1                                                     # Exit To O/S
     fi
+
 
     # User got to be part of the SADMIN Group specified in $SADMIN/cfg/sadmin.cfg
     if [ -r $SADMIN/cfg/sadmin.cfg ] && [ "$SADM_GROUP_ONLY" = "Y" ]
@@ -2934,20 +2958,25 @@ sadm_start() {
     # If it doesn't exist, create it from initial file ($SADMIN/cfg/.alert_group.cfg)
     if [ ! -f "$SADM_ALERT_FILE" ]                                      # alert_group.cfg not Exist
        then if [ ! -f "$SADM_ALERT_INIT" ]                              # .alert_group.cfg not Exist
-               then sadm_write_err "********************************************************"
+               then sadm_write_err " " 
+                    sadm_write_err "********************************************************"
                     sadm_write_err "SADMIN Alert Group file not found - $SADM_ALERT_FILE "
-                    sadm_write_err "Even Alert Group Template file is missing - $SADM_ALERT_INIT"
+                    sadm_write_err "Also the Alert Group Template file is missing '$SADM_ALERT_INIT'"
+                    sadm_write_err "SADMIN need a valid alert group file."
                     sadm_write_err "Copy both files from another system to this server"
                     sadm_write_err "Or restore them from a backup"
                     sadm_write_err "Don't forget to review the file content."
                     sadm_write_err "********************************************************"
+                    sadm_write_err " " 
                     sadm_stop 1                                         # Exit to O/S with Error
                     exit 1
-               else sadm_write_log "Alert file initialize '$SADM_ALERT_FILE' with '$SADM_ALERT_INIT'" 
+               else sadm_write_log "A new alert group file '$SADM_ALERT_FILE' was created from the template."
                     cp $SADM_ALERT_INIT $SADM_ALERT_FILE                # Copy Template as initial
                     chmod 664 $SADM_ALERT_FILE
             fi
     fi
+
+
 
     # Check Files that are present ONLY ON SADMIN SERVER
     if [ "$SADM_HOST_TYPE" = "S" ]                                      # If we're on  SADMIN server
@@ -3096,7 +3125,7 @@ sadm_stop() {
 
     # Trim the log and RCH file to $SADM_MAX_LOGLINE and $SADM_MAX_RCHLINE lines (0=No Trim)
     if [ "$SADM_MAX_LOGLINE" -ne 0 ] ; then sadm_trimfile "$SADM_LOG"      "$SADM_MAX_LOGLINE" ; fi 
-    if [ "$SADM_MAX_RCHLINE" -ne 0 ] ; then sadm_trimfile "$SADM_RCH_FILE" "$SADM_MAX_RCHLINE"  ; fi 
+    if [ "$SADM_MAX_RCHLINE" -ne 0 ] ; then sadm_trimfile "$SADM_RCH_FILE" "$SADM_MAX_RCHLINE" ; fi 
 
     
     # Make sure the log file is writable and readable by the SADMIN user and group (Ignore error).
