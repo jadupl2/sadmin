@@ -118,8 +118,8 @@ shutdown_mail()
     echo -e "Greeting,\nOn $(date), system '$SADM_HOSTNAME' has initiated a shutdown." > $wb
     echo -e "\nThe program '\$SADMIN/sys/${SADM_PN}' is reponsable for sending this email." >> $wb
     echo -e "If you wish to stop receiving this email each time '$SADM_HOSTNAME' is power down," >> $wb
-    echo -e "  - just type the following command on '$SADM_HOSTNAME':"  >>$wb
-    echo -e "  - touch $SADM_SYS_SHUTDOWN_NOEMAIL" >>$wb    
+    echo -e "  - Just type the following command on '$SADM_HOSTNAME':"  >>$wb
+    echo -e "    - 'touch $SADM_SYS_SHUTDOWN_NOEMAIL'" >>$wb    
     echo -e "\nUptime           : $(uptime)" >> $wb
     echo -e "\nLast 5 Reboot    :\n$(last reboot | head -5 | nl)" >> $wb
     echo -e "\nLast 10 Users : \n$(last -10 | head -10 | nl)" >> $wb
