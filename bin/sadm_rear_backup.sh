@@ -41,35 +41,35 @@
 # --------------------------------------------------------------------------------------------------
 # Change Log
 #
-# 2016_12_14 v1.7 Add Check to see if Rear Configuration file isn't present, abort Job (Exit 1)
-# 2017_03_09 v1.8 Move test if rear is installed first, if not abort process up front.
-#                 Error Message more verbose and More Customization
-# 2017_04_20 v2.0 Return Code returned by Rear handle correctly, Script Messages more informative
-# 2017_06_06 v2.1 NFS Server Name, Mount Point and Nb of copy to keep are taken from sadmin.cfg
-# 2018_09_14 v2.2 ExitCode was reporting error on some occasion, even when backup was ok.
-# 2018_09_19 v2.3 Include Usage of Alert Group
-# 2018_11_02_v2.4 Produce new log every time
-# 2019_08_19 Update: v2.5 Updated to align with new SADMIN definition section.
-# 2019_08_29 Fix: v2.6 Code restructure and was not reporting error properly.
-# 2019_08_30 Fix: v2.7 Fix renaming backup problem at the end of the backup.
-# 2019_09_01 Update: v2.8 Remove separate creation of ISO (Already part of backup)
-# 2019_09_02 Update: v2.9 Change syntax of error messages.
-# 2019_09_14 Update: v2.10 Backup list before housekeeping was not showing.
-# 2019_09_18 Update: v2.11 Show Backup size in human readable form.
-# 2020_01_08 Update: v2.12 Minor logging changes.
-# 2020_02_18 Update: v2.13 Correct typo error introduce in v2.12
-# 2020_03_04 Fix: v2.14 always leave latest ReaR Backup to default name to ease the restore.
-# 2020_03_05 Fix: v2.15 Was not removing NFS mount point in /mnt after the backup.
-# 2020_04_11 Fix: v2.16 site.conf, "BACKUP_URL" line is align with sadmin.cfg before each backup.
-# 2020_04_12 Update: v2.17 If ReaR site.conf doesn't exist, create it, bug fix and enhancements.
-# 2020_04_13 Update: v2.18 Lot of little adjustments.
-# 2020_04_14 Update: v2.19 Some more logging adjustments.
-# 2020_04_16 Update: v2.20 Minor adjustments
-# 2020_05_13 Update: v2.21 Remove mount directory before exiting script.
-# 2020_05_18 Fix: v2.22 Fix /etc/rear/site.conf auto update problem, prior to starting backup.
-# 2020_06_30 Fix: v2.23 Fix chmod 664 for files in server backup directory
-# 2020_09_05 Fix: v2.24 Minor Changes.
-# 2021_01_11 Fix: v2.25 NFS drive was not unmounted when the backup failed.
+# 2016_12_14 backup v1.7 Add Check to see if Rear Configuration file isn't present, abort Job (Exit 1)
+# 2017_03_09 backup v1.8 Move test if rear is installed first, if not abort process up front.
+#                        Error Message more verbose and More Customization
+# 2017_04_20 backup v2.0 Return Code returned by Rear handle correctly, Script Messages more informative
+# 2017_06_06 backup v2.1 NFS Server Name, Mount Point and Nb of copy to keep are taken from sadmin.cfg
+# 2018_09_14 backup v2.2 ExitCode was reporting error on some occasion, even when backup was ok.
+# 2018_09_19 backup v2.3 Include Usage of Alert Group
+# 2018_11_02_backup v2.4 Produce new log every time
+# 2019_08_19 backup v2.5 Updated to align with new SADMIN definition section.
+# 2019_08_29 backup v2.6 Code restructure and was not reporting error properly.
+# 2019_08_30 backup v2.7 Fix renaming backup problem at the end of the backup.
+# 2019_09_01 backup v2.8 Remove separate creation of ISO (Already part of backup)
+# 2019_09_02 backup v2.9 Change syntax of error messages.
+# 2019_09_14 backup v2.10 Backup list before housekeeping was not showing.
+# 2019_09_18 backup v2.11 Show Backup size in human readable form.
+# 2020_01_08 backup v2.12 Minor logging changes.
+# 2020_02_18 backup v2.13 Correct typo error introduce in v2.12
+# 2020_03_04 backup v2.14 always leave latest ReaR Backup to default name to ease the restore.
+# 2020_03_05 backup v2.15 Was not removing NFS mount point in /mnt after the backup.
+# 2020_04_11 backup v2.16 site.conf, "BACKUP_URL" line is align with sadmin.cfg before each backup.
+# 2020_04_12 backup v2.17 If ReaR site.conf doesn't exist, create it, bug fix and enhancements.
+# 2020_04_13 backup v2.18 Lot of little adjustments.
+# 2020_04_14 backup v2.19 Some more logging adjustments.
+# 2020_04_16 backup v2.20 Minor adjustments
+# 2020_05_13 backup v2.21 Remove mount directory before exiting script.
+# 2020_05_18 backup v2.22 Fix /etc/rear/site.conf auto update problem, prior to starting backup.
+# 2020_06_30 backup v2.23 Fix chmod 664 for files in server backup directory
+# 2020_09_05 backup v2.24 Minor Changes.
+# 2021_01_11 backup v2.25 NFS drive was not unmounted when the backup failed.
 # 2021_05_11 backup v2.26 Fix 'rear' command missing false error message
 # 2021_05_12 backup v2.27 Write more information about ReaR sadmin.cfg in the log.
 # 2021_06_02 backup v2.28 Added more information in the script log.
@@ -96,14 +96,15 @@
 #@2026_01_27 backup v2.48 Correct problem when the NFS server (SADM_REAR_NFS_SERVER) is localhost
 #@2026_09_24 backup v2.49 Updated to latest SADMIN section 1.60
 #@2026_10_18 backup v2.50 Fix Typo Error 
+#@2026_10_28 backup v2.51 Set permission on backup output files.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
 
 
-                                                                                         
+                                                                                          
 # ---------   S T A R T   O F   S A D M I N   R E Q U I R E D   C O D E   S E C T I O N  -----------
-# v1.60 - Setup Global Variables and load the SADMIN standard library $SADMIN/lib/sadmlib_std.sh.
+# v1.61 - Setup Global Variables and load the SADMIN standard library $SADMIN/lib/sadmlib_std.sh.
 #       - To use SADMIN scripting tools, this section MUST be present near the top of your code.    
 #
 # Make sure environment variable 'SADMIN' is defined, if it's not, exit with error message.
@@ -117,7 +118,6 @@ if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                   # If SADMIN shell lib
    then printf "\n[ ERROR ] SADMIN library '$SADMIN/lib/sadmlib_std.sh' can't be found.\n" ; exit 1 
 fi 
 
-
 # SADMIN Section of your program that is shared with SADMIN Bash Library.
 export SADM_TPID="$$"                                      # Script Process ID.
 export SADM_HOSTNAME=$(hostname -s)                        # Host name without Domain Name
@@ -125,11 +125,10 @@ export SADM_OS_TYPE=$(uname -s|tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 export SADM_DEBUG=0                                        # Debug Level(0-9), 0 = NoDebug
 export SADM_EXIT_CODE=0                                    # Pgm. Default Exit Code
-export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 export SADM_PN=$(basename "$0")                            # Script name(with extension)
 export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
 
-export SADM_VER='2.50'                                     # Script version number
+export SADM_VER='2.51'                                     # Script version number
 export SADM_DESC="Produce a ReaR bootable iso and a restorable backup on a NFS server"
 export SADM_ROOT_ONLY="Y"                                  # Pgm. run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Pgm. run only on SADMIN server? [Y]/[N]
@@ -158,18 +157,20 @@ export SADM_TMP_FILE3=$(mktemp -q "$SADMIN/tmp/sadm_tmp3_XXX") # Make tmpfile3, 
 export SADM_OS_NAME=$(sadm_get_osname)                     # REDHAT,ROCKY,ALMA,CENTOS,DEBIAN,UBUNTU.
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.5)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
+export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access clients Systems
 
 # Variables Below Are Taken From SADMIN Configuration File (sadmin.cfg) when the Library is loaded.
 # You Can Overridde them On A Per Program Basis (If Needed).
 #export SADM_ALERT_TYPE=1                                   # 0=NoAlert 1=OnError 2=OnOK 3=Always
-#export SADM_ALERT_GROUP="default"                          # Error Group Define in alert_group.cfg
+#export SADM_ALERT_GROUP="default"                          # Error Group Define  (alert_group.cfg)
 #export SADM_WARNING_GROUP="default"                        # Warning Alert Group (alert_group.cfg)   
-#export SADM_INFO_GROUP="default"                           # Info Alert Group (in alert_group.cfg)
-#export SADM_ALERT_REPEAT=0                                 # 0=No Alert Repeat, Sec. between Repeat
-#export SADM_MAIL_ADDR="your_email@domain.com"              # Send email to...default in sadmin.cfg
+#export SADM_INFO_GROUP="default"                           # Info Alert Group    (alert_group.cfg)
+#export SADM_ALERT_TTL=86400                                # Alert ignored after 86400 Sec = 24hrs
+#export SADM_MAIL_ADDR="your_email@domain.com"              # Default is in $SADMIN/cfg/sadmin.cfg
 #export SADM_MAX_LOGLINE=400                                # Nb of Lines to trim (0=NoTrim)
 #export SADM_MAX_RCHLINE=35                                 # Nb of Lines to trim (0=NoTrim)
 # -------------------  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
+
 
 
 
@@ -528,14 +529,9 @@ rear_housekeeping()
     fi 
 
     sadm_write_log "[ INFO ] Setting permission on backup files."
-    if [ -r "$REAR_CUR_ISO" ] ; then chmod 664 ${REAR_CUR_ISO} ; fi
-    if [ -r "$REAR_USB_ISO" ] ; then chmod 664 ${REAR_USB_ISO} ; fi
-    if [ -r "$REAR_ISO_LOG" ] ; then chmod 664 ${REAR_ISO_LOG} ; fi
-    if [ -r "$REAR_CUR_TGZ" ] ; then chmod 664 ${REAR_CUR_TGZ} ; fi
-    if [ -r "$REAR_CUR_LST" ] ; then chmod 664 ${REAR_CUR_LST} ; fi
-    if [ -r "$REAR_README" ]  ; then chmod 664 ${REAR_README}  ; fi
-    if [ -r "$REAR_VERSION" ] ; then chmod 664 ${REAR_VERSION} ; fi
-    if [ -r "$REAR_CUR_LOG" ] ; then chmod 664 ${REAR_CUR_LOG} ; fi
+    find ${REAR_DIR} -type f -exec chmod 664 {} \;
+    find ${REAR_DIR} -type f -exec chown ${SADM_USER}:${SADM_GROUP} {} \;
+    ls -ltrh  ${REAR_DIR} | tee -a $SADM_LOG 2>&1
 
     sadm_write_log " "
     sadm_write_log "Based on the field 'SADM_REAR_BACKUP_TO_KEEP' in SADMIN configuration file :"
@@ -795,7 +791,7 @@ function cmd_options()
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Create Dir.,PID,log,rch
     
-    rear_preparation                                                    # NFS Mount Point Work ?  ...
+    rear_preparation                                                    # NFS Mount Point Work ? ...
     SADM_EXIT_CODE=$?
     if [ "$SADM_EXIT_CODE" -ne 0 ]                                      # If preparation went wrong
         then sadm_stop $SADM_EXIT_CODE                                  # Upd. RCH File & Trim Log
