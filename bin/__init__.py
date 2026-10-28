@@ -1,2 +1,3 @@
-COCOLIB="25.92.10"
+__version__ = "2.1.2"
+__author__ = "Jacques Duplessis"
 
