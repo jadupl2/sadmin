@@ -97,67 +97,81 @@
 #@2026_02_13 backup v3.52 Change message when NFS mount failed & retry after clearing the cache.
 #@2026_02_13 backup v3.53 Add argument '-X' when we want to delete PID file prior to execute script.
 #@2026_03_27 backup v3.54 If NFS mount failed, retry after dropping the cache (low memory systems).
+#@2026_10_28 backup v3.55 Backup file size over 250MB, now list 5 biggest files part of the backup.
 #===================================================================================================
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The Control-C
 #set -x
 
 
-
-# ------------------- S T A R T  O F   S A D M I N   C O D E    S E C T I O N  ---------------------
-# v1.56 - Setup for Global Variables and load the SADMIN standard library.
-#       - To use SADMIN tools, this section MUST be present near the top of your code.    
-
-# Make Sure Environment Variable 'SADMIN' Is Defined.
-if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADMIN defined? Libr.exist
-    then if [ -r /etc/environment ] ; then source /etc/environment ; fi # LastChance defining SADMIN
-         if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]   # Still not define = Error
-            then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
-                 exit 1                                                 # No SADMIN Env. Var. Exit
-         fi
+                                                                                          
+# ---------   S T A R T   O F   S A D M I N   R E Q U I R E D   C O D E   S E C T I O N  -----------
+# v1.61 - Setup Global Variables and load the SADMIN standard library $SADMIN/lib/sadmlib_std.sh.
+#       - To use SADMIN scripting tools, this section MUST be present near the top of your code.    
+#
+# Make sure environment variable 'SADMIN' is defined, if it's not, exit with error message.
+if [ -r /etc/environment ] && [ -z "$SADMIN" ] ; then source /etc/environment ; fi 
+if [ -z "$SADMIN" ]                                        # Advise user, SADMIN Env. Var. is a MUST
+   then printf "\n[ ERROR ] Set 'SADMIN' environment variable to the install directory." 
+        printf "\n  - Add a line similar to 'SADMIN=/opt/sadmin' in /etc/environment." 
+        exit 1 
+fi 
+if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                   # If SADMIN shell library doesn't exist 
+   then printf "\n[ ERROR ] SADMIN library '$SADMIN/lib/sadmlib_std.sh' can't be found.\n" ; exit 1 
 fi 
 
-# YOU CAN USE THE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
-export SADM_PN=${0##*/}                                    # Script name(with extension)
-export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
+# SADMIN Section of your program that is shared with SADMIN Bash Library.
 export SADM_TPID="$$"                                      # Script Process ID.
 export SADM_HOSTNAME=$(hostname -s)                        # Host name without Domain Name
-export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_OS_TYPE=$(uname -s|tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
 export SADM_USERNAME=$(id -un)                             # Current user name.
+export SADM_DEBUG=0                                        # Debug Level(0-9), 0 = NoDebug
+export SADM_EXIT_CODE=0                                    # Pgm. Default Exit Code
+export SADM_PN=$(basename "$0")                            # Script name(with extension)
+export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
 
-# YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.54'                                     # Script version number
+export SADM_VER='3.55'                                     # Script version number
 export SADM_DESC="Backup files and directories specified in the backup list file."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
+export SADM_GROUP_ONLY='N'                                 # Pgm. run only if usr part of SADMIN Grp
+export SADM_MULTIPLE_EXEC="N"                              # Can Run Simultaneous copy of script Y/N
+export SADM_QUIET="N"                                      # Y=HideMsg & Error#  N=Show Msg & Error#
 export SADM_LOG_TYPE="B"                                   # Write log to [S]creen, [L]og, [B]oth
-export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
-export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
-export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
-export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
-export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
-export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
-export SADM_EXIT_CODE=0                                    # Script Default Exit Code
-export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
-export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") 
-export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX") 
+export SADM_LOG_APPEND="N"                                 # Append log ? Y=AppendLog,N=CreateNewLog
+export SADM_LOG_HEADER="Y"                                 # Y = ProduceLogHeader, N = NoLogHeader
+export SADM_LOG_FOOTER="Y"                                 # Y = ProduceLogFooter, N = NoLogFooter
+export SADM_USE_RCH="Y"                                    # Update the RCH History File (Y/N)
+export SADM_ERRMSG=""                                      # Error Message returned by Library 
+export SADM_ERRNO=0                                        # Error number (0=OK) returned by Library
+export SADM_PID_TIMEOUT=7200                               # Sec. before PID file is remove,7200=2hr
+export SADM_LOCK_TIMEOUT=3600                              # Sec. before System LockFile is Del, 1hr
+export SADM_DB_USED="N"                                    # Use or Not, Got to be on SADMIN server
+export SADM_DB_NAME="sadmin"                               # Database Name SADM_DBNAME in sadmin.cfg
+export SADM_TMP_FILE1=$(mktemp -q "$SADMIN/tmp/sadm_tmp1_XXX") # Make tmpfile1, rm in sadm_stop()
+export SADM_TMP_FILE2=$(mktemp -q "$SADMIN/tmp/sadm_tmp2_XXX") # Make tmpfile2, rm in sadm_stop()
+export SADM_TMP_FILE3=$(mktemp -q "$SADMIN/tmp/sadm_tmp3_XXX") # Make tmpfile3, rm in sadm_stop()
 
-# LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
-. "${SADMIN}/lib/sadmlib_std.sh"                           # Load SADMIN Shell Library
-export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
-export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
+# Load SADMIN Bash Shell Library, ready to  be used.
+. "${SADMIN}/lib/sadmlib_std.sh"                           # Init SADMIN tools, load cfg files
+
+# Example of some functions and variable you can use.
+export SADM_OS_NAME=$(sadm_get_osname)                     # REDHAT,ROCKY,ALMA,CENTOS,DEBIAN,UBUNTU.
+export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.5)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
-#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
+export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access clients Systems
 
-# VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
-# BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
-#export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
-#export SADM_ALERT_GROUP="default"                          # Alert Group to advise
-#export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
-#export SADM_MAX_LOGLINE=400                                # Nb Lines to trim(0=NoTrim)
-#export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
-#export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
-#export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
-# --------------- ---  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
+# Variables Below Are Taken From SADMIN Configuration File (sadmin.cfg) when the Library is loaded.
+# You Can Overridde them On A Per Program Basis (If Needed).
+#export SADM_ALERT_TYPE=1                                   # 0=NoAlert 1=OnError 2=OnOK 3=Always
+#export SADM_ALERT_GROUP="default"                          # Error Group Define  (alert_group.cfg)
+#export SADM_WARNING_GROUP="default"                        # Warning Alert Group (alert_group.cfg)   
+#export SADM_INFO_GROUP="default"                           # Info Alert Group    (alert_group.cfg)
+#export SADM_ALERT_TTL=86400                                # Alert ignored after 86400 Sec = 24hrs
+#export SADM_MAIL_ADDR="your_email@domain.com"              # Default is in $SADMIN/cfg/sadmin.cfg
+#export SADM_MAX_LOGLINE=400                                # Nb of Lines to trim (0=NoTrim)
+#export SADM_MAX_RCHLINE=35                                 # Nb of Lines to trim (0=NoTrim)
+# -------------------  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
+
 
 
 
@@ -267,7 +281,7 @@ backup_setup()
     fi
 
     # Remove previous backup link in the latest directory
-    sadm_write_log "Removing previous backup links in $LATEST_DIR"
+    sadm_write_log "Removing previous backup links in the '$(basename $LATEST_DIR)' directory."
     rm -f $LATEST_DIR/20* > /dev/null 2>&1
 
     # Determine the root backup for today (Daily,Weekly,Monthly or Yearly) 
@@ -371,13 +385,13 @@ create_backup()
 
     # Show Backup list content
     sadm_write_log " " 
-    sadm_write_log "Content of backup list file ($SADM_BACKUP_LIST)" 
+    sadm_write_log "Content of the include backup list file ($SADM_BACKUP_LIST)" 
     cat $SADM_BACKUP_LIST | while read ln ; do sadm_write_log "${ln}" ;done 
     sadm_write_log " "
 
     # Show Backup exclude list 
     sadm_write_log " " 
-    sadm_write_log "Content of backup exclude list file ($SADM_BACKUP_EXCLUDE)" 
+    sadm_write_log "Content of the exclude backup list file ($SADM_BACKUP_EXCLUDE)" 
     cat $SADM_BACKUP_EXCLUDE | while read ln ; do sadm_write_log "${ln}" ;done 
     sadm_write_log " "
 
@@ -446,9 +460,10 @@ create_backup()
         if [ -d ${backup_line} ]                                        # Dir to Backup Exist ?
            then sadm_write_log " "                                      # Insert Blank Line
                 sadm_write_log "${SADM_TEN_DASH}"                       # Line of 10 Dash in Log
+                sadm_write_log " "                                      # Insert Blank Line
                 sadm_write_log "Starting backup of [$backup_line]"      # Show Dir will backup
                 cd /                                                    # Make sure we are on /
-                sadm_write_log "Initiating backup from `pwd`"           # Print Current Working Dir.
+                sadm_write_log "Initiating backup from '$(pwd)'."       # Print Current Working Dir.
 
                 # Build Backup Exclude list to include Dir. Sockets file (Prevent false error)
                 find .$backup_line -type s -print > /tmp/exclude  2>/dev/null  # Sockets in exclude
@@ -495,14 +510,14 @@ create_backup()
                          echo "#"  >>$BACK_LOG 2>&1
                          tar -cvf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude .$backup_line >>$BACK_LOG 2>&1
                          RC=$?                                          # Save Return Code
-                         echo "Backup ended at $(date) with exit code of $RC"  >>$BACK_LOG 2>&1
+                         echo "Backup ended at $(date) with an exit code of $RC"  >>$BACK_LOG 2>&1
                 fi
         fi
 
         # Error 1 = File(s) changed while backup running, don't report that as an error.
-        if [ $RC -eq 1 ] ; then RC=0 ; fi                               # File Changed while backup
+#        if [ $RC -eq 1 ] ; then RC=0 ; fi                              # File Changed while backup
         if [ $RC -ne 0 ]                                                # If Error while Backup
-            then MESS="[ ERROR #${RC} ] while creating $BACK_FILE"      # Advise Backup Error
+            then MESS="[ ERROR No.${RC} ] while creating $BACK_FILE"    # Advise Backup Error
                  sadm_write_err "${MESS}"                               # Advise User - Log Info
                  RC=1                                                   # Make Sure Return Code is 0
             else MESS="[ SUCCESS ] Creating Backup $BACK_FILE"          # Advise Backup Success
@@ -515,12 +530,11 @@ create_backup()
             then BSIZE=$(stat -f%z ${BACKUP_DIR}/${BACK_FILE})
             else BSIZE=$(stat --format=%s ${BACKUP_DIR}/${BACK_FILE})
         fi 
-        BTOTAL=$(echo "$BSIZE /1024/1024" | bc)                             
-        sadm_write_log "Backup size is ${BTOTAL}MB."
 
         # Create link to backup in the server latest directory
         cd ${LATEST_DIR}
-        sadm_write_log "Create link to latest backup of ${backup_line} in ${LATEST_DIR}"
+        sadm_write_log " " 
+        sadm_write_log "Create a symbolic link to latest backup of '${backup_line}' in '$(basename $LATEST_DIR)' directory."
         sadm_write_log "Current directory: $(pwd)"                      # Print Current Dir.
         sadm_write_log "ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}"
         ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}  >>$SADM_LOG 2>&1   # Run Soft Link Command
@@ -528,17 +542,27 @@ create_backup()
             then sadm_write_err "ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}"
                  sadm_write_err "[ ERROR ] Creating link backup in latest directory."
                  RC=1
-            else sadm_write_log "[ SUCCESS ] Creating link."            # Advise User - Log Info
+            else sadm_write_log "[ SUCCESS ] Symbolic Link created."    # Advise User - Log Info
                  RC=0                                                   # Make Sure Return Code is 0
         fi
         TOTAL_ERROR=$(($TOTAL_ERROR+$RC))                               # Total = Cumulate RC Value
         rm -f /tmp/exclude >/dev/null 2>&1                              # Remove socket tmp file
+        BTOTAL=$(echo "$BSIZE /1024/1024" | bc)                             
+        sadm_write_log "Backup size is ${BTOTAL}MB."
+
+        # List 5 biggest files include in the tgz file , if size of backup is greater 250 MB
+        if [[ "$BTOTAL" -gt 250 ]] 
+            then sadm_write_log " "
+                 sadm_write_log "Building a list of the 5 biggest files included in your backup file."
+                 tar -tzvf ${BACKUP_DIR}/${BACK_FILE} | sort -k3 -rn | nl | head -n 5 | tee -a $SADM_LOG 2>&1
+        fi 
         done < $SADM_BACKUP_LIST                                          # For Loop Read Backup List
 
 
     # End of Backup
     cd "$CUR_PWD"                                                       # Restore Previous Cur Dir.
     sadm_write_log " "                                                  # Insert Blank Line
+    sadm_write_log "${SADM_TEN_DASH}"                                   # Line of 10 Dash in Log
     sadm_write_log "Total error(s) while creating backup: ${TOTAL_ERROR}."
     sadm_write_log "${SADM_TEN_DASH}"                                   # Line of 10 Dash in Log
     sadm_write_log " "                                                  # Insert Blank Line
@@ -719,12 +743,12 @@ mount_nfs()
     if [ ! -d "$F" ]                                                    # Check if Server Dir Exist
         then mkdir "$F"                                                 # If Not Create it
              if [ $? -ne 0 ]                                            # If Error trying to mount
-                then sadm_write_err "[ ERROR ] Creating backup main directory '${F}'."
+                then sadm_write_err "[ ERROR ] Creating backup main directory '$F'."
                      return 1                                           # End Function with error
-                else sadm_write_log "[ SUCCESS ] Main backup directory created '${F}'."
+                else sadm_write_log "[ SUCCESS ] Main backup directory created '$F'."
              fi
     fi
-    chmod 775 ${F} >/dev/null @>&1                                      # Assign Permission
+    chmod 775 "$F" >/dev/null 2>&1                                      # Assign Permission
     return 0
 }
 
