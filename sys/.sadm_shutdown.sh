@@ -111,7 +111,7 @@ export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access S
 shutdown_mail()
 {
     wb="$SADMIN/tmp/body$$$.txt"                                        # Work email body file
-    ws="SADM_INFO: Shutdown initiated on system '$SADM_HOSTNAME'."     # Email subject
+    ws="SADM_INFO: Shutdown initiated on system '$SADM_HOSTNAME'."      # Email subject
     we="$SADM_MAIL_ADDR"                                                # Send email to SysAdmin
 
     # Create the Body of email in a text file 
@@ -120,13 +120,14 @@ shutdown_mail()
     echo -e "If you wish to stop receiving this email each time '$SADM_HOSTNAME' is power down," >> $wb
     echo -e "  - Just type the following command on '$SADM_HOSTNAME':"  >>$wb
     echo -e "    - 'touch $SADM_SYS_SHUTDOWN_NOEMAIL'" >>$wb    
+    echo -e "\nHave a pleasant day !" >> $wb
+
     echo -e "\nUptime           : $(uptime)" >> $wb
     echo -e "\nLast 5 Reboot    :\n$(last reboot | head -5 | nl)" >> $wb
-    echo -e "\nLast 10 Users : \n$(last -10 | head -10 | nl)" >> $wb
-    echo -e "\nTop 10 processes : \n$(ps --no-headers -eo pid,ppid,cmd,%cpu,%mem --sort=-%cpu | grep -v 'ps' | head -n 10 | nl)\n" >> $wb
+    #echo -e "\nLast 10 Users : \n$(last -10 | head -10 | nl)" >> $wb
+    #echo -e "\nTop 10 processes : \n$(ps --no-headers -eo pid,ppid,cmd,%cpu,%mem --sort=-%cpu | grep -v 'ps' | head -n 10 | nl)\n" >> $wb
     echo -e "\nHardware or kernel errors prior to power down : \n$(dmesg -l err)" | nl >> $wb
     echo -e "\nFilesystems usage:\n$(df -hT --total)\n" >> $wb    
-    echo -e "\nHave a pleasant day !" >> $wb
 
     # Send Info Email To Sysadmin
     if [[ -s "$SADM_ELOG" ]]                                            # If Error Log is not empty

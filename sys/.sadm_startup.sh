@@ -155,10 +155,12 @@ poweron_email()
     echo -e "Greeting,\nOn $(date), the system '${SADM_HOSTNAME}' is back online." > $wb
     echo -e "\nThe script '\${SADMIN}/sys/${SADM_PN}' is reponsable for sending you this email." >> $wb
     echo -e "If you wish to stop receiving this email, just type the command 'touch $SADM_SYS_START_NOEMAIL'." >>$wb    
-    echo -e "\nLast 5 Reboot :\n$(last reboot | head -5 | nl)" >> $wb
-    echo -e "\nLast 10 Users : \n$(last -10 | head -10 | nl)" >> $wb
-    echo -e "\nFilesystems usage : \n$(df -hP --total)" >> $wb
     echo -e "\nHave a pleasant day !" >> $wb
+
+    echo -e "\nLast 5 Reboot :\n$(last reboot | head -5 | nl)" >> $wb
+    #echo -e "\nLast 10 Users : \n$(last -10 | head -10 | nl)" >> $wb
+    echo -e "\nError on boot : \n$(journalctl -p err -b --no-pager)" >> $wb
+    echo -e "\nFilesystems usage : \n$(df -hP --total)" >> $wb
 
     # Send Info Email To Sysadmin
     if [[ -s "$SADM_ELOG" ]]                                            # If Error Log is not empty
