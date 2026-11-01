@@ -67,6 +67,7 @@
 #@2026_09_04 osupdate v3.47.02 Initial attempt to update Flatpak, if SADM_OSUPDATE_FLATPAK=Y in sadmin.cfg.
 #@2026_09_10 osupdate v3.47.03 Flatpak update is now working, but it is not yet fully tested.
 #@2026_10_18 osupdate v3.47.04 Change format of email when on Ubuntu they are kept-back packages.
+#@2026_11_01 osupdate v3.47.05 Add more verbose output when updating Flatpak 
 # --------------------------------------------------------------------------------------------------
 #set -x
 # dnf clean expire-cache && dnf makecache # Refresh cache in dnf5
@@ -99,7 +100,7 @@ export SADM_EXIT_CODE=0                                    # Pgm. Default Exit C
 export SADM_PN=$(basename "$0")                            # Script name(with extension)
 export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
 
-export SADM_VER='3.47.04'                                  # Your Current Script Version
+export SADM_VER='3.47.05'                                  # Your Current Script Version
 export SADM_DESC="Script is used to perform an O/S update on the system"
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -443,29 +444,38 @@ update_flatpak()
 {
     sadm_write_log " "
     sadm_write_log "-----" 
-    sadm_write_log "Checking if Flatpak is installed on the system."
+    sadm_write_log "Flatpak update : "
     rc=0                                                                # Function return code      
 
-    # Check if flatpak program is available on this system.
+    # Check if flatpak program is installed on the system.
     FLATPAK_PATH=$(sadm_get_command_path "flatpak" >/dev/null)          # Get full path of flatpak
     if [ $? -ne 0 ]                                                     # If not found
        then sadm_write_log "[ INFO ] Flatpak not installed on the system."
             return 0
        else sadm_write_log "[ OK ] Flatpak is installed on the system."
     fi 
+
+    # If 'SADM_OSUPDATE_FLATPAK' is set to 'N' in $SADMIN/cfg/sadmin.cfg 
+    if [[ "$SADM_OSUPDATE_FLATPAK" == "N" ]] 
+       then sadm_write_log "[ OK ] You opted to not update any flatpak packages."
+            return 0 
+       else sadm_write_log "[ OK ] You opted to update flatpak packages ('SADM_OSUPDATE_FLATPAK'='Y')."
+    fi
+
     
 #    flatpak remote-ls --updates | tee -a >> $SADM_LOG 2>&1 
 #    flatpak remote-ls --updates 
 #    'n\n' 2>/dev/null | flatpak update | grep -Eo "^[\ ]*[0-9]+\..*" --color=none # List of Update
 #    'n\n' 2>/dev/null | flatpak update | grep -Eo "^[\ ]*[0-9]+\." | wc -l  # Update Number
 
+
+
     # Check if flatpak is executable on this system, if ok run flatpak update command.
-    flatpak -y update >> $SADM_LOG 2>&1 
+    #flatpak -y update >> $SADM_LOG 2>&1 
     f=$(mktemp); { flatpak -y update ; echo $?>$f ; } |tee -a $SADM_LOG 2>&1; rc=$(cat $f) 
     if [[ "$rc" -eq 0 ]]
-        then sadm_write_log "[ OK ] The 'flatpak -y update' command ran with success.\n"
-        else sadm_write_err "[ ERROR ] Return Code of 'flatpak -y update' is ${rc}.\n"
-             rc=1
+        then sadm_write_log "[ OK ] Flatpak update ran successfully."
+        else sadm_write_err "[ ERROR No.$rc ] After running 'flatpak -y update'."
     fi
     return $rc
 }
