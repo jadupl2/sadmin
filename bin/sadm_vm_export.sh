@@ -135,11 +135,16 @@ export CONFIRM="Y"                                                      # confir
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\n${SADM_PN} [ VMName ] :"
-    printf "\n\t-d   (Debug Level [0-9])"
-    printf "\n\t-h   (Display this help message)"
-    printf "\n\t-v   (Show Script Version Info)"
-    printf "\n\n" 
+    byellow="${BOLD}${YELLOW}" ; bcyan="${BOLD}${CYAN}"; bgreen="${BOLD}${GREEN}"; reset="${NORMAL}"
+    printf "\n${byellow}${SADM_PN} v${SADM_VER} - Hostname '${SADM_HOSTNAME}'"
+    printf "\n${byellow}${SADM_DESC}${reset}\n"
+    printf "\nUsage: %s%s%s%s [options]" "$bcyan" "$(basename "$0")" "${reset}"
+    printf "\n\n${bgreen}Options:${reset}"
+    printf "\n  ${byellow}[-d 0-9]${reset}\tSet Debug verbose Level."
+    printf "\n  ${byellow}[-h]${reset}\t\tShow this help message."
+    printf "\n  ${byellow}[-v]${reset}\t\tShow script version and information."
+    printf "\n  ${byellow}[-X]${reset}\t\tRemove the PID file & run script."
+    printf "\n\n"
 }
 
 
