@@ -2,25 +2,13 @@
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
 #   Title    :  sadm_fetch_servers.sh
-#   Synopsis :  Rsync all *.rch/*.log/*.rpt files from all active SADMIN client to the SADMIN Server
+#   Synopsis :  Collect scripts results & SysMon status from all systems and send alert if needed.
 #   Version  :  1.0
 #   Date     :  December 2015
 #   Requires :  sh
 #   SCCS-Id. :  @(#) sadm_fetch_servers.sh 1.0 2015.09.06
 #
 # --------------------------------------------------------------------------------------------------
-# ---CHANGE LOG---
-# GROUPS are :
-#   - "Web"     Web Interface modification      - "install"  Install,Uninstall & Update changes.
-#   - "cmdline" Command line tools changes.     - "template" Library,Templates,Libr demo.
-#   - "mon"     System Monitor related.         - "backup"   Backup related modification or fixes.
-#   - "config"  Config files modification.      - "server"   Server related modification or fixes.
-#   - "client"  Client related modifications.   - "osupdate" O/S Update modification or fixes.
-#   - "lib"     Library documentation           - "doc"      General Documentation
-#   - "sys"     System (startup and shutdown)   - "nolog"    Minor change, not included in rel. note
-#   - "doc"     SADMIN documentation            - "testenv"  Script to test environment
-# --------------------------------------------------------------------------------------------------
-#
 # 2016_12_12 server v1.6 Major changes to include ssh test to each server and alert when not working
 # 2017_02_09 server v1.8 Change Script name and change SADM server default crontab
 # 2017_04_04 server v1.9 Cosmetic - Remove blank lines inside processing servers
@@ -134,6 +122,7 @@
 #@2026_09_24 server v3.65.03 Alert file restructure, Code revision, fix in send_alert & sendmail.
 #@2026_09_29 server v3.65.04 Major review of alerting part of the script, correct some fixes.
 #@2026_10_01 server V3.65.05 Replace variable 'SADM_ALERT_REPEAT' in sadmin.cfg, by 'SADM_ALERT_TTL'.
+#@2026_11_02 server V3.65.06 Fix problem false alert when system wasn't really down.
 #
 # ---CHANGE LOG---
 # GROUPS are :
@@ -145,16 +134,17 @@
 #   - "lib"     Library documentation           - "doc"      General Documentation
 #   - "sys"     System (startup and shutdown)   - "nolog"    Minor change, not included in rel. note
 #   - "doc"     SADMIN documentation            - "testenv"  Script to test environment
+#   - "vmtools" Script to help managing VMs     - "sysadmin" Script used for management of systems.
+#   - "test"    For testing futur enhancement
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT the ^C
 #set -x
 
 
-
                                                                                           
 # ---------   S T A R T   O F   S A D M I N   R E Q U I R E D   C O D E   S E C T I O N  -----------
-# v1.60 - Setup Global Variables and load the SADMIN standard library $SADMIN/lib/sadmlib_std.sh.
+# v1.61 - Setup Global Variables and load the SADMIN standard library $SADMIN/lib/sadmlib_std.sh.
 #       - To use SADMIN scripting tools, this section MUST be present near the top of your code.    
 #
 # Make sure environment variable 'SADMIN' is defined, if it's not, exit with error message.
@@ -168,7 +158,6 @@ if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                   # If SADMIN shell lib
    then printf "\n[ ERROR ] SADMIN library '$SADMIN/lib/sadmlib_std.sh' can't be found.\n" ; exit 1 
 fi 
 
-
 # SADMIN Section of your program that is shared with SADMIN Bash Library.
 export SADM_TPID="$$"                                      # Script Process ID.
 export SADM_HOSTNAME=$(hostname -s)                        # Host name without Domain Name
@@ -179,7 +168,7 @@ export SADM_EXIT_CODE=0                                    # Pgm. Default Exit C
 export SADM_PN=$(basename "$0")                            # Script name(with extension)
 export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
 
-export SADM_VER='3.65.05'                                  # Script version number
+export SADM_VER='3.65.06'                                  # Script version number
 export SADM_DESC="Collect scripts results & SysMon status from all systems and send alert if needed." 
 export SADM_ROOT_ONLY="Y"                                  # Pgm. run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Pgm. run only on SADMIN server? [Y]/[N]
@@ -208,20 +197,19 @@ export SADM_TMP_FILE3=$(mktemp -q "$SADMIN/tmp/sadm_tmp3_XXX") # Make tmpfile3, 
 export SADM_OS_NAME=$(sadm_get_osname)                     # REDHAT,ROCKY,ALMA,CENTOS,DEBIAN,UBUNTU.
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.5)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
-export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
+export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access clients Systems
 
 # Variables Below Are Taken From SADMIN Configuration File (sadmin.cfg) when the Library is loaded.
 # You Can Overridde them On A Per Program Basis (If Needed).
 #export SADM_ALERT_TYPE=1                                   # 0=NoAlert 1=OnError 2=OnOK 3=Always
-#export SADM_ALERT_GROUP="default"                          # Error Group Define in alert_group.cfg
+#export SADM_ALERT_GROUP="default"                          # Error Group Define  (alert_group.cfg)
 #export SADM_WARNING_GROUP="default"                        # Warning Alert Group (alert_group.cfg)   
-#export SADM_INFO_GROUP="default"                           # Info Alert Group (in alert_group.cfg)
-#export SADM_ALERT_REPEAT=0                                 # 0=No Alert Repeat, Sec. between Repeat
-#export SADM_MAIL_ADDR="your_email@domain.com"              # Send email to...default in sadmin.cfg
+#export SADM_INFO_GROUP="default"                           # Info Alert Group    (alert_group.cfg)
+#export SADM_ALERT_TTL=86400                                # Alert ignored after 86400 Sec = 24hrs
+#export SADM_MAIL_ADDR="your_email@domain.com"              # Default is in $SADMIN/cfg/sadmin.cfg
 #export SADM_MAX_LOGLINE=400                                # Nb of Lines to trim (0=NoTrim)
 #export SADM_MAX_RCHLINE=35                                 # Nb of Lines to trim (0=NoTrim)
 # -------------------  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
-
 
 
 
@@ -866,9 +854,10 @@ rsync_function()
 
         if [ $RC -ne 0 ]                                                # If Error doing rsync
            then if [ $RETRY -lt 3 ]                                     # If less than 3 retry
-                   then sleep 5                                         # Sleep 5Sec. between retries
+                   then #sleep 2                                         # Sleep 2Sec. between retry
                         sadm_write_log "[ RETRY $RETRY ] rsync -ar -e 'ssh -p $ssh_port' --delete ${REMOTE_DIR} ${LOCAL_DIR}"
-                   else sadm_write_err "$SADM_ERROR $RETRY ] rsync -ar -e 'ssh -p $ssh_port' --delete ${REMOTE_DIR} ${LOCAL_DIR}"
+                   else sadm_write_err "[ RETRY $RETRY ] rsync -ar -e 'ssh -p $ssh_port' --delete ${REMOTE_DIR} ${LOCAL_DIR}"
+                        sadm_write_err "[ ERROR ] rsync -ar -e 'ssh -p $ssh_port' --delete ${REMOTE_DIR} ${LOCAL_DIR}"
                         break
                 fi
            else sadm_write_log "$SADM_OK rsync -ar -e 'ssh -p $ssh_port' --delete ${REMOTE_DIR} ${LOCAL_DIR}"
@@ -1046,6 +1035,10 @@ check_host_connectivity()
     LAST_UPTIME="$3"                                                    # Last Recorded uptime in DB
     SNAME=$(echo "$FQDN_SNAME" | awk -F\. '{print $1}')                 # System Name without Domain
 
+    if [[ "$SADM_DEBUG" -gt 4 ]] 
+        then sadm_write_log "Check connectivity to $SNAME on port $SSH_PORT, LastUptime is $LAST_UPTIME" 
+    fi
+
 
     # Can we resolve the hostname ?
     if ! host "$SNAME" >/dev/null 2>&1                                  # Name is resolvable ? 
@@ -1054,35 +1047,35 @@ check_host_connectivity()
               return 1                                                  # Return Error to Caller
     fi
 
-
     # Get uptime of remote system & we are testing at same time if ssh to remote system is working.
-    if [ "$SADM_SERVER" = "$fqdn_server" ]                              # If system is SADMIN Server    
+    if [[ "$SADM_SERVER" == "$fqdn_server" ]]                           # If system is SADMIN Server    
         then wuptime=$(uptime 2>/dev/null)                              # Get local system uptime 
              uptime_rc=$?                                               # Save Result Code
         else wuptime=$($SADM_SSH -qnp $SSH_PORT -o ConnectTimeout=2 -o ConnectionAttempts=2 $FQDN_SNAME uptime 2>/dev/null)
              uptime_rc=$?                                               # Save Result Code
     fi
-    if [ "$SADM_DEBUG" -gt 4 ] ;then sadm_write_log "wuptime: $wuptime uptime_rc=$uptime_rc" ;fi 
 
-    # If was able to get system uptime
-    if [ "$uptime_rc" -eq 0 ]   
-        then if [ "$SADM_DEBUG" -gt 4 ] ; then sadm_write_log "Getting uptime of system '$SNAME'"; fi             
-             GLOB_UPTIME=$(echo "$wuptime" |awk -F, '{print $1}' |awk '{gsub(/^[ ]+/,""); print $0}')
-             GLOB_UPTIME=$(echo "$wuptime" |awk -F, '{print $1}' |awk '{gsub(/^[ ]+/,""); print $0}')
-             if [ "$SADM_DEBUG" -gt 4 ] ; then sadm_write_log "Uptime returned is '$GLOB_UPTIME'" ;fi
+
+    # If we were able to get system uptime, update database and return to caller with success code
+    if [[ "$uptime_rc" -eq 0 ]]                                         # Success getting uptime 
+        then GLOB_UPTIME=$(echo "$wuptime" |awk -F, '{print $1}' |awk '{gsub(/^[ ]+/,""); print $0}')
              update_server_uptime "$SNAME" "$GLOB_UPTIME"               # Update Server Uptime in DB
-             return 0
+             RC=$?                                                      # Save Update DB Result Code
+             return $RC                                                 # Return to caller
+        else #sadm_write_log "No connectivity to $SNAME LastUptime is ${LAST_UPTIME:0:4}" 
+             if [[ "${LAST_UPTIME:0:4}" != "OFF " ]]                    # First time offline ?
+                then GLOB_UPTIME="OFF $(date "+%C%y.%m.%d %H:%M")"      # Date/Time came offline
+                     #sadm_write_log "New Uptime is ${GLOB_UPTIME} for $SNAME" 
+                     update_server_uptime "$SNAME" "$GLOB_UPTIME"       # Update system uptime in DB
+                     RC=$?                                              # Save Update DB Result Code
+                     return $RC                                         # Return to caller
+                else return 0                                           # Stay Offline, no update DB
+             fi 
     fi 
 
-    # Update system uptime in the Database
-    # - if error getting uptime of the system & not already OFF Line
-    if [ "$uptime_rc" -ne 0 ] && [ "${LAST_UPTIME:0:4}" != "OFF " ]    # Was Not able to get uptime
-        then GLOB_UPTIME="OFF $(date "+%C%y.%m.%d %H:%M")"              # Date/Time came offline
-             update_server_uptime "$SNAME" "$GLOB_UPTIME"               # Update system uptime in DB
-    fi 
 
     # SSH didn't work, but is it a sporadic system (Laptop,Test... system) don't report as an error)
-    if [ $uptime_rc -ne 0 ]  && [ "$server_sporadic" = "1" ]            # If Error on Sporadic Host
+    if [[ $uptime_rc -ne 0 ]]  && [[ "$server_sporadic" = "1" ]]        # If Error on Sporadic Host
         then sadm_write_log "[ WARNING ] Can't SSH to $SNAME (Sporadic System)."
              return 2                                                   # Return Skip Code to caller
     fi 
@@ -2176,24 +2169,24 @@ update_server_uptime()
     WUPTIME=$2                                                          # Uptime value to store
     WCURDAT=$(date "+%C%y.%m.%d %H:%M:%S")                              # Get & Format Update Date
 
-    SQL1="UPDATE server SET "                                           # SQL Update Statement
-    SQL2="srv_uptime = '$WUPTIME', "                                    # System uptime value
-    SQL3="srv_date_update = '${WCURDAT}' "                              # Last Update Date
-    SQL4=" "                                                            # Last Boot Date
-    SQL5="where srv_name = '${WSERVER}' ;"                              # Server name to update
-    SQL="${SQL1}${SQL2}${SQL3}${SQL4}${SQL5}"                           # Create final SQL Statement
+    SQL="UPDATE server SET "                                           # SQL Update Statement
+    SQL+="srv_uptime = '$WUPTIME', "                                    # System uptime value
+    SQL+="srv_date_update = '${WCURDAT}' "                              # Last Update Date
+    SQL+="where srv_name = '${WSERVER}' ;"                              # Server name to update
 
     WAUTH="-u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD "                       # Set Authentication String 
     CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
     CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -e '$SQL'"           # Build Full Command Line
     if [ "$SADM_DEBUG" -gt 5 ] ; then sadm_write_log "$CMDLINE" ; fi    # Debug = Write command Line
+    sadm_write_log "$CMDLINE" 
 
     # Execute SQL to Update Server O/S Data
-    $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -e "$SQL" >>$SADM_LOG 2>&1
-    if [ $? -ne 0 ]                                                     # If Error while updating
-        then sadm_write_err "[ ERROR ] Database update failed to update 'uptime' ($WUPTIME) of $WSERVER"
+    $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -e \"$SQL\" >>$SADM_LOG 2>&1
+    sadm_write_log "$SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -e \"$SQL\""
+    if [[ $? -ne 0 ]]                                                   # If Error while updating
+        then sadm_write_err "[ ERROR ] Database update failed to update the 'uptime' to '$WUPTIME' of '$WSERVER'."
              RCU=1                                                      # Set Error Code = 1
-        else sadm_write_log "[ OK ] Success updating database 'uptime' ($WUPTIME) of $WSERVER"
+        else sadm_write_log "[ OK ] Success updating database the 'uptime' to '$WUPTIME' of '$WSERVER'."
              RCU=0                                                      # Set Code = Success =0
     fi
     return $RCU
