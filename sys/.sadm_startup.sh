@@ -52,6 +52,7 @@
 #@2026_10_10 startup/shutdown v03.26.06 Change format of startup email.
 #@2026_10_12 startup/shutdown v03.26.07 Log sent by email was not complete & change sendmail code.
 #@2026_10_21 startup/shutdown V03.26.08 Prevent startup email when "$SADM_SYS_START_NOEMAIL" file is present.
+#@2026_11_01 startup/shutdown V03.26.09 Consider 'SADM_EMAIL_STARTUP' var. to control startup email.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
@@ -85,7 +86,7 @@ export SADM_EXIT_CODE=0                                    # Pgm. Default Exit C
 export SADM_PN=$(basename "$0")                            # Script name(with extension)
 export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
 
-export SADM_VER='03.26.08'                                 # Script version number
+export SADM_VER='03.26.09'                                 # Script version number
 export SADM_DESC="Script run when the system is started (systemctl enable --now sadmin)." 
 export SADM_ROOT_ONLY="Y"                                  # Pgm. run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Pgm. run only on SADMIN server? [Y]/[N]
@@ -147,9 +148,9 @@ export NTP_SERVER="68.69.221.61 162.159.200.1 205.206.70.2"         # Canada NTP
 # --------------------------------------------------------------------------------------------------
 poweron_email()
 {
-    wb="$SADMIN/tmp/body$$$.txt"                                        # work email body file
+    wb="$SADMIN/tmp/body$$$.txt"                                        # Email tmp body file
     ws="SADM_INFO: System '$SADM_HOSTNAME' is back online."             # Email subject
-    we="$SADM_MAIL_ADDR"                                                # Send email to SysAdmin
+    we="$SADM_MAIL_ADDR"                                                # Email Default=SysAdmin
 
     # Create the Body of email in a text file 
     echo -e "Greeting,\nOn $(date), the system '${SADM_HOSTNAME}' is back online." > $wb
@@ -174,9 +175,6 @@ poweron_email()
     if [ -f  "$wb" ] ; then rm -f "$wb" ; fi                            # Remove body file
     return $RC 
 }
-
-
-
 
 
 
@@ -271,7 +269,7 @@ main_process()
                     ;;
     esac
 
-    if [[ ! -f "$SADM_SYS_START_NOEMAIL" ]]                             # Email file don't exist
+    if [[ ! -f "$SADM_SYS_START_NOEMAIL" ]] && [[ "$SADM_EMAIL_STARTUP" == "Y" ]]                             # Email file don't exist
         then sadm_write_log "  - Sending 'Startup' email to $SADM_MAIL_ADDR." 
     fi 
     return $error_count                                                 # Return Default return code
@@ -285,14 +283,14 @@ main_process()
     sadm_start                                                          # Won't come back if error
     main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
+    sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
 
-    # Send email unless the file "$SADMIN/sys/sadm_startup_noemail.txt" exist 
-    if [[ ! -f "$SADM_SYS_START_NOEMAIL" ]]                             # Email file don't exist
-        then sadm_write_log "  - Sending 'Startup' email to the '$SADM_ALERT_GROUP' group."
-             poweron_email                                               # Send Email to sysadmin
+    # Now that all logs are closed, send email unless one of these conditions is met : 
+    #   - The file "$SADMIN/sys/sadm_startup_noemail.txt" exist 
+    #   - The parameter 'SADM_EMAIL_STARTUP' in sadmin config file is set to 'N'. 
+    if [[ ! -f "$SADM_SYS_START_NOEMAIL" ]] && [[ "$SADM_EMAIL_STARTUP" == "Y"]] # Ok to send email
+        then poweron_email                                              # Send Email to sysadmin
              if [[ $? -ne 0 ]] ; then SADM_EXIT_CODE=1 ; fi             # If problem sending email
     fi 
 
-    sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
-                                             # Exit With Global Err (0/1)

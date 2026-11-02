@@ -31,6 +31,7 @@
 #@2026_10_10 startup/shutdown v02.17.07 Change format of shutdown email sent to sysadmin.
 #@2026_10_12 startup/shutdown v02.17.08 Log sent by email was not complete & change sendmail code.
 #@2026_10_21 startup/shutdown V02.17.09 Prevent shutdown email when "$SADM_SYS_SHUTDOWN_NOEMAIL" file is present.
+#@2026_11_01 startup/shutdown V02.17.10 Consider "$SADM_EMAIL_SHUTDOWN" parameter in sadmin.cfg to email at shutdown.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x
@@ -61,7 +62,7 @@ export SADM_EXIT_CODE=0                                    # Pgm. Default Exit C
 export SADM_PN=$(basename "$0")                            # Script name(with extension)
 export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
 
-export SADM_VER='02.17.09'                                 # Script version number
+export SADM_VER='02.17.10'                                 # Script version number
 export SADM_PDESC="Executed when the system is initiating shutdown by the 'sadmin.service'."
 export SADM_ROOT_ONLY="Y"                                  # Pgm. run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Pgm. run only on SADMIN server? [Y]/[N]
@@ -124,8 +125,8 @@ shutdown_mail()
 
     echo -e "\nUptime           : $(uptime)" >> $wb
     echo -e "\nLast 5 Reboot    :\n$(last reboot | head -5 | nl)" >> $wb
-    #echo -e "\nLast 10 Users : \n$(last -10 | head -10 | nl)" >> $wb
-    #echo -e "\nTop 10 processes : \n$(ps --no-headers -eo pid,ppid,cmd,%cpu,%mem --sort=-%cpu | grep -v 'ps' | head -n 10 | nl)\n" >> $wb
+    echo -e "\nLast 10 Users : \n$(last -10 | head -10 | nl)" >> $wb
+    echo -e "\nTop 10 cpu processes : \n$(ps -eo pid,cmd,%mem,%cpu --sort=-%cpu | head)\n" >> $wb
     echo -e "\nHardware or kernel errors prior to power down : \n$(dmesg -l err)" | nl >> $wb
     echo -e "\nFilesystems usage:\n$(df -hT --total)\n" >> $wb    
 
@@ -167,8 +168,10 @@ main_process()
                     ;;
     esac
 
-    # If file "$SADMIN/sys/sadm_shutdown_noemail.txt" don't exist, then msg send shutdown email.
-    if [[ ! -f "$SADM_SYS_SHUTDOWN_NOEMAIL" ]]                          # If don't exist, shut email
+    # Now that all logs are closed, send email unless one of these conditions is met : 
+    #   - The file "$SADMIN/sys/sadm_shutdown_noemail.txt" exist 
+    #   - The parameter 'SADM_EMAIL_SHUTDOWN' in sadmin config file is set to 'N'. 
+    if [[ ! -f "$SADM_SYS_SHUTDOWN_NOEMAIL" ]] && [[ "$SADM_EMAIL_SHUTDOWN" == "Y" ]]                             # Email file don't exist
         then sadm_write_log "  - Sending 'Shutdown' email to $SADM_MAIL_ADDR." 
     fi 
 
@@ -187,9 +190,9 @@ main_process()
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
 
     # Send email unless the file "$SADMIN/sys/sadm_shutdown_noemail.txt" exist 
-    if [[ ! -f "$SADM_SYS_SHUTDOWN_NOEMAIL" ]]                          # if send email at shutdown
+    if [[ ! -f "$SADM_SYS_SHUTDOWN_NOEMAIL" ]] && [[ "$SADM_EMAIL_SHUTDOWN" == "Y" ]]
         then shutdown_mail                                              # Send notification email
              if [[ $? -ne 0 ]] ; then SADM_EXIT_CODE=1 ; fi             # If problem sending email
     fi 
-    exit $SADM_EXIT_CODE 
+
     exit $SADM_EXIT_CODE 
