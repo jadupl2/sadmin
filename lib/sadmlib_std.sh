@@ -153,7 +153,7 @@
 # 2021_08_17 lib v3.74 Performance improvement.
 # 2021_09_09 lib v3.75 'sadm_write_err $msg' function added to write to log and error log.
 # 2021_09_13 lib v3.76 Enhance script log header to be more concise, yet have more information.
-# 2021_09_14 lib v3.77 If script desc. "SADM_DESC" v# 2022_08_22 lib v4.06 Update 'sadm_server_type()' better detection if physical or virtual system.
+# 2021_09_14 lib v3.77 If script desc. "SADM_DESC" is available , print it in log header.
 # 2021_09_15 lib v3.78 Function "sadm_show_version" will show Script Desc. ($SADM_DESC) if Avail.
 # 2021_09_30 lib v3.79 Various small little corrections.
 # 2021_10_20 lib v3.80 Merge 'slack channel file' with 'alert group' & change log footer.
@@ -311,9 +311,6 @@ export SADM_STIME=""                                                    # Will b
 export DELETE_PID="Y"                                                   # Default Delete PID On Exit
 export LIB_DEBUG=0                                                      # This Library Debug Level
 
-
-
-
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 export SADM_BASE_DIR=${SADMIN:="/opt/sadmin"}                           # Script Root Base Dir.
 export SADM_BIN_DIR="$SADM_BASE_DIR/bin"                                # Script Root binary Dir.
@@ -371,15 +368,17 @@ export SADM_ALERT_HIST="$SADM_CFG_DIR/alert_history.txt"                # Alert 
 export SADM_ALERT_HINI="$SADM_CFG_DIR/.alert_history.txt"               # History Init
 export SADM_ALERT_ARC="$SADM_CFG_DIR/alert_archive.txt"                 # Alert Archive
 export SADM_ALERT_ARCINI="$SADM_CFG_DIR/.alert_archive.txt"             # Init Archive
-export SADM_REL_FILE="$SADM_CFG_DIR/.release"  
-                         # Release Ver.
+export SADM_REL_FILE="$SADM_CFG_DIR/.release"                           # Release Ver.
+
 export SADM_SYS_STARTUP="$SADM_SYS_DIR/sadm_startup.sh"                 # Startup script
 export SADM_SYS_START="$SADM_SYS_DIR/.sadm_startup.sh"                  # Startup script template
 export SADM_SYS_START_NOEMAIL="$SADM_SYS_DIR/sadm_startup_noemail.txt"  # If exist, no email on boot
+export SADM_EMAIL_STARTUP="Y"                                           # Y/N email @ startup
 
 export SADM_SYS_SHUTDOWN="$SADM_SYS_DIR/sadm_shutdown.sh"               # Shutdown 
 export SADM_SYS_SHUT="$SADM_SYS_DIR/.sadm_shutdown.sh"                  # Shutdown Template
 export SADM_SYS_SHUTDOWN_NOEMAIL="$SADM_SYS_DIR/sadm_shutdown_noemail.txt" # If exist, no email on shut
+export SADM_EMAIL_SHUTDOWN="Y"                                           # Y/N email @ shutdown
 
 export SADM_CRON_FILE="$SADM_CFG_DIR/.sadm_osupdate"                    # Work crontab
 export SADM_CRONTAB="/etc/cron.d/sadm_osupdate"                         # Final crontab
@@ -2570,6 +2569,10 @@ sadm_load_config_file() {
                                             ;;
             "SADM_SMTP_SENDER")             SADM_SMTP_SENDER=$VALUE
                                             ;;
+            "SADM_EMAIL_STARTUP")           SADM_EMAIL_STARTUP=$VALUE     
+                                            ;;
+            "SADM_EMAIL_SHUTDOWN")          SADM_EMAIL_SHUTDOWN=$VALUE     
+                                            ;;
             "SADM_VM_EXPORT_NFS_SERVER" )   SADM_VM_EXPORT_NFS_SERVER=$VALUE
                                             ;; 
             "SADM_VM_EXPORT_NFS_SERVER_VER" ) SADM_VM_EXPORT_NFS_SERVER_VER=$VALUE
@@ -2621,13 +2624,13 @@ sadm_load_config_file() {
 # Get Read/Write and Read/Only Database User Password from pasword file (Only on SADMIN Server)
     SADM_RW_DBPWD=""                                                    # Default Write Pwd is Blank
     SADM_RO_DBPWD=""                                                    # Default ReadOnly Pwd Blank
-    if [ "$SADM_HOST_TYPE" = "S" ] && [ -r "$DBPASSFILE" ]              # If on Server & pwd file
+    if [[ -r "$DBPASSFILE" ]]                                           # If .dbpass readable
         then SADM_RW_DBPWD=$(grep "^${SADM_RW_DBUSER}," "$DBPASSFILE" |awk -F, '{ print $2 }') 
              SADM_RO_DBPWD=$(grep "^${SADM_RO_DBUSER}," "$DBPASSFILE" |awk -F, '{ print $2 }') 
-    fi
+    fi 
 
-# If on client delete plain text email pwd file
-# On SADMIN Server recreate encrypted email pwd file from plaintext file.
+    # If we are on a sadmin client delete plain text email pwd file, if present.
+    # On SADMIN Server recreate encrypted email pwd file from plaintext file.
     if [[ "$SADM_HOST_TYPE" == "S" ]] && [[ -r "$GMPW_FILE_TXT" ]]      # Admin Server & Pwd txtfile
        then base64 $GMPW_FILE_TXT >$GMPW_FILE_B64                       # Recreate encrypt pwd file
             if [[ $(id -u) -eq 0 ]]
@@ -2640,15 +2643,16 @@ sadm_load_config_file() {
             if [[ "$SADM_DEV_HOST" != "$SADM_HOSTNAME" ]] ;then rm -f $GMPW_FILE_TXT >>/dev/null ;fi
     fi
 
-# Set Email Account password from encrypted email account password file.
+    # Set Email Account password from encrypted email account password file.
     SADM_GMPW=""
     if [ -r "$GMPW_FILE_B64" ] 
         then SADM_GMPW=$(base64 -d "$GMPW_FILE_B64")                    # Decrypt GM Password
              if [ $(id -u) -eq 0 ]
                 then chmod 0664 "$GMPW_FILE_B64" >/dev/null 2>&1
-                     chown "${SADM_USER}":"${SADM_GROUP}" "$GMPW_FILE_B64" >/dev/null 2>&1
+                     chown "${SADM_USER}:${SADM_GROUP}" "$GMPW_FILE_B64" >/dev/null 2>&1
              fi 
     fi
+
     return 0
 }
 
@@ -2835,7 +2839,7 @@ sadm_start() {
     # Make sure 'SADM_ROOT_ONLY' exist and not empty, if not set to default value "N" NO restriction
     # Check if this script is to be run only by root user
     if [[ -z "$SADM_ROOT_ONLY" ]] ; then export SADM_ROOT_ONLY="N" ; fi # Default can run everywhere
-    if [ "$SADM_ROOT_ONLY" == "Y" ] &&  [ $(id -u) -ne 0 ]  
+    if [[ "$SADM_ROOT_ONLY" == "Y" ]] &&  [[ $(id -u) -ne 0 ]]  
         then sadm_write_err " "
              sadm_write_err "Script can only be run by the 'root' user."
              sadm_write_err "Try 'sudo ${0##*/}'."                      # Suggest using sudo
@@ -2865,7 +2869,7 @@ sadm_start() {
 
     # Check if this script to be run only on the SADMIN server.
     if [[ -z "$SADM_SERVER_ONLY" ]] ; then SADM_SERVER_ONLY="N" ; fi    # Default can run everywhere
-    if [ "$SADM_SERVER_ONLY" = "Y" ] && [ "$SADM_HOST_TYPE" != "S" ]
+    if [[ "$SADM_SERVER_ONLY" == "Y" ]] && [[ "$SADM_HOST_TYPE" != "S" ]]
         then sadm_write_err "[ ERROR ] This script will only run on the SADMIN server '$SADM_SERVER'."
              sadm_write_err "The variable 'SADM_SERVER_ONLY' is set to 'Y' in '$SADM_PN'."
              sadm_write_err "Process aborted."                          # Abort advise message
