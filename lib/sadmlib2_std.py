@@ -93,7 +93,9 @@
 #@2026_10_01 lib V04.69.07 Add variable 'SADM_ALERT_TTL' to sadmin.cfg, Sec. (86400) alert stay valid.
 #@2026_10_10 lib V04.69.08 Remove warning msg for 'rrdtool' and 'mysql' if not on SADMIN server.
 #@2026_10_18 lib V04.69.09 Fix get username portability and fix testing if user part of sadmin group.
+#@2026_11_02 lib V04.69.10 New variable 'SADM_EMAIL_STARTUP' and 'SADM_EMAIL_SHUTDOWN' options (Y/N)
 #   
+SADM_EMAIL_STARTUP
 # --------------------------------------------------------------------------------------------------
 
 #from multiprocessing.dummy import connection
@@ -151,7 +153,7 @@ except ImportError as e:
 
 # Global Variables to this script 
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.69.09"                              # This Library Version
+lib_ver             = "4.69.10"                              # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 
 start_time          = ""                                    # Script Start Date & Time
@@ -874,6 +876,9 @@ def load_sadmin_config(cfg_file=f"{dir_cfg}/sadmin.cfg") :
             if "SADM_SMTP_SENDER"                == CFG_NAME: cfg_dict["SADM_SMTP_SENDER"]               = CFG_VALUE
             if "SADM_DAYS_HISTORY"               == CFG_NAME: cfg_dict["SADM_DAYS_HISTORY"]              = int(CFG_VALUE)
             if "SADM_MAX_ARC_LINE"               == CFG_NAME: cfg_dict["SADM_MAX_ARC_LINE"]              = int(CFG_VALUE)
+            if "SADM_EMAIL_STARTUP"              == CFG_NAME: cfg_dict["SADM_EMAIL_STARTUP"]             = CFG_VALUE
+            if "SADM_EMAIL_SHUTDOWN"             == CFG_NAME: cfg_dict["SADM_EMAIL_SHUTDOWN"]            = CFG_VALUE
+
 
             # Database Connection Information
             if "SADM_DBNAME"                     == CFG_NAME: cfg_dict["SADM_DBNAME"]                    = CFG_VALUE
@@ -1024,7 +1029,7 @@ def load_config_file(cfg_file):
     sadm_textbelt_key            ,sadm_textbelt_url             ,sadm_ntfy_email                  ,\
     sadm_ntfy_pwd                ,sadm_ntfy_token               ,sadm_ntfy_topic                  ,\
     sadm_ntfy_user               ,sadm_pwd_random               ,sadm_pid_timeout                 ,\
-    sadm_vm_export_concurrent                                                                     ,\
+    sadm_vm_export_concurrent    ,sadm_email_startup            ,sadm_email_shutdown              ,\
     sadm_backup_batch_day2run    ,sadm_backup_batch_mth2run     ,sadm_backup_batch_date2run       ,\
     sadm_rear_batch_day2run      ,sadm_rear_batch_mth2run       ,sadm_rear_batch_date2run         ,\
     sadm_vm_export_batch_day2run ,sadm_vm_export_batch_mth2run  ,sadm_vm_export_batch_date2run    ,\
@@ -1121,6 +1126,10 @@ def load_config_file(cfg_file):
         if "SADM_SMTP_SENDER"              in CFG_NAME: sadm_smtp_sender             = CFG_VALUE
         if "SADM_DAYS_HISTORY"             in CFG_NAME: sadm_days_history            = int(CFG_VALUE)
         if "SADM_MAX_ARC_LINE"             in CFG_NAME: sadm_max_arc_line            = int(CFG_VALUE)
+        if "SADM_MAX_ARC_LINE"             in CFG_NAME: sadm_max_arc_line            = int(CFG_VALUE)
+        if "SADM_EMAIL_STARTUP"            in CFG_NAME: sadm_email_startup           = CFG_VALUE
+        if "SADM_EMAIL_SHUTDOWN"           in CFG_NAME: sadm_email_shutdown          = CFG_VALUE
+
 
         # Database Connection Information
         if "SADM_DBNAME"                   in CFG_NAME: sadm_dbname                  = CFG_VALUE
@@ -3319,7 +3328,7 @@ def db_connect(db_name="sadmin",quiet=False):
 # --------------------------------------------------------------------------------------------------
 def get_ip_addresses(family):
     """
-        Return a list with all defined IP on the current host
+        Return a list of defined IPs on the current host
     
         Args    : Constant AF_INET (IPv4) or AF_INET6 (IPv6).
 
@@ -3338,7 +3347,7 @@ def get_ip_addresses(family):
 
 
 
-# Things to do when the module is loaded
+# Things to do when this module is loaded
 # --------------------------------------------------------------------------------------------------
 
 load_cmd_path()                                                         # Get Secure Path to cmd.
