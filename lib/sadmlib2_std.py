@@ -95,7 +95,6 @@
 #@2026_10_18 lib V04.69.09 Fix get username portability and fix testing if user part of sadmin group.
 #@2026_11_02 lib V04.69.10 New variable 'SADM_EMAIL_STARTUP' and 'SADM_EMAIL_SHUTDOWN' options (Y/N)
 #   
-SADM_EMAIL_STARTUP
 # --------------------------------------------------------------------------------------------------
 
 #from multiprocessing.dummy import connection
