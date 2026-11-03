@@ -690,7 +690,7 @@ def update_server_crontab_file(logfile,sroot,wostype,wuser) :
 
 #===================================================================================================
 # Install Python MySQL module Based on current System
-#python3-PyMySQL
+# python3-PyMySQL
 #===================================================================================================
 def special_install(lpacktype,sosname,logfile) :
 
@@ -732,6 +732,7 @@ def special_install(lpacktype,sosname,logfile) :
     else:
         writelog("Done")
 
+# On Ubuntu apt install python3-pymysql
 
     # Install pymysql python3 module using pip3
     writelog ("Installing python3 PyMySQL module (pip3 install PyMySQL) ... ","nonl") 

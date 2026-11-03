@@ -220,6 +220,7 @@ sadm_vm_stop()
     sadm_write_log "$VBOXMANAGE controlvm '$VM' acpipowerbutton"
     sadm_write_log "We give $SADM_VM_STOP_TIMEOUT seconds to bring down the virtual machine."
     sadm_write_log "This value is taken from SADMIN configuration file 'sadmin.cfg' as 'SADM_VM_STOP_TIMEOUT'."
+    sadm_write_log "Environment variable LOGNAME is $LOGNAME and USER is $USER, does not correspond to effective user id."
     $VBOXMANAGE controlvm "$VM" acpipowerbutton >> $SADM_LOG 2>&1
 
     # Wait for the shutdown to complete, wait for "$SADM_VM_STOP_TIMEOUT" sec, then power off.
