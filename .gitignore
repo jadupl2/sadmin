@@ -77,9 +77,9 @@ tmp/*
 !tmp/.gitkeep
 
 # Documentation Directory
-doc/*
 !doc/.gitkeep
-doc/sadm_commands/sadm_link_2doc.cfg
+doc/sadm_draft
+
 
 # System startup & Shutdown Scripts, Used if sadmin.service is enabled.
 sys/*
