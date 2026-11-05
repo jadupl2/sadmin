@@ -1656,15 +1656,14 @@ sadm_get_osname() {
                             fi 
                     fi 
                     
-                    # Put O/S name in uppercase.
-                    wosname=$(echo "$wosname" | tr '[:lower:]' '[:upper:]')
-                    
-                    # RockyLinux returned by lsb_release and /etc/os-release ID=Rocky, make it ROCKY
+
+                    wosname=$(echo "$wosname" | tr '[:lower:]' '[:upper:]') # O/S name in uppercase
+                    # lsb_release return 'RockyLinux' & /etc/os-release ID='Rocky', make it ROCKY.
                     if [ "$wosname" = "ROCKYLINUX" ]             ; then wosname="ROCKY"    ;fi
                     if [ "$wosname" = "ALMALINUX"  ]             ; then wosname="ALMA"     ;fi
                     # Rename CENTOSSTREAM MAKING it CENTOS
                     if [ "$wosname" = "CENTOSSTREAM" ]           ; then wosname="CENTOS"   ;fi
-                    # RedHat ID can be different accross time , making REDHAT
+                    # RedHat ID can be different accross time , making it REDHAT
                     if [ "$wosname" = "REDHATENTERPRISESERVER" ] ; then wosname="REDHAT"   ;fi
                     if [ "$wosname" = "REDHATENTERPRISEAS" ]     ; then wosname="REDHAT"   ;fi
                     if [ "$wosname" = "REDHATENTERPRISE" ]       ; then wosname="REDHAT"   ;fi
@@ -3309,10 +3308,8 @@ sadm_lock_system()
     # Manage parmeter(s) received.
     SNAME="$1"                                                          # Name of system to lock
     if [ $# -eq 2 ]                                                     # Second parameter specified
-        then SCRIPT_NAME="$2"                                           # Desc. or Remote ScriptName
-             LOCK_MESS="System '$SNAME' lock by '$SCRIPT_NAME'." 
-        else SCRIPT_NAME="$SADM_INST"                                   # Use current script name
-             LOCK_MESS="Lock system '$SNAME' while '$SADM_INST' is running."
+        then LOCK_MESS="$2"                                             # Mesg receive as parameter
+        else LOCK_MESS="System '$SNAME' lock while '$SADM_INST' is running."
     fi 
 
     # Refuse to lock if already lock or create the system lock file
