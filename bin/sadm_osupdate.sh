@@ -68,6 +68,7 @@
 #@2026_09_10 osupdate v3.47.03 Flatpak update is now working, but it is not yet fully tested.
 #@2026_10_18 osupdate v3.47.04 Change format of email when on Ubuntu they are kept-back packages.
 #@2026_11_01 osupdate v3.47.05 Add more verbose output when updating Flatpak 
+#@2026_11_05 osupdate v3.47.06 Add option '--refresh' to 'dnf -y update' to solve problem on some update.
 # --------------------------------------------------------------------------------------------------
 #set -x
 # dnf clean expire-cache && dnf makecache # Refresh cache in dnf5
@@ -100,7 +101,7 @@ export SADM_EXIT_CODE=0                                    # Pgm. Default Exit C
 export SADM_PN=$(basename "$0")                            # Script name(with extension)
 export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
 
-export SADM_VER='3.47.05'                                  # Your Current Script Version
+export SADM_VER='3.47.06'                                  # Your Current Script Version
 export SADM_DESC="Script is used to perform an O/S update on the system"
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -323,13 +324,13 @@ run_dnf()
 {
     sadm_write_log " "
     sadm_write_log "Starting $SADM_OS_NAME update process ..."
-    sadm_write_log "Running : dnf -y update"
+    sadm_write_log "Running : dnf -y update --refresh"
 
     # Running the update command 
-    f=$(mktemp) ; { dnf -y update ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; rc=$(cat $f)
+    f=$(mktemp) ; { dnf -y update --refresh ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; rc=$(cat $f)
     if [ "$rc" -ne 0 ] 
-       then sadm_write_err "The exit code of the 'dnf -y update' command is ${rc}."
-       else sadm_write_log "[ OK ] The 'dnf -y update' command ran with success."
+       then sadm_write_err "The exit code of the 'dnf -y update --refresh' command is ${rc}."
+       else sadm_write_log "[ OK ] The 'dnf -y update --refresh' command ran with success."
             sadm_write_log " "
             sadm_write_log "Remove orphaned packages, running 'dnf autoremove'."
             dnf autoremove -y >>$SADM_LOG 2>&1
@@ -436,8 +437,8 @@ run_apt()
 
 
 
-#
-# --------------------------------------------------------------------------------------------------
+
+
 # Update Flatpak packages if Flatpak is installed on the system.
 # --------------------------------------------------------------------------------------------------
 update_flatpak()
@@ -483,6 +484,44 @@ update_flatpak()
 
 
 
+# Update Snap packages, if Snap is installed on the system.
+# --------------------------------------------------------------------------------------------------
+update_snap()
+{
+    sadm_write_log " "
+    sadm_write_log "-----" 
+    sadm_write_log "Snap update : "
+    rc=0                                                                # Function return code      
+
+    # Check if snap program is installed on the system.
+    SNAP_PATH=$(sadm_get_command_path "snap" >/dev/null)          # Get full path of snap
+    if [ $? -ne 0 ]                                                     # If not found
+       then sadm_write_log "[ INFO ] Snap not installed on the system."
+            return 0
+       else sadm_write_log "[ OK ] Snap is installed on the system."
+    fi 
+
+    # If 'SADM_OSUPDATE_SNAP' is set to 'N' in $SADMIN/cfg/sadmin.cfg 
+    if [[ "$SADM_OSUPDATE_SNAP" == "N" ]] 
+       then sadm_write_log "[ OK ] You opted to not update any snap packages."
+            return 0 
+       else sadm_write_log "[ OK ] You opted to update snap packages ('SADM_OSUPDATE_SNAP'='Y')."
+    fi
+
+
+    # Check if snap is executable on this system, if ok run snap update command.
+    #snap -y update >> $SADM_LOG 2>&1 
+    f=$(mktemp); { snap -y update ; echo $?>$f ; } |tee -a $SADM_LOG 2>&1; rc=$(cat $f) 
+    if [[ "$rc" -eq 0 ]]
+        then sadm_write_log "[ OK ] Snap update ran successfully."
+        else sadm_write_err "[ ERROR No.$rc ] After running 'snap -y update'."
+    fi
+    return $rc
+}
+
+
+
+
 # --------------------------------------------------------------------------------------------------
 # Update $SADMIN/dat/dr/`hostname -s`_sysinfo.txt (Update the O/S Update date & Status)
 # --------------------------------------------------------------------------------------------------
@@ -521,24 +560,23 @@ update_sysinfo_file()
 
 
 
-# --------------------------------------------------------------------------------------------------
-# Function to perform the O/S Update for all Operating Systems.
+
+# Perform the O/S Update for all Operating Systems.
 # --------------------------------------------------------------------------------------------------
 perform_osupdate()
 {
-
-    # Make sure no reboot on SADMIN server "WREBOOT="N".
-    if [[ "$SADM_HOST_TYPE" == "S" ]]  && [[ "$WREBOOT" == "Y" ]]       # No reboot of sadmin server
+    # Make sure we don't reboot the SADMIN server "WREBOOT="N" automatically.
+    if [[ "$SADM_HOST_TYPE" == "S" ]]  && [[ "$WREBOOT" == "Y" ]]       # Set reboot sadmin server ?
        then WREBOOT="N"                                                 # No Auto Reboot on SADM Srv
-            sadm_write_err "[ WARNING ] Refusing reboot after successful update on the SADMIN server" 
-            sadm_write_err "[ WARNING ] You will need to reboot the system at your chosen time."
+            sadm_write_err "[ WARNING ] Refuse to reboot the SADMIN server after successful update." 
+            sadm_write_err "   - You will need to reboot this system at your chosen time."
     fi
 
-    case "$(sadm_get_osname)" in                                        # Test OS Name
 
+    case "$(sadm_get_osname)" in                                        # Test OS Name
         "REDHAT"|"CENTOS"|"ALMA"|"ROCKY"|"FEDORA")
-            pkg_mgm="dnf"                                               # Default value
-            sadm_get_command_path "dnf" >/dev/null                      # dnf on system ? RHEL 8 
+            pkg_mgm="dnf"                                               # Default value mgmt pkg
+            sadm_get_command_path "dnf" >/dev/null                      # dnf on system ? R
             if [[ $? -eq 0 ]] && [[ "$SADM_OS_MAJORVER" -lt 8 ]]        # Do we use yum r dnf 
                then run_yum                                             # For RHEL 7 and prior ver.
                     SADM_EXIT_CODE=$?                                   # Save Return Code
@@ -546,23 +584,21 @@ perform_osupdate()
                     SADM_EXIT_CODE=$?                                   # Save Return Code
             fi 
             ;; 
-
         "SUSE"|"OPENSUSE" ) 
-            sadm_write_err "$SADM_OS_NAME is not yet supported."
+            sadm_write_err "System $(sadm_get_osname) not supported yet. "
             sadm_write_err "Please report it to SADMIN Web Site at this email : "
             sadm_write_err "support@sadmin.ca"
             ;;
-            
         "DEBIAN"|"RASPBIAN"|"UBUNTU"|"MINT" )
             run_apt
             SADM_EXIT_CODE=$?
             ;;
-
-        * ) sadm-write_error "System $(sadm_get_osname) not supported yet. "
+        * ) 
+            sadm_write_err "System $(sadm_get_osname) not supported yet. "
+            sadm_write_err "Please report it to SADMIN Web Site at this email : "
+            sadm_write_err "support@sadmin.ca"
             ;; 
     esac
-        
-      
     return $SADM_EXIT_CODE
 }
 
@@ -576,9 +612,7 @@ main_process()
     check_available_update                                              # Update Avail./apt upd
     RC=$?                                                               # 0=UpdAvail 1=NoUpd 2=Error
 
-    # RC = 0 If Update Are Available, 
-    # RC = 1 If No Update Are Available, 
-    # RC = 2 If Problem Checking For Update
+    # RC = 0 If Update Available, RC = 1 No Update Available,  RC = 2 Problem Checking For Update
     UPDATE_AVAILABLE="N"                                                # Assume No Upd. Available
     case $RC in                     
         0)  UPDATE_AVAILABLE="Y"                                        # Update to be done Flag ON
@@ -590,7 +624,7 @@ main_process()
         2)  SADM_EXIT_CODE=1                                            # Error Encountered set to 1
             ;;
         *)  SADM_EXIT_CODE=1                                            # Error Encountered set to 1
-            sadm_write_err "Function ${FUNCNAME[0]} have returned an invalid result code (${RC})."
+            sadm_write_err "Function ${FUNCNAME[0]} have returned an invalid result code of ${RC}."
             ;;
     esac 
 
@@ -608,10 +642,21 @@ main_process()
              fi
     fi
 
+    # If SADM_OSUPDATE_SNAP is set to Y in $SADMIN/cfg/sadmin.cfg 
+    if [[ "$SADM_OSUPDATE_SNAP" == "Y" ]] 
+        then update_snap 
+             if [[ $? -ne 0 ]] 
+                then sadm_write_err "[ ERROR ] Error updating Snap packages."
+                     ((SADM_EXIT_CODE++))                                # Incr exit code 
+             fi
+    fi
+
     sadm_write_log " " 
     sadm_write_log "----------"     
-    sadm_write_log "[ SUCCESS ] System Updated with Success."
-
+    if [[ "$SADM_EXIT_CODE" -eq 0 ]] 
+        then sadm_write_log "[ SUCCESS ] System Updated with Success."
+        else sadm_write_err "[ ERROR ] System Update Failed."
+    fi
     return $SADM_EXIT_CODE
 }
 
@@ -666,6 +711,7 @@ function cmd_options()
     # If Reboot is requested (-r) and update available and the update was successful, advise user.
     if [[ "$WREBOOT" == "Y" ]] && [[ "$UPDATE_AVAILABLE" == "Y" ]] && [[ "$SADM_EXIT_CODE" -eq 0 ]]
         then sadm_write_log "[ SUCCESS ] Update successful, system will reboot in 1 Minute."
+             sadm_lock_system "$SADM_HOSTNAME" "O/S Update reboot in 1 minute, please save your work."
              shutdown -r +1 "System reboot in 1 minute" >>$SADM_LOG     # Issue Shutdown & Reboot
     fi
     
