@@ -64,7 +64,6 @@ if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                   # If SADMIN shell lib
 fi 
 
 # SADMIN Section of your program that is shared with SADMIN Bash Library.
-export SADM_TPID="$$"                                      # Script Process ID.
 export SADM_HOSTNAME=$(hostname -s)                        # Host name without Domain Name
 export SADM_OS_TYPE=$(uname -s|tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
 export SADM_USERNAME=$(id -un)                             # Current user name.
@@ -72,6 +71,7 @@ export SADM_DEBUG=0                                        # Debug Level(0-9), 0
 export SADM_EXIT_CODE=0                                    # Pgm. Default Exit Code
 export SADM_PN=$(basename "$0")                            # Script name(with extension)
 export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
+export SADM_TPID="$$"                                      # Script Process ID.
 
 export SADM_VER='00.02.00'                                 # Pgm. Version Number
 export SADM_DESC="Describe what your program is doing."    # Short Desc. of your script.
