@@ -295,6 +295,7 @@
 #@2026_10_10 lib V04.92.20 Fix problem with 'sadm_sendmail()' when sending multiple attachments.
 #@2026_10_21 lib V04.92.21 Prevent startup email when "$SADM_SYS_START_NOEMAIL" file is present.
 #@2026_10_21 lib V04.92.22 Prevent shutdown email when "$SADM_SYS_SHUTDOWN_NOEMAIL" file is present.
+#@2026_11_06 lib V04.92.23 The 'mysql' command will be depreciated soon, changed to 'mariadb'.
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x
@@ -302,7 +303,7 @@ trap 'exit 0' 2
 
 # V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
-export SADM_LIB_VER="04.92.22"                                          # This Library Version
+export SADM_LIB_VER="04.92.23"                                          # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -423,6 +424,7 @@ export SADM_PARTED=""                                       # Path to parted Com
 export SADM_ETHTOOL=""                                      # Path to ethtool Command
 export SADM_SSH=""                                          # Path to ssh Exec.
 export SADM_MYSQL=""                                        # Default mysql 
+export SADM_MARIADB=""                                      # Default mariadb
 export SADM_SED=""                                          # Path to sed Command
 export SADM_RRDTOOL=""                                      # Path to rrdtool
 export SADM_INXI=""                                         # Path to inxi
@@ -1261,6 +1263,7 @@ sadm_load_cmd_path() {
     SADM_MUTT=$(sadm_get_command_path "mutt")                           # Get mutt cmd path   
     SADM_CURL=$(sadm_get_command_path "curl")                           # Get curl cmd path   
     SADM_MYSQL=$(sadm_get_command_path "mysql")                         # Get mysql cmd path  
+    SADM_MARIADB=$(sadm_get_command_path "mariadb")                     # Get mariadb cmd path  
     SADM_SED=$(sadm_get_command_path "sed")                             # Get sed cmd path  
     SADM_RRDTOOL=$(sadm_get_command_path "rrdtool")                     # Get rrdtool cmd path  
     SADM_INXI=$(sadm_get_command_path "inxi")                           # Get inxi cmd path  
