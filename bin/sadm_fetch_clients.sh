@@ -1045,7 +1045,7 @@ check_host_connectivity()
     if ! host "$SNAME" >/dev/null 2>&1                                  # Name is resolvable ? 
         then SMSG="Can't process '$SNAME', because hostname can't be resolved."
              sadm_write_err "[ ERROR ] ${SMSG}"                         # Advise user
-              return 1                                                  # Return Error to Caller
+             return 1                                                   # Return Error to Caller
     fi
 
     # Get uptime of remote system & we are testing at same time if ssh to remote system is working.
@@ -1057,21 +1057,18 @@ check_host_connectivity()
     fi
 
 
-    # If we were able to get system uptime, update database and return to caller with success code
+    # If we were able to get system uptime (ssh worked), update database and return to caller
     if [[ "$uptime_rc" -eq 0 ]]                                         # Success getting uptime 
         then GLOB_UPTIME=$(echo "$wuptime" |awk -F, '{print $1}' |awk '{gsub(/^[ ]+/,""); print $0}')
-             update_server_uptime "$SNAME" "$GLOB_UPTIME"               # Update Server Uptime in DB
-             RC=$?                                                      # Save Update DB Result Code
-             return $RC                                                 # Return to caller
-        else #sadm_write_log "No connectivity to $SNAME LastUptime is ${LAST_UPTIME:0:4}" 
-             if [[ "${LAST_UPTIME:0:4}" != "OFF " ]]                    # First time offline ?
-                then GLOB_UPTIME="OFF $(date "+%C%y.%m.%d %H:%M")"      # Date/Time came offline
-                     #sadm_write_log "New Uptime is ${GLOB_UPTIME} for $SNAME" 
-                     update_server_uptime "$SNAME" "$GLOB_UPTIME"       # Update system uptime in DB
-                     RC=$?                                              # Save Update DB Result Code
-                     return $RC                                         # Return to caller
-                else return 0                                           # Stay Offline, no update DB
-             fi 
+             update_server_uptime "$SNAME" "$GLOB_UPTIME"               # Update Uptime in Database
+             return 0                                                   # Return Success to caller
+    fi 
+
+    # Were not able to get uptime (ssh didn't work)
+    # Check if system was already offline, if not update database and return to caller
+    if [[ "$uptime_rc" -ne 0 ]] && [[ "${LAST_UPTIME:0:4}" != "OFF " ]] # Server just got offline
+        then GLOB_UPTIME="OFF $(date "+%C%y.%m.%d %H:%M")"              # Date/Time came offline
+             update_server_uptime "$SNAME" "$GLOB_UPTIME"               # Update Offline date & Time in DB
     fi 
 
 
@@ -2170,18 +2167,17 @@ update_server_uptime()
     WUPTIME=$2                                                          # Uptime value to store
     WCURDAT=$(date "+%C%y.%m.%d %H:%M:%S")                              # Get & Format Update Date
 
-    SQL="UPDATE server SET "                                           # SQL Update Statement
+    SQL="UPDATE server SET "                                            # SQL Update Statement
     SQL+="srv_uptime = '$WUPTIME', "                                    # System uptime value
     SQL+="srv_date_update = '${WCURDAT}' "                              # Last Update Date
     SQL+="where srv_name = '${WSERVER}' ;"                              # Server name to update
 
-    WAUTH="-u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD "                       # Set Authentication String 
-    CMDLINE="$SADM_MARIADB $WAUTH "                                     # Join MySQL with Authen.
-    CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -e \"$SQL\""         # Build Full Command Line
+    CMDLINE="$SADM_MARIADB -u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD "       # Join MySQL with Authen.
+    CMDLINE+="-h $SADM_DBHOST $SADM_DBNAME -e \"$SQL\""                 # Build Full Command Line
     if [ "$SADM_DEBUG" -gt 5 ] ; then sadm_write_log "$CMDLINE" ; fi    # Debug = Write command Line
 
     # Execute SQL to Update Server O/S Data
-    $SADM_MARIADB $WAUTH -h $SADM_DBHOST $SADM_DBNAME -e \"$SQL\" >>$SADM_LOG 2>&1
+    eval "$CMDLINE" >>$SADM_LOG 2>&1                                    # Update Uptime in Database
     if [[ $? -ne 0 ]]                                                   # If Error while updating
         then sadm_write_err "[ ERROR ] Database update failed to update the 'uptime' to '$WUPTIME' of '$WSERVER'."
              RCU=1                                                      # Set Error Code = 1
