@@ -123,6 +123,7 @@
 #@2026_09_29 server v3.65.04 Major review of alerting part of the script, correct some fixes.
 #@2026_10_01 server V3.65.05 Replace variable 'SADM_ALERT_REPEAT' in sadmin.cfg, by 'SADM_ALERT_TTL'.
 #@2026_11_02 server V3.65.06 Fix problem false alert when system wasn't really down.
+#@2026_11_06 server V3.65.07 The 'mysql' command will be depreciated soon, changed to 'mariadb'.
 #
 # ---CHANGE LOG---
 # GROUPS are :
@@ -168,7 +169,7 @@ export SADM_EXIT_CODE=0                                    # Pgm. Default Exit C
 export SADM_PN=$(basename "$0")                            # Script name(with extension)
 export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
 
-export SADM_VER='3.65.06'                                  # Script version number
+export SADM_VER='3.65.07'                                  # Script version number
 export SADM_DESC="Collect scripts results & SysMon status from all systems and send alert if needed." 
 export SADM_ROOT_ONLY="Y"                                  # Pgm. run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Pgm. run only on SADMIN server? [Y]/[N]
@@ -1242,12 +1243,12 @@ build_server_list()
 
     # Setup database connection parameters
     WAUTH="-u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "                       # Set Authentication String 
-    CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
+    CMDLINE="$SADM_MARIADB $WAUTH "                                       # Join MySQL with Authen.
     CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' | tr '/\t/' '/;/'" # Build CmdLine
     if [ "$SADM_DEBUG" -gt 7 ] ; then sadm_write_log "${CMDLINE}" ; fi  # Debug = Write command Line
 
     # Try simple sql statement to test connection to database
-    $SADM_MYSQL $WAUTH -h $SADM_DBHOST -e "show databases;" > /dev/null 2>&1
+    $SADM_MARIADB $WAUTH -h $SADM_DBHOST -e "show databases;" > /dev/null 2>&1
     if [ $? -ne 0 ]                                                     # Error Connecting to DB
         then sadm_write_err "[ ERROR ] Error connecting to Database."   # Access Denied
              return 1                                                   # Return Error to Caller
@@ -1255,7 +1256,7 @@ build_server_list()
 
 
     # Execute sql to get a list of active servers of the received o/s type into $sadm_tmp_file1
-    $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/;/' >$SADM_TMP_FILE1
+    $SADM_MARIADB $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/;/' >$SADM_TMP_FILE1
     
     # If result file don't exist or have a size of zero.
     if [ ! -s "$SADM_TMP_FILE1" ]                                       # File don't exist or size=0
@@ -2175,14 +2176,12 @@ update_server_uptime()
     SQL+="where srv_name = '${WSERVER}' ;"                              # Server name to update
 
     WAUTH="-u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD "                       # Set Authentication String 
-    CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
-    CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -e '$SQL'"           # Build Full Command Line
+    CMDLINE="$SADM_MARIADB $WAUTH "                                     # Join MySQL with Authen.
+    CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -e \"$SQL\""         # Build Full Command Line
     if [ "$SADM_DEBUG" -gt 5 ] ; then sadm_write_log "$CMDLINE" ; fi    # Debug = Write command Line
-    sadm_write_log "$CMDLINE" 
 
     # Execute SQL to Update Server O/S Data
-    $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -e \"$SQL\" >>$SADM_LOG 2>&1
-    sadm_write_log "$SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -e \"$SQL\""
+    $SADM_MARIADB $WAUTH -h $SADM_DBHOST $SADM_DBNAME -e \"$SQL\" >>$SADM_LOG 2>&1
     if [[ $? -ne 0 ]]                                                   # If Error while updating
         then sadm_write_err "[ ERROR ] Database update failed to update the 'uptime' to '$WUPTIME' of '$WSERVER'."
              RCU=1                                                      # Set Error Code = 1
