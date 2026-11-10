@@ -98,7 +98,7 @@
 #@2026_02_13 backup v3.53 Add argument '-X' when we want to delete PID file prior to execute script.
 #@2026_03_27 backup v3.54 If NFS mount failed, retry after dropping the cache (low memory systems).
 #@2026_10_28 backup v3.55 Backup file size over 250MB, now list 5 biggest files part of the backup.
-#@2026_11_08 backup v3.60 Resturucture for better performance, readability and maintainability.
+#@2026_11_08 backup v3.60 Restructure for better performance, readability and maintainability.
 #===================================================================================================
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -169,7 +169,7 @@ export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access c
 #export SADM_INFO_GROUP="default"                           # Info Alert Group    (alert_group.cfg)
 #export SADM_ALERT_TTL=86400                                # Alert ignored after 86400 Sec = 24hrs
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Default is in $SADMIN/cfg/sadmin.cfg
-#export SADM_MAX_LOGLINE=400                                # Nb of Lines to trim (0=NoTrim)
+export SADM_MAX_LOGLINE=0                                 # Nb of Lines to trim (0=NoTrim)
 #export SADM_MAX_RCHLINE=35                                 # Nb of Lines to trim (0=NoTrim)
 # -------------------  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
 
@@ -399,24 +399,20 @@ backup_file()
     sadm_write_log "$MSG"                                               # Print Current Working Dir.
     
     if [ "$COMPRESS" == "ON" ]                                          # If compression ON
-        then MSG="Creating a compress backup of [${backup_file}]."
-             echo "$MSG" >>$BACK_LOG 2>&1
-             sadm_write_log "$MSG"
-             BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tgz"                 # Final tgz Backup file name
-             echo "tar -cvzf ${BACKUP_DIR}/${BACK_FILE} .$backup_file" >>$BACK_LOG 2>&1
-             echo "#"  >>$BACK_LOG 2>&1
-             sadm_write_log "  - tar -cvzf ${BACKUP_DIR}/${BACK_FILE} .$backup_file"
-             tar -cvzf ${BACKUP_DIR}/${BACK_FILE} .$backup_file >>$BACK_LOG 2>&1
-             RC=$?                                                      # Save Return Code
+        then BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tgz"                 # Final tgz Backup file name
+             MSG="Creating a compress backup of [${backup_file}]."
+             echo "$MSG" >>$BACK_LOG 2>&1       ; sadm_write_log "$MSG"
+             CMD="tar -cvzf '${BACKUP_DIR}/${BACK_FILE}' "
+             CMD+="--exclude-from='$SADM_BACKUP_EXCLUDE' .$backup_dir"
+             echo "$CMD" >>$BACK_LOG 2>&1   ; sadm_write_log "  - $CMD"
+             eval "$CMD" >>$BACK_LOG 2>&1
+             RC=$?   
         
-        else MSG="Creating an uncompress backup of [${backup_file}]."
-             echo "$MSG" >>$BACK_LOG 2>&1
-             sadm_write_log "$MSG"
-             BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tar"                 # Final tar Backup file name
+        else BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tar"                 # Final tar Backup file name
+             MSG="Creating an uncompress backup of [${backup_file}]."
+             echo "$MSG" >>$BACK_LOG 2>&1       ; sadm_write_log "$MSG"
              CMD="tar -cvf ${BACKUP_DIR}/${BACK_FILE} .$backup_file"
-             echo "$CMD" >>$BACK_LOG 2>&1
-             echo "#"    >>$BACK_LOG 2>&1
-             sadm_write_log "  - $CMD"
+             echo "$CMD" >>$BACK_LOG 2>&1       ; sadm_write_log "  - $CMD"
              tar -cvf ${BACKUP_DIR}/${BACK_FILE} .$backup_file >>$BACK_LOG 2>&1
              RC=$?                                                      # Save Return Code
     fi
@@ -472,7 +468,7 @@ backup_dir()
 #    sadm_write_log "$MSG"                                               # Print Current Working Dir.
 
     # Add sockets files to Exclude list (tar don't backup socket file & give error if not excluded)
-    sadm_write_log "  - Add socket files in [${backup_line}] to exclude list, because they are fundamentally temporary."
+    sadm_write_log "  - Add socket files in [${backup_line}] to exclude list (they are fundamentally temporary)."
     find .${backup_line} -type s -print >/tmp/exclude  2>/dev/null       # Sockets in exclude
     while read excl_line                                                # Loop Until EOF Excl. File
         do
@@ -481,45 +477,39 @@ backup_dir()
         echo "$excl_line" >> /tmp/exclude                               # Add Line to Exclude List
         done < $SADM_BACKUP_EXCLUDE                                     # Read Backup Exclude File
     
-    # Show Updated (with socket files) exclude list 
-#    sadm_write_log " " 
-#    sadm_write_log "$(printf %5s |tr ' ' '=')"
-#    MSG="Content of the exclude backup list file '$SADM_BACKUP_EXCLUDE'."
-#    sadm_write_log "$MSG"
-#    sadm_write_log " " 
-#    cat $SADM_BACKUP_EXCLUDE | while read ln ; do sadm_write_log "${ln}" ;done 
-#    sadm_write_log " "
-#    echo " "         >>$BACK_LOG 2>&1
-#    echo "# $MSG"    >>$BACK_LOG 2>&1
-#    cat $SADM_BACKUP_EXCLUDE >>$BACK_LOG 2>&1
-#    echo " "         >>$BACK_LOG 2>&1
-
-    if [ "$COMPRESS" == "ON" ]                                          # If compression ON
-        then MSG="  - Creating a compress backup of '$backup_dir' directory."
-             echo "$MSG" >>$BACK_LOG 2>&1
+    # Show Updated exclude list  (with socket files) 
+    if [[ "$DEBUG" ]] 
+        then sadm_write_log " " 
+             sadm_write_log "$(printf %5s |tr ' ' '=')"
+             MSG="Content of the exclude backup list file '$SADM_BACKUP_EXCLUDE'."
              sadm_write_log "$MSG"
-             BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tgz"                 # Final tgz Backup file name
+             sadm_write_log " " 
+             cat $SADM_BACKUP_EXCLUDE | while read ln ; do sadm_write_log "${ln}" ;done 
+             sadm_write_log " "
+             echo " "         >>$BACK_LOG 2>&1
+             echo "# $MSG"    >>$BACK_LOG 2>&1
+             cat $SADM_BACKUP_EXCLUDE >>$BACK_LOG 2>&1
+             echo " "         >>$BACK_LOG 2>&1
+    fi 
+
+    if [[ "$COMPRESS" == "ON" ]]                                        # If compression ON
+        then BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tgz"                 # Final tgz Backup file name
+             MSG="  - Creating a compress backup of '$backup_dir' directory."
+             echo "$MSG" >>$BACK_LOG 2>&1   ; sadm_write_log "$MSG"
              CMD="tar -cvzf '${BACKUP_DIR}/${BACK_FILE}' "
              CMD+="--exclude-from='$SADM_BACKUP_EXCLUDE' .$backup_dir"
-             echo "$CMD" >>$BACK_LOG 2>&1
-             echo "#"    >>$BACK_LOG 2>&1
-             sadm_write_log "  - $CMD"
-             eval "$CMD" >>$SADM_LOG 2>&1
+             echo "$CMD" >>$BACK_LOG 2>&1   ; sadm_write_log "  - $CMD"
+             eval "$CMD" >>$BACK_LOG 2>&1
              RC=$?                                                      # Save Return Code
-             #tar -cvzf ${BACKUP_DIR}/${BACK_FILE} --exclude-from="$SADM_BACKUP_EXCLUDE" .$backup_dir >>$BACK_LOG 2>&1
         
-        else MSG="  - Creating an uncompress backup of directory [$backup_dir]."
-             echo "$MSG" >>$BACK_LOG 2>&1
-             sadm_write_log "$MSG"
-             BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tar"                 # Final tar Backup file name
+        else BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tar"                 # Final tar Backup file name
+             MSG="  - Creating an uncompress backup of directory [$backup_dir]."
+             echo "$MSG" >>$BACK_LOG 2>&1   ; sadm_write_log "$MSG"
              CMD="tar -cvf '${BACKUP_DIR}/${BACK_FILE}' "
              CMD+="--exclude-from='$SADM_BACKUP_EXCLUDE' .$backup_dir"
-             echo "$CMD" >>$BACK_LOG 2>&1
-             echo "#"    >>$BACK_LOG 2>&1
-             sadm_write_log "  - $CMD"
-             eval "$CMD" >>$SADM_LOG 2>&1
+             echo "$CMD" >>$BACK_LOG 2>&1   ; sadm_write_log "  - $CMD"
+             eval "$CMD" >>$BACK_LOG 2>&1
              RC=$?                                                      # Save Return Code
-             # tar -X "$SADM_BACKUP_EXCLUDE" -cvf ${BACKUP_DIR}/${BACK_FILE} .$backup_dir >>$BACK_LOG 2>&1
     fi
 
     MSG="  - Backup ended at $(date) with an exit code of $RC"
@@ -559,9 +549,6 @@ backup_dir()
            ;;             
     esac
 
-
-
-    return $RC
 }
 
 
@@ -589,6 +576,7 @@ create_backup()
     grep -ivE "^#|^$" $SADM_BACKUP_EXCLUDE | while read ln ; do sadm_write_log "${ln}" ;done 
     sadm_write_log " "
 
+    # Start of backup process
     sadm_write_log " "
     sadm_write_log "$(printf %10s |tr ' ' '-')"
     sadm_write_log "Starting backup of files & directories specified in '$(basename $SADM_BACKUP_LIST)'."
@@ -599,11 +587,11 @@ create_backup()
     while read backup_line                                              # Loop Until EOF Backup List
         do
         backup_line=$(echo "$backup_line" | sed 's/#.*//')              # Remove comment from line
-        #FC=$(echo $backup_line | cut -c1)                               # Get First Char. of Line
         backup_line=$(echo $backup_line | tr -d '\r')                   # Remove EndOfLine CR if any 
         backup_line=$(echo $backup_line | sed 's/[[:blank:]]*$//')      # Remove Blank & Tab if any 
-        backup_line=$(echo $backup_line | sed 's/#.*//; s/[[:space:]]*$//')
+        backup_line=$(echo $backup_line | sed 's/#.*//; s/[[:space:]]*$//') 
 
+        # Remove comment from line and ignore blank lines
         if [[ -z "$backup_line" ]] || [[ "$backup_line" == [[:blank:]]#* ]] 
             then #sadm_write_log "Line is empty or commented, skip it and go to next line in backup list."
                  continue                                               # Go Read Nxt Line to backup
@@ -622,6 +610,7 @@ create_backup()
         BASE_NAME=$(echo "$backup_line" | sed -e 's/^\///'| sed -e 's#/$##'| tr -s '/' '_' )
         TIME_STAMP=$(date "+%C%y_%m_%d-%H_%M_%S")                       # Current Date & Time
 
+
         # If the backup line is a File
         if [[ -f "$backup_line" ]] && [[ -r "$backup_line" ]] 
             then backup_file "$backup_line"                             # Go backup the file
@@ -633,6 +622,7 @@ create_backup()
                     else echo "Success of Backup - Exit code of $RC" >>$BACK_LOG 2>&1
                  fi  
         fi 
+
 
         # If the backup line is a Directory
         if [[ -d "$backup_line" ]]                                        # Dir to Backup Exist ?
@@ -654,7 +644,7 @@ create_backup()
         fi 
 
         TOTAL_ERROR=$(($TOTAL_ERROR+$RC))                               # Total = Cumulate RC Value
-        rm -f /tmp/exclude >/dev/null 2>&1                              # Remove socket tmp file
+        rm -f /tmp/exclude >/dev/null 2>&1                              # Del Excl. file with socket
 
         # Show Backup Size in MB
         BTOTAL=$(echo "$BSIZE /1024/1024" | bc)                             
@@ -663,10 +653,9 @@ create_backup()
         # List 5 biggest files include in the tgz file , if size of backup is greater 250 MB
         if [[ "$BTOTAL" -gt 250 ]] 
             then sadm_write_log " "
-                 sadm_write_log "$(printf %10s |tr ' ' '=')"            # Line of 10 Dash in Log
                  sadm_write_log "When backup size is greater than 250MB, list 5 biggest files of your backup file."
                  sadm_write_log "Building a list of the 5 biggest files included in your backup file."
-                 tar -tzvf ${BACKUP_DIR}/${BACK_FILE} | sort -k3 -rn | nl | head -n 5 | tee -a $SADM_LOG 2>&1
+                 tar -tzvf ${BACKUP_DIR}/${BACK_FILE} | sort -k3 -rn | nl | head -n 5 | tee -a $BACK_LOG 2>&1
         fi 
         done < $SADM_BACKUP_LIST 
 
