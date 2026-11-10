@@ -296,6 +296,7 @@
 #@2026_10_21 lib V04.92.21 Prevent startup email when "$SADM_SYS_START_NOEMAIL" file is present.
 #@2026_10_21 lib V04.92.22 Prevent shutdown email when "$SADM_SYS_SHUTDOWN_NOEMAIL" file is present.
 #@2026_11_06 lib V04.92.23 The 'mysql' command will be depreciated soon, changed to 'mariadb'.
+#@2026_11_10 lib V04.92.24 Change log info in the footer & change default of Maxlog line to zero .
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x
@@ -303,7 +304,7 @@ trap 'exit 0' 2
 
 # V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
-export SADM_LIB_VER="04.92.23"                                          # This Library Version
+export SADM_LIB_VER="04.92.24"                                          # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -455,8 +456,8 @@ export SADM_GROUP="sadmin"                                  # sadmin group accou
 export SADM_PWD_RANDOM="N"                                  # ReGenerate sadmin pwd Y/N
 export SADM_WWW_USER="apache"                               # /sadmin/www owner
 export SADM_WWW_GROUP="apache"                              # /sadmin/www group
-export SADM_MAX_LOGLINE=500                                 # Max Nb. Lines in LOG
-export SADM_MAX_RCHLINE=25                                  # Max Nb. Lines in RCH file
+export SADM_MAX_LOGLINE=0                                   # No Max Nb. Lines in LOG
+export SADM_MAX_RCHLINE=35                                  # Max Nb. Lines in RCH file
 export SADM_NMON_KEEPDAYS=10                                # Days to keep old *.nmon
 export SADM_RCH_KEEPDAYS=35                                 # Days to keep old *.rch
 export SADM_LOG_KEEPDAYS=35                                 # Days to keep old *.log
@@ -3114,13 +3115,18 @@ sadm_stop() {
                     ;;
              esac
 
-             if [ "$SADM_LOG_APPEND" = "N" ]                            # If New log Every Execution
-                then sadm_write_log "New log created '\$SADMIN/log/${SADM_HOSTNAME}_${SADM_INST}.log'."
-                else if [ $SADM_MAX_LOGLINE -eq 0 ]                     # MaxTrimLog=0hen no Trim
-                        then sadm_write_log "Log \$SADMIN/log/${SADM_HOSTNAME}_${SADM_INST}.log is not trimmed (\$SADM_MAX_LOGLINE=0)."
-                        else sadm_write_log "Log \$SADMIN/log/${SADM_HOSTNAME}_${SADM_INST}.log trim to ${SADM_MAX_LOGLINE} lines." 
+             # Logging the log file creation and trimming information to the log file.      
+             if [[ "$SADM_LOG_APPEND" == "N" ]]                         # If New log Every Execution
+                then if [[ "$SADM_MAX_LOGLINE" -eq 0 ]]                 # No log trimming required
+                        then sadm_write_log "New untrimmed log created '\$SADMIN/log/${SADM_HOSTNAME}_${SADM_INST}.log'."
+                        else sadm_write_log "New trimmed log created '\$SADMIN/log/${SADM_HOSTNAME}_${SADM_INST}.log' trim to ${SADM_MAX_LOGLINE} lines." 
+                     fi 
+                else if [ $SADM_MAX_LOGLINE -eq 0 ]                     # If MaxLogLine = 0 no Trim
+                        then sadm_write_log "Appended log untrimmed \$SADMIN/log/${SADM_HOSTNAME}_${SADM_INST}.log."
+                        else sadm_write_log "Appended log trimmed to ${SADM_MAX_LOGLINE} lines '\$SADMIN/log/${SADM_HOSTNAME}_${SADM_INST}.log'." 
                      fi 
              fi 
+
              sadm_write_log "End of ${SADM_PN} - `date`"                # Write End Time To Log
              sadm_write_log "${SADM_80_DASH}"                           # Write 80 Dash Line
              sadm_write_log " "                                         
