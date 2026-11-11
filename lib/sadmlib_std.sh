@@ -297,6 +297,10 @@
 #@2026_10_21 lib V04.92.22 Prevent shutdown email when "$SADM_SYS_SHUTDOWN_NOEMAIL" file is present.
 #@2026_11_06 lib V04.92.23 The 'mysql' command will be depreciated soon, changed to 'mariadb'.
 #@2026_11_10 lib V04.92.24 Change log info in the footer & change default of Maxlog line to zero .
+#@2026_11_10 lib V04.92.25 Remove ANSI Color Code from Log File
+#@2026_11_11 lib v04.92.26 New var. SADM_BACKUP_FILE_CHANGE_ERROR (Y/N) Error file change during backup
+#@2026_11_11 lib v04.92.26 New var. SADM_BACKUP_TOP10_MIN_SIZE, Min. size in MB for 10 biggest files.
+
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x
@@ -304,7 +308,7 @@ trap 'exit 0' 2
 
 # V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
-export SADM_LIB_VER="04.92.24"                                          # This Library Version
+export SADM_LIB_VER="04.92.26"                                          # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -348,7 +352,7 @@ export SADM_WWW_ARC_DIR="$SADM_WWW_DAT_DIR/archive"                     # www ar
 export SADM_WWW_RRD_DIR="$SADM_WWW_DIR/rrd"                             # www RRD Dir
 export SADM_WWW_CFG_DIR="$SADM_WWW_DIR/cfg"                             # www CFG Dir
 export SADM_WWW_VIEW_DIR="$SADM_WWW_DIR/view"                           # www view Dir
-export SADM_WWW_RRD_DIR="$SADM_WWW_DIR/rrd"                             # www rrd Dir
+export SADM_WWW_RRD_DIR="$SADM_WWW_DIR/rrd"                             # www rrd database Dir
 export SADM_WWW_CSS_DIR="$SADM_WWW_DIR/css"                             # www CSS Dir
 export SADM_WWW_CRUD_DIR="$SADM_WWW_DIR/crud"                           # www CRUD Dir
 export SADM_WWW_LIB_DIR="$SADM_WWW_DIR/lib"                             # www Lib Dir
@@ -526,6 +530,9 @@ export SADM_BACKUP_CONCURRENT=1                             # Concurrent backup 
 export SADM_BACKUP_BATCH_DAY2RUN="2,7"                      # 0=AnyDay,1=Su,2=Mo,3=We,4=Tu,6=Fr,7=Sa
 export SADM_BACKUP_BATCH_MTH2RUN="0"                        # 0=AnyMonth or [1,2,,,12] Month to run
 export SADM_BACKUP_BATCH_DATE2RUN="0"                       # 0=AnyDate, or Date to run [1,2...27,28]
+export SADM_BACKUP_FILE_CHANGE_ERROR="Y"                    # Error if file change during backup
+export SADM_BACKUP_TOP10_MIN_SIZE=500                       # Min. MB size for Top10 files in backup
+
 
 # Rear Backup Variables (Default Values here will be overridden by SADM CONFIG FILE Content)
 export SADM_REAR_NFS_SERVER=""                              # ReaR NFS Server
@@ -2504,6 +2511,8 @@ sadm_load_config_file() {
                                             ;;
             "SADM_SSH_PORT")                SADM_SSH_PORT=$VALUE
                                             ;;
+
+            # Load Backup Data from sadmin.cfg file into global variables
             "SADM_BACKUP_NFS_SERVER")       SADM_BACKUP_NFS_SERVER=$VALUE
                                             ;;
             "SADM_BACKUP_NFS_SERVER_VER")   SADM_BACKUP_NFS_SERVER_VER=$VALUE
@@ -2530,6 +2539,26 @@ sadm_load_config_file() {
                                             ;;
             "SADM_BACKUP_DIF")              SADM_BACKUP_DIF=$VALUE
                                             ;;
+            "SADM_BACKUP_DAY2RUN")          SADM_BACKUP_DAY2RUN=$VALUE 
+                                            ;;  
+            "SADM_BACKUP_BATCH_MODE")       SADM_BACKUP_BATCH_MODE=$VALUE
+                                            ;; 
+            "SADM_BACKUP_BATCH_START_TIME") SADM_BACKUP_BATCH_START_TIME=$VALUE
+                                            ;; 
+            "SADM_BACKUP_BATCH_CONCURRENT") SADM_BACKUP_BATCH_CONCURRENT=$VALUE
+                                            ;; 
+            "SADM_BACKUP_BATCH_DAY2RUN")    SADM_BACKUP_BATCH_DAY2RUN=$VALUE
+                                            ;; 
+            "SADM_BACKUP_BATCH_MTH2RUN")    SADM_BACKUP_BATCH_MTH2RUN=$VALUE
+                                            ;; 
+            "SADM_BACKUP_BATCH_DATE2RUN")   SADM_BACKUP_BATCH_DATE2RUN=$VALUE
+                                            ;; 
+            "SADM_BACKUP_FILE_CHANGE_ERROR") SADM_BACKUP_FILE_CHANGE_ERROR=$VALUE
+                                            ;;
+            "SADM_BACKUP_TOP10_MIN_SIZE")   SADM_BACKUP_TOP10_MIN_SIZE=$VALUE     
+                                            ;; 
+
+            # ReaR Backup Data from sadmin.cfg file into global variables
             "SADM_REAR_NFS_SERVER")         SADM_REAR_NFS_SERVER=$VALUE
                                             ;;
             "SADM_REAR_NFS_SERVER_VER")     SADM_REAR_NFS_SERVER_VER=$VALUE
@@ -3118,8 +3147,8 @@ sadm_stop() {
              # Logging the log file creation and trimming information to the log file.      
              if [[ "$SADM_LOG_APPEND" == "N" ]]                         # If New log Every Execution
                 then if [[ "$SADM_MAX_LOGLINE" -eq 0 ]]                 # No log trimming required
-                        then sadm_write_log "New untrimmed log created '\$SADMIN/log/${SADM_HOSTNAME}_${SADM_INST}.log'."
-                        else sadm_write_log "New trimmed log created '\$SADMIN/log/${SADM_HOSTNAME}_${SADM_INST}.log' trim to ${SADM_MAX_LOGLINE} lines." 
+                        then sadm_write_log "New untrimmed log '\$SADMIN/log/${SADM_HOSTNAME}_${SADM_INST}.log'."
+                        else sadm_write_log "New log '\$SADMIN/log/${SADM_HOSTNAME}_${SADM_INST}.log' trim to ${SADM_MAX_LOGLINE} lines." 
                      fi 
                 else if [ $SADM_MAX_LOGLINE -eq 0 ]                     # If MaxLogLine = 0 no Trim
                         then sadm_write_log "Appended log untrimmed \$SADMIN/log/${SADM_HOSTNAME}_${SADM_INST}.log."
@@ -3138,7 +3167,9 @@ sadm_stop() {
     # Trim the log and RCH file to $SADM_MAX_LOGLINE and $SADM_MAX_RCHLINE lines (0=No Trim)
     if [ "$SADM_MAX_LOGLINE" -ne 0 ] ; then sadm_trimfile "$SADM_LOG"      "$SADM_MAX_LOGLINE" ; fi 
     if [ "$SADM_MAX_RCHLINE" -ne 0 ] ; then sadm_trimfile "$SADM_RCH_FILE" "$SADM_MAX_RCHLINE" ; fi 
-
+    
+    # Remove ANSI Color Code from Log File
+    sed -i -E 's/\x1b\[[0-9;]*m//g' $SADM_LOG                           
     
     # Make sure the log file is writable and readable by the SADMIN user and group (Ignore error).
     chmod 664 "$SADM_LOG"                 >/dev/null 2>&1               # Change Log Permissions 
