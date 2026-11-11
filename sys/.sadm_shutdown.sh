@@ -32,6 +32,7 @@
 #@2026_10_12 startup/shutdown v02.17.08 Log sent by email was not complete & change sendmail code.
 #@2026_10_21 startup/shutdown V02.17.09 Prevent shutdown email when "$SADM_SYS_SHUTDOWN_NOEMAIL" file is present.
 #@2026_11_01 startup/shutdown V02.17.10 Consider "$SADM_EMAIL_SHUTDOWN" parameter in sadmin.cfg to email at shutdown.
+
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x
@@ -101,7 +102,7 @@ export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access S
 #export SADM_INFO_GROUP="default"                           # Info Alert Group (in alert_group.cfg)
 #export SADM_ALERT_TTL=86400                                # Alert will be ignored after 86400 Sec
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Send email to...default in sadmin.cfg
-#export SADM_MAX_LOGLINE=400                                # Nb of Lines to trim (0=NoTrim)
+#export SADM_MAX_LOGLINE=0                                  # Nb of Lines to trim (0=NoTrim)
 #export SADM_MAX_RCHLINE=35                                 # Nb of Lines to trim (0=NoTrim)
 # -------------------  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
 
@@ -117,11 +118,15 @@ shutdown_mail()
 
     # Create the Body of email in a text file 
     echo -e "Greeting,\nOn $(date), system '$SADM_HOSTNAME' has initiated a shutdown." > $wb
-    echo -e "\nThe program '\$SADMIN/sys/${SADM_PN}' is reponsable for sending this email." >> $wb
-    echo -e "If you wish to stop receiving this email each time '$SADM_HOSTNAME' is power down," >> $wb
-    echo -e "  - Just type the following command on '$SADM_HOSTNAME':"  >>$wb
-    echo -e "    - 'touch $SADM_SYS_SHUTDOWN_NOEMAIL'" >>$wb    
-    echo -e "\nHave a pleasant day !" >> $wb
+    echo -e "\nThe script '\$SADMIN/sys/${SADM_PN}' is reponsable for sending this email." >> $wb
+
+    echo -e "If you wish to stop receiving this email on all your systems : "        >> $wb
+    echo -e "  - Just set 'SADM_EMAIL_SHUTDOWN' to 'N' in '$SADMIN/cfg/sadmin.cfg'." >> $wb
+    echo -e "\nHave a pleasant day !"                                                >> $wb
+
+    echo -e "If you wish to stop receiving this email only on '$SADM_HOSTNAME' :"    >>$wb
+    echo -e "  - Create an empty file named 'sadm_shutdown_noemail.txt' in '\$SADMIN/sys' directory." >>$wb
+    echo -e "    - 'touch $SADM_SYS_DIR/sadm_shutdown_noemail.txt' "                 >>$wb
 
     echo -e "\nUptime           : $(uptime)" >> $wb
     echo -e "\nLast 5 Reboot    :\n$(last reboot | head -5 | nl)" >> $wb
