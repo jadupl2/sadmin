@@ -475,7 +475,7 @@ update_flatpak()
     #flatpak -y update >> $SADM_LOG 2>&1 
     f=$(mktemp); { flatpak -y update ; echo $?>$f ; } |tee -a $SADM_LOG 2>&1; rc=$(cat $f) 
     if [[ "$rc" -eq 0 ]]
-        then sadm_write_log "[ OK ] Flatpak update ran successfully."
+        then sadm_write_log "[ OK ] Flatpak update successful."
         else sadm_write_err "[ ERROR No.$rc ] After running 'flatpak -y update'."
     fi
     return $rc
@@ -513,7 +513,7 @@ update_snap()
     #snap -y update >> $SADM_LOG 2>&1 
     f=$(mktemp); { snap -y update ; echo $?>$f ; } |tee -a $SADM_LOG 2>&1; rc=$(cat $f) 
     if [[ "$rc" -eq 0 ]]
-        then sadm_write_log "[ OK ] Snap update ran successfully."
+        then sadm_write_log "[ OK ] Snap update successfull."
         else sadm_write_err "[ ERROR No.$rc ] After running 'snap -y update'."
     fi
     return $rc
