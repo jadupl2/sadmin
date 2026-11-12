@@ -149,7 +149,7 @@ export NTP_SERVER="68.69.221.61 162.159.200.1 205.206.70.2"         # Canada NTP
 poweron_email()
 {
     wb="$SADMIN/tmp/body$$$.txt"                                        # Email tmp body file
-    ws="SADM_INFO: System '$SADM_HOSTNAME' is back online."             # Email subject
+    ws="SADM_INFO: System '$SADM_HOSTNAME' is starting up."             # Email subject
     we="$SADM_MAIL_ADDR"                                                # Email Default=SysAdmin
 
     # Create the Body of email in a text file 
