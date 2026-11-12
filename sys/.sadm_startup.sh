@@ -155,15 +155,11 @@ poweron_email()
     # Create the Body of email in a text file 
     echo -e "Greeting,\nOn $(date), the system '${SADM_HOSTNAME}' is back online." > $wb
     echo -e "\nThe script '\${SADMIN}/sys/${SADM_PN}' is reponsable for sending you this email." >> $wb
-    
     echo -e "If you wish to stop receiving this email on all your systems : "        >> $wb
     echo -e "  - Just set 'SADM_EMAIL_STARTUP' to 'N' in '$SADMIN/cfg/sadmin.cfg'."  >> $wb
-    echo -e "\nHave a pleasant day !"                                                >> $wb
-
     echo -e "If you wish to stop receiving this email only on '$SADM_HOSTNAME' :"    >>$wb
     echo -e "  - Create an empty file named 'sadm_startup_noemail.txt' in '\$SADMIN/sys' directory." >>$wb
     echo -e "    - 'touch $SADM_SYS_DIR/sadm_startup_noemail.txt' "                  >>$wb
-
     echo -e "\nHave a pleasant day !" >> $wb
 
     echo -e "\nLast 5 Reboot :\n$(last reboot | head -5 | nl)" >> $wb
