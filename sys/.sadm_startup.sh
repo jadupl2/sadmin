@@ -296,7 +296,7 @@ main_process()
     # Now that all logs are closed, send email unless one of these conditions is met : 
     #   - The file "$SADMIN/sys/sadm_startup_noemail.txt" exist 
     #   - The parameter 'SADM_EMAIL_STARTUP' in sadmin config file is set to 'N'. 
-    if [[ ! -f "$SADM_SYS_START_NOEMAIL" ]] && [[ "$SADM_EMAIL_STARTUP" == "Y"]] # Ok to send email
+    if [[ ! -f "$SADM_SYS_START_NOEMAIL" ]] && [[ "$SADM_EMAIL_STARTUP" == "Y" ]] # Ok to send email
         then poweron_email                                              # Send Email to sysadmin
              if [[ $? -ne 0 ]] ; then SADM_EXIT_CODE=1 ; fi             # If problem sending email
     fi 
