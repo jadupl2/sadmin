@@ -362,7 +362,7 @@ backup_setup()
 
     sadm_write_log " " 
     sadm_write_log "$(printf %10s |tr ' ' '=')"                         # Line of 10 Dash in Log
-    sadm_write_log " "
+    #sadm_write_log " "
     sadm_write_log "[ INFO ] You have chosen from the SADMIN configuration file to :"
     sadm_write_log "  - Keep $SADM_DAILY_BACKUP_TO_KEEP daily backups"
     weekly_day=$(sadm_capitalize ${WEEKDAY[$SADM_WEEKLY_BACKUP_DAY]})
