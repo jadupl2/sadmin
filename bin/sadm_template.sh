@@ -6,7 +6,7 @@
 #   Requires      : sh and SADMIN Shell Library
 #   Description   : Template for starting a new shell script
 #
-# Note : All scripts (Shell,Python,Perl,php), configuration files and screen output are formatted to 
+# Note : All scripts (Shell,Python,Perl,PHP), configuration files and screen output are formatted to 
 #        have and use a 100 characters per line. Comments in all scripts always begin at column 73. 
 #        You will have a better experience, if you set screen width to have at least 100 Characters.
 # 
@@ -24,18 +24,18 @@
 #
 # ---CHANGE LOG---
 # GROUPS are :
-#   - "Web"     Web Interface modification      - "install"  Install,Uninstall & Update changes.
-#   - "cmdline" Command line tools changes.     - "template" Library,Templates,Libr demo.
-#   - "mon"     System Monitor related.         - "backup"   Backup related modification or fixes.
-#   - "config"  Config files modification.      - "server"   Server related modification or fixes.
-#   - "client"  Client related modifications.   - "osupdate" O/S Update modification or fixes.
-#   - "lib"     Library documentation           - "doc"      General Documentation
-#   - "sys"     System (startup and shutdown)   - "nolog"    Minor change, not included in rel. note
-#   - "doc"     SADMIN documentation            - "testenv"  Script to test environment
-#   - "vmtools" Script to help managing VMs     - "sysadmin" Script used for management of systems.
-#   - "test"    For testing futur enhancement
+#  - "Web"     Web Interface related            - "install"   Install,Uninstall & Update scripts
+#  - "cmdline" Command line tools               - "template"  Script Templates, Libraries demo.
+#  - "mon"     SADMIN System Monitor            - "backup"    Backup related scripts.
+#  - "config"  SADMIN Configuration files       - "server"    SADMIN Server related.
+#  - "client"  Client/Server scripts            - "osupdate"  Operating System Update script.
+#  - "lib"     Shell & Python Libraries         - "doc"       SADMIN Documentation
+#  - "sys"     Startup and shutdown scripts     - "nolog"     Minor change,not included in rel. note
+#  - "doc"     SADMIN documentation             - "testenv"   Script to test environment
+#  - "vmtools" Scripts for managing VirtualBox  - "sysadmin"  Script used for management of systems.
+#  - "test"    Scripts used for testing purpose
 #
-# YYYY-MM-DD GROUPS   vXX.XX.XX ------------------ 69 Characters to describe change ----------------
+# YYYY-MM- DD GROUPS   vXX.XX.XX ------------------ 69 Characters to describe change ----------------
 #@2026_08_02 template v00.01.00 Initial development version.
 #@2026_10_01 template v00.02.00 Replace variable 'SADM_ALERT_REPEAT' in sadmin.cfg by 'SADM_ALERT_TTL'.
 #
@@ -315,6 +315,9 @@ main_process()
     # PROCESSING CAN BE PUT HERE
     sadm_write_log "Starting Main Process ..."                          # Starting processing Mess.
     sadm_sleep 6 2                                                      # Sleep 6Sec, 2sec increment
+
+
+
 
 
     # If Error occurred, set SADM_EXIT_CODE to 1 before returning to caller, else return 0 (default)
