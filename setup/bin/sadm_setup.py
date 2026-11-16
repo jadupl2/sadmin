@@ -138,6 +138,7 @@
 #@2024_07_10 install v4.06 Minor changes and fixes.
 #@2025_03_25 install v4.07 Add some more comments in SADMIN Server crontab.
 #@2025_05_07 install v4.08 Add & change some commenta in update_server_crontab_file
+#@2026_11_16 install v4.09 Add 'jq' installation , if not installed
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -157,7 +158,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "4.08"                                            # Setup Version Number
+sver                = "4.09"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname
@@ -211,6 +212,8 @@ req_client = {
                     'deb':'lsb-release',                    'drepo':'base'},
     'crontab'    :{ 'rpm':'cronie',                         'rrepo':'base',  
                     'deb':'cron',                           'drepo':'base'},
+    'jq'         :{ 'rpm':'jq',                             'rrepo':'base',  
+                    'deb':'jq',                             'drepo':'base'},
     'nmon'       :{ 'rpm':'nmon',                           'rrepo':'epel',  
                     'deb':'nmon',                           'drepo':'base'},
     'ethtool'    :{ 'rpm':'ethtool',                        'rrepo':'base',  
