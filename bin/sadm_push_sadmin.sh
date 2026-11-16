@@ -197,7 +197,6 @@ process_servers()
              sadm_write_log "${SADM_DESC}."
              sadm_ask "Confirmation needed, continue"                   # Continue (y/n) ? 
              if [ $? -eq 0 ] ; then sadm_stop 0 ; exit 0 ; fi           # 0 = Don't want to continue
-        else sadm_write_log "Script not executed on the command line." 
     fi
 
 
