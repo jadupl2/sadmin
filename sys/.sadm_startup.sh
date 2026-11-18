@@ -53,7 +53,7 @@
 #@2026_10_12 startup/shutdown v03.26.07 Log sent by email was not complete & change sendmail code.
 #@2026_10_21 startup/shutdown V03.26.08 Prevent startup email when "$SADM_SYS_START_NOEMAIL" file is present.
 #@2026_11_01 startup/shutdown V03.26.09 Consider 'SADM_EMAIL_STARTUP' var. to control startup email.
-#
+#@2026_11_18 startup/shutdown V03.26.10 Restructure information in the startup email.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x 
@@ -86,7 +86,7 @@ export SADM_EXIT_CODE=0                                    # Pgm. Default Exit C
 export SADM_PN=$(basename "$0")                            # Script name(with extension)
 export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
 
-export SADM_VER='03.26.09'                                 # Script version number
+export SADM_VER='03.26.10'                                 # Script version number
 export SADM_DESC="Script run when the system is started (systemctl enable --now sadmin)." 
 export SADM_ROOT_ONLY="Y"                                  # Pgm. run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Pgm. run only on SADMIN server? [Y]/[N]
@@ -152,8 +152,17 @@ poweron_email()
     ws="SADM_INFO: System '$SADM_HOSTNAME' is starting up."             # Email subject
     we="$SADM_MAIL_ADDR"                                                # Email Default=SysAdmin
 
-    # Create the Body of email in a text file 
+    # First Line of the Body
     echo -e "Greeting,\nOn $(date), the system '${SADM_HOSTNAME}' is back online." > $wb
+
+    # System information
+    echo -e "\nUptime            : $(uptime)" >> $wb
+    echo -e "\nLast 10 Reboot    :\n$(last -xF reboot shutdown | head -10)" >> $wb
+    echo -e "\nLast 10 Users     :\n$(last -10 | head -10 | nl)" >> $wb
+    echo -e "\nError on boot     :\n$(journalctl -p err -b --no-pager)" >> $wb
+    echo -e "\nFilesystems usage :\n$(df -hPT --total)" >> $wb
+
+    # P.S. Note about the script 
     echo -e "\nThe script '\${SADMIN}/sys/${SADM_PN}' is reponsable for sending you this email." >> $wb
     echo -e "   - If you wish to stop receiving this email on ALL your systems : "        >> $wb
     echo -e "       - Just set 'SADM_EMAIL_STARTUP' to 'N' in '$SADMIN/cfg/sadmin.cfg'."  >> $wb
@@ -161,11 +170,6 @@ poweron_email()
     echo -e "       - Create an empty file named 'sadm_startup_noemail.txt' in '\$SADMIN/sys' directory." >>$wb
     echo -e "         - 'touch $SADM_SYS_DIR/sadm_startup_noemail.txt' "                  >>$wb
     echo -e "\nHave a pleasant day !" >> $wb
-
-    echo -e "\nLast 5 Reboot :\n$(last reboot | head -5 | nl)" >> $wb
-    #echo -e "\nLast 10 Users : \n$(last -10 | head -10 | nl)" >> $wb
-    echo -e "\nError on boot : \n$(journalctl -p err -b --no-pager)" >> $wb
-    echo -e "\nFilesystems usage : \n$(df -hP --total)" >> $wb
 
     # Send Info Email To Sysadmin
     if [[ -s "$SADM_ELOG" ]]                                            # If Error Log is not empty
