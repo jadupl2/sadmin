@@ -32,7 +32,7 @@
 #@2026_10_12 startup/shutdown v02.17.08 Log sent by email was not complete & change sendmail code.
 #@2026_10_21 startup/shutdown V02.17.09 Prevent shutdown email when "$SADM_SYS_SHUTDOWN_NOEMAIL" file is present.
 #@2026_11_01 startup/shutdown V02.17.10 Consider "$SADM_EMAIL_SHUTDOWN" parameter in sadmin.cfg to email at shutdown.
-
+#@2026_11_18 startup/shutdown V02.18.01 Restructure information in the startup email.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x
@@ -63,7 +63,7 @@ export SADM_EXIT_CODE=0                                    # Pgm. Default Exit C
 export SADM_PN=$(basename "$0")                            # Script name(with extension)
 export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
 
-export SADM_VER='02.17.10'                                 # Script version number
+export SADM_VER='02.18.01'                                 # Script version number
 export SADM_PDESC="Executed when the system is initiating shutdown by the 'sadmin.service'."
 export SADM_ROOT_ONLY="Y"                                  # Pgm. run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Pgm. run only on SADMIN server? [Y]/[N]
@@ -116,22 +116,26 @@ shutdown_mail()
     ws="SADM_INFO: Shutdown initiated on system '$SADM_HOSTNAME'."      # Email subject
     we="$SADM_MAIL_ADDR"                                                # Send email to SysAdmin
 
+
     # Create the Body of email in a text file 
-    echo -e "Greeting,\nOn $(date), system '$SADM_HOSTNAME' has initiated a shutdown." > $wb
-    echo -e "\nThe program '\$SADMIN/sys/${SADM_PN}' is reponsable for sending this email." >> $wb
-    echo -e "   - If you wish to stop receiving this email on all your systems : "        >> $wb
-    echo -e "       - Just set 'SADM_EMAIL_SHUTDOWN' to 'N' in '$SADMIN/cfg/sadmin.cfg'." >> $wb
-    echo -e "   - If you wish to stop receiving this email only on '$SADM_HOSTNAME' :"    >>$wb
-    echo -e "       - Create an empty file named 'sadm_shutdown_noemail.txt' in '\$SADMIN/sys' directory." >>$wb
-    echo -e "         - 'touch $SADM_SYS_DIR/sadm_shutdown_noemail.txt' "                 >>$wb
-    echo -e "\nHave a pleasant day !" >> $wb
-    
-    echo -e "\nUptime           : $(uptime)" >> $wb
-    echo -e "\nLast 5 Reboot    :\n$(last reboot | head -5 | nl)" >> $wb
-    echo -e "\nLast 10 Users : \n$(last -10 | head -10 | nl)" >> $wb
-    echo -e "\nTop 10 cpu processes : \n$(ps -eo pid,cmd,%mem,%cpu --sort=-%cpu | head)\n" >> $wb
-    echo -e "\nHardware or kernel errors prior to power down : \n$(dmesg -l err)" | nl >> $wb
-    echo -e "\nFilesystems usage:\n$(df -hT --total)\n" >> $wb    
+    echo -e "Greeting,\nOn $(date), system '$SADM_HOSTNAME' has initiated a shutdown."      > $wb
+
+    # System Information
+    echo -e "\nUptime               : $(uptime)"                                            >>$wb
+    echo -e "\nLast 10 Reboot       :\n$(last -xF reboot shutdown | head -10)"              >>$wb
+    echo -e "\nLast 10 Users        :\n$(last -10 | head -10 | nl)"                         >>$wb
+    echo -e "\nTop 10 cpu processes :\n$(ps -eo pid,cmd,%mem,%cpu --sort=-%cpu | head)\n"   >>$wb
+    echo -e "\nHardware or kernel errors prior to power down :\n$(dmesg -l err)" | nl       >>$wb
+    echo -e "\nFilesystems usage    :\n$(df -hPT --total)\n"                                >>$wb    
+
+    # P.S.  
+    echo -e "\nThe program '\$SADMIN/sys/${SADM_PN}' is reponsable for sending this email." >>$wb
+    echo -e "   - If you wish to stop receiving this email on ALL your systems : "          >>$wb
+    echo -e "       - Just set 'SADM_EMAIL_SHUTDOWN' to 'N' in '$SADMIN/cfg/sadmin.cfg'."   >>$wb
+    echo -e "   - If you wish to stop receiving this email ONLY on '$SADM_HOSTNAME' :"      >>$wb
+    echo -e "       - Create an empty file name 'sadm_shutdown_noemail.txt' in '\$SADMIN/sys' directory." >>$wb
+    echo -e "         - 'touch $SADM_SYS_DIR/sadm_shutdown_noemail.txt' "                   >>$wb
+    echo -e "\nHave a pleasant day !" >> $wb 
 
     # Send Info Email To Sysadmin
     if [[ -s "$SADM_ELOG" ]]                                            # If Error Log is not empty
