@@ -65,7 +65,7 @@ export SADM_DESC="Script to stop a VirtualBox virtual machine."
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_LOG_TYPE="B"                                   # Write log to [S]creen, [L]og, [B]oth
-export SADM_LOG_APPEND="Y"                                 # Y=AppendLog, N=CreateNewLog
+export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="N"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="N"                                 # Y=IncludeFooter N=NoFooter
 export SADM_MULTIPLE_EXEC="Y"                              # Run Simultaneous copy of script
@@ -143,7 +143,7 @@ main_process()
     fi 
 
     # If specified to stop one VM [-n VMName], check if it's already running.
-    if [ "$VMNAME" != "" ]                                              # Is a VMName specified.
+    if [[ "$VMNAME" != "" ]]                                            # Is a VMName specified.
        then sadm_vm_exist "$VMNAME"                                     # Check if VM exist
             if [ $? -eq 1 ] 
                 then sadm_write_err "'$VMNAME' is not a registered VM." 
@@ -154,28 +154,26 @@ main_process()
                 then sadm_write_err "We didn't stop the VM '$VMNAME' since it's already power off." 
                      return 0 
             fi 
+            sadm_write_log "Will stop '$VMNAME' virtual machine."
+       else sadm_write_log "This will stop ALL virtual machine(s)."
     fi        
 
-    if [ "$VMNAME" = "" ] 
-       then sadm_write_log "This will stop ALL virtual machine(s)."
-       else sadm_write_log "Will stop '$VMNAME' virtual machine."
-    fi
-
     # Ask Confirmation before Starting VM.
-    if [ "$CONFIRM" = "Y" ]                                             # if [-y] cmd line used ?
+    if [[ "$CONFIRM" == "Y" ]]                                          # if [-y] cmd line used ?
        then sadm_ask "Still want to proceed"                            # Wait for user Answer (y/n)
             if [ "$?" -eq 0 ] ; then return 0 ; fi                      # 0=No, Do not proceed
     fi 
 
-    # When VMNAME is blank Stop ALL Virtual Machine.
+
+    # When VMNAME is blank, meaning stop ALL Virtual Machines.
     # If $VMNAME isn't blank, then it contain the name of the vm to stop.
     scount=0 ; ecount=0                                                 # Stop and Error Count
-    if [ "$VMNAME" = "" ] 
+    if [[ "$VMNAME" == "" ]]  
        then sadm_write_log "Producing a list of all running virtual machines." 
             $VBOXMANAGE list runningvms | awk -F\" '{ print $2 }' | sort > $VMRUNLIST
             if [ $? -ne 0 ]                                             # If no problem making list
                then sadm_write_err " "
-                    sadm_write_err "[ ERROR ] Running '$VBOXMANAGE list vms."
+                    sadm_write_err "[ ERROR ] Running '$VBOXMANAGE list of running vm."
                     sadm_write_err " "
                     return 1
             fi

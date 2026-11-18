@@ -220,7 +220,7 @@ sadm_vm_stop()
     sadm_write_log "$VBOXMANAGE controlvm '$VM' acpipowerbutton"
     sadm_write_log "We give $SADM_VM_STOP_TIMEOUT seconds to bring down the virtual machine."
     sadm_write_log "This value is taken from SADMIN configuration file 'sadmin.cfg' as 'SADM_VM_STOP_TIMEOUT'."
-    sadm_write_log "Environment variable LOGNAME is $LOGNAME and USER is $USER, does not correspond to effective user id."
+    sadm_write_log "Environment variable LOGNAME is '$LOGNAME' and USER is '$USER', does not correspond to effective user id '$(id -u)' '$(id -un)'."
     $VBOXMANAGE controlvm "$VM" acpipowerbutton >> $SADM_LOG 2>&1
 
     # Wait for the shutdown to complete, wait for "$SADM_VM_STOP_TIMEOUT" sec, then power off.
@@ -235,7 +235,7 @@ sadm_vm_stop()
         done
     
     # If was able to shutdown VM using 'acpi power button' command, advise user & return to caller.
-    sadm_write_log " " 
+    #sadm_write_log " " 
     if [ "$POWEROFF" = "Y" ]
         then sadm_write_log "[ OK ] Virtual Machine '$VM' is now powered off." 
              return 0  

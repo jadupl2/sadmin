@@ -277,7 +277,7 @@ main_process()
                     ;;
     esac
 
-    if [[ ! -f "$SADM_SYS_START_NOEMAIL" ]] && [[ "$SADM_EMAIL_STARTUP" == "Y" ]]                             # Email file don't exist
+    if [[ ! -f "$SADM_SYS_START_NOEMAIL" ]] && [[ "$SADM_EMAIL_STARTUP" == "Y" ]] # Email file don't exist
         then sadm_write_log "  - Sending 'Startup' email to $SADM_MAIL_ADDR." 
     fi 
     return $error_count                                                 # Return Default return code
