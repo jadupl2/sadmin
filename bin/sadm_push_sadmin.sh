@@ -72,6 +72,7 @@
 #@2026_04_27 server v2.53 Fix problem with CentOS 6 getting /etc/environment.
 #@2026_05_15 server v2.54 Automate the creation of "sadm_client.cfg" from "sadmin.cfg".
 #@2026_05_15 server v2.55 Show name of rsync exclude file.
+#@2026_11_19 server v03.00.01 Add new alert group file '$SADMIN/cfg/alert_group.json' to rsync
 # --------------------------------------------------------------------------------------------------
 
 # Trap Ctrl-C (SIGINT) and call sadm_stop function to cleanup before exit.
@@ -80,67 +81,74 @@ trap 'sadm_stop 1; exit 1' 2
 
 
 
-# --------------------------  S A D M I N   C O D E    S E C T I O N  ------------------------------
-# v1.56 - Setup for Global variables and load the SADMIN standard library.
-#       - To use SADMIN tools, this section MUST be present near the top of your code.
-
-# Make sure environment variable 'SADMIN' is defined.
+                                                                                          
+# ---------   S T A R T   O F   S A D M I N   R E Q U I R E D   C O D E   S E C T I O N  -----------
+# v1.61 - Setup Global Variables and load the SADMIN standard library $SADMIN/lib/sadmlib_std.sh.
+#       - To use SADMIN scripting tools, this section MUST be present near the top of your code.    
+#
+# Make sure environment variable 'SADMIN' is defined, if it's not, exit with error message.
 if [ -r /etc/environment ] && [ -z "$SADMIN" ] ; then source /etc/environment ; fi 
 if [ -z "$SADMIN" ]                                        # Advise user, SADMIN Env. Var. is a MUST
-   then printf "\nSet 'SADMIN' environment variable to the install directory." 
-        printf "\nAdd a line similar to 'SADMIN=/opt/sadmin' in /etc/environment." 
-        exit 1 ; fi 
+   then printf "\n[ ERROR ] Set 'SADMIN' environment variable to the install directory." 
+        printf "\n  - Add a line similar to 'SADMIN=/opt/sadmin' in /etc/environment." 
+        exit 1 
+fi 
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                   # If SADMIN shell library doesn't exist 
-   then printf "\nSADMIN library '$SADMIN/lib/sadmlib_std.sh' can't be found.\n" ; exit 1 ; fi 
+   then printf "\n[ ERROR ] SADMIN library '$SADMIN/lib/sadmlib_std.sh' can't be found.\n" ; exit 1 
+fi 
 
-# YOU CAN USE THE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
-export SADM_PN=${0##*/}                                    # Script name(with extension)
-export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
-export SADM_TPID="$$"                                      # Script Process ID.
+# SADMIN Section of your program that is shared with SADMIN Bash Library.
 export SADM_HOSTNAME=$(hostname -s)                        # Host name without Domain Name
-export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_OS_TYPE=$(uname -s|tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
 export SADM_USERNAME=$(id -un)                             # Current user name.
+export SADM_DEBUG=0                                        # Debug Level(0-9), 0 = NoDebug
+export SADM_EXIT_CODE=0                                    # Pgm. Default Exit Code
+export SADM_PN=$(basename "$0")                            # Script name(with extension)
+export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
+export SADM_TPID="$$"                                      # Script Process ID.
 
-# YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.55'                                     # Script version number
+export SADM_VER='03.00.01'                                 # Script version number
 export SADM_DESC="Copy SADMIN version from $SADM_HOSTNAME to all active clients (without overwriting config files)." 
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
-export SADM_QUIET="N"                                      # N=Show Err.Msg Y=ReturnErrorCode No Msg
+export SADM_GROUP_ONLY='N'                                 # Pgm. run only if usr part of SADMIN Grp
+export SADM_MULTIPLE_EXEC="N"                              # Can Run Simultaneous copy of script Y/N
+export SADM_QUIET="N"                                      # Y=HideMsg & Error#  N=Show Msg & Error#
 export SADM_LOG_TYPE="B"                                   # Write log to [S]creen, [L]og, [B]oth
-export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
-export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoLogHeader
-export SADM_LOG_FOOTER="Y"                                 # Y=IncludeLogFooter N=NoLogFooter
-export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
-export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
-export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
-export SADM_EXIT_CODE=0                                    # Script Default Exit Code
-export SADM_TMP_FILE1=$(mktemp -q "$SADMIN/tmp/${SADM_INST}1_XXX") # WorkFile, remove by sadm_stop()
-export SADM_TMP_FILE2=$(mktemp -q "$SADMIN/tmp/${SADM_INST}2_XXX") # WorkFile, remove by sadm_stop()
-export SADM_TMP_FILE3=$(mktemp -q "$SADMIN/tmp/${SADM_INST}3_XXX") # WorkFile, remove by sadm_stop()
+export SADM_LOG_APPEND="N"                                 # Append log ? Y=AppendLog,N=CreateNewLog
+export SADM_LOG_HEADER="Y"                                 # Y = ProduceLogHeader, N = NoLogHeader
+export SADM_LOG_FOOTER="Y"                                 # Y = ProduceLogFooter, N = NoLogFooter
+export SADM_USE_RCH="Y"                                    # Update the RCH History File (Y/N)
+export SADM_ERRMSG=""                                      # Error Message returned by Library 
+export SADM_ERRNO=0                                        # Error number (0=OK) returned by Library
+export SADM_PID_TIMEOUT=7200                               # Sec. before PID file is remove,7200=2hr
+export SADM_LOCK_TIMEOUT=3600                              # Sec. before System LockFile is Del, 1hr
+export SADM_DB_USED="N"                                    # Use or Not, Got to be on SADMIN server
+export SADM_DB_NAME="sadmin"                               # Database Name SADM_DBNAME in sadmin.cfg
+export SADM_TMP_FILE1=$(mktemp -q "$SADMIN/tmp/sadm_tmp1_XXX") # Make tmpfile1, rm in sadm_stop()
+export SADM_TMP_FILE2=$(mktemp -q "$SADMIN/tmp/sadm_tmp2_XXX") # Make tmpfile2, rm in sadm_stop()
+export SADM_TMP_FILE3=$(mktemp -q "$SADMIN/tmp/sadm_tmp3_XXX") # Make tmpfile3, rm in sadm_stop()
 
-# LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
-. "${SADMIN}/lib/sadmlib_std.sh"                           # Load SADMIN Shell Library
-export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
+# Load SADMIN Bash Shell Library, ready to  be used.
+. "${SADMIN}/lib/sadmlib_std.sh"                           # Init SADMIN tools, load cfg files
+
+# Example of some functions and variable you can use.
+export SADM_OS_NAME=$(sadm_get_osname)                     # REDHAT,ROCKY,ALMA,CENTOS,DEBIAN,UBUNTU.
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.5)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
-#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
+export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access clients Systems
 
-# VARIABLES DEFINE BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
-# BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).export SADM_WARNING_GRP="default"
-#export SADM_ALERT_GROUP="default"                          # Error Group Define in alert_group.cfg
-#export SADM_WARNING_GROUP="default"                        # Warning alert Group (alert_group.cfg)   
-#export SADM_INFO_GROUP="default"                           # Info alert Group (in alert_group.cfg)
-#export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
-#export SADM_ALERT_GROUP="default"                          # Alert Group to advise
-#export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
-#export SADM_MAX_LOGLINE=400                                # Nb Lines to trim(0=NoTrim)
-#export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
-#export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
-#export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
+# Variables Below Are Taken From SADMIN Configuration File (sadmin.cfg) when the Library is loaded.
+# You Can Overridde them On A Per Program Basis (If Needed).
+#export SADM_ALERT_TYPE=1                                   # 0=NoAlert 1=OnError 2=OnOK 3=Always
+#export SADM_ALERT_GROUP="default"                          # Error Group Define  (alert_group.cfg)
+#export SADM_WARNING_GROUP="default"                        # Warning Alert Group (alert_group.cfg)   
+#export SADM_INFO_GROUP="default"                           # Info Alert Group    (alert_group.cfg)
+#export SADM_ALERT_TTL=86400                                # Alert ignored after 86400 Sec = 24hrs
+#export SADM_MAIL_ADDR="your_email@domain.com"              # Default is in $SADMIN/cfg/sadmin.cfg
+#export SADM_MAX_LOGLINE=0                                  # Nb of Lines to trim (0=NoTrim)
+#export SADM_MAX_RCHLINE=35                                 # Nb of Lines to trim (0=NoTrim)
 # -------------------  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
-
-
 
 
 
@@ -465,6 +473,25 @@ process_servers()
         # Copy Alert Group file from SADMIN server file to client
         # May be used by SADMIN monitor in the future to send Notification/Alert.
         WFILE="alert_group.cfg" 
+        CFG_SRC="${SADM_CFG_DIR}/${WFILE}"
+        CFG_DST="${server_fqdn}:${server_dir}/cfg/${WFILE}"
+        CFG_CMD="rsync -ar -e 'ssh -p $server_ssh_port' ${CFG_SRC} ${CFG_DST}"
+        if [ $SADM_DEBUG -gt 5 ] ; then sadm_write_log "$CFG_CMD" ; fi 
+        rsync -ar -e "ssh -p $server_ssh_port" "${CFG_SRC}" "${CFG_DST}" >> $SADM_LOG 2>&1
+        RC=$? 
+        if [ $RC -ne 0 ]
+           then if [ $RC -eq 23 ] 
+                   then sadm_write_err "[ WARNING ] Error code 23 denotes a partial transfer ..." 
+                        ((WARNING_COUNT++))                           # Increase Warning Counter
+                   else sadm_write_err "[ ERROR ] ($RC) doing ${CFG_CMD}"
+                        ((ERROR_COUNT++))
+                fi 
+           else sadm_write_log "[ OK ] ${CFG_CMD}" 
+        fi
+
+        # Copy Alert Group file from SADMIN server file to client
+        # May be used by SADMIN monitor in the future to send Notification/Alert.
+        WFILE="alert_group.json" 
         CFG_SRC="${SADM_CFG_DIR}/${WFILE}"
         CFG_DST="${server_fqdn}:${server_dir}/cfg/${WFILE}"
         CFG_CMD="rsync -ar -e 'ssh -p $server_ssh_port' ${CFG_SRC} ${CFG_DST}"
