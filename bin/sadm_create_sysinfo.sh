@@ -74,7 +74,7 @@
 #@2026_04_27 client v3.44 Fix problem with creating VM list, under VBox 7.2.6, is ok in 7.2.8
 #@2026_04_27 client v3.45 Adjustment for Virtual Box 7.2.8, VBoxManage list vms output format change
 #@2026_06_01 client v3.46 chmod 664 $SADMIN/dat/dr/HOSTNAME_sysinfo.txt
-#@2026_08_01 client v3.47 lshw stuck when VMware network interface are present.
+#@2026_11_18 client v3.47 Using 'fdisk' command instead of 'parted', solve problem on some distrib.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 0' 2                                            # Intercept the ^C
 #set -x
@@ -518,14 +518,14 @@ create_linux_config_files()
     fi
 
     if [ "$DF" != "" ]
-        then CMD="df -hP"
+        then CMD="df -hPT"
              execute_command "$CMD" "$DISKS_FILE" 
     fi
 
     if [ "$LSBLK" != "" ] 
         then CMD="$LSBLK" 
              execute_command "$CMD" "$DISKS_FILE" 
-             CMD="$LSBLK -o name,size" 
+             CMD="$LSBLK -o name,size,fstype" 
              execute_command "$CMD" "$DISKS_FILE" 
              CMD="$LSBLK -f" 
              execute_command "$CMD" "$DISKS_FILE" 
@@ -539,8 +539,8 @@ create_linux_config_files()
     fi
 
 
-    if [ "$SADM_PARTED" != "" ]
-        then CMD="$SADM_PARTED -l | grep '^Disk' | grep -vE 'mapper|Disk Flags:'"
+    if [ "$SADM_FDISK" != "" ]
+        then CMD="$SADM_FDISK -l"
              execute_command "$CMD" "$DISKS_FILE" 
     fi
 
