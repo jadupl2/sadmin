@@ -107,9 +107,9 @@ export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access c
 # Variables Below Are Taken From SADMIN Configuration File (sadmin.cfg) when the Library is loaded.
 # You Can Overridde them On A Per Program Basis (If Needed).
 #export SADM_ALERT_TYPE=1                                   # 0=NoAlert 1=OnError 2=OnOK 3=Always
-#export SADM_ALERT_GROUP="default"                          # Error Group Define  (alert_group.cfg)
-#export SADM_WARNING_GROUP="default"                        # Warning Alert Group (alert_group.cfg)   
-#export SADM_INFO_GROUP="default"                           # Info Alert Group    (alert_group.cfg)
+#export SADM_ALERT_GROUP="default"                          # Error Group Define  (alert_group.json)
+#export SADM_WARNING_GROUP="default"                        # Warning Alert Group (alert_group.json)   
+#export SADM_INFO_GROUP="default"                           # Info Alert Group    (alert_group.json)
 #export SADM_ALERT_TTL=86400                                # Alert ignored after 86400 Sec = 24hrs
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Default is in $SADMIN/cfg/sadmin.cfg
 #export SADM_MAX_LOGLINE=0                                  # Nb of Lines to trim (0=NoTrim)
