@@ -38,108 +38,121 @@
 # 2019_01_01    Added: sadm_create_sysinfo v3.8 - Use lshw to list Disks and Network Info on Linux.
 # 2019_01_01    Added: sadm_create_sysinfo v3.9 - Use lsblk to list Disks Partitions and Filesystems
 # 2019_01_01    Added: sadm_create_sysinfo v3.10 - Added lspci, lsscsi and create hardware html list
-# 2019_01_28 Added: v3.11 Change Header of files produced by this script.
-# 2019_03_17 Change: v3.12 PCI hardware list moved to end of system report file.
-# 2019_07_07 Fix: v3.13 O/S Update was indicating 'Failed' when it should have been 'Success'.
-# 2019_10_13 Update: v3.14 Collect Server Architecture to be store later on in Database.
-# 2019_10_30 Update: v3.15 Remove utilization on 'facter' for collecting info (Not always available)
-# 2019_11_22 Fix: v3.16 Problem with 'nmcli -t' on Ubuntu,Debian corrected.
-# 2020_01_13 Update: v3.17 Collect 'rear' version to show on rear schedule web page.
-# 2020_03_08 Update: v3.18 Collect more information about Disks, Partitions, Network and fix lsblk.
-# 2020_04_05 Update: v3.19 Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl
-# 2020_06_09 Update: v3.20 New log at each execution & log not trimmed anymore ($SADM_MAX_LOGLINE=0)
-# 2020_12_12 Update: v3.21 Add SADM_PID_TIMEOUT and SADM_LOCK_TIMEOUT Variables.
-# 2021_05_10 nolog: v3.22 Change error message "sadm_osupdate_farm.sh" to "sadm_osupdate_starter".
-# 2021_05_22 nolog: v3.23 Standardize command line options & Update SADMIN code section
-# 2021_06_03 client v3.24 Include script version in sysinfo text file generated
-# 2022_01_10 client v3.25 Include memory module information in system information file.
-# 2022_01_11 client v3.26 Added more disks information.
-# 2022_02_17 client v3.27 Fix error writing network information file.
-# 2022_02_17 client v3.28 Now show last O/S update status and date.
-# 2022_03_04 client v3.29 Added more info about disks, filesystems and partition size.
-# 2022_04_10 client v3.30 Change for RHEL/Rocky/AlmaLinux/CentOS v9, 'lsb_release' command is gone.
-# 2022_04_19 client v3.31 Now include information from 'inxi' command (if available).
-# 2022_07_20 client v3.32 When using 'inxi' suppress color escape sequence from generated files.
-# 2022_07_21 client v3.33 Small enhancement in network information section.
-# 2022_08_25 client v3.34 Update to SADMIN Section 1.52
-# 2022_09_22 client v3.35 LVM information are now written into the Disk information file.
-# 2023_01_12 client v3.36 Update gathering network information.
-# 2023_12_26 client v3.37 Update SADMIN section
-#@2024_10_31 client v3.38 Creation of a list of vm on system to $SADMIN/dat/dr/HOSTNAME_vm_list.txt 
-#@2024_11_11 client v3.39 Change permission to VM list file '$SADMIN/dat/dr/HOSTNAME_vm_list.txt'.
-#@2025_01_25 client v3.40 Add VM guest version line (SADM_VMGUEST_VERSION) to sysinfo.txt file
-#@2025_02_04 client v3.41 Now using 'VBoxClient' to get current VirtualBox Guest version.
-#@2025_08_25 client v3.42 Location change of 'vmlist.txt' file and review process of creating it.
-#@2025_08_25 client v3.43 Solve problem when "$SADM_USER" display stuff when login (.bash_profile)
-#@2026_04_27 client v3.44 Fix problem with creating VM list, under VBox 7.2.6, is ok in 7.2.8
-#@2026_04_27 client v3.45 Adjustment for Virtual Box 7.2.8, VBoxManage list vms output format change
-#@2026_06_01 client v3.46 chmod 664 $SADMIN/dat/dr/HOSTNAME_sysinfo.txt
-#@2026_11_18 client v3.47 Using 'fdisk' command instead of 'parted', solve problem on some distrib.
+# 2019_01_28 client v3.11 Change Header of files produced by this script.
+# 2019_03_17 client v03.12.00 PCI hardware list moved to end of system report file.
+# 2019_07_07 client v03.13.00 O/S Update was indicating 'Failed' when it should have been 'Success'.
+# 2019_10_13 client v03.14.00 Collect Server Architecture to be store later on in Database.
+# 2019_10_30 client v03.15.00 Remove utilization on 'facter' for collecting info (Not always available)
+# 2019_11_22 client v03.16.00 Problem with 'nmcli -t' on Ubuntu,Debian corrected.
+# 2020_01_13 client v03.17.00 Collect 'rear' version to show on rear schedule web page.
+# 2020_03_08 client v03.18.00 Collect more information about Disks, Partitions, Network and fix lsblk.
+# 2020_04_05 client v03.19.00 Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl
+# 2020_06_09 client v03.20.00 New log at each execution & log not trimmed anymore ($SADM_MAX_LOGLINE=0)
+# 2020_12_12 client v03.21.00 Add SADM_PID_TIMEOUT and SADM_LOCK_TIMEOUT Variables.
+# 2021_05_10 client v03.22.00 Change error message "sadm_osupdate_farm.sh" to "sadm_osupdate_starter".
+# 2021_05_22 client v03.23.00 Standardize command line options & Update SADMIN code section
+# 2021_06_03 client v03.24.00 Include script version in sysinfo text file generated
+# 2022_01_10 client v03.25.00 Include memory module information in system information file.
+# 2022_01_11 client v03.26.00 Added more disks information.
+# 2022_02_17 client v03.27.00 Fix error writing network information file.
+# 2022_02_17 client v03.28.00 Now show last O/S update status and date.
+# 2022_03_04 client v03.29.00 Added more info about disks, filesystems and partition size.
+# 2022_04_10 client v03.30.00 Change for RHEL/Rocky/AlmaLinux/CentOS v9, 'lsb_release' command is gone.
+# 2022_04_19 client v03.31.00 Now include information from 'inxi' command (if available).
+# 2022_07_20 client v03.32.00 When using 'inxi' suppress color escape sequence from generated files.
+# 2022_07_21 client v03.33.00 Small enhancement in network information section.
+# 2022_08_25 client v03.34.00 Update to SADMIN Section 1.52
+# 2022_09_22 client v03.35.00 LVM information are now written into the Disk information file.
+# 2023_01_12 client v03.36.00 Update gathering network information.
+# 2023_12_26 client v03.37.00 Update SADMIN section
+#@2024_10_31 client v03.38.00 Creation of a list of vm on system to $SADMIN/dat/dr/HOSTNAME_vm_list.txt 
+#@2024_11_11 client v03.39.00 Change permission to VM list file '$SADMIN/dat/dr/HOSTNAME_vm_list.txt'.
+#@2025_01_25 client v03.40.00 Add VM guest version line (SADM_VMGUEST_VERSION) to sysinfo.txt file
+#@2025_02_04 client v03.41.00 Now using 'VBoxClient' to get current VirtualBox Guest version.
+#@2025_08_25 client v03.42.00 Location change of 'vmlist.txt' file and review process of creating it.
+#@2025_08_25 client v03.43.00 Solve problem when "$SADM_USER" display stuff when login (.bash_profile)
+#@2026_04_27 client v03.44.00 Fix problem with creating VM list, under VBox 7.2.6, is ok in 7.2.8
+#@2026_04_27 client v03.45.00 Adjustment for Virtual Box 7.2.8, VBoxManage list vms output format change
+#@2026_06_01 client v03.46.00 chmod 664 $SADMIN/dat/dr/HOSTNAME_sysinfo.txt
+#@2026_11_18 client v03.47.00 Using 'fdisk' command instead of 'parted', solve problem on some distrib.
+#@2026_11_20 client v03.48.00 Add 'iwconfig' where available, include /etc/fstab, more info with 'lsblk'.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 0' 2                                            # Intercept the ^C
 #set -x
 
 
 
-
-# ------------------- S T A R T  O F   S A D M I N   C O D E    S E C T I O N  ---------------------
-# v1.56 - Setup for Global Variables and load the SADMIN standard library.
-#       - To use SADMIN tools, this section MUST be present near the top of your code.    
-
-# Make Sure Environment Variable 'SADMIN' Is Defined.
-if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADMIN defined? Libr.exist
-    then if [ -r /etc/environment ] ; then source /etc/environment ;fi  # LastChance defining SADMIN
-         if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]   # Still not define = Error
-            then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
-                 exit 1                                                 # No SADMIN Env. Var. Exit
-         fi
+                                                                                          
+# ---------   S T A R T   O F   S A D M I N   R E Q U I R E D   C O D E   S E C T I O N  -----------
+# v1.61 - Setup Global Variables and load the SADMIN standard library $SADMIN/lib/sadmlib_std.sh.
+#       - To use SADMIN scripting tools, this section MUST be present near the top of your code.    
+#
+# Make sure environment variable 'SADMIN' is defined, if it's not, exit with error message.
+if [ -r /etc/environment ] && [ -z "$SADMIN" ] ; then source /etc/environment ; fi 
+if [ -z "$SADMIN" ]                                        # Advise user, SADMIN Env. Var. is a MUST
+   then printf "\n[ ERROR ] Set 'SADMIN' environment variable to the install directory." 
+        printf "\n  - Add a line similar to 'SADMIN=/opt/sadmin' in /etc/environment." 
+        exit 1 
+fi 
+if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                   # If SADMIN shell library doesn't exist 
+   then printf "\n[ ERROR ] SADMIN library '$SADMIN/lib/sadmlib_std.sh' can't be found.\n" ; exit 1 
 fi 
 
-# YOU CAN USE THE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
-export SADM_PN=${0##*/}                                    # Script name(with extension)
-export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
-export SADM_TPID="$$"                                      # Script Process ID.
+# SADMIN Section of your program that is shared with SADMIN Bash Library.
 export SADM_HOSTNAME=$(hostname -s)                        # Host name without Domain Name
-export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_OS_TYPE=$(uname -s|tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
 export SADM_USERNAME=$(id -un)                             # Current user name.
+export SADM_DEBUG=0                                        # Debug Level(0-9), 0 = NoDebug
+export SADM_EXIT_CODE=0                                    # Pgm. Default Exit Code
+export SADM_PN=$(basename "$0")                            # Script name(with extension)
+export SADM_INST="${SADM_PN%.*}"                           # Script name(without extension)
+export SADM_TPID="$$"                                      # Script Process ID.
 
-# YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.47'                                     # Script version number
+export SADM_VER='03.48.00'                                 # Script version number
 export SADM_DESC="Collect hardware & software info of system" # Script Description
-export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
-export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
-export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
-export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
-export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
-export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
-export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
-export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
-export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
-export SADM_EXIT_CODE=0                                    # Script Default Exit Code
-export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
-export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
-export SADM_EXIT_CODE=0                                    # Script Default Exit Code
-export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
-export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") 
-export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX") 
+export SADM_ROOT_ONLY="Y"                                  # Pgm. run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="N"                                # Pgm. run only on SADMIN server? [Y]/[N]
+export SADM_GROUP_ONLY='Y'                                 # Pgm. run only if usr part of SADMIN Grp
+export SADM_MULTIPLE_EXEC="N"                              # Can Run Simultaneous copy of script Y/N
+export SADM_QUIET="N"                                      # Y=HideMsg & Error#  N=Show Msg & Error#
+export SADM_LOG_TYPE="B"                                   # Write log to [S]creen, [L]og, [B]oth
+export SADM_LOG_APPEND="N"                                 # Append log ? Y=AppendLog,N=CreateNewLog
+export SADM_LOG_HEADER="Y"                                 # Y = ProduceLogHeader, N = NoLogHeader
+export SADM_LOG_FOOTER="Y"                                 # Y = ProduceLogFooter, N = NoLogFooter
+export SADM_USE_RCH="Y"                                    # Update the RCH History File (Y/N)
+export SADM_ERRMSG=""                                      # Error Message returned by Library 
+export SADM_ERRNO=0                                        # Error number (0=OK) returned by Library
+export SADM_PID_TIMEOUT=7200                               # Sec. before PID file is remove,7200=2hr
+export SADM_LOCK_TIMEOUT=3600                              # Sec. before System LockFile is Del, 1hr
+export SADM_DB_USED="N"                                    # Use or Not, Got to be on SADMIN server
+export SADM_DB_NAME="sadmin"                               # Database Name SADM_DBNAME in sadmin.cfg
+export SADM_TMP_FILE1=$(mktemp -q "$SADMIN/tmp/sadm_tmp1_XXX") # Make tmpfile1, rm in sadm_stop()
+export SADM_TMP_FILE2=$(mktemp -q "$SADMIN/tmp/sadm_tmp2_XXX") # Make tmpfile2, rm in sadm_stop()
+export SADM_TMP_FILE3=$(mktemp -q "$SADMIN/tmp/sadm_tmp3_XXX") # Make tmpfile3, rm in sadm_stop()
 
-# LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
-. "${SADMIN}/lib/sadmlib_std.sh"                           # Load SADMIN Shell Library
-export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
-export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
+# Load SADMIN Bash Shell Library, ready to  be used.
+. "${SADMIN}/lib/sadmlib_std.sh"                           # Init SADMIN tools, load cfg files
+
+# Example of some functions and variable you can use.
+export SADM_OS_NAME=$(sadm_get_osname)                     # REDHAT,ROCKY,ALMA,CENTOS,DEBIAN,UBUNTU.
+export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.5)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
-#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
+export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access clients Systems
 
-# VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
-# BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
-#export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
-#export SADM_ALERT_GROUP="default"                          # Alert Group to advise
-#export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
-#export SADM_MAX_LOGLINE=400                                # Nb Lines to trim(0=NoTrim)
-#export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
-#export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
-#export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
-# --------------- ---  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
+# Variables Below Are Taken From SADMIN Configuration File (sadmin.cfg) when the Library is loaded.
+# You Can Overridde them On A Per Program Basis (If Needed).
+#export SADM_ALERT_TYPE=1                                   # 0=NoAlert 1=OnError 2=OnOK 3=Always
+#export SADM_ALERT_GROUP="default"                          # Error Group Define  (alert_group.json)
+#export SADM_WARNING_GROUP="default"                        # Warning Alert Group (alert_group.json)   
+#export SADM_INFO_GROUP="default"                           # Info Alert Group    (alert_group.json)
+#export SADM_ALERT_TTL=86400                                # Alert ignored after 86400 Sec = 24hrs
+#export SADM_MAIL_ADDR="your_email@domain.com"              # Default is in $SADMIN/cfg/sadmin.cfg
+#export SADM_MAX_LOGLINE=0                                  # Nb of Lines to trim (0=NoTrim)
+#export SADM_MAX_RCHLINE=35                                 # Nb of Lines to trim (0=NoTrim)
+# -------------------  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
+
+
+
 
 
 
@@ -206,7 +219,8 @@ export SYSCTL=""                                                        # sysctl
 export SCUTIL=""                                                        # MacOS to list DNS Param.
 export LSSCSI=""                                                        # List SCSI Device Info.
 export LSPCI=""                                                         # List PCI Components
-export VBMGR=""                                                    # VirtualBox Manager
+export VBMGR=""                                                         # VirtualBox Manager
+export IWCONFIG=""                                                      # Wireless connection status 
 
 
 
@@ -240,29 +254,21 @@ show_usage()
 command_available()
 {
     SADM_PKG=$1
-    if [ $# -ne 1 ] || [ -z "$SADM_PKG" ]
-        then sadm_write_err "[ ERROR ] Command '$SADM_PKG' is not available on this system."
+    
+    if [ $# -ne 1 ]
+        then sadm_write_err "[ WARNING ] Command '$SADM_PKG' is not available on this system."
              sadm_write_err " - Parameter received = '$*' "
-             sadm_write_err " - Please correct error in the script."
              return 1
     fi
 
-    # Ff command (SADM_PKG) exist, Return command full Path, else return blank in CPATH
-    if [[ $(type -P $SADM_PKG > /dev/null 2>&1) -eq 0 ]] 
-        then SADM_CPATH=$(type -P $SADM_PKG) 
+    # If command ($SADM_PKG) exist, Return command full Path, else return blank in SADM_PATH
+    command -v "$SADM_PKG"  > /dev/null 2>&1 
+    if [[ $? -eq 0 ]] 
+        then SADM_CPATH=$(command -v "$SADM_PKG") 
+             return 0 
         else SADM_CPATH="" 
+             return 1
     fi
-
-    # If SADM_DEBUG is activated then display Package Name and Full path to it
-    if [ $SADM_DEBUG -gt 0 ]
-        then if [ ! -z $SADM_CPATH ]                                    # If CPATH not Blank
-                then SADM_MSG=$(printf "%-10s %-15s : %-30s" "[ OK ]" "$SADM_PKG" "$SADM_CPATH")
-                else SADM_MSG=$(printf "%-10s %-15s : %-30s" "[ INFO ]" "$SADM_PKG" "Not Found")
-             fi
-             sadm_write_log "${SADM_MSG}"
-    fi
-
-    if [ -z "$SADM_CPATH" ] ; then return 1 ; else return 0 ; fi
 }
 
 
@@ -295,6 +301,7 @@ pre_validation()
                 command_available "networksetup" ; NETWORKSETUP=$SADM_CPATH  
                 command_available "hostinfo"     ; HOSTINFO=$SADM_CPATH  # HostInfo Cmd Path
                 command_available "ipconfig"     ; IPCONFIG=$SADM_CPATH  # ipconfig Cmd Path
+                command_available "scutil"       ; SCUTIL=$SADM_CPATH    # CmdPath="" if not found
                 ;;
         LINUX)  command_available "lvs"          ; LVS=$SADM_CPATH       # Cmd Path or Blank=!found
                 command_available "lvscan"       ; LVSCAN=$SADM_CPATH    # Cmd Path or Blank=!found
@@ -317,11 +324,11 @@ pre_validation()
                 command_available "mii-tool"     ; MIITOOL=$SADM_CPATH   # mii-tool Cmd Path
                 command_available "ethtool"      ; ETHTOOL=$SADM_CPATH   # ethtool Cmd Path
                 command_available "sysctl"       ; SYSCTL=$SADM_CPATH    # CmdPath "" if not found
-                command_available "scutil"       ; SCUTIL=$SADM_CPATH    # CmdPath="" if not found
                 command_available "lsscsi"       ; LSSCSI=$SADM_CPATH    # CmdPath="" if not found
                 command_available "rear"         ; REAR=$SADM_CPATH      # CmdPath="" if not found
                 command_available "lspci"        ; LSPCI=$SADM_CPATH     # CmdPath="" if not found
-                command_available "vboxmanage"   ; VBMGR=$SADM_CPATH
+                command_available "vboxmanage"   ; VBMGR=$SADM_CPATH     # Virtual Box Manager
+                command_available "iwconfig"     ; IWCONFIG=$SADM_CPATH  # Wireless conn. status
                 ;;
         *)      sadm_write_err "$SADM_OSTYPE is not supported yet."
                 sadm_write_err "Please reported to sadmlinux@gmail.com"
@@ -507,6 +514,7 @@ create_linux_config_files()
     # Collect Disk Information ---------------------------------------------------------------------
     write_file_header "Disks Information" "$DISKS_FILE"
     sadm_write_log "Creating $DISKS_FILE ..."
+
     if [ "$INXI" != "" ]
         then CMD="$INXI -dc"
              execute_command "$CMD" "$DISKS_FILE" 
@@ -522,10 +530,15 @@ create_linux_config_files()
              execute_command "$CMD" "$DISKS_FILE" 
     fi
 
+    if [[ -f "/etc/fstab" ]]
+        then CMD="cat /etc/fstab"
+             execute_command "$CMD" "$DISKS_FILE" 
+    fi
+
     if [ "$LSBLK" != "" ] 
         then CMD="$LSBLK" 
              execute_command "$CMD" "$DISKS_FILE" 
-             CMD="$LSBLK -o name,size,fstype" 
+             CMD="$LSBLK -o NAME,SIZE,FSTYPE,MOUNTPOINTS"
              execute_command "$CMD" "$DISKS_FILE" 
              CMD="$LSBLK -f" 
              execute_command "$CMD" "$DISKS_FILE" 
@@ -599,6 +612,14 @@ create_linux_config_files()
         then CMD="$IP r"
              execute_command "$CMD" "$NET_FILE" 
     fi
+
+    if [ "$IWCONFIG" != "" ]
+       then WIFI_DEV=$(/usr/sbin/ip -brief a | grep "UP" | grep -i "^w" | awk '{print $1}')
+            CMD="$IWCONFIG $WIFI_DEV"
+            execute_command "$CMD" "$NET_FILE" 
+    fi
+
+
 
     if [ "$NETSTAT" != "" ]
         then CMD="$NETSTAT -rn"
@@ -1048,7 +1069,7 @@ function cmd_options()
 #
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Create Dir.,PID,log,rch
-    pre_validation                                                      # Cmd neede are present ?
+    pre_validation                                                      # Cmd needed are present ?
     SADM_EXIT_CODE=$?                                                   # Save Function Return code
     if [ $SADM_EXIT_CODE -ne 0 ] ; then sadm_stop 1 ; exit 1 ; fi       # If pre_validation failed
     
