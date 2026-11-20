@@ -300,7 +300,8 @@
 #@2026_11_10 lib V04.92.25 Remove ANSI Color Code from Log File
 #@2026_11_11 lib v04.92.26 New var. SADM_BACKUP_FILE_CHANGE_ERROR (Y/N) Error file change during backup
 #@2026_11_11 lib v04.92.26 New var. SADM_BACKUP_TOP10_MIN_SIZE, Min. size in MB for 10 biggest files.
-
+#@2026_11_20 lib v04.93.00 Include loading of new format of Alert Group file (alert_group.json),
+#@2026_11_20 lib v04.93.01 .
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x
@@ -308,7 +309,7 @@ trap 'exit 0' 2
 
 # V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
-export SADM_LIB_VER="04.92.26"                                          # This Library Version
+export SADM_LIB_VER="04.93.00"                                          # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -316,6 +317,7 @@ export SADM_TEN_DASH=$(printf %10s |tr ' ' '=')                         # 10 das
 export SADM_STIME=""                                                    # Will be, Script Start Time
 export DELETE_PID="Y"                                                   # Default Delete PID On Exit
 export LIB_DEBUG=0                                                      # This Library Debug Level
+export SADM_LIBTMP_FILE1=$(mktemp -q "$SADMIN/tmp/sadm_libtmp1_XXX")    # tmpfile1, only for libr.
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 export SADM_BASE_DIR=${SADMIN:="/opt/sadmin"}                           # Script Root Base Dir.
@@ -366,8 +368,9 @@ export SADM_WWW_PERF_DIR="$SADM_WWW_TMP_DIR/perf"                       # web pe
 export SADM_ETCENV="/etc/environment"                                   # SADMIN define in this file
 export SADM_PID_FILE="${SADM_TMP_DIR}/${SADM_INST}.$$"                  # PID file name
 export SADM_CFG_FILE="$SADM_CFG_DIR/sadmin.cfg"                         # Cfg file name
-export SADM_ALERT_FILE="$SADM_CFG_DIR/alert_group.cfg"                  # AlertGrp File
-export SADM_ALERT_INIT="$SADM_CFG_DIR/.alert_group.cfg"                 # Initial Alert
+#export SADM_ALERT_FILE="$SADM_CFG_DIR/alert_group.cfg"                  # AlertGrp File old format
+export SADM_ALERT_FILE="$SADM_CFG_DIR/alert_group.json"                 # Alert Group file .json
+export SADM_ALERT_INIT="$SADM_CFG_DIR/.alert_group.json"                # Initial Alert (Template)
 export SADM_SLACK_FILE="$SADM_CFG_DIR/alert_slack.cfg"                  # Old Slack Alert File
 export SADM_SLACK_INIT="$SADM_CFG_DIR/.alert_slack.cfg"                 # Old Slack Alert Init File
 export SADM_ALERT_HIST="$SADM_CFG_DIR/alert_history.txt"                # Alert History
@@ -425,6 +428,7 @@ export SADM_MUTT=""                                         # mutt Pgm Path
 export SADM_CURL=""                                         # curl Pgm Path
 export SADM_LSCPU=""                                        # Path to lscpu Command
 export SADM_NMON=""                                         # Path to nmon Command
+export SADM_JQ=""                                           # Path to Jason Query jq Command
 export SADM_PARTED=""                                       # Path to parted Command
 export SADM_ETHTOOL=""                                      # Path to ethtool Command
 export SADM_SSH=""                                          # Path to ssh Exec.
@@ -438,11 +442,15 @@ export SADM_INXI=""                                         # Path to inxi
 # SADMIN CONFIG FILE VARIABLES (Default Values here will be overridden by SADM CONFIG FILE Content)
 export SADM_CFG_VERSION=""                                  # Configuration File Version
 export SADM_MAIL_ADDR="your_email@domain.com"               # Default is in $SADMIN/cfg/sadmin.cfg
+#
 export SADM_ALERT_TYPE=1                                    # 0=No 1=Err 2=Success 3=All
+export SADM_ALERT_GROUP_TYPE="M"                            # 'M'=Mail,'S'=Slack,'T'=Texto,'N'=ntfy
+export SADM_ALERT_GROUP_MEMBERS=()                          # Members of Alert Group ',' separated
 export SADM_ALERT_GROUP="default"                           # Error Group (Prod)  (alert_group.cfg)
 export SADM_WARNING_GROUP="default"                         # Warning Group (Dev) (alert_group.cfg)
 export SADM_INFO_GROUP="default"                            # Info alert Group    (alert_group.cfg)
 export SADM_ALERT_TTL=86400                                 # Alert Valid TimeToLive 86400 Sec=1Day
+#
 export SADM_TEXTBELT_KEY="textbelt"                         # Textbelt.com API Key
 export SADM_TEXTBELT_URL="https://textbelt.com/text"        # Textbelt.com API URL
 export SADM_NTFY_EMAIL=""                                   # NTFY Email Address
@@ -718,6 +726,46 @@ sadm_isnumeric() {
 
 
 
+
+#""" sadm_ord()
+#    Use get the ascii code a character.
+#
+# Argument : One character, can be uppercase or lowercase.
+#
+# Returns  : The Ascii number (0-255) the correspond to the character receive.
+#
+# Example  : $(sadm_ord M) will return the number 77 that correspond to uppercase 'M'.
+#            See ASCII table at https://www.ascii-code.com/
+#
+#"""
+# --------------------------------------------------------------------------------------------------
+sadm_ord() {
+  # POSIX
+  LC_ALL= LC_CTYPE=C printf %d "'$1"
+}
+
+
+
+#"""
+# sadm_chr()
+#    Use get the character corresponding to the number (0-255) receive.
+#
+# Argument : Number between 0 and 255 (ASCII) 
+#
+# Returns  : The character that correspond to the number receive.
+#
+# Example  : $(sadm_chr 77) will return the letter 'M'.
+#            See ASCII table at https://www.ascii-code.com/
+#
+#"""
+sadm_chr() {
+  local val
+  [ "$1" -lt 256 ] || return 1
+  printf -v val %o "$1"; printf "\\$val"
+  # That one requires bash 3.1 or above.
+}
+
+
 # Display Question ($1) and wait for response from user, Y/y (return 1) or N/n (return 0)
 sadm_ask() {
     wmess="$1 [y,n] ? "                                                 # Add Y/N to Mess. Rcv
@@ -852,8 +900,9 @@ sadm_write_dbg() {
 
 
 
-#@S-------------------------------------------------------------------------------------------------
-# sadm_get_username() {
+#---------------------------------------------------------------------------------------------------
+#"""" 
+# sadm_get_username()
 #
 # Description: 
 #   Function to get current username.
@@ -867,7 +916,7 @@ sadm_write_dbg() {
 #
 # Example of optional second parameter:  wusername = sadm_get_username() 
 #
-#@E
+#"""
 sadm_get_username() {
     whoami > /dev/null 2>&1
     if [ $? -eq 0 ] 
@@ -1275,6 +1324,7 @@ sadm_load_cmd_path() {
     SADM_SED=$(sadm_get_command_path "sed")                             # Get sed cmd path  
     SADM_RRDTOOL=$(sadm_get_command_path "rrdtool")                     # Get rrdtool cmd path  
     SADM_INXI=$(sadm_get_command_path "inxi")                           # Get inxi cmd path  
+    SADM_JQ=$(sadm_get_command_path "jq")                               # Get jq cmd path  
     return 0
 }
 
@@ -1619,6 +1669,7 @@ sadm_get_oscodename() {
                     if [ "$wver"  = "14" ]    ; then oscode="Sonoma"        ;fi
                     if [ "$wver"  = "15" ]    ; then oscode="Sequoia"       ;fi
                     if [ "$wver"  = "26" ]    ; then oscode="Tahoe"         ;fi
+                    if [ "$wver"  = "27" ]    ; then oscode="Golden Gate"   ;fi
                     ;;
         "LINUX")    if [ "$SADM_LSB_RELEASE" != "" ] && [ -x "$SADM_LSB_RELEASE" ]
                        then oscode=$($SADM_LSB_RELEASE -sc)
@@ -2279,7 +2330,7 @@ sadm_server_disks() {
 
                  # Cannot Get Info under RedHat/CentOS 3 and 4 - Unsuported
                  SOSNAME=$(sadm_get_osname) ; SOSVER=$(sadm_get_osmajorversion)
-                 $SADM_PARTED -l | grep "^Disk" | grep -viE "mapper|Disk Flags:|zram" >$STMP
+                 $SADM_FDISK  -l | grep -i '^Disk /dev' | awk -F, '{print $1}' >$STMP
 
                  while read xline                                       # Read Each disks line
                     do
@@ -2767,7 +2818,7 @@ make_log_ready() {
 
     # Validate Log Type '$SADM_LOG_TYPE' & make sure it's in upper case for later use.
     case "$SADM_LOG_TYPE" in                                            # Test for valid Log Type
-            l|L|b|B|s|S)                                                # Various logtype validation
+            l|L|b|B|s|S)                                                # Various log type validation
                 SADM_LOG_TYPE=$(sadm_toupper "$SADM_LOG_TYPE")          # Make sure in Uppercase 
                 ;;
             *)  SADM_LOG_TYPE="B"                                       # Default Both Screen & Log
@@ -2804,8 +2855,238 @@ make_log_ready() {
 
 
 
+
+#""""
+# validate_alert_group() 
+#
+# Validate the group name received exist in the alert group file ($SADM_ALERT_FILE)
+# 
+# Args:            
+#     $1 AGROUP (str)    : Alert Group Name to validate.
+#
+# Returns:
+#     Return Code (Int)   : 0 Group is valid 
+#                           1 Group is invalid
+#
+#""""
 # --------------------------------------------------------------------------------------------------
-#                   SADM INITIALIZE FUNCTION - EXECUTE BEFORE DOING ANYTHING
+sadm_validate_alert_group()
+{
+    AGROUP=$1                                                           # Save Alert Group 
+    RESULT=$($SADM_JQ --arg grp "$AGROUP" '.[$grp]' $SADM_ALERT_FILE)
+    if [[ "$RESULT" == "null" ]]                                    # If Group don't exist
+        then if [[ $SADM_DEBUG -gt 4 ]] ; then sadm_write_log "Group '$AGROUP' don't exist." ; fi
+             RC=1
+        else if [[ $SADM_DEBUG -gt 4 ]] ; then sadm_write_log "Group '$AGROUP' is valid." ; fi 
+             RC=0
+    fi 
+    return $RC
+}
+
+
+
+
+#"""" 
+# sadm_get_alert_group_type() 
+#
+# Get the alert group type (m,t,s,n) for the group name received.
+# Possible Alert Group Type :       
+#   - 'M' Specify a Mail Group.
+#   - 'S' Specify a Slack Group .
+#   - 'T' Specify a SMS (Texto) Group. 
+#   - 'N' Specify Notification group for ntfy
+# 
+# Args:            
+#     $1 AGROUP (str)    : Alert Group Name to get the group type.
+#
+# Returns:
+#     Return Code (Int)  :  0 : Indicate that variable $SADM_ALERT_GROUP_TYPE is set to [M,N,S,T].
+#                           1 : Error could not get the group type
+#                                 - Could be the group name is invalid
+#                                 - Could not find the group type for the specified group.
+#""""
+# --------------------------------------------------------------------------------------------------
+sadm_get_alert_group_type()
+{
+    AGROUP=$1                                                           # Save the Alert Group Name
+    sadm_validate_alert_group "$AGROUP"                                 # Is Alert Group Name Valid?
+    if [[ $? -ne 0 ]] ; then return 1 ; fi                              # No it's not valid
+
+    if [[ $SADM_DEBUG -gt 4 ]] ; then sadm_write_log "Get alert group type of '$AGROUP'." ; fi 
+    #RESULT=$($SADM_JQ --arg grp "$AGROUP" '.[$grp]' $SADM_ALERT_FILE)
+
+    SADM_ALERT_GROUP_TYPE=$($SADM_JQ ".${AGROUP}.type" "$SADM_ALERT_FILE" | tr 'a-z' 'A-Z' | tr -d "\"")
+    if [[ "$SADM_ALERT_GROUP_TYPE" == "null" ]] 
+        then if [[ $SADM_DEBUG -gt 4 ]] ;then sadm_write_log "Can't get type of group '$AGROUP'." ;fi
+             SADM_ALERT_GROUP_TYPE=""
+             RC=1
+        else RC=0
+             if [[ $SADM_DEBUG -gt 4 ]] 
+                then sadm_write_log "Group Type of '$AGROUP' is '$SADM_ALERT_GROUP_TYPE'." 
+             fi 
+    fi 
+    return $RC
+}
+
+
+
+
+#"""
+# sadm_get_group_member() 
+#
+# Return the member(s) of the alert group receive.
+# 
+# Args:            
+#     $1 AGROUP (str)   : Get the member(s) of the Alert Group Name receive.
+#
+# Returns:
+#     Return Code (Int) : 0 : Global array name "SADM_ALERT_GROUP_MEMBERS" contains member data.
+#                         1 : Error could not get the group member(s)
+#                                 - Could be the name of the alert group is invalid
+#                                 - The alert group name have no member.
+#"""
+# --------------------------------------------------------------------------------------------------
+sadm_get_group_member()
+{
+    AGROUP=$1                                                           # Save the Alert Group Name
+    sadm_validate_alert_group "$AGROUP"                                 # Is Alert Group Name Valid?
+    if [[ $? -ne 0 ]] ; then return 1 ; fi                              # No it's not valid
+    if [[ $SADM_DEBUG -gt 4 ]] ;then sadm_write_log "Get member of the alert group '$AGROUP'." ;fi 
+
+    # Get the member of the Alert Group $AGROUP
+    CMD="$SADM_JQ '.${AGROUP}.member' $SADM_ALERT_FILE"                 # Command we will execute
+    if [[ $SADM_DEBUG -gt 4 ]] ;then sadm_write_log "CMD = $CMD" ; fi   # Show user jq command
+    eval "$CMD" > $SADM_LIBTMP_FILE1                                    # Execute the jq command
+    if [[ "$GMEMBERS" == "null" ]]                                      # If No Member ??
+        then if [[ $SADM_DEBUG -gt 4 ]] ;then sadm_write_log "Can't get members of '$AGROUP' group." ;fi 
+             SADM_ALERT_GROUP_MEMBERS=()                                # Empty Array no Member
+             return 1                                                   # Return error to caller
+    fi
+    
+    MEMBERS=$(grep ":" $SADM_LIBTMP_FILE1 | tr -d '"' |tr -d "\n" | tr -d ' ' | sed 's/,/ /g') 
+    if [[ $SADM_DEBUG -gt 4 ]] ;then sadm_write_log "Alert Group Member $MEMBERS"; fi
+    SADM_ALERT_GROUP_MEMBERS=($MEMBERS)                                 # Move MEMBERS into Array
+    return 0
+}
+
+
+
+#"""
+# setup_alert_group_data() 
+#
+# - Validate the alert group name in global variable '$SADM_ALERT_GROUP'.
+# - Set the alert group type Global Variable 'SADM_ALERT_GROUP_TYPE' (M,N,T,S).
+# - Fill the global array 'SADM_ALERT_GROUP_MEMBERS' with members key:value.
+# 
+# Args: None : 
+#    Using Global Variables: '$SADM_ALERT_GROUP','SADM_ALERT_GROUP_TYPE','SADM_ALERT_GROUP_MEMBERS'.
+#
+# Returns:
+#     Return Code (Int) : 0 : Always return 0 (If Any error then the 'default' group name is used).
+#
+#"""
+# --------------------------------------------------------------------------------------------------
+setup_alert_group_data()
+{
+
+    # Validate Alert Group Name and Determine group type
+    sadm_validate_alert_group "$SADM_ALERT_GROUP"                       # Validate Alert Group Name
+    if [[ $? -ne 0 ]] 
+       then sadm_write_err " "
+            sadm_write_err "[ WARNING ] Invalid alert group name '$SADM_ALERT_GROUP'." 
+            sadm_write_err "    - Group name wasn't found in alert group file '$SADM_ALERT_FILE'." 
+            SADM_ALERT_GROUP='default'
+            sadm_write_err "    - Defaulting to '$SADM_ALERT_GROUP' group name." 
+            sadm_write_err " "
+    fi 
+
+    # Get the alert group type (m,t,s,n) for the group name.
+    sadm_get_alert_group_type "$SADM_ALERT_GROUP"                        # Get Group type (M,N,T,S)
+    if [[ $? -ne 0 ]]                                                    # Error getting it 
+        then msg="Invalid alert group type '$SADM_ALERT_GROUP_TYPE' for group '$SADM_ALERT_GROUP'." 
+             sadm_write_err "[ ERROR ] $msg"                             # Advise User 
+             sadm_stop 1
+             exit 1
+    fi    
+
+    # The 'sadm_get_group_member' function fill array '$SADM_ALERT_GROUP_MEMBERS' with the 
+    # Member(s) of the group.
+    # Will be empty if no member, the number of members in array is '${#SADM_ALERT_GROUP_MEMBERS[@]}'
+    # Members in the array are separated by space, and key, value by a ':'.
+    # Example of array content: (robin:robin@batcave.com batman:batman@batcave.com)
+    sadm_get_group_member "$SADM_ALERT_GROUP"                            # Get member of the group
+    if [[ $? -ne 0 ]]                                                    # Success getting it 
+        then msg="Alert group '$SADM_ALERT_GROUP' have no member." 
+             sadm_write_err "[ ERROR ] $msg"                             # Advise User 
+             sadm_stop 1
+             exit 1
+    fi    
+
+    # For debugging purpose
+    if [[ $LIB_DEBUG -gt 4 ]] 
+        then sadm_write_log "----- " 
+             sadm_write_log "Alert group name is '$SADM_ALERT_GROUP'."
+             sadm_write_log "Alert group type is '$SADM_ALERT_GROUP_TYPE'"
+             sadm_write_log "Alert group have  ${#SADM_ALERT_GROUP_MEMBERS[@]} members."
+             for (( i=0; i<${#SADM_ALERT_GROUP_MEMBERS[@]}; i++ ));
+                do
+                sadm_write_log "index: $i, value: ${SADM_ALERT_GROUP_MEMBERS[$i]}"
+                done
+             sadm_write_log "----- " 
+    fi 
+    return 0 
+
+}
+
+
+
+#"""
+# sadm_write_log_header() 
+#
+# - Print the script log header with information about the environment.
+# 
+# Args: None : 
+#    Using Global Variables: '$SADM_ALERT_GROUP','SADM_ALERT_GROUP_TYPE','SADM_ALERT_GROUP_MEMBERS'.
+#
+# Returns:
+#     Return Code (Int) : 0 If Everything went OK.
+#                       : 1 When something went wrong.
+#
+#"""
+# --------------------------------------------------------------------------------------------------
+sadm_write_log_header() 
+{
+    # Either $SADM_LOG_HEADER is not defined or empty
+    if [ ! -z "$SADM_LOG_HEADER" ]                                      # Either not defined or empty
+        then SADM_LOG_HEADER="Y"                                        # If not defined Default=Y 
+    fi 
+    
+    if [ "$SADM_LOG_HEADER" = "Y" ]                                     # User Want Log Header
+        then sadm_write_log "${SADM_80_DASH}"                           # Write 80 Dashes Line
+             hline="$(date +"%a %d %b %Y %T") - ${SADM_PN} v${SADM_VER} - Library v${SADM_LIB_VER}"
+             sadm_write_log "$hline" 
+
+             # If $SADM_DESC ia define and contain something (Script Description) write to log.
+             if [[ ! -z "$SADM_DESC" ]] ; then sadm_write_log "$SADM_DESC" ; fi 
+
+             hline="$(sadm_get_fqdn), User '$SADM_USERNAME', Umask $(umask), "
+             hline+="AlertGroup '${SADM_ALERT_GROUP}' type '$SADM_ALERT_GROUP_TYPE'"
+             sadm_write_log "$hline"
+             hline="$(sadm_capitalize $(sadm_get_osname)) $(sadm_capitalize $(sadm_get_ostype)) "
+             hline+="v$(sadm_get_osversion), Kernel $(sadm_get_kernel_version), "
+             hline+="SADMIN($SADM_HOST_TYPE) $SADMIN"
+             sadm_write_log "$hline"
+             sadm_write_log "${SADM_FIFTY_DASH}"                         # Write 50 Dashes Line
+             sadm_write_log " "                                         
+    fi
+    return 0 
+}
+
+
+
+
+# --------------------------------------------------------------------------------------------------
+#                   SADMIN INITIALIZE FUNCTION - EXECUTE BEFORE DOING ANYTHING
 # What this function do.
 #   1) Make sure All SADM Directories and sub-directories exist and they have proper permission
 #   2) Make sure the log file exist with proper permission ($SADM_LOG)
@@ -2835,38 +3116,20 @@ sadm_start() {
              fi
     fi
 
+    # Validate Alert Group and : 
+    # - Set Alert Group Type '$SADM_ALERT_GROUP_TYPE' to : 
+    #    - 'M' Specify a Mail Group.
+    #    - 'S' Specify a Slack Group .
+    #    - 'T' Specify a SMS (Texto) Group. 
+    #    - 'N' Specify Notification group for ntfy
+    # - Set Alert Group Member(s) in the array '$SADM_ALERT_GROUP_MEMBERS'.
+    #   - Member name and value are separated by a ':'.
+    #   - Example of items in the array : 'robin:robin@batcave.com batman:batman@batcave.com' 
+    # If error detected during this validation, the user is advise and script abort and exit 1.
+    setup_alert_group_data "$SADM_ALERT_GROUP"                          # Gather info of alert Group
 
-    # Validate Alert Group Name and Determine group type
-    grep -q "^${SADM_ALERT_GROUP} " $SADMIN/cfg/alert_group.cfg
-    if [[ $? -ne 0 ]] 
-       then sadm_write_err " "
-            sadm_write_err "[ WARNING ] Invalid alert group name '$SADM_ALERT_GROUP'." 
-            sadm_write_err "    - Group name wasn't found in the alert group file '$SADM_ALERT_GROUP'." 
-            SADM_ALERT_GROUP='default'
-            sadm_write_err "    - Continuing with the '$SADM_ALERT_GROUP' group name." 
-            sadm_write_err " "
-   fi          
-   gtype=$(grep "^${SADM_ALERT_GROUP} " $SADM_ALERT_FILE | awk '{print$2}')
-   gtype=$(echo $gtype | tr "[:lower:]" "[:upper:]")                    # Always in UpperCase Std
-
-
-    # Write Log Header
-    if [ ! -z "$SADM_LOG_HEADER" ] && [ "$SADM_LOG_HEADER" = "Y" ]      # User Want Log Header
-        then sadm_write_log "${SADM_80_DASH}"                           # Write 80 Dashes Line
-             hline="$(date +"%a %d %b %Y %T") - ${SADM_PN} v${SADM_VER} - Library v${SADM_LIB_VER}"
-             sadm_write_log "$hline" 
-             if [[ ! -z "$SADM_DESC" ]] ; then sadm_write_log "$SADM_DESC" ; fi # Script description
-             hline="$(sadm_get_fqdn) - User: $SADM_USERNAME - Umask : $(umask) - "
-             hline+="Alert Group : ${SADM_ALERT_GROUP}($gtype)"
-             sadm_write_log "$hline"
-             hline="$(sadm_capitalize $(sadm_get_osname)) $(sadm_capitalize $(sadm_get_ostype))"
-             hline+="v$(sadm_get_osversion) - Kernel $(sadm_get_kernel_version)"
-             hline+="- SADMIN($SADM_HOST_TYPE): $SADMIN"
-             sadm_write_log "$hline"
-             sadm_write_log "${SADM_FIFTY_DASH}"                         # Write 50 Dashes Line
-             sadm_write_log " "                                         
-    fi
-
+    sadm_write_log_header                                               # Go write log header
+    
 
     # Make sure 'SADM_ROOT_ONLY' exist and not empty, if not set to default value "N" NO restriction
     # Check if this script is to be run only by root user
@@ -2911,7 +3174,7 @@ sadm_start() {
 
 
     # User got to be part of the SADMIN Group specified in $SADMIN/cfg/sadmin.cfg
-    if [ -r $SADMIN/cfg/sadmin.cfg ] && [ "$SADM_GROUP_ONLY" = "Y" ]
+    if [ -r $SADM_CFG_FILE ] && [ "$SADM_GROUP_ONLY" = "Y" ]
        then SADM_GROUP=`awk -F= '/^SADM_GROUP/ {print $2}' $SADMIN/cfg/sadmin.cfg | tr -d ' '` 
             if [ $(id -u) -ne 0 ]                                       # If user is not 'root' user
                then usrname=$(id -un)                                   # Get Current User Name
@@ -2936,10 +3199,7 @@ sadm_start() {
                 else sadm_write_err "[ ERROR ] Script '$SADM_PN' is already running ..."
             fi
             sadm_write_err " "
-
-            ps -ef | grep -v grep | grep "$SADM_PN" | while read wline ; do sadm_write_log "    - $wline"; done
-            #ps -ef | grep "$SADM_PN" | grep -v grep | grep -v "$$" | nl 
-            #ps -ef | grep "$SADM_PN" | grep -v grep | grep -v "$$" | nl >> $SADM_ELOG 2>&1
+            ps -ef |grep -v grep |grep "$SADM_PN" |while read wline ; do sadm_write_log "    - $wline"; done
 
             # If $SADM_PID_TIMEOUT isn't define in sadmin.cfg or in your script (in SADMIN section).
             if [ -z "$SADM_PID_TIMEOUT" ] ;then SADM_PID_TIMEOUT=0 ;fi  # Set to default, no timeout
@@ -2990,23 +3250,21 @@ sadm_start() {
             DELETE_PID="Y"                                              # Del PID at end, by stop
     fi 
 
-    # Alert Group File ($SADMIN/cfg/alert_group.cfg) MUST be present.
+    # Alert Group File ($SADMIN/cfg/alert_group.json) MUST be present.
     # If it doesn't exist, create it from initial file ($SADMIN/cfg/.alert_group.cfg)
     if [ ! -f "$SADM_ALERT_FILE" ]                                      # alert_group.cfg not Exist
        then if [ ! -f "$SADM_ALERT_INIT" ]                              # .alert_group.cfg not Exist
                then sadm_write_err " " 
                     sadm_write_err "********************************************************"
-                    sadm_write_err "SADMIN Alert Group file not found - $SADM_ALERT_FILE "
-                    sadm_write_err "Also the Alert Group Template file is missing '$SADM_ALERT_INIT'"
-                    sadm_write_err "SADMIN need a valid alert group file."
-                    sadm_write_err "Copy both files from another system to this server"
-                    sadm_write_err "Or restore them from a backup"
-                    sadm_write_err "Don't forget to review the file content."
+                    sadm_write_err "[ ERROR ] SADMIN Alert Group file not found '$SADM_ALERT_FILE'."
+                    sadm_write_err "   - Alert Group Template file is also missing '$SADM_ALERT_INIT'."
+                    sadm_write_err "   - SADMIN need a valid alert group file."
+                    sadm_write_err "   - Copy template '$SADM_ALERT_INIT' from another system."
                     sadm_write_err "********************************************************"
                     sadm_write_err " " 
                     sadm_stop 1                                         # Exit to O/S with Error
                     exit 1
-               else sadm_write_log "A new alert group file '$SADM_ALERT_FILE' was created from the template."
+               else sadm_write_log "New Alert Group file '$SADM_ALERT_FILE' created from the template."
                     cp $SADM_ALERT_INIT $SADM_ALERT_FILE                # Copy Template as initial
                     chmod 664 $SADM_ALERT_FILE
             fi
@@ -3030,8 +3288,9 @@ sadm_start() {
 
 
 
-# --------------------------------------------------------------------------------------------------
-# CLOSING SADMIN 
+#"""
+# sadm_stop()
+# 
 # END OF PROCESS FUNCTION (RECEIVE 1 PARAMETER = EXIT CODE OF SCRIPT)
 # What this function do.
 #   1) If Exit Code is not zero, change it to 1.
@@ -3044,8 +3303,8 @@ sadm_start() {
 #   8) Send Email to sysadmin (if user selected that option in sadmin.cfg)
 #   9) Delete the PID File of the script (SADM_PID_FILE)
 #  10) Delete the Uers 3 TMP Files (SADM_TMP_FILE1, SADM_TMP_FILE2, SADM_TMP_FILE3)
+#"""
 # --------------------------------------------------------------------------------------------------
-#
 sadm_stop() {
 
     if [ $# -eq 0 ]                                                     # If No status Code Received
@@ -3099,24 +3358,20 @@ sadm_stop() {
     # If variable "$SADM_LOG_FOOTER" is either unset or empty, define it & set it to default 'Y'.
     if [[ -z "$SADM_LOG_FOOTER" ]] ; then  "$SADM_LOG_FOOTER" = "Y" ;fi # Then default incl. footer
 
-    # If user want to produce a log.
+    # If user want to produce a script log.
     if [[ "$SADM_LOG_FOOTER" = "Y" ]] || [[ -z "$SADM_LOG_FOOTER" ]]    # User Want the Log Footer
-        then GRP_TYPE=$(grep -i "^$SADM_ALERT_GROUP " $SADM_ALERT_FILE |awk '{print$2}' |tr -d ' ')
-             GRP_NAME=$(grep -i "^$SADM_ALERT_GROUP " $SADM_ALERT_FILE |awk '{print$3}' |tr -d ' ')
-             ORG_NAME=$GRP_NAME                                         # Save Original Group Name
-             if [[ "$SADM_ALERT_GROUP" == "default" ]]                  # Get Real Default GroupName
-                then GRP_NAME=$(grep -i "^$GRP_NAME " $SADM_ALERT_FILE |awk '{print$3}' |tr -d ' ')
-             fi
-             case "$GRP_TYPE" in                                        # Case on Default Alert Group
-                m|M )   GRP_DESC="by email to '$GRP_NAME'"              # Alert Sent by Email
+        then case "$SADM_ALERT_GROUP_TYPE" in                           # Case on Default Alert Group
+                m|M )   GRP_DESC="by email to '$SADM_ALERT_GROUP'"      # Alert Sent by Email
                         ;; 
-                s|S )   GRP_DESC="(Slack '$GRP_NAME' channel)"          # Alert Send using Slack App
+                n|N )   GRP_DESC="(to ntfy '$SADM_ALERT_GROUP' topic)"  # Alert Send ntfy topic
                         ;; 
-                c|C )   GRP_DESC="to Cell. '$GRP_NAME'"                 # Alert send to Cell. Number
+                s|S )   GRP_DESC="(Slack '$SADM_ALERT_GROUP' channel)"  # Alert Send using Slack App
                         ;; 
-                t|T )   GRP_DESC="by SMS to '$GRP_NAME'"                # Alert send to SMS Group
+                c|C )   GRP_DESC="to Cell. '$SADM_ALERT_GROUP'"         # Alert send to Cell. Number
                         ;; 
-                *   )   GRP_DESC="Grp. $GRP_TYPE ?"                     # Illegal Code Desc
+                t|T )   GRP_DESC="by SMS to '$SADM_ALERT_GROUP'"        # Alert send to SMS Group
+                        ;; 
+                *   )   GRP_DESC="Grp. $SADM_ALERT_GROUP_TYPE ?"        # Invalid Type Code Desc
                         ;;
              esac
 
@@ -3187,9 +3442,11 @@ sadm_stop() {
     fi
 
     # Delete Temporary files used
-    if [ -e "$SADM_TMP_FILE1" ] ; then rm -f $SADM_TMP_FILE1 >/dev/null 2>&1 ; fi
-    if [ -e "$SADM_TMP_FILE2" ] ; then rm -f $SADM_TMP_FILE2 >/dev/null 2>&1 ; fi
-    if [ -e "$SADM_TMP_FILE3" ] ; then rm -f $SADM_TMP_FILE3 >/dev/null 2>&1 ; fi
+    if [ -e "$SADM_TMP_FILE1" ]     ; then rm -f $SADM_TMP_FILE1    >/dev/null 2>&1 ; fi
+    if [ -e "$SADM_TMP_FILE2" ]     ; then rm -f $SADM_TMP_FILE2    >/dev/null 2>&1 ; fi
+    if [ -e "$SADM_TMP_FILE3" ]     ; then rm -f $SADM_TMP_FILE3    >/dev/null 2>&1 ; fi
+    if [ -e "$SADM_LIBTMP_FILE1" ]  ; then rm -f $SADM_LIBTMP_FILE1 >/dev/null 2>&1 ; fi
+    
 
     # If error log or the RCH file are empty, we can delete them
     if [ ! -s "$SADM_ELOG" ]     ; then rm -f $SADM_ELOG     >/dev/null 2>&1 ; fi
@@ -3217,6 +3474,41 @@ sadm_stop() {
     fi
     return $SADM_EXIT_CODE
 }
+
+
+
+
+# --------------------------------------------------------------------------------------------------
+# sadm_send_ntfy() 
+#
+# Send the message to the topic received.
+# 
+# Args:            
+#     $1 ntfy topic (str) : Message will be send to this topic.
+#     $2 ntfy_url (str)   : URL for ntfy
+#     $3 ntfy_msg (str)   : Notification to send 
+#
+# Returns:
+#     Return Code (Int)   : 0 Successfully sent the message
+#                           1 Error while sending the email (Parameters may be wrong)
+#
+# --------------------------------------------------------------------------------------------------
+sadm_send_ntfy() {
+
+    ntfy_topic="$1" 
+    ntfy_mess="$2" 
+    ntfy_url="$3"
+    $SADM_CURL -d "$ntfy_msg" ${SADM_NTFY_URL}/${$SADM_NTFY_TOPIC}
+
+
+
+}
+
+
+
+
+
+
 
 
 
