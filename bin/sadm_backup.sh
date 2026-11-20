@@ -464,7 +464,7 @@ backup_dir()
     cd /                                                                # Make sure we are on /
 
     # Add sockets files to Exclude list (tar don't backup socket file & give error if not excluded)
-    sadm_write_log "  - Add socket files in [${backup_line}] to exclude list (they are fundamentally temporary)."
+    sadm_write_log "  - Add socket files in [${backup_line}] to exclude list (they are fundamentally temporary file)."
     find .${backup_line} -type s -print >/tmp/exclude  2>/dev/null       # Sockets in exclude
     while read excl_line                                                # Loop Until EOF Excl. File
         do
