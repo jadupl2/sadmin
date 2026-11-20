@@ -1,14 +1,15 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<html lang="en">
+
 <head>
-    <title>SADMIN for Linux SysAdmin</title>
+
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible"  content="IE=edge">
-    <meta http-equiv="Content-Type"     content="text/html; charset=ISO-8859-1" />
-    <meta name="viewport"               content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description"            content="SADMIN - Linux SysAdmin Tools">
     <meta name="author"                 content="Jacques Duplessis (sadmlinux@gmail.com)">
-    <meta name="generator"              content="sadmin"/>
+    <title>SADMIN for Linux SysAdmin</title>
+    <meta name="description"            content="SADMIN - Linux SysAdmin Tools">
     <link rel="icon" 		            type="image/x-icon" href="/images/favicon.ico" />
 
     <!-- Java scripts -->
